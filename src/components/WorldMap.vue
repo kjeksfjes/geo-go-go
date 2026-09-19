@@ -25,6 +25,7 @@ const emit = defineEmits<{
 
 const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
+const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
 const { width: measuredWidth } = useElementSize(container)
 const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
@@ -43,10 +44,9 @@ const {
   movePan,
   resetZoom,
   startPan,
-  transformAttribute,
   zoomFromWheel,
   zoomToBounds,
-} = useMapZoom(mapWidth, mapHeight)
+} = useMapZoom(mapWidth, mapHeight, mapContent)
 
 watch(projectionId, () => resetZoom(false))
 
@@ -94,7 +94,7 @@ function handlePointerEnd(event: PointerEvent) {
       @pointerup="handlePointerEnd"
       @pointercancel="handlePointerEnd"
     >
-      <g class="map-content" :transform="transformAttribute">
+      <g ref="mapContent" class="map-content">
         <path class="map-sphere" :d="spherePath" />
         <g class="countries">
           <path
@@ -150,10 +150,6 @@ function handlePointerEnd(event: PointerEvent) {
   max-height: 65vh;
   cursor: grab;
   user-select: none;
-}
-
-.map-content {
-  will-change: transform;
 }
 
 .map-sphere {

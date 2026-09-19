@@ -8,7 +8,11 @@ const MIN_ZOOM = 1
 // become practically visible. High zoom reveals no detail beyond the source.
 const MAX_ZOOM = 256
 
-export function useMapZoom(width: Ref<number>, height: Ref<number>) {
+export function useMapZoom(
+  width: Ref<number>,
+  height: Ref<number>,
+  mapContent: Ref<SVGGElement | null>,
+) {
   const transform = reactive({ x: 0, y: 0, scale: 1 })
   const isDragging = ref(false)
   let animationFrame: number | undefined
@@ -25,9 +29,6 @@ export function useMapZoom(width: Ref<number>, height: Ref<number>) {
   } | undefined
   let suppressNextClick = false
 
-  const transformAttribute = computed(
-    () => `translate(${transform.x} ${transform.y}) scale(${transform.scale})`,
-  )
   const isZoomed = computed(() => transform.scale > MIN_ZOOM + 0.01)
 
   function stopAnimation() {
@@ -37,7 +38,7 @@ export function useMapZoom(width: Ref<number>, height: Ref<number>) {
     }
   }
 
-  function setTransform(x: number, y: number, scale: number) {
+  function constrainTransform(x: number, y: number, scale: number) {
     // Let either edge travel as far as the viewport center. This keeps the map
     // recoverable while allowing countries near the antimeridian to be centered.
     const minX = width.value * (0.5 - scale)
@@ -45,25 +46,60 @@ export function useMapZoom(width: Ref<number>, height: Ref<number>) {
     const minY = height.value * (0.5 - scale)
     const maxY = height.value * 0.5
 
-    transform.x = Math.max(minX, Math.min(maxX, x))
-    transform.y = Math.max(minY, Math.min(maxY, y))
-    transform.scale = scale
+    return {
+      x: Math.max(minX, Math.min(maxX, x)),
+      y: Math.max(minY, Math.min(maxY, y)),
+      scale,
+    }
   }
 
-  function animateTo(x: number, y: number, scale: number, duration = 700) {
+  function setTransform(x: number, y: number, scale: number) {
+    const next = constrainTransform(x, y, scale)
+    transform.x = next.x
+    transform.y = next.y
+    transform.scale = next.scale
+
+    // This attribute changes on every animation frame. Updating it directly
+    // avoids making Vue diff hundreds of large SVG path strings each frame.
+    mapContent.value?.setAttribute(
+      'transform',
+      `translate(${next.x} ${next.y}) scale(${next.scale})`,
+    )
+  }
+
+  function animateTo(x: number, y: number, scale: number, duration = 750) {
     stopAnimation()
 
     const start = { ...transform }
+    const target = constrainTransform(x, y, scale)
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTransform(target.x, target.y, target.scale)
+      return
+    }
+
+    const startCenter = {
+      x: (width.value / 2 - start.x) / start.scale,
+      y: (height.value / 2 - start.y) / start.scale,
+    }
+    const targetCenter = {
+      x: (width.value / 2 - target.x) / target.scale,
+      y: (height.value / 2 - target.y) / target.scale,
+    }
+    const scaleRatio = target.scale / start.scale
     const startedAt = performance.now()
 
     function frame(now: number) {
       const progress = Math.min(1, (now - startedAt) / duration)
-      const eased = 1 - Math.pow(1 - progress, 3)
+      const eased = progress * progress * (3 - 2 * progress)
+      const nextScale = start.scale * Math.pow(scaleRatio, eased)
+      const centerX = startCenter.x + (targetCenter.x - startCenter.x) * eased
+      const centerY = startCenter.y + (targetCenter.y - startCenter.y) * eased
 
       setTransform(
-        start.x + (x - start.x) * eased,
-        start.y + (y - start.y) * eased,
-        start.scale + (scale - start.scale) * eased,
+        width.value / 2 - nextScale * centerX,
+        height.value / 2 - nextScale * centerY,
+        nextScale,
       )
 
       if (progress < 1) {
@@ -195,7 +231,6 @@ export function useMapZoom(width: Ref<number>, height: Ref<number>) {
     movePan,
     resetZoom,
     startPan,
-    transformAttribute,
     zoomFromWheel,
     zoomToBounds,
   }

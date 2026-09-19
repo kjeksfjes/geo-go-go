@@ -32,7 +32,8 @@ defineProps<{
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
-  padding: 1.25rem;
+  /* Keep the largest flag within the card's reserved 128px height. */
+  padding: 0.75rem 1.25rem;
 }
 
 .country-card__flag {
@@ -75,9 +76,12 @@ h2 {
 
 @media (max-width: 520px) {
   .country-card {
-    flex-direction: column;
     gap: 0.8rem;
-    text-align: center;
+    padding-inline: 0.75rem;
+  }
+
+  .country-card__flag {
+    font-size: clamp(3rem, 18vw, 4rem);
   }
 }
 </style>
