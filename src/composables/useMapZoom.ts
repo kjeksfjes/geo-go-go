@@ -78,13 +78,17 @@ export function useMapZoom(
       return
     }
 
-    const startCenter = {
-      x: (width.value / 2 - start.x) / start.scale,
-      y: (height.value / 2 - start.y) / start.scale,
-    }
-    const targetCenter = {
+    const targetAnchor = {
       x: (width.value / 2 - target.x) / target.scale,
       y: (height.value / 2 - target.y) / target.scale,
+    }
+    const startAnchorPosition = {
+      x: start.x + start.scale * targetAnchor.x,
+      y: start.y + start.scale * targetAnchor.y,
+    }
+    const targetAnchorPosition = {
+      x: target.x + target.scale * targetAnchor.x,
+      y: target.y + target.scale * targetAnchor.y,
     }
     const scaleRatio = target.scale / start.scale
     const startedAt = performance.now()
@@ -93,12 +97,14 @@ export function useMapZoom(
       const progress = Math.min(1, (now - startedAt) / duration)
       const eased = progress * progress * (3 - 2 * progress)
       const nextScale = start.scale * Math.pow(scaleRatio, eased)
-      const centerX = startCenter.x + (targetCenter.x - startCenter.x) * eased
-      const centerY = startCenter.y + (targetCenter.y - startCenter.y) * eased
+      const anchorX = startAnchorPosition.x
+        + (targetAnchorPosition.x - startAnchorPosition.x) * eased
+      const anchorY = startAnchorPosition.y
+        + (targetAnchorPosition.y - startAnchorPosition.y) * eased
 
       setTransform(
-        width.value / 2 - nextScale * centerX,
-        height.value / 2 - nextScale * centerY,
+        anchorX - nextScale * targetAnchor.x,
+        anchorY - nextScale * targetAnchor.y,
         nextScale,
       )
 
