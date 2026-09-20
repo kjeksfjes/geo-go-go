@@ -2,6 +2,7 @@
 import { onMounted, ref, type ComponentPublicInstance } from 'vue'
 import TreeSelect from '@zanmato/vue3-treeselect'
 import type { MapProjectionId } from '../composables/useMapProjection'
+import { t } from '../i18n'
 
 defineProps<{
   disabled?: boolean
@@ -44,7 +45,7 @@ function selectProjection(value: string | null) {
 
 <template>
   <div class="projection-selector" @mousedown.capture="toggleFromControl">
-    <span id="projection-selector-label">Projection</span>
+    <span id="projection-selector-label">{{ t('projection') }}</span>
     <TreeSelect
       ref="treeSelect"
       :model-value="model"

@@ -13,6 +13,7 @@ import { useMapZoom, type MapBounds, type MapPoint } from '../composables/useMap
 import type { CountryFeature } from '../types/country'
 import type { MapRegion, MapRegionId } from '../data/regions'
 import { afterPaint, wait } from '../utils/paint'
+import { countryName, t } from '../i18n'
 
 const props = defineProps<{
   countries: CountryFeature[]
@@ -199,7 +200,7 @@ async function setProjection(nextId: MapProjectionId) {
         class="world-map"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         role="group"
-        aria-label="Interactive world map"
+        :aria-label="t('interactiveMap')"
         @wheel.prevent="handleWheel"
         @pointerdown="handlePointerDown"
         @pointermove="movePan"
@@ -224,7 +225,7 @@ async function setProjection(nextId: MapProjectionId) {
               :data-country-id="country.id"
               role="button"
               :tabindex="visibleCountryIds.has(country.id) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
-              :aria-label="country.properties.name"
+              :aria-label="countryName(country.id)"
               :aria-hidden="!visibleCountryIds.has(country.id)"
               :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
               :aria-pressed="quizMode ? country.id === quizAnswerId : country.id === selectedCountryId"
@@ -232,7 +233,7 @@ async function setProjection(nextId: MapProjectionId) {
               @keydown.enter.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
               @keydown.space.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
             >
-              <title v-if="!quizMode || quizAnswerId !== null">{{ country.properties.name }}</title>
+              <title v-if="!quizMode || quizAnswerId !== null">{{ countryName(country.id) }}</title>
             </path>
           </g>
         </g>
@@ -263,18 +264,16 @@ async function setProjection(nextId: MapProjectionId) {
 
       <div class="map-tools">
         <span>
-          {{ quizMode && quizAnswerId !== null
-            ? 'Click map or press Space to continue'
-            : 'Scroll to zoom · Drag to move' }}
+          {{ quizMode && quizAnswerId !== null ? t('continueHint') : t('mapHint') }}
         </span>
         <button v-if="isZoomed" type="button" @click="resetView">
-          Reset view
+          {{ t('resetView') }}
         </button>
       </div>
     </div>
     <div v-if="interactionLocked" class="map-loading-overlay">
       <p v-if="mapBlurred" class="map-loading-status" role="status">
-        Loading detailed map…
+        {{ t('loadingMap') }}
       </p>
     </div>
   </div>

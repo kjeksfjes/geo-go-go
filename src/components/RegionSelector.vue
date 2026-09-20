@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, type ComponentPublicInstance } from 'vue'
 import TreeSelect from '@zanmato/vue3-treeselect'
 import type { MapRegion, MapRegionId } from '../data/regions'
+import { regionName, t } from '../i18n'
 
 const props = defineProps<{
   options: readonly MapRegion[]
@@ -40,7 +41,7 @@ interface TreeOption {
 }
 
 function toTreeOption(region: MapRegion): TreeOption {
-  const option: TreeOption = { id: region.id, label: region.label }
+  const option: TreeOption = { id: region.id, label: regionName(region) }
   if (region.children?.length) option.children = region.children.map(toTreeOption)
   return option
 }
@@ -54,7 +55,7 @@ function selectRegion(value: string | null) {
 
 <template>
   <div class="region-selector" @mousedown.capture="toggleFromControl">
-    <span id="region-selector-label">Region</span>
+    <span id="region-selector-label">{{ t('region') }}</span>
     <TreeSelect
       ref="treeSelect"
       :model-value="model"

@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import type { QuizPhase } from '../composables/useCountryQuiz'
 import type { CountryInfo } from '../types/country'
+import { countryName, t } from '../i18n'
 
 const props = defineProps<{
   phase: QuizPhase
@@ -35,21 +36,21 @@ watch(() => props.question?.id, async (countryId) => {
 </script>
 
 <template>
-  <section class="quiz-panel" aria-label="Find the country quiz">
+  <section class="quiz-panel" :aria-label="t('quiz')">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
-        <p class="quiz-panel__eyebrow">Region complete</p>
-        <h2>Final score: {{ score }} / {{ total }}</h2>
+        <p class="quiz-panel__eyebrow">{{ t('regionComplete') }}</p>
+        <h2>{{ t('finalScore', { score, total }) }}</h2>
       </div>
       <button class="quiz-panel__button" type="button" @click="emit('restart')">
-        Play again
+        {{ t('playAgain') }}
       </button>
     </template>
 
     <template v-else-if="phase === 'empty'">
       <div class="quiz-panel__message">
-        <p class="quiz-panel__eyebrow">Find the country</p>
-        <h2>No quiz countries in this region</h2>
+        <p class="quiz-panel__eyebrow">{{ t('findCountry') }}</p>
+        <h2>{{ t('noCountries') }}</h2>
       </div>
     </template>
 
@@ -58,24 +59,24 @@ watch(() => props.question?.id, async (countryId) => {
         class="quiz-panel__flag fi"
         :class="`fi-${question.flagCode}`"
         role="img"
-        :aria-label="`${question.name} flag`"
+        :aria-label="t('flag', { name: countryName(question.id) })"
       />
       <div class="quiz-panel__message">
         <p class="quiz-panel__eyebrow">
-          Question {{ questionNumber }}/{{ total }} · {{ score }} pts
+          {{ t('questionStatus', { number: questionNumber, total, score }) }}
         </p>
-        <h2 ref="questionHeading" tabindex="-1">Find {{ question.name }}</h2>
+        <h2 ref="questionHeading" tabindex="-1">{{ t('find', { name: countryName(question.id) }) }}</h2>
         <div class="quiz-panel__status" aria-live="polite">
           <p v-if="phase === 'question'" class="quiz-panel__hint">
-            Click its location on the map.
+            {{ t('clickLocation') }}
           </p>
           <p
             v-else
             class="quiz-panel__feedback"
             :class="isCorrect ? 'quiz-panel__feedback--correct' : 'quiz-panel__feedback--wrong'"
           >
-            <template v-if="isCorrect">Correct! +1 point.</template>
-            <template v-else>Not quite. Green marks the answer.</template>
+            <template v-if="isCorrect">{{ t('correct') }}</template>
+            <template v-else>{{ t('wrong') }}</template>
           </p>
         </div>
       </div>
@@ -89,7 +90,7 @@ watch(() => props.question?.id, async (countryId) => {
         :tabindex="phase === 'answered' ? 0 : -1"
         @click="emit('next')"
       >
-        {{ questionNumber === total ? 'See results' : 'Next country' }}
+        {{ questionNumber === total ? t('seeResults') : t('nextCountry') }}
       </button>
     </template>
   </section>

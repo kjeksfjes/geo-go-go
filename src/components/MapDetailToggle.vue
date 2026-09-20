@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 const props = defineProps<{
   loading: boolean
   modelValue: boolean
@@ -20,7 +21,7 @@ const emit = defineEmits<{
     :disabled="loading"
     @click="emit('update:modelValue', !props.modelValue)"
   >
-    <span>High detail</span>
+    <span>{{ t('highDetail') }}</span>
     <span class="detail-toggle__track" aria-hidden="true">
       <span class="detail-toggle__thumb" />
     </span>

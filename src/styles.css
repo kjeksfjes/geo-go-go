@@ -40,8 +40,47 @@ select {
 }
 
 .app-header {
+  position: relative;
   margin-bottom: 1.25rem;
   text-align: center;
+}
+
+.language-selector {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 0.1rem;
+  padding: 0.2rem;
+  border: 1px solid rgba(82, 103, 110, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.language-selector button {
+  min-width: 2.2rem;
+  padding: 0.35rem 0.4rem;
+  border: 0;
+  border-radius: 999px;
+  color: #52676e;
+  background: transparent;
+  font-size: 0.7rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.language-selector button[aria-pressed='true'] {
+  color: #fff;
+  background: #172d38;
+}
+
+.language-selector button:hover:not([aria-pressed='true']) {
+  background: rgba(23, 45, 56, 0.08);
+}
+
+html[data-input-modality='keyboard'] .language-selector button:focus-visible {
+  outline: 2px solid #172d38;
+  outline-offset: 2px;
 }
 
 .mode-selector {
@@ -109,6 +148,10 @@ html[data-input-modality='keyboard'] .mode-selector button:focus-visible {
   border-radius: 22px;
   background: #dcebf1;
   box-shadow: 0 20px 60px rgba(23, 45, 56, 0.12);
+}
+
+@media (max-width: 800px) {
+  .app-header { padding-top: 2.5rem; }
 }
 
 @media (max-width: 560px) {

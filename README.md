@@ -21,6 +21,8 @@ npm run dev
 ```
 
 Open the local URL printed by Vite, then hover, focus, or click a country.
+Use the EN/NO control to switch between English and Norwegian Bokmål. The app
+starts in the browser's language when supported and remembers a manual choice.
 Scroll over the map to zoom around the pointer; selecting a country smoothly
 zooms the map to its bounds. Drag a zoomed map to pan, or switch between
 Mercator, Winkel Tripel, Equal Earth, and Natural Earth projections with the

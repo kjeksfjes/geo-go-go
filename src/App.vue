@@ -12,6 +12,7 @@ import {
   type MapRegionId,
 } from './data/regions'
 import { afterPaint, wait } from './utils/paint'
+import { locale, setLocale, t } from './i18n'
 
 const selectedCountryId = ref<string | null>(null)
 const mode = ref<'explore' | 'find-country'>('explore')
@@ -152,25 +153,29 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
 <template>
   <main class="app-shell">
     <header class="app-header">
-      <p class="eyebrow">A tiny geography game</p>
-      <h1>Where in the world?</h1>
-      <p>Explore the map and pick a country.</p>
+      <div class="language-selector" role="group" :aria-label="t('language')">
+        <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="setLocale('en')">EN</button>
+        <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="setLocale('nb')">NO</button>
+      </div>
+      <p class="eyebrow">{{ t('eyebrow') }}</p>
+      <h1>{{ t('title') }}</h1>
+      <p>{{ t('subtitle') }}</p>
     </header>
 
-    <div class="mode-selector" role="group" aria-label="Game mode">
+    <div class="mode-selector" role="group" :aria-label="t('gameMode')">
       <button
         type="button"
         :aria-pressed="mode === 'explore'"
         @click="setMode('explore')"
       >
-        Explore
+        {{ t('explore') }}
       </button>
       <button
         type="button"
         :aria-pressed="mode === 'find-country'"
         @click="setMode('find-country')"
       >
-        Find the country
+        {{ t('findCountry') }}
       </button>
     </div>
 
@@ -186,7 +191,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
       @restart="startQuiz(visibleCountryIds)"
     />
 
-    <section class="map-card" aria-label="World map game">
+    <section class="map-card" :aria-label="t('worldMapGame')">
       <WorldMap
         :countries="mapCountries"
         :detailed-countries="detailedCountries"

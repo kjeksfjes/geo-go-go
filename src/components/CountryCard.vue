@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CountryInfo } from '../types/country'
+import { countryName, t } from '../i18n'
 
 defineProps<{
   country: CountryInfo | null
@@ -13,15 +14,15 @@ defineProps<{
         class="country-card__flag fi"
         :class="`fi-${country.flagCode}`"
         role="img"
-        :aria-label="`${country.name} flag`"
+        :aria-label="t('flag', { name: countryName(country.id) })"
       />
       <div>
-        <p class="country-card__label">Selected country</p>
-        <h2>{{ country.name }}</h2>
-        <p class="country-card__code">Map code · {{ country.id }}</p>
+        <p class="country-card__label">{{ t('selectedCountry') }}</p>
+        <h2>{{ countryName(country.id) }}</h2>
+        <p class="country-card__code">{{ t('mapCode', { code: country.id }) }}</p>
       </div>
     </template>
-    <p v-else class="country-card__empty">Choose a country on the map</p>
+    <p v-else class="country-card__empty">{{ t('chooseCountry') }}</p>
   </aside>
 </template>
 
