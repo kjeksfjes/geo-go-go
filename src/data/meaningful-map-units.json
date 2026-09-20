@@ -25,12 +25,73 @@
     "ESP": "ESX"
   },
   "metadataOverrides": {
+    "map-unit:ACA": {
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-unit:ACB": {
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-unit:MYT": {
+      "type": { "en": "Overseas department/region", "nb": "Oversjøisk departement/region" }
+    },
+    "map-unit:REU": {
+      "name": { "en": "Réunion", "nb": "Réunion" },
+      "type": { "en": "Overseas department/region", "nb": "Oversjøisk departement/region" }
+    },
+    "map-unit:MTQ": {
+      "type": { "en": "Overseas department/region", "nb": "Oversjøisk departement/region" }
+    },
+    "map-unit:GLP": {
+      "type": { "en": "Overseas department/region", "nb": "Oversjøisk departement/region" }
+    },
     "map-unit:NSV": {
       "type": { "en": "Archipelago", "nb": "Øygruppe" }
     },
     "map-unit:GUF": {
       "name": { "nb": "Fransk Guyana" },
       "type": { "en": "Overseas department/region", "nb": "Oversjøisk departement/region" }
+    },
+    "map-unit:WLS": {
+      "type": { "en": "Constituent country", "nb": "Land i Storbritannia" }
+    },
+    "map-unit:SCT": {
+      "type": { "en": "Constituent country", "nb": "Land i Storbritannia" }
+    },
+    "map-unit:NIR": {
+      "type": { "en": "Constituent country", "nb": "Land i Storbritannia" }
+    },
+    "map-unit:ENG": {
+      "type": { "en": "Constituent country", "nb": "Land i Storbritannia" }
+    },
+    "map-unit:CXR": {
+      "type": { "en": "External territory", "nb": "Oversjøisk territorium" }
+    },
+    "map-unit:CCK": {
+      "type": { "en": "External territory", "nb": "Oversjøisk territorium" }
+    },
+    "map-unit:NLY": {
+      "type": { "en": "Special municipalities", "nb": "Særskilte kommuner" }
+    },
+    "map-unit:TKL": {
+      "type": { "en": "Territory", "nb": "Territorium" }
+    },
+    "map-unit:PNB": {
+      "type": { "en": "Autonomous region", "nb": "Autonom region" }
+    },
+    "map-unit:PMD": {
+      "type": { "en": "Autonomous region", "nb": "Autonom region" }
+    },
+    "map-unit:PAZ": {
+      "type": { "en": "Autonomous region", "nb": "Autonom region" }
+    },
+    "map-unit:GAZ": {
+      "type": { "en": "Territory", "nb": "Territorium" }
+    },
+    "map-unit:WEB": {
+      "type": { "en": "Territory", "nb": "Territorium" }
+    },
+    "map-unit:TZZ": {
+      "type": { "en": "Semi-autonomous region", "nb": "Delvis selvstyrt region" }
     },
     "map-subunit:USK": {
       "type": { "en": "State", "nb": "Delstat" }
@@ -50,7 +111,8 @@
       "type": { "en": "Autonomous community", "nb": "Autonom region" }
     },
     "map-subunit:FXC": {
-      "name": { "nb": "Korsika" }
+      "name": { "nb": "Korsika" },
+      "type": { "en": "Island", "nb": "Øy" }
     },
     "map-subunit:RUK": {
       "type": { "en": "Exclave", "nb": "Eksklave" }

@@ -17,6 +17,7 @@ export function useMapZoom(
   height: Ref<number>,
   mapContent: Ref<SVGGElement | null>,
   horizontalWrap: Ref<HorizontalWrap | null>,
+  minimumZoomPoint: Ref<MapPoint | null>,
 ) {
   const transform = reactive({ x: 0, y: 0, scale: 1 })
   const isDragging = ref(false)
@@ -231,14 +232,24 @@ export function useMapZoom(
     )
     const ratio = nextScale / transform.scale
 
-    setTransform(
-      pointerX - (pointerX - transform.x) * ratio,
-      pointerY - (pointerY - transform.y) * ratio,
-      nextScale,
-    )
-
-    if (nextScale === MIN_ZOOM) {
+    const wheelX = pointerX - (pointerX - transform.x) * ratio
+    const wheelY = pointerY - (pointerY - transform.y) * ratio
+    const center = minimumZoomPoint.value
+    if (center && nextScale < 1.5) {
+      // Ease the pointer-anchored zoom toward the region's center before the
+      // minimum is reached, avoiding a final-frame snap across the canvas.
+      const weight = (1.5 - nextScale) / (1.5 - MIN_ZOOM)
+      const centeredX = width.value / 2 - nextScale * center[0]
+      const centeredY = height.value / 2 - nextScale * center[1]
+      setTransform(
+        wheelX + (centeredX - wheelX) * weight,
+        wheelY + (centeredY - wheelY) * weight,
+        nextScale,
+      )
+    } else if (nextScale === MIN_ZOOM) {
       setTransform(0, 0, MIN_ZOOM)
+    } else {
+      setTransform(wheelX, wheelY, nextScale)
     }
   }
 

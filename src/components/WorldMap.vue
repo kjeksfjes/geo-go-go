@@ -61,6 +61,13 @@ const { geographicPaths, hasCachedPaths, horizontalWrap, projectPoint, spherePat
   toRef(props, 'activeRegion'),
   toRef(props, 'visibleMapUnitIds'),
 )
+// Global projections keep their world-sized canvas. At minimum zoom, center
+// the filtered region within that canvas instead of returning to world origin.
+const minimumZoomPoint = computed<MapPoint | null>(() => {
+  if (props.activeRegion.id === 'world' || projectionId.value === 'regional-equal-area') return null
+  const center = props.activeRegion.view?.center
+  return center ? projectPoint(center) ?? null : null
+})
 // SVG paths paint in DOM order. Put related geographic units above ordinary
 // countries, the clicked unit above its siblings, and correct above wrong.
 const paintedGeographicPaths = computed(() => {
@@ -133,7 +140,7 @@ const {
   zoomFromWheel,
   zoomToBounds,
   zoomToPoint,
-} = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap)
+} = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap, minimumZoomPoint)
 
 const wrappedGeographicPaths = computed(() => {
   const centerX = horizontalWrap.value?.centerX
