@@ -13,6 +13,7 @@ import { useMapZoom, type MapBounds, type MapPoint } from '../composables/useMap
 import type { CountryFeature } from '../types/country'
 import type { MapRegion, MapRegionId } from '../data/regions'
 import { afterPaint, wait } from '../utils/paint'
+import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { countryName, t } from '../i18n'
 
 const props = defineProps<{
@@ -210,7 +211,6 @@ async function setProjection(nextId: MapProjectionId) {
       :class="{
         'map-container--dragging': isDragging,
         'map-container--detail-blurred': mapBlurred,
-        'map-container--quiz-answered': quizMode && quizAnswerId !== null,
       }"
       :aria-busy="interactionLocked"
       :inert="interactionLocked"
@@ -241,6 +241,7 @@ async function setProjection(nextId: MapProjectionId) {
                 'country--selected': !quizMode && country.id === selectedCountryId,
                 'country--quiz-correct': quizMode && quizAnswerId !== null && country.id === quizQuestionId,
                 'country--quiz-wrong': quizMode && quizAnswerId === country.id && country.id !== quizQuestionId,
+                'country--quiz-inactive': quizMode && quizAnswerId !== null && country.id !== quizQuestionId && country.id !== quizAnswerId,
               }"
               :data-country-id="country.id"
               role="button"
@@ -253,7 +254,7 @@ async function setProjection(nextId: MapProjectionId) {
               @keydown.enter.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
               @keydown.space.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
             >
-              <title v-if="!quizMode || quizAnswerId !== null || quizComplete">{{ countryName(country.id) }}</title>
+              <title v-if="canShowCountryTooltip(country.id, props)">{{ countryName(country.id) }}</title>
             </path>
           </g>
         </g>
@@ -321,10 +322,6 @@ async function setProjection(nextId: MapProjectionId) {
   transition: filter 280ms ease;
 }
 
-.map-container--quiz-answered .world-map {
-  cursor: pointer;
-}
-
 .map-container--detail-blurred .world-map {
   filter: blur(5px);
 }
@@ -362,6 +359,10 @@ async function setProjection(nextId: MapProjectionId) {
   cursor: pointer;
   outline: none;
   transition: fill 120ms ease, filter 120ms ease;
+}
+
+.country--quiz-inactive {
+  pointer-events: none;
 }
 
 .map-container--dragging .world-map,
