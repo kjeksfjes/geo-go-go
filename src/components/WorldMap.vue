@@ -25,6 +25,7 @@ const props = defineProps<{
   regionOptions: readonly MapRegion[]
   selectedCountryId: string | null
   quizMode: boolean
+  quizComplete: boolean
   quizQuestionId: string | null
   quizAnswerId: string | null
   visibleCountryIds: ReadonlySet<string>
@@ -252,7 +253,7 @@ async function setProjection(nextId: MapProjectionId) {
               @keydown.enter.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
               @keydown.space.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
             >
-              <title v-if="!quizMode || quizAnswerId !== null">{{ countryName(country.id) }}</title>
+              <title v-if="!quizMode || quizAnswerId !== null || quizComplete">{{ countryName(country.id) }}</title>
             </path>
           </g>
         </g>

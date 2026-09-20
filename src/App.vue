@@ -202,6 +202,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :region-options="regions"
         :selected-country-id="selectedCountryId"
         :quiz-mode="mode === 'find-country'"
+        :quiz-complete="mode === 'find-country' && quizPhase === 'complete'"
         :quiz-question-id="quizQuestionId"
         :quiz-answer-id="quizAnswerId"
         :visible-country-ids="visibleCountryIds"
