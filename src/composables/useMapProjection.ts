@@ -1,6 +1,7 @@
 import {
   geoCentroid,
   geoArea,
+  geoBounds,
   geoAzimuthalEqualArea,
   geoEqualEarth,
   geoMercator,
@@ -172,6 +173,7 @@ export function useMapProjection(
       const displayUnit = displayFeature(unit)
       const fullBounds = generator.bounds(displayUnit) as MapBounds
       let focusUnit = displayUnit
+      let centerOnBounds = false
 
       // A geographic unit can still contain distant islands or cross the antimeridian.
       // Use its largest landmass for click-to-zoom when the full unit bounds
@@ -193,19 +195,28 @@ export function useMapProjection(
         const mainHeight = Math.max(1, mainBounds[1][1] - mainBounds[0][1])
         const mainlandAreaShare = geoArea(largestLandmass) / geoArea(displayUnit)
         const spansMostOfMap = fullWidth > width.value * 0.65
-        const hasDistantTerritories = Math.max(
+        const hasWideProjectedFootprint = Math.max(
           fullWidth / mainWidth,
           fullHeight / mainHeight,
         ) > 2
         const mainlandDominates = mainlandAreaShare > 0.75
-
-        if (mainlandDominates && (spansMostOfMap || hasDistantTerritories)) {
-          focusUnit = largestLandmass
+        if (mainlandDominates && (spansMostOfMap || hasWideProjectedFootprint)) {
+          const [[west, south], [east, north]] = geoBounds(displayUnit)
+          const longitudeSpan = east >= west ? east - west : east + 360 - west
+          // Keep a compact island group together even if one island accounts
+          // for most of its land area. A broad geographic spread still focuses
+          // the main landmass, as for distant overseas or outlying territory.
+          const geographicallyBroad = longitudeSpan > 12 || north - south > 12
+          if (spansMostOfMap || geographicallyBroad) {
+            focusUnit = largestLandmass
+          } else {
+            centerOnBounds = true
+          }
         }
       }
 
       const projection = generator.projection()
-      const focusPoint = typeof projection === 'function'
+      const focusPoint = !centerOnBounds && typeof projection === 'function'
         ? projection(geoCentroid(focusUnit)) ?? undefined
         : undefined
 
