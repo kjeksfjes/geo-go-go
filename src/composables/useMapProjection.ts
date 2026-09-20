@@ -16,6 +16,10 @@ import type { GeographicFrame, MapRegion } from '../data/regions'
 import type { MapBounds, MapPoint } from './useMapZoom'
 
 export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'natural-earth' | 'regional-equal-area'
+export interface HorizontalWrap {
+  period: number
+  centerX: number
+}
 
 export const projectionOptions: Array<{ id: MapProjectionId; label: string }> = [
   { id: 'mercator', label: 'Mercator' },
@@ -222,6 +226,15 @@ export function useMapProjection(
 
   const spherePath = computed(() => pathGenerator.value({ type: 'Sphere' }) ?? '')
 
+  const horizontalWrap = computed<HorizontalWrap | null>(() => {
+    if (projectionId.value !== 'mercator' || activeRegion.value.id !== 'world') return null
+    const projection = pathGenerator.value.projection() as GeoProjection
+    return {
+      period: 2 * Math.PI * projection.scale(),
+      centerX: projection.translate()[0],
+    }
+  })
+
   function projectPoint(point: MapPoint): MapPoint | undefined {
     const projection = pathGenerator.value.projection()
     if (typeof projection !== 'function') return undefined
@@ -229,5 +242,5 @@ export function useMapProjection(
     return projection(point) as MapPoint | undefined
   }
 
-  return { geographicPaths, hasCachedPaths, projectPoint, spherePath }
+  return { geographicPaths, hasCachedPaths, horizontalWrap, projectPoint, spherePath }
 }

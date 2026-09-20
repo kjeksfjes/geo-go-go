@@ -1,4 +1,5 @@
 import { computed, onBeforeUnmount, reactive, ref, watch, type Ref } from 'vue'
+import type { HorizontalWrap } from './useMapProjection'
 
 export type MapBounds = [[number, number], [number, number]]
 export type MapPoint = [number, number]
@@ -12,6 +13,7 @@ export function useMapZoom(
   width: Ref<number>,
   height: Ref<number>,
   mapContent: Ref<SVGGElement | null>,
+  horizontalWrap: Ref<HorizontalWrap | null>,
 ) {
   const transform = reactive({ x: 0, y: 0, scale: 1 })
   const isDragging = ref(false)
@@ -30,6 +32,16 @@ export function useMapZoom(
   let suppressNextClick = false
 
   const isZoomed = computed(() => transform.scale > MIN_ZOOM + 0.01)
+  const wrapActive = computed(() => {
+    const wrap = horizontalWrap.value
+    return wrap !== null && transform.scale * wrap.period >= width.value
+  })
+  const wrapNeighborDirection = computed(() => {
+    const wrap = horizontalWrap.value
+    if (!wrap) return 1
+    const mapCenterX = (width.value / 2 - transform.x) / transform.scale
+    return mapCenterX >= wrap.centerX ? 1 : -1
+  })
 
   function stopAnimation() {
     if (animationFrame !== undefined) {
@@ -46,8 +58,18 @@ export function useMapZoom(
     const minY = height.value * (0.5 - scale)
     const maxY = height.value * 0.5
 
+    const wrap = horizontalWrap.value
+    if (wrap && scale * wrap.period >= width.value) {
+      const mapCenterX = (width.value / 2 - x) / scale
+      const centered = mapCenterX - wrap.centerX + wrap.period / 2
+      const wrapped = ((centered % wrap.period) + wrap.period) % wrap.period
+      x = width.value / 2 - scale * (wrap.centerX + wrapped - wrap.period / 2)
+    } else {
+      x = Math.max(minX, Math.min(maxX, x))
+    }
+
     return {
-      x: Math.max(minX, Math.min(maxX, x)),
+      x,
       y: Math.max(minY, Math.min(maxY, y)),
       scale,
     }
@@ -78,6 +100,15 @@ export function useMapZoom(
 
     const start = { ...transform }
     const target = constrainTransform(x, y, scale)
+    const wrap = horizontalWrap.value
+    if (wrap && scale * wrap.period >= width.value) {
+      // Animate toward the nearest equivalent world copy, then normalize each
+      // painted frame. Otherwise a click across the seam takes the long way.
+      const startCenterX = (width.value / 2 - start.x) / start.scale
+      const targetCenterX = (width.value / 2 - target.x) / target.scale
+      const copies = Math.round((startCenterX - targetCenterX) / wrap.period)
+      target.x -= copies * target.scale * wrap.period
+    }
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setTransform(target.x, target.y, target.scale)
@@ -218,7 +249,7 @@ export function useMapZoom(
   }
 
   function startPan(event: PointerEvent, svg: SVGSVGElement) {
-    if (event.button !== 0 || transform.scale <= MIN_ZOOM) return
+    if (event.button !== 0 || (transform.scale <= MIN_ZOOM && !wrapActive.value)) return
 
     stopAnimation()
     suppressNextClick = false
@@ -280,6 +311,8 @@ export function useMapZoom(
   return {
     isZoomed,
     isDragging,
+    wrapActive,
+    wrapNeighborDirection,
     consumeDragClick,
     endPan,
     movePan,

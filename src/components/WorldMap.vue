@@ -53,7 +53,7 @@ const mapBlurred = computed(() => props.detailBlurred || projectionBlurred.value
 const { width: measuredWidth } = useElementSize(container)
 const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
 const mapHeight = computed(() => Math.max(280, Math.min(620, mapWidth.value * 0.56)))
-const { geographicPaths, hasCachedPaths, projectPoint, spherePath } = useMapProjection(
+const { geographicPaths, hasCachedPaths, horizontalWrap, projectPoint, spherePath } = useMapProjection(
   toRef(props, 'geographicUnits'),
   mapWidth,
   mapHeight,
@@ -128,10 +128,32 @@ const {
   movePan,
   resetZoom,
   startPan,
+  wrapActive,
+  wrapNeighborDirection,
   zoomFromWheel,
   zoomToBounds,
   zoomToPoint,
-} = useMapZoom(mapWidth, mapHeight, mapContent)
+} = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap)
+
+const wrappedGeographicPaths = computed(() => {
+  const centerX = horizontalWrap.value?.centerX
+  if (centerX === undefined) return []
+  // At wrap-active zoom, the viewport is at most one projected world wide.
+  // Only the adjoining half of the neighboring copy can enter it.
+  return paintedGeographicPaths.value.filter(({ displayBounds }) =>
+    wrapNeighborDirection.value > 0
+      ? displayBounds[0][0] <= centerX
+      : displayBounds[1][0] >= centerX,
+  )
+})
+
+function wrapOffset(copyIndex: number) {
+  return copyIndex === 0 ? 0 : wrapNeighborDirection.value * (horizontalWrap.value?.period ?? 0)
+}
+
+function offsetBounds(bounds: MapBounds, offset: number): MapBounds {
+  return [[bounds[0][0] + offset, bounds[0][1]], [bounds[1][0] + offset, bounds[1][1]]]
+}
 
 function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
   // This projection is already fitted to the selected region at scale 1.
@@ -175,6 +197,7 @@ function selectCountry(
   bounds: MapBounds,
   focusPoint: MapPoint | undefined,
   event?: MouseEvent | KeyboardEvent,
+  horizontalOffset = 0,
 ) {
   if (event instanceof MouseEvent && consumeDragClick()) {
     event.stopPropagation()
@@ -199,13 +222,16 @@ function selectCountry(
     group.includes(unit.id) && isGeographicUnitVisible(unit),
   )
   if (sharedPaths && sharedPaths.length > 1) {
-    const x0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][0]))
+    const x0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][0])) + horizontalOffset
     const y0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][1]))
-    const x1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][0]))
+    const x1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][0])) + horizontalOffset
     const y1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][1]))
     zoomToBounds([[x0, y0], [x1, y1]])
   } else {
-    zoomToBounds(bounds, focusPoint)
+    zoomToBounds(
+      offsetBounds(bounds, horizontalOffset),
+      focusPoint ? [focusPoint[0] + horizontalOffset, focusPoint[1]] : undefined,
+    )
   }
 }
 
@@ -305,9 +331,16 @@ async function setProjection(nextId: MapProjectionId) {
       >
         <g ref="mapContent" class="map-content">
           <path class="map-sphere" :d="spherePath" />
-          <g class="countries">
+          <g
+            v-for="copyIndex in [0, 1]"
+            :key="copyIndex"
+            v-show="copyIndex === 0 || wrapActive"
+            class="countries"
+            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+            :aria-hidden="copyIndex === 1"
+          >
             <g
-              v-for="{ unit, path, outlinePath, divisionPath, bounds, focusPoint } in paintedGeographicPaths"
+              v-for="{ unit, path, outlinePath, divisionPath, bounds, focusPoint } in copyIndex === 0 ? paintedGeographicPaths : wrappedGeographicPaths"
               :key="unit.id"
               v-show="isGeographicUnitVisible(unit)"
             >
@@ -319,16 +352,16 @@ async function setProjection(nextId: MapProjectionId) {
                 :data-country-id="unit.properties.entityId"
                 :data-geographic-unit-id="unit.id"
                 role="button"
-                :tabindex="isGeographicUnitVisible(unit) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
+                :tabindex="copyIndex === 0 && isGeographicUnitVisible(unit) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
                 :aria-label="countryName(unit.properties.entityId)"
                 :aria-hidden="!isGeographicUnitVisible(unit)"
                 :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
                 :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
-                @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event)"
+                @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
                 @pointerenter="hoveredUnit = { id: unit.id, entityId: unit.properties.entityId }"
                 @pointerleave="clearHoveredUnit(unit.id)"
-                @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event)"
-                @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event)"
+                @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
+                @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
               >
                 <title v-if="canShowCountryTooltip(unit.properties.entityId, props)">{{ countryName(unit.properties.entityId) }}</title>
               </path>

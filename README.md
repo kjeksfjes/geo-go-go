@@ -12,7 +12,9 @@ later switches are immediate at the current map size and projection.
 
 It defaults to a conventional Mercator projection. Mercator preserves local
 shapes and angles well, while enlarging areas toward the poles in the familiar
-way.
+way. At closer zoom levels, the World view wraps horizontally when panning
+across the map edge. The initial full-world view keeps the conventional map
+seam rather than showing duplicate land in the side margins.
 
 ## Run locally
 
