@@ -55,6 +55,8 @@ const { countryPaths, hasCachedPaths, projectPoint, spherePath } = useMapProject
   mapWidth,
   mapHeight,
   projectionId,
+  toRef(props, 'activeRegion'),
+  toRef(props, 'visibleCountryIds'),
 )
 // SVG paths paint in DOM order. Keep the cached projected paths untouched and
 // draw a wrong answer above ordinary countries, then the correct one above it.
@@ -89,6 +91,11 @@ const {
 } = useMapZoom(mapWidth, mapHeight, mapContent)
 
 function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
+  // This projection is already fitted to the selected region at scale 1.
+  if (projectionId.value === 'regional-equal-area') {
+    resetZoom(animated)
+    return
+  }
   const view = props.activeRegion.view
   if (!view) {
     resetZoom(animated)
@@ -104,7 +111,11 @@ function resetView() {
   focusActiveRegion(true, true)
 }
 
-watch(() => props.activeRegion.id, () => focusActiveRegion(true), { flush: 'post' })
+watch(
+  () => props.activeRegion.id,
+  () => focusActiveRegion(projectionId.value !== 'regional-equal-area'),
+  { flush: 'post' },
+)
 watch(() => props.quizMode, (active) => {
   if (active) focusActiveRegion(true, true)
 }, { flush: 'post' })

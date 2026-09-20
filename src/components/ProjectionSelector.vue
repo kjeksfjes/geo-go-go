@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { onMounted, ref, type ComponentPublicInstance } from 'vue'
+import { computed, onMounted, ref, type ComponentPublicInstance } from 'vue'
 import TreeSelect from '@zanmato/vue3-treeselect'
 import type { MapProjectionId } from '../composables/useMapProjection'
 import { t } from '../i18n'
 
-defineProps<{
+const props = defineProps<{
   disabled?: boolean
   options: Array<{ id: MapProjectionId; label: string }>
 }>()
 
 const model = defineModel<MapProjectionId>({ required: true })
+const localizedOptions = computed(() => props.options.map((option) =>
+  option.id === 'regional-equal-area'
+    ? { ...option, label: t('regionalEqualArea') }
+    : option,
+))
 const treeSelect = ref<ComponentPublicInstance | null>(null)
 
 function toggleFromControl(event: MouseEvent) {
@@ -50,7 +55,7 @@ function selectProjection(value: string | null) {
       ref="treeSelect"
       :model-value="model"
       :disabled="disabled"
-      :options="options"
+      :options="localizedOptions"
       :multiple="false"
       :disable-branch-nodes="false"
       :clearable="false"
@@ -81,8 +86,8 @@ function selectProjection(value: string | null) {
 }
 
 .projection-selector :deep(.vue3-treeselect) {
-  width: 7.75rem;
-  min-width: 7.75rem;
+  width: 10rem;
+  min-width: 10rem;
   color: #172d38;
   font: inherit;
 }

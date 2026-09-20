@@ -13,6 +13,8 @@ export interface MapRegion {
   // A parent includes its children's countries plus any listed here.
   countryNames?: readonly string[]
   view: { center: MapPoint; zoom: number } | null
+  // Optional azimuthal orientation. Other regions use their existing view center.
+  regionalProjection?: { center: MapPoint; roll?: number }
   children?: readonly MapRegion[]
 }
 
@@ -31,6 +33,7 @@ export const regions: readonly MapRegion[] = [
     children: [
       {
         id: 'nordics', label: 'Nordics', view: { center: [8, 64], zoom: 4.25 },
+        regionalProjection: { center: [15, 64] },
         countryNames: ['Denmark', 'Faeroe Is.', 'Finland', 'Greenland', 'Iceland', 'Norway', 'Sweden', 'Åland'],
       },
       {

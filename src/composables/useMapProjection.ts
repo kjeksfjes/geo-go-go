@@ -1,6 +1,7 @@
 import {
   geoCentroid,
   geoArea,
+  geoAzimuthalEqualArea,
   geoEqualEarth,
   geoMercator,
   geoNaturalEarth1,
@@ -11,18 +12,20 @@ import { geoWinkel3 } from 'd3-geo-projection'
 import { computed, type Ref } from 'vue'
 import type { FeatureCollection } from 'geojson'
 import type { CountryFeature } from '../types/country'
+import type { MapRegion } from '../data/regions'
 import type { MapBounds, MapPoint } from './useMapZoom'
 
-export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'natural-earth'
+export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'natural-earth' | 'regional-equal-area'
 
 export const projectionOptions: Array<{ id: MapProjectionId; label: string }> = [
   { id: 'mercator', label: 'Mercator' },
   { id: 'winkel-tripel', label: 'Winkel Tripel' },
   { id: 'equal-earth', label: 'Equal Earth' },
   { id: 'natural-earth', label: 'Natural Earth' },
+  { id: 'regional-equal-area', label: 'Regional Equal Area' },
 ]
 
-const projectionFactories: Record<MapProjectionId, () => GeoProjection> = {
+const projectionFactories: Record<Exclude<MapProjectionId, 'regional-equal-area'>, () => GeoProjection> = {
   mercator: geoMercator,
   'winkel-tripel': geoWinkel3,
   'equal-earth': geoEqualEarth,
@@ -38,7 +41,7 @@ interface ProjectedCountry {
 
 interface PathCacheEntry {
   sizeKey: string
-  projections: Map<MapProjectionId, ProjectedCountry[]>
+  projections: Map<string, ProjectedCountry[]>
 }
 
 export function useMapProjection(
@@ -46,32 +49,54 @@ export function useMapProjection(
   width: Ref<number>,
   height: Ref<number>,
   projectionId: Ref<MapProjectionId>,
+  activeRegion: Ref<MapRegion>,
+  visibleCountryIds: Ref<ReadonlySet<string>>,
 ) {
   // Keep fitting tied to the initial 50m atlas. A resolution swap may change
   // coastline extents by a fraction, but it must not move the coordinate
   // system underneath an active pan or zoom transform.
+  const fittingCountries = countries.value
   const fittingFeatures: FeatureCollection = {
     type: 'FeatureCollection',
-    features: countries.value,
+    features: fittingCountries,
   }
   // Retain each projection at the current viewport size. A resize invalidates
   // the old paths, without accumulating maps at every intermediate size.
   const pathCache = new WeakMap<CountryFeature[], PathCacheEntry>()
 
+  function cacheKey(id: MapProjectionId) {
+    return id === 'regional-equal-area' ? `${id}:${activeRegion.value.id}` : id
+  }
+
   function hasCachedPaths(source: CountryFeature[], id = projectionId.value): boolean {
     const cached = pathCache.get(source)
     return cached?.sizeKey === `${width.value}:${height.value}`
-      && cached.projections.has(id)
+      && cached.projections.has(cacheKey(id))
   }
 
   const pathGenerator = computed(() => {
     const padding = Math.max(12, Math.min(width.value, height.value) * 0.035)
-    const projection = projectionFactories[projectionId.value]().fitExtent(
+    const id = projectionId.value
+    let projection: GeoProjection
+    let fitFeatures = fittingFeatures
+
+    if (id === 'regional-equal-area') {
+      const region = activeRegion.value
+      const { center, roll = 0 } = region.regionalProjection
+        ?? { center: region.view?.center ?? [0, 0] as MapPoint }
+      projection = geoAzimuthalEqualArea().rotate([-center[0], -center[1], roll])
+      const selected = fittingCountries.filter((country) => visibleCountryIds.value.has(country.id))
+      if (selected.length) fitFeatures = { type: 'FeatureCollection', features: selected }
+    } else {
+      projection = projectionFactories[id]()
+    }
+
+    projection.fitExtent(
       [
         [padding, padding],
         [width.value - padding, height.value - padding],
       ],
-      fittingFeatures,
+      fitFeatures,
     )
 
     return geoPath(projection)
@@ -79,10 +104,12 @@ export function useMapProjection(
 
   const countryPaths = computed(() => {
     const source = countries.value
+    const id = projectionId.value
+    const key = cacheKey(id)
     const sizeKey = `${width.value}:${height.value}`
     let cached = pathCache.get(source)
     if (cached?.sizeKey === sizeKey) {
-      const paths = cached.projections.get(projectionId.value)
+      const paths = cached.projections.get(key)
       if (paths) return paths
     } else {
       cached = { sizeKey, projections: new Map() }
@@ -90,7 +117,11 @@ export function useMapProjection(
     }
 
     const generator = pathGenerator.value
-    const paths: ProjectedCountry[] = source.map((country) => {
+    // A regional view never needs paths for countries hidden by its filter.
+    const renderCountries = id === 'regional-equal-area'
+      ? source.filter((country) => visibleCountryIds.value.has(country.id))
+      : source
+    const paths: ProjectedCountry[] = renderCountries.map((country) => {
       const fullBounds = generator.bounds(country) as MapBounds
       let focusCountry = country
 
@@ -139,7 +170,7 @@ export function useMapProjection(
       }
     })
 
-    cached.projections.set(projectionId.value, paths)
+    cached.projections.set(key, paths)
     return paths
   })
 

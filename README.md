@@ -26,7 +26,9 @@ starts in the browser's language when supported and remembers a manual choice.
 Scroll over the map to zoom around the pointer; selecting a country smoothly
 zooms the map to its bounds. Drag a zoomed map to pan, or switch between
 Mercator, Winkel Tripel, Equal Earth, and Natural Earth projections with the
-map control. The hierarchical region selector can isolate and focus a continent
+map control. Regional Equal Area uses an azimuthal equal-area projection fitted
+to the active region; the Nordics have a configured Scandinavian orientation.
+The hierarchical region selector can isolate and focus a continent
 or a smaller subregion without recalculating map paths. Parent regions include
 their child regions and can also be selected directly. Its dropdown uses
 `@zanmato/vue3-treeselect` for tree navigation and single selection.
