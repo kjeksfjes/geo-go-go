@@ -49,12 +49,23 @@ Natural Earth map units are rendering parts, not automatically separate quiz
 areas. By default, parts sharing one quiz identity are dissolved into one
 geographic interaction unit, removing internal administrative edges (as with
 Bosnia and Herzegovina, Serbia, and Belgium). The small opt-in list in
-`src/data/meaningful-map-units.json` keeps genuinely distinct areas separate:
+`src/data/meaningful-map-units.json` keeps genuinely distinct components separate:
 mainland France and French Guiana, for example, remain separate geographic
 units tied to the same France answer. Hover and click target the complete
 geographic unit; the clicked unit highlights strongly, while other units of
 the same quiz identity highlight softly. Answer checking and the country card
-use the shared quiz identity.
+use the shared quiz identity. The country card can also show the selected
+component's own name and a smaller educational type label.
+
+Explore-mode selection has a separate, small camera/selection policy in
+`src/data/selection-behavior.json`. Clicking a configured main country unit
+highlights all of that quiz identity's parts, while clicking a named component
+highlights that component strongly and its siblings softly. Nearby components
+can share a camera footprint (for example mainland Italy, Sicily, and Sardinia);
+distant components keep their own click-to-zoom focus. Hover is broader:
+every visible part sharing a quiz identity highlights together, even when its
+camera focus remains local. Quiz feedback is separate and unchanged by this
+explore-mode policy.
 
 ## Geographic data
 
@@ -76,10 +87,29 @@ independent game area: it marks Vojvodina and French Guiana alike. The explicit
 meaningful-unit list provides that semantic decision. The generated
 `combined-geographic-units-50m.json` and `combined-geographic-units-10m.json`
 contain dissolved geometry for unlisted multi-part identities; regenerate them
-with `scripts/build-geographic-units.py` after changing the list. Natural Earth
-still provides only one USA map unit containing the contiguous states, Alaska,
-and Hawaii; splitting those into separate geographic units would require an
-additional polygon-level source or override.
+with `scripts/build-geographic-units.py` after changing the map-unit list.
+
+Selected [Natural Earth Admin-0 Map Subunits](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-details/)
+at 50m and 10m supply source geometries and names for places within a single
+map unit, including Alaska, Hawaii, Corsica, and the Canary Islands.
+`SU_A3` identifies the subunit, `GU_A3` links it to the parent map unit, and
+`ADM0_A3` links it to the country/quiz identity. Only the subunit IDs opted in
+by `meaningful-map-units.json` become named components. The importer
+`scripts/import-meaningful-subunits.py` dissolves all other subunits of each
+selected map unit into one unnamed interactive remainder, so source splits do
+not automatically become educational components. The same config holds a small set of
+optional English/Norwegian name and type overrides. Natural Earth's `TYPE`
+field is usually only "Geo unit" or "Geo subunit," not a useful educational
+label such as "State" or "Archipelago"; informative source types are used
+when available, and otherwise a curated type may be shown or omitted. The
+remainder of each selected map unit is retained as an interactive geographic
+unit, so no country geometry is discarded. Subunit selection never changes
+the country used for quiz answers.
+
+For a map unit with regional display geometry, the importer removes selected
+components from the regional remainder too. Kaliningrad is therefore separate
+from the rest of Russia without being drawn twice in the Europe view; the
+existing dashed Europe–Asia division remains on the Russian remainder.
 
 Natural Earth does not split Russia's European and Asian territory into map
 units. The Europe view therefore uses an optional **regional display geometry**
@@ -112,7 +142,7 @@ then pass its file path to `python scripts/build-regional-display.py`.
 - `src/composables/useElementSize.ts` observes the responsive map container.
 - `src/composables/useMapZoom.ts` owns wheel and animated country zoom state.
 - `src/data/countries.ts` indexes map units, quiz identities, and sovereigns.
-- `src/data/meaningful-map-units.json` defines independently meaningful map units.
+- `src/data/meaningful-map-units.json` curates meaningful map units, subunits, and optional metadata.
 - `src/data/regions.ts` defines selector hierarchy and geographic unit membership.
 - `src/data/quizCountries.ts` defines which identities can be quiz questions.
 - `src/composables/useCountryQuiz.ts` owns question order, answers, and score.

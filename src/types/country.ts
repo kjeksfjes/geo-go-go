@@ -28,9 +28,31 @@ export type MapUnitFeature = Feature<Geometry, CountryProperties> & {
   regionalDisplayGeometry?: Readonly<Record<string, RegionalDisplayGeometry>>
 }
 
+export type MapSubunitFeature = Feature<Geometry, {
+  name: string
+  mapUnitId: string
+  entityId: string
+  featureType: string
+}> & {
+  id: string
+  regionalDisplayGeometry?: Readonly<Record<string, RegionalDisplayGeometry>>
+}
+
+export interface GeographicComponentInfo {
+  id: string
+  sourceKind: 'map-unit' | 'map-subunit'
+  sourceId: string
+  entityId: string
+  name: string
+  sourceType: string
+  nameOverrides?: Partial<Record<'en' | 'nb', string>>
+  typeOverrides?: Partial<Record<'en' | 'nb', string>>
+}
+
 export type GeographicUnitFeature = Feature<Geometry, {
   entityId: string
   mapUnitIds: readonly string[]
+  componentId?: string
 }> & {
   id: string
   regionalDisplayGeometry?: Readonly<Record<string, RegionalDisplayGeometry>>

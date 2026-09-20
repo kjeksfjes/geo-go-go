@@ -37,6 +37,7 @@ interface ProjectedGeographicUnit {
   path: string
   outlinePath?: string
   divisionPath?: string
+  displayBounds: MapBounds
   bounds: MapBounds
   focusPoint: MapPoint | undefined
 }
@@ -209,6 +210,7 @@ export function useMapProjection(
         path: generator(displayUnit) ?? '',
         outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? '' : undefined,
         divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? '' : undefined,
+        displayBounds: fullBounds,
         bounds: generator.bounds(focusUnit) as MapBounds,
         focusPoint: focusPoint as MapPoint | undefined,
       }

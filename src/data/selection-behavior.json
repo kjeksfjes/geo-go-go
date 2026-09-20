@@ -1,0 +1,21 @@
+{
+  "countryClickUnitIds": [
+    "subunit:FXX",
+    "unit:NOR",
+    "subunit:USB",
+    "subunit:ESX",
+    "unit:PRX",
+    "unit:NLD",
+    "unit:TZA",
+    "unit:PNX",
+    "remainder:ITA",
+    "remainder:ECU",
+    "remainder:RUS"
+  ],
+  "sharedFocusGroups": [
+    ["remainder:ITA", "subunit:ITY", "subunit:ITD"],
+    ["subunit:NZN", "subunit:NZS"],
+    ["subunit:FXX", "subunit:FXC"],
+    ["subunit:ESX", "subunit:ESI"]
+  ]
+}

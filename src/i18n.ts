@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { countryInfoById } from './data/countries'
+import type { GeographicComponentInfo } from './types/country'
 import type { MapRegion } from './data/regions'
 
 export type Locale = 'en' | 'nb'
@@ -130,4 +131,18 @@ export function countryName(id: string) {
     ?? country.name
   norwegianNameCache.set(id, name)
   return name
+}
+
+const sourceComponentTypes: Record<string, Record<Locale, string>> = {
+  Dependency: { en: 'Dependency', nb: 'Avhengig territorium' },
+}
+
+export function componentName(component: GeographicComponentInfo) {
+  return component.nameOverrides?.[locale.value] ?? component.name
+}
+
+export function componentType(component: GeographicComponentInfo) {
+  return component.typeOverrides?.[locale.value]
+    ?? sourceComponentTypes[component.sourceType]?.[locale.value]
+    ?? null
 }

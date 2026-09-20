@@ -3,12 +3,15 @@ import { geoArea } from 'd3-geo'
 import baseMapUnits from './ne-map-units-50m.json'
 import baseRegionalGeometry from './regional-display-50m.json'
 import baseCombinedGeometry from './combined-geographic-units-50m.json'
+import baseMeaningfulSubunits from './meaningful-subunits-50m.json'
 import semanticMapUnits from './meaningful-map-units.json'
 import type { Geometry } from 'geojson'
 import type {
   CountryInfo,
+  GeographicComponentInfo,
   GeographicUnitFeature,
   MapUnitFeature,
+  MapSubunitFeature,
   RegionalDisplayGeometry,
   SovereignInfo,
 } from '../types/country'
@@ -99,16 +102,113 @@ for (const [id, units] of unitsByEntityId) {
 const independentlyMeaningfulUnitIds = new Set<string>(
   Object.values(semanticMapUnits.independentMapUnitIdsByEntity).flat(),
 )
+const subunitIdsByMapUnit: Record<string, string[]> = semanticMapUnits.independentMapSubunitIdsByMapUnit
+const mapSubunits = baseMeaningfulSubunits.features as unknown as MapSubunitFeature[]
+
+type ComponentMetadataOverride = {
+  name?: Partial<Record<'en' | 'nb', string>>
+  type?: Partial<Record<'en' | 'nb', string>>
+}
+const metadataOverrides = semanticMapUnits.metadataOverrides as Record<string, ComponentMetadataOverride>
+export const componentInfoById = new Map<string, GeographicComponentInfo>()
+
+for (const id of independentlyMeaningfulUnitIds) {
+  const unit = mapUnitById.get(id)
+  if (!unit) throw new Error(`Meaningful map unit not found: ${id}`)
+  const componentId = `map-unit:${id}`
+  const override = metadataOverrides[componentId]
+  componentInfoById.set(componentId, {
+    id: componentId,
+    sourceKind: 'map-unit',
+    sourceId: id,
+    entityId: unit.properties.entityId,
+    name: unit.properties.name,
+    sourceType: unit.properties.featureType,
+    nameOverrides: override?.name,
+    typeOverrides: override?.type,
+  })
+}
+
+for (const unit of mapSubunits) {
+  if (unit.id.startsWith('remainder:')) continue
+  const componentId = `map-subunit:${unit.id}`
+  const override = metadataOverrides[componentId]
+  componentInfoById.set(componentId, {
+    id: componentId,
+    sourceKind: 'map-subunit',
+    sourceId: unit.id,
+    entityId: unit.properties.entityId,
+    name: unit.properties.name,
+    sourceType: unit.properties.featureType,
+    nameOverrides: override?.name,
+    typeOverrides: override?.type,
+  })
+}
+for (const id of Object.keys(metadataOverrides)) {
+  if (!componentInfoById.has(id)) throw new Error(`Unknown component metadata override: ${id}`)
+}
+
 type CombinedGeometryIndex = Record<string, Geometry>
 const baseCombinedIndex = baseCombinedGeometry as CombinedGeometryIndex
 
 function buildGeographicUnits(
   units: MapUnitFeature[],
   combinedGeometry: CombinedGeometryIndex,
+  subunits: MapSubunitFeature[],
   fallbackGeometry = baseCombinedIndex,
 ): GeographicUnitFeature[] {
   const partsByGeographicId = new Map<string, MapUnitFeature[]>()
+  const selectedSubunitById = new Map(subunits.map((unit) => [unit.id, unit]))
+  const geographicUnits: GeographicUnitFeature[] = []
   for (const unit of units) {
+    const selectedSubunitIds = subunitIdsByMapUnit[unit.id]
+    if (selectedSubunitIds) {
+      for (const subunitId of selectedSubunitIds) {
+        const subunit = selectedSubunitById.get(subunitId)
+        if (
+          !subunit
+          || subunit.properties.mapUnitId !== unit.id
+          || subunit.properties.entityId !== unit.properties.entityId
+        ) {
+          throw new Error(`Missing map subunit ${subunitId} for ${unit.id}`)
+        }
+        geographicUnits.push({
+          type: 'Feature',
+          id: `subunit:${subunitId}`,
+          properties: {
+            entityId: unit.properties.entityId,
+            mapUnitIds: [unit.id],
+            componentId: `map-subunit:${subunitId}`,
+          },
+          geometry: subunit.geometry,
+        })
+      }
+      const remainder = selectedSubunitById.get(`remainder:${unit.id}`)
+      if (remainder) {
+        if (
+          remainder.properties.mapUnitId !== unit.id
+          || remainder.properties.entityId !== unit.properties.entityId
+        ) {
+          throw new Error(`Invalid map subunit remainder for ${unit.id}`)
+        }
+        geographicUnits.push({
+          type: 'Feature',
+          id: remainder.id,
+          properties: {
+            entityId: unit.properties.entityId,
+            mapUnitIds: [unit.id],
+          },
+          geometry: remainder.geometry,
+          ...(remainder.regionalDisplayGeometry
+            ? { regionalDisplayGeometry: remainder.regionalDisplayGeometry }
+            : {}),
+        })
+      } else if (unit.regionalDisplayGeometry) {
+        throw new Error(`Missing regional map subunit remainder for ${unit.id}`)
+      }
+      continue
+    }
+
     const geographicId = independentlyMeaningfulUnitIds.has(unit.id)
       ? `unit:${unit.id}`
       : `entity:${unit.properties.entityId}`
@@ -117,7 +217,7 @@ function buildGeographicUnits(
     partsByGeographicId.set(geographicId, parts)
   }
 
-  return [...partsByGeographicId].map(([id, parts]) => {
+  for (const [id, parts] of partsByGeographicId) {
     const entityId = parts[0].properties.entityId
     const geometry = parts.length === 1
       ? parts[0].geometry
@@ -125,19 +225,25 @@ function buildGeographicUnits(
           ? fallbackGeometry[entityId]
           : combinedGeometry[entityId])
     if (!geometry) throw new Error(`Missing combined geometry for ${entityId}`)
-    return {
+    geographicUnits.push({
       type: 'Feature',
       id,
-      properties: { entityId, mapUnitIds: parts.map((part) => part.id) },
+      properties: {
+        entityId,
+        mapUnitIds: parts.map((part) => part.id),
+        ...(id.startsWith('unit:') ? { componentId: `map-unit:${parts[0].id}` } : {}),
+      },
       geometry,
       ...(parts.length === 1 && parts[0].regionalDisplayGeometry
         ? { regionalDisplayGeometry: parts[0].regionalDisplayGeometry }
         : {}),
-    }
-  })
+    })
+  }
+
+  return geographicUnits
 }
 
-export const geographicUnits = buildGeographicUnits(mapUnits, baseCombinedIndex)
+export const geographicUnits = buildGeographicUnits(mapUnits, baseCombinedIndex, mapSubunits)
 export const geographicUnitById = new Map(geographicUnits.map((unit) => [unit.id, unit]))
 
 let detailedGeographicUnitsPromise: Promise<GeographicUnitFeature[]> | undefined
@@ -147,8 +253,14 @@ export function loadDetailedGeographicUnits() {
     import('./ne-map-units-10m.json'),
     import('./regional-display-10m.json'),
     import('./combined-geographic-units-10m.json'),
+    import('./meaningful-subunits-10m.json'),
   ])
-    .then(([{ default: detailed }, { default: detailedRegionalGeometry }, { default: detailedCombinedGeometry }]) => {
+    .then(([
+      { default: detailed },
+      { default: detailedRegionalGeometry },
+      { default: detailedCombinedGeometry },
+      { default: detailedSubunits },
+    ]) => {
       const detailedById = new Map(detailed.features.map((feature) => [feature.id, feature]))
       const units = mapUnits.map((base) => {
         const feature = detailedById.get(base.id)
@@ -166,7 +278,24 @@ export function loadDetailedGeographicUnits() {
         const area = geoArea(unit)
         return Number.isFinite(area) && area <= Math.PI * 2 ? unit : base
       })
-      return buildGeographicUnits(units, detailedCombinedGeometry as CombinedGeometryIndex)
+      const detailedSubunitById = new Map(detailedSubunits.features.map((unit) => [unit.id, unit]))
+      const subunits = mapSubunits.map((base) => {
+        const feature = detailedSubunitById.get(base.id)
+        if (!feature) return base
+        const unit: MapSubunitFeature = {
+          ...base,
+          geometry: feature.geometry as MapSubunitFeature['geometry'],
+          regionalDisplayGeometry: (feature.regionalDisplayGeometry as MapSubunitFeature['regionalDisplayGeometry'])
+            ?? base.regionalDisplayGeometry,
+        }
+        const area = geoArea(unit)
+        return Number.isFinite(area) && area <= Math.PI * 2 ? unit : base
+      })
+      return buildGeographicUnits(
+        units,
+        detailedCombinedGeometry as CombinedGeometryIndex,
+        subunits,
+      )
     })
     .catch((error: unknown) => {
       detailedGeographicUnitsPromise = undefined

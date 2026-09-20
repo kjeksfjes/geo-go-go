@@ -15,6 +15,7 @@ import type { MapRegion, MapRegionId } from '../data/regions'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { countryName, t } from '../i18n'
+import { isCountryLevelSelection, sharedFocusUnitIds } from '../data/mapSelection'
 
 const props = defineProps<{
   geographicUnits: GeographicUnitFeature[]
@@ -44,6 +45,7 @@ const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
+const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
@@ -87,9 +89,11 @@ function geographicUnitClasses(unit: GeographicUnitFeature) {
   const clicked = unit.id === props.selectedGeographicUnitId
 
   if (!props.quizMode) {
+    const selected = isPrimarySelectedExploreUnit(unit)
     return {
-      'country--selected': clicked,
-      'country--related': entityId === props.selectedCountryId && !clicked,
+      'country--selected': selected,
+      'country--related': entityId === props.selectedCountryId && !selected,
+      'country--identity-hover': hoveredUnit.value?.entityId === entityId,
     }
   }
 
@@ -105,6 +109,12 @@ function geographicUnitClasses(unit: GeographicUnitFeature) {
     'country--quiz-wrong-related': wrong && relatedAnswer,
     'country--quiz-inactive': answered && !correct && !wrong,
   }
+}
+
+function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature) {
+  if (unit.properties.entityId !== props.selectedCountryId) return false
+  return isCountryLevelSelection(props.selectedCountryId, props.selectedGeographicUnitId)
+    || unit.id === props.selectedGeographicUnitId
 }
 
 function isGeographicUnitVisible(unit: GeographicUnitFeature) {
@@ -150,8 +160,12 @@ watch(
   { flush: 'post' },
 )
 watch(() => props.quizMode, (active) => {
+  hoveredUnit.value = null
   if (active) focusActiveRegion(true, true)
 }, { flush: 'post' })
+watch([() => props.activeRegion.id, () => props.geographicUnits], () => {
+  hoveredUnit.value = null
+})
 watch(projectionId, () => focusActiveRegion(false), { flush: 'post' })
 watch([mapWidth, mapHeight], () => focusActiveRegion(false), { flush: 'post' })
 
@@ -180,7 +194,19 @@ function selectCountry(
     return
   }
   emit('select', countryId, geographicUnitId)
-  zoomToBounds(bounds, focusPoint)
+  const group = sharedFocusUnitIds(geographicUnitId)
+  const sharedPaths = group && geographicPaths.value.filter(({ unit }) =>
+    group.includes(unit.id) && isGeographicUnitVisible(unit),
+  )
+  if (sharedPaths && sharedPaths.length > 1) {
+    const x0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][0]))
+    const y0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][1]))
+    const x1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][0]))
+    const y1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][1]))
+    zoomToBounds([[x0, y0], [x1, y1]])
+  } else {
+    zoomToBounds(bounds, focusPoint)
+  }
 }
 
 function handleMapClick(event: MouseEvent) {
@@ -201,6 +227,10 @@ function handlePointerDown(event: PointerEvent) {
 
 function handlePointerEnd(event: PointerEvent) {
   if (svg.value) endPan(event, svg.value)
+}
+
+function clearHoveredUnit(id: string) {
+  if (hoveredUnit.value?.id === id) hoveredUnit.value = null
 }
 
 function requestDetailChange(enabled: boolean) {
@@ -293,8 +323,10 @@ async function setProjection(nextId: MapProjectionId) {
                 :aria-label="countryName(unit.properties.entityId)"
                 :aria-hidden="!isGeographicUnitVisible(unit)"
                 :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
-                :aria-pressed="unit.id === selectedGeographicUnitId"
+                :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
                 @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event)"
+                @pointerenter="hoveredUnit = { id: unit.id, entityId: unit.properties.entityId }"
+                @pointerleave="clearHoveredUnit(unit.id)"
                 @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event)"
                 @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event)"
               >
@@ -467,6 +499,11 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--selected:hover {
   fill: #ed866a;
+}
+
+.country--identity-hover:not(.country--selected) {
+  fill: #efc06a;
+  filter: brightness(1.03);
 }
 
 .country--quiz-correct-related,

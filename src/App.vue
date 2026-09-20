@@ -6,6 +6,7 @@ import WorldMap from './components/WorldMap.vue'
 import { useCountryQuiz } from './composables/useCountryQuiz'
 import {
   countryInfoById,
+  componentInfoById,
   geographicUnitById,
   geographicUnits,
   loadDetailedGeographicUnits,
@@ -19,6 +20,7 @@ import {
 } from './data/regions'
 import { afterPaint, wait } from './utils/paint'
 import { locale, setLocale, t } from './i18n'
+import { isCountryLevelSelection } from './data/mapSelection'
 
 const selectedCountryId = ref<string | null>(null)
 const selectedGeographicUnitId = ref<string | null>(null)
@@ -41,6 +43,13 @@ const selectedCountry = computed(() =>
     ? countryInfoById.get(selectedCountryId.value) ?? null
     : null,
 )
+const selectedComponent = computed(() => {
+  if (isCountryLevelSelection(selectedCountryId.value, selectedGeographicUnitId.value)) return null
+  const id = selectedGeographicUnitId.value
+    ? geographicUnitById.get(selectedGeographicUnitId.value)?.properties.componentId
+    : undefined
+  return id ? componentInfoById.get(id) ?? null : null
+})
 const {
   answeredCountry: quizAnswer,
   answeredCountryId: quizAnswerId,
@@ -241,6 +250,6 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
       />
     </section>
 
-    <CountryCard v-if="mode === 'explore'" :country="selectedCountry" />
+    <CountryCard v-if="mode === 'explore'" :country="selectedCountry" :component="selectedComponent" />
   </main>
 </template>

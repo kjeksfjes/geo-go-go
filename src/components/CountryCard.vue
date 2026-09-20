@@ -1,10 +1,21 @@
 <script setup lang="ts">
-import type { CountryInfo } from '../types/country'
-import { countryName, t } from '../i18n'
+import { computed } from 'vue'
+import type { CountryInfo, GeographicComponentInfo } from '../types/country'
+import { componentName, componentType, countryName, t } from '../i18n'
 
-defineProps<{
+const props = defineProps<{
   country: CountryInfo | null
+  component: GeographicComponentInfo | null
 }>()
+
+const componentDetail = computed(() => {
+  const { component, country } = props
+  if (!component || !country || component.entityId !== country.id) return null
+  const name = componentName(component)
+  const type = componentType(component)
+  if (!type && (component.name === country.name || name === countryName(country.id))) return null
+  return { name, type }
+})
 </script>
 
 <template>
@@ -19,6 +30,9 @@ defineProps<{
       <div>
         <p class="country-card__label">{{ t('selectedCountry') }}</p>
         <h2>{{ countryName(country.id) }}</h2>
+        <p v-if="componentDetail" class="country-card__component">
+          {{ componentDetail.name }}<span v-if="componentDetail.type"> · <em>{{ componentDetail.type }}</em></span>
+        </p>
         <p class="country-card__code">{{ t('mapCode', { code: country.id }) }}</p>
       </div>
     </template>
@@ -63,6 +77,12 @@ defineProps<{
 .country-card__code {
   margin-top: 0.25rem;
   font-size: 0.8rem;
+}
+
+.country-card__component {
+  margin: 0.2rem 0 0;
+  color: #52676e;
+  font-size: 0.9rem;
 }
 
 h2 {

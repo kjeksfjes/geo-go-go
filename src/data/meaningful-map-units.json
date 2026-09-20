@@ -11,5 +11,69 @@
     "PRT": ["PMD", "PRX", "PAZ"],
     "PSX": ["GAZ", "WEB"],
     "TZA": ["TZZ", "TZA"]
+  },
+  "independentMapSubunitIdsByMapUnit": {
+    "USA": ["USK", "USH", "USB"],
+    "ESP": ["ESC", "ESI", "ESX"],
+    "FXX": ["FXC", "FXX"],
+    "RUS": ["RUK"],
+    "ITA": ["ITY", "ITD"],
+    "ECU": ["ECG"],
+    "NZL": ["NZN", "NZS"]
+  },
+  "mergeUnlistedSubunitsInto": {
+    "ESP": "ESX"
+  },
+  "metadataOverrides": {
+    "map-unit:NSV": {
+      "type": { "en": "Archipelago", "nb": "Øygruppe" }
+    },
+    "map-unit:GUF": {
+      "name": { "nb": "Fransk Guyana" },
+      "type": { "en": "Overseas department/region", "nb": "Oversjøisk departement/region" }
+    },
+    "map-subunit:USK": {
+      "type": { "en": "State", "nb": "Delstat" }
+    },
+    "map-subunit:USH": {
+      "type": { "en": "State", "nb": "Delstat" }
+    },
+    "map-subunit:USB": {
+      "name": { "en": "Contiguous United States", "nb": "Fastlands-USA" }
+    },
+    "map-subunit:ESC": {
+      "name": { "nb": "Kanariøyene" },
+      "type": { "en": "Autonomous community", "nb": "Autonom region" }
+    },
+    "map-subunit:ESI": {
+      "name": { "nb": "Balearene" },
+      "type": { "en": "Autonomous community", "nb": "Autonom region" }
+    },
+    "map-subunit:FXC": {
+      "name": { "nb": "Korsika" }
+    },
+    "map-subunit:RUK": {
+      "type": { "en": "Exclave", "nb": "Eksklave" }
+    },
+    "map-subunit:ITY": {
+      "name": { "nb": "Sicilia" },
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:ITD": {
+      "name": { "nb": "Sardinia" },
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:ECG": {
+      "name": { "en": "Galápagos Islands", "nb": "Galápagosøyene" },
+      "type": { "en": "Archipelago", "nb": "Øygruppe" }
+    },
+    "map-subunit:NZN": {
+      "name": { "nb": "Nordøya" },
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:NZS": {
+      "name": { "nb": "Sørøya" },
+      "type": { "en": "Island", "nb": "Øy" }
+    }
   }
 }
