@@ -152,10 +152,15 @@ export function useMapZoom(
       Math.min(MAX_ZOOM, 0.68 / Math.max(boundsWidth / width.value, boundsHeight / height.value)),
     )
 
+    // When moving from a small target to a larger one, pull back around the
+    // current view before traversing the map. The balanced (target-anchored)
+    // motion can otherwise sweep across the scene while still highly zoomed.
     animateTo(
       width.value / 2 - scale * (focusPoint?.[0] ?? (x0 + x1) / 2),
       height.value / 2 - scale * (focusPoint?.[1] ?? (y0 + y1) / 2),
       scale,
+      750,
+      scale < transform.scale ? 'zoom-out' : 'balanced',
     )
   }
 

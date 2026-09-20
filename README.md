@@ -45,12 +45,16 @@ remain visible on the map but are not used as quiz questions.
 After an answer, clicking the map or pressing Space also advances, so the
 player can continue without moving back to the button.
 
-Map units have their own SVG paths and geographic classifications. Several
-units can share one quiz identity and selected color: mainland France and
-French Guiana, for example, are separate units tied to France. Selecting a
-unit zooms to that unit and highlights it strongly; other rendered units of
-the same answer highlight more softly. Answer checking and the country card
-use the shared country ID.
+Natural Earth map units are rendering parts, not automatically separate quiz
+areas. By default, parts sharing one quiz identity are dissolved into one
+geographic interaction unit, removing internal administrative edges (as with
+Bosnia and Herzegovina, Serbia, and Belgium). The small opt-in list in
+`src/data/meaningful-map-units.json` keeps genuinely distinct areas separate:
+mainland France and French Guiana, for example, remain separate geographic
+units tied to the same France answer. Hover and click target the complete
+geographic unit; the clicked unit highlights strongly, while other units of
+the same quiz identity highlight softly. Answer checking and the country card
+use the shared quiz identity.
 
 ## Geographic data
 
@@ -60,12 +64,22 @@ and [1:10m](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-
 `scripts/import-natural-earth.py` converts their shapefiles
 to compact GeoJSON. The 50m table defines the unit IDs and metadata; the 10m
 file supplies geometry for the same units, keeping detail switches stable.
-`GU_A3` identifies a rendered unit, `ADM0_A3` groups units into a country/quiz
+`GU_A3` identifies a source map unit, `ADM0_A3` groups units into a country/quiz
 identity, and `SOV_A3` records the separate sovereign relationship. Dependency
 parent links are optional. Natural Earth's `REGION_UN` and `SUBREGION` fields
 provide the canonical, broadly UN M49-style geography. Custom game groupings
 (Nordics, Baltics, Balkans, Middle East) are overlays, never inherited into a
 parent continent. State eligibility is a separate game rule.
+
+Natural Earth's "Geo unit" type does not say whether a split should be an
+independent game area: it marks Vojvodina and French Guiana alike. The explicit
+meaningful-unit list provides that semantic decision. The generated
+`combined-geographic-units-50m.json` and `combined-geographic-units-10m.json`
+contain dissolved geometry for unlisted multi-part identities; regenerate them
+with `scripts/build-geographic-units.py` after changing the list. Natural Earth
+still provides only one USA map unit containing the contiguous states, Alaska,
+and Hawaii; splitting those into separate geographic units would require an
+additional polygon-level source or override.
 
 Natural Earth does not split Russia's European and Asian territory into map
 units. The Europe view therefore uses an optional **regional display geometry**
@@ -98,6 +112,7 @@ then pass its file path to `python scripts/build-regional-display.py`.
 - `src/composables/useElementSize.ts` observes the responsive map container.
 - `src/composables/useMapZoom.ts` owns wheel and animated country zoom state.
 - `src/data/countries.ts` indexes map units, quiz identities, and sovereigns.
+- `src/data/meaningful-map-units.json` defines independently meaningful map units.
 - `src/data/regions.ts` defines selector hierarchy and geographic unit membership.
 - `src/data/quizCountries.ts` defines which identities can be quiz questions.
 - `src/composables/useCountryQuiz.ts` owns question order, answers, and score.

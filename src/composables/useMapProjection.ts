@@ -11,7 +11,7 @@ import {
 import { geoWinkel3 } from 'd3-geo-projection'
 import { computed, type Ref } from 'vue'
 import type { FeatureCollection, MultiPoint } from 'geojson'
-import type { MapUnitFeature } from '../types/country'
+import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
 import type { MapBounds, MapPoint } from './useMapZoom'
 
@@ -32,8 +32,8 @@ const projectionFactories: Record<Exclude<MapProjectionId, 'regional-equal-area'
   'natural-earth': geoNaturalEarth1,
 }
 
-interface ProjectedCountry {
-  country: MapUnitFeature
+interface ProjectedGeographicUnit {
+  unit: GeographicUnitFeature
   path: string
   outlinePath?: string
   divisionPath?: string
@@ -43,7 +43,7 @@ interface ProjectedCountry {
 
 interface PathCacheEntry {
   sizeKey: string
-  projections: Map<string, ProjectedCountry[]>
+  projections: Map<string, ProjectedGeographicUnit[]>
 }
 
 function frameBoundary({ west, south, east, north }: GeographicFrame): [number, number][] {
@@ -70,29 +70,29 @@ function frameBoundary({ west, south, east, north }: GeographicFrame): [number, 
 }
 
 export function useMapProjection(
-  mapUnits: Ref<MapUnitFeature[]>,
+  geographicUnits: Ref<GeographicUnitFeature[]>,
   width: Ref<number>,
   height: Ref<number>,
   projectionId: Ref<MapProjectionId>,
   activeRegion: Ref<MapRegion>,
   visibleMapUnitIds: Ref<ReadonlySet<string>>,
 ) {
-  // Keep fitting tied to the initial 50m map units. A resolution swap may change
+  // Keep fitting tied to the initial 50m geographic units. A resolution swap may change
   // coastline extents by a fraction, but it must not move the coordinate
   // system underneath an active pan or zoom transform.
-  const fittingUnits = mapUnits.value
+  const fittingUnits = geographicUnits.value
   const fittingFeatures: FeatureCollection = {
     type: 'FeatureCollection',
     features: fittingUnits,
   }
   // Retain each projection at the current viewport size. A resize invalidates
   // the old paths, without accumulating maps at every intermediate size.
-  const pathCache = new WeakMap<MapUnitFeature[], PathCacheEntry>()
+  const pathCache = new WeakMap<GeographicUnitFeature[], PathCacheEntry>()
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
   )
 
-  function displayFeature(unit: MapUnitFeature): MapUnitFeature {
+  function displayFeature(unit: GeographicUnitFeature): GeographicUnitFeature {
     const display = unit.regionalDisplayGeometry?.[activeRegion.value.id]
     return display ? { ...unit, geometry: display.geometry } : unit
   }
@@ -103,7 +103,7 @@ export function useMapProjection(
       : id
   }
 
-  function hasCachedPaths(source: MapUnitFeature[], id = projectionId.value): boolean {
+  function hasCachedPaths(source: GeographicUnitFeature[], id = projectionId.value): boolean {
     const cached = pathCache.get(source)
     return cached?.sizeKey === `${width.value}:${height.value}`
       && cached.projections.has(cacheKey(id))
@@ -124,7 +124,7 @@ export function useMapProjection(
         fitGeometry = { type: 'MultiPoint', coordinates: frameBoundary(frame) }
       } else {
         const selected = fittingUnits
-          .filter((unit) => visibleMapUnitIds.value.has(unit.id))
+          .filter((unit) => unit.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id)))
           .map(displayFeature)
         if (selected.length) fitGeometry = { type: 'FeatureCollection', features: selected }
       }
@@ -143,8 +143,8 @@ export function useMapProjection(
     return geoPath(projection)
   })
 
-  const countryPaths = computed(() => {
-    const source = mapUnits.value
+  const geographicPaths = computed(() => {
+    const source = geographicUnits.value
     const id = projectionId.value
     const key = cacheKey(id)
     const sizeKey = `${width.value}:${height.value}`
@@ -158,23 +158,23 @@ export function useMapProjection(
     }
 
     const generator = pathGenerator.value
-    // A regional view never needs paths for map units hidden by its filter.
-    const renderCountries = id === 'regional-equal-area'
-      ? source.filter((country) => visibleMapUnitIds.value.has(country.id))
+    // A regional view never needs paths for geographic units hidden by its filter.
+    const renderUnits = id === 'regional-equal-area'
+      ? source.filter((unit) => unit.properties.mapUnitIds.some((mapUnitId) => visibleMapUnitIds.value.has(mapUnitId)))
       : source
-    const paths: ProjectedCountry[] = renderCountries.map((country) => {
-      const regionalDisplay = country.regionalDisplayGeometry?.[activeRegion.value.id]
-      const displayCountry = displayFeature(country)
-      const fullBounds = generator.bounds(displayCountry) as MapBounds
-      let focusCountry = displayCountry
+    const paths: ProjectedGeographicUnit[] = renderUnits.map((unit) => {
+      const regionalDisplay = unit.regionalDisplayGeometry?.[activeRegion.value.id]
+      const displayUnit = displayFeature(unit)
+      const fullBounds = generator.bounds(displayUnit) as MapBounds
+      let focusUnit = displayUnit
 
-      // A map unit can still contain distant islands or cross the antimeridian.
+      // A geographic unit can still contain distant islands or cross the antimeridian.
       // Use its largest landmass for click-to-zoom when the full unit bounds
       // would be misleading, while retaining all of its rendered polygons.
-      if (displayCountry.geometry.type === 'MultiPolygon') {
-        const largestLandmass = displayCountry.geometry.coordinates
+      if (displayUnit.geometry.type === 'MultiPolygon') {
+        const largestLandmass = displayUnit.geometry.coordinates
           .map((coordinates) => ({
-            ...displayCountry,
+            ...displayUnit,
             geometry: { type: 'Polygon' as const, coordinates },
           }))
           .reduce((largest, candidate) =>
@@ -186,7 +186,7 @@ export function useMapProjection(
         const fullHeight = Math.max(1, fullBounds[1][1] - fullBounds[0][1])
         const mainWidth = Math.max(1, mainBounds[1][0] - mainBounds[0][0])
         const mainHeight = Math.max(1, mainBounds[1][1] - mainBounds[0][1])
-        const mainlandAreaShare = geoArea(largestLandmass) / geoArea(displayCountry)
+        const mainlandAreaShare = geoArea(largestLandmass) / geoArea(displayUnit)
         const spansMostOfMap = fullWidth > width.value * 0.65
         const hasDistantTerritories = Math.max(
           fullWidth / mainWidth,
@@ -195,21 +195,21 @@ export function useMapProjection(
         const mainlandDominates = mainlandAreaShare > 0.75
 
         if (mainlandDominates && (spansMostOfMap || hasDistantTerritories)) {
-          focusCountry = largestLandmass
+          focusUnit = largestLandmass
         }
       }
 
       const projection = generator.projection()
       const focusPoint = typeof projection === 'function'
-        ? projection(geoCentroid(focusCountry)) ?? undefined
+        ? projection(geoCentroid(focusUnit)) ?? undefined
         : undefined
 
       return {
-        country,
-        path: generator(displayCountry) ?? '',
+        unit,
+        path: generator(displayUnit) ?? '',
         outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? '' : undefined,
         divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? '' : undefined,
-        bounds: generator.bounds(focusCountry) as MapBounds,
+        bounds: generator.bounds(focusUnit) as MapBounds,
         focusPoint: focusPoint as MapPoint | undefined,
       }
     })
@@ -227,5 +227,5 @@ export function useMapProjection(
     return projection(point) as MapPoint | undefined
   }
 
-  return { countryPaths, hasCachedPaths, projectPoint, spherePath }
+  return { geographicPaths, hasCachedPaths, projectPoint, spherePath }
 }

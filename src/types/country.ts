@@ -28,6 +28,14 @@ export type MapUnitFeature = Feature<Geometry, CountryProperties> & {
   regionalDisplayGeometry?: Readonly<Record<string, RegionalDisplayGeometry>>
 }
 
+export type GeographicUnitFeature = Feature<Geometry, {
+  entityId: string
+  mapUnitIds: readonly string[]
+}> & {
+  id: string
+  regionalDisplayGeometry?: Readonly<Record<string, RegionalDisplayGeometry>>
+}
+
 export interface CountryInfo {
   id: string
   name: string

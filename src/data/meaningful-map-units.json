@@ -1,0 +1,15 @@
+{
+  "independentMapUnitIdsByEntity": {
+    "ATG": ["ACA", "ACB"],
+    "FRA": ["FXX", "MYT", "REU", "MTQ", "GLP", "GUF"],
+    "GBR": ["WLS", "SCT", "NIR", "ENG"],
+    "IOA": ["CXR", "CCK"],
+    "NLD": ["NLD", "NLY"],
+    "NOR": ["NOR", "NJM", "NSV"],
+    "NZL": ["NZL", "TKL"],
+    "PNG": ["PNX", "PNB"],
+    "PRT": ["PMD", "PRX", "PAZ"],
+    "PSX": ["GAZ", "WEB"],
+    "TZA": ["TZZ", "TZA"]
+  }
+}

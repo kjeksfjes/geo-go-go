@@ -4,7 +4,12 @@ import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import WorldMap from './components/WorldMap.vue'
 import { useCountryQuiz } from './composables/useCountryQuiz'
-import { countryInfoById, loadDetailedMapUnits, mapUnits } from './data/countries'
+import {
+  countryInfoById,
+  geographicUnitById,
+  geographicUnits,
+  loadDetailedGeographicUnits,
+} from './data/countries'
 import {
   entityIdsByRegion,
   mapUnitIdsByRegion,
@@ -16,14 +21,14 @@ import { afterPaint, wait } from './utils/paint'
 import { locale, setLocale, t } from './i18n'
 
 const selectedCountryId = ref<string | null>(null)
-const selectedMapUnitId = ref<string | null>(null)
+const selectedGeographicUnitId = ref<string | null>(null)
 const mode = ref<'explore' | 'find-country'>('explore')
 const activeRegionId = ref<MapRegionId>('world')
-const renderedMapUnits = shallowRef(mapUnits)
+const renderedGeographicUnits = shallowRef(geographicUnits)
 const highDetailEnabled = ref(false)
 const detailLoading = ref(false)
 const detailBlurred = ref(false)
-const detailedMapUnits = shallowRef<typeof mapUnits | null>(null)
+const detailedGeographicUnits = shallowRef<typeof geographicUnits | null>(null)
 const activeRegion = computed(() => regionById.get(activeRegionId.value) ?? regions[0])
 const visibleMapUnitIds = computed(() =>
   mapUnitIdsByRegion.get(activeRegionId.value) ?? mapUnitIdsByRegion.get('world')!,
@@ -54,12 +59,12 @@ function setMode(nextMode: 'explore' | 'find-country') {
   if (mode.value === nextMode) return
   mode.value = nextMode
   selectedCountryId.value = null
-  selectedMapUnitId.value = null
+  selectedGeographicUnitId.value = null
   if (nextMode === 'find-country') startQuiz(visibleEntityIds.value)
 }
 
-function handleMapSelection(countryId: string | null, mapUnitId: string | null) {
-  selectedMapUnitId.value = mapUnitId
+function handleMapSelection(countryId: string | null, geographicUnitId: string | null) {
+  selectedGeographicUnitId.value = geographicUnitId
   if (mode.value === 'find-country') {
     if (countryId) answerQuiz(countryId)
   } else {
@@ -68,12 +73,12 @@ function handleMapSelection(countryId: string | null, mapUnitId: string | null) 
 }
 
 function advanceQuizQuestion() {
-  selectedMapUnitId.value = null
+  selectedGeographicUnitId.value = null
   nextQuizQuestion()
 }
 
 function restartQuiz() {
-  selectedMapUnitId.value = null
+  selectedGeographicUnitId.value = null
   startQuiz(visibleEntityIds.value)
 }
 
@@ -106,7 +111,7 @@ function setActiveRegion(regionId: MapRegionId) {
   activeRegionId.value = regionId
 
   if (mode.value === 'find-country') {
-    selectedMapUnitId.value = null
+    selectedGeographicUnitId.value = null
     startQuiz(visibleEntityIds.value)
     return
   }
@@ -114,11 +119,12 @@ function setActiveRegion(regionId: MapRegionId) {
   if (
     selectedCountryId.value
     && (!visibleEntityIds.value.has(selectedCountryId.value)
-      || !selectedMapUnitId.value
-      || !visibleMapUnitIds.value.has(selectedMapUnitId.value))
+      || !selectedGeographicUnitId.value
+      || !geographicUnitById.get(selectedGeographicUnitId.value)?.properties.mapUnitIds
+        .some((id) => visibleMapUnitIds.value.has(id)))
   ) {
     selectedCountryId.value = null
-    selectedMapUnitId.value = null
+    selectedGeographicUnitId.value = null
   }
 }
 
@@ -126,13 +132,13 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
   if (detailLoading.value) return
 
   if (!enabled) {
-    renderedMapUnits.value = mapUnits
+    renderedGeographicUnits.value = geographicUnits
     highDetailEnabled.value = false
     return
   }
 
-  if (detailedMapUnits.value && pathsCached) {
-    renderedMapUnits.value = detailedMapUnits.value
+  if (detailedGeographicUnits.value && pathsCached) {
+    renderedGeographicUnits.value = detailedGeographicUnits.value
     highDetailEnabled.value = true
     return
   }
@@ -147,16 +153,16 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
     await afterPaint()
     const minimumBlur = reducedMotion ? Promise.resolve() : wait(300)
     const [detailed] = await Promise.all([
-      detailedMapUnits.value ?? loadDetailedMapUnits(),
+      detailedGeographicUnits.value ?? loadDetailedGeographicUnits(),
       minimumBlur,
     ])
-    detailedMapUnits.value = detailed
-    renderedMapUnits.value = detailed
+    detailedGeographicUnits.value = detailed
+    renderedGeographicUnits.value = detailed
     // Let the detailed paths render while they are still blurred.
     await nextTick()
     await afterPaint()
   } catch (error) {
-    renderedMapUnits.value = mapUnits
+    renderedGeographicUnits.value = geographicUnits
     highDetailEnabled.value = false
     console.error('Could not load the high-detail map.', error)
   } finally {
@@ -214,15 +220,15 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
 
     <section class="map-card" :aria-label="t('worldMapGame')">
       <WorldMap
-        :map-units="renderedMapUnits"
-        :detailed-map-units="detailedMapUnits"
+        :geographic-units="renderedGeographicUnits"
+        :detailed-geographic-units="detailedGeographicUnits"
         :detail-loading="detailLoading"
         :detail-blurred="detailBlurred"
         :high-detail-enabled="highDetailEnabled"
         :active-region="activeRegion"
         :region-options="regions"
         :selected-country-id="selectedCountryId"
-        :selected-map-unit-id="selectedMapUnitId"
+        :selected-geographic-unit-id="selectedGeographicUnitId"
         :quiz-mode="mode === 'find-country'"
         :quiz-complete="mode === 'find-country' && quizPhase === 'complete'"
         :quiz-question-id="quizQuestionId"
