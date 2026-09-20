@@ -44,6 +44,43 @@ select {
   text-align: center;
 }
 
+.mode-selector {
+  display: flex;
+  width: fit-content;
+  gap: 0.2rem;
+  margin: 0 auto 1rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(82, 103, 110, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 16px rgba(23, 45, 56, 0.06);
+}
+
+.mode-selector button {
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  color: #52676e;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.mode-selector button[aria-pressed='true'] {
+  color: #fff;
+  background: #172d38;
+}
+
+.mode-selector button:hover:not([aria-pressed='true']) {
+  background: rgba(23, 45, 56, 0.08);
+}
+
+html[data-input-modality='keyboard'] .mode-selector button:focus-visible {
+  outline: 2px solid #172d38;
+  outline-offset: 2px;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: clamp(2rem, 5vw, 3.7rem);

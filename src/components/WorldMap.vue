@@ -23,11 +23,15 @@ const props = defineProps<{
   activeRegion: MapRegion
   regionOptions: readonly MapRegion[]
   selectedCountryId: string | null
+  quizMode: boolean
+  quizQuestionId: string | null
+  quizAnswerId: string | null
   visibleCountryIds: ReadonlySet<string>
 }>()
 
 const emit = defineEmits<{
   select: [countryId: string | null]
+  'quiz-next': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'region-change': [regionId: MapRegionId]
 }>()
@@ -79,6 +83,9 @@ function resetView() {
 }
 
 watch(() => props.activeRegion.id, () => focusActiveRegion(true), { flush: 'post' })
+watch(() => props.quizMode, (active) => {
+  if (active) focusActiveRegion(true, true)
+}, { flush: 'post' })
 watch(projectionId, () => focusActiveRegion(false), { flush: 'post' })
 watch([mapWidth, mapHeight], () => focusActiveRegion(false), { flush: 'post' })
 
@@ -86,11 +93,33 @@ function selectCountry(
   countryId: string,
   bounds: MapBounds,
   focusPoint: MapPoint | undefined,
-  event?: MouseEvent,
+  event?: MouseEvent | KeyboardEvent,
 ) {
-  if (event && consumeDragClick()) return
+  if (event instanceof MouseEvent && consumeDragClick()) {
+    event.stopPropagation()
+    return
+  }
+  if (props.quizMode) {
+    // Ignore the second click of a double-click, including if the first click
+    // advanced from the previous question.
+    if (event instanceof MouseEvent && event.detail > 1) {
+      event.stopPropagation()
+      return
+    }
+    if (props.quizQuestionId && props.quizAnswerId === null) {
+      event?.stopPropagation()
+      emit('select', countryId)
+    }
+    return
+  }
   emit('select', countryId)
   zoomToBounds(bounds, focusPoint)
+}
+
+function handleMapClick(event: MouseEvent) {
+  if (!props.quizMode || props.quizAnswerId === null) return
+  if (consumeDragClick() || event.detail > 1) return
+  emit('quiz-next')
 }
 
 function handleWheel(event: WheelEvent) {
@@ -160,6 +189,7 @@ async function setProjection(nextId: MapProjectionId) {
       :class="{
         'map-container--dragging': isDragging,
         'map-container--detail-blurred': mapBlurred,
+        'map-container--quiz-answered': quizMode && quizAnswerId !== null,
       }"
       :aria-busy="interactionLocked"
       :inert="interactionLocked"
@@ -175,6 +205,7 @@ async function setProjection(nextId: MapProjectionId) {
         @pointermove="movePan"
         @pointerup="handlePointerEnd"
         @pointercancel="handlePointerEnd"
+        @click="handleMapClick"
       >
         <g ref="mapContent" class="map-content">
           <path class="map-sphere" :d="spherePath" />
@@ -185,18 +216,23 @@ async function setProjection(nextId: MapProjectionId) {
               :d="path"
               v-show="visibleCountryIds.has(country.id)"
               class="country"
-              :class="{ 'country--selected': country.id === selectedCountryId }"
+              :class="{
+                'country--selected': !quizMode && country.id === selectedCountryId,
+                'country--quiz-correct': quizMode && quizAnswerId !== null && country.id === quizQuestionId,
+                'country--quiz-wrong': quizMode && quizAnswerId === country.id && country.id !== quizQuestionId,
+              }"
               :data-country-id="country.id"
               role="button"
-              :tabindex="visibleCountryIds.has(country.id) ? 0 : -1"
+              :tabindex="visibleCountryIds.has(country.id) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
               :aria-label="country.properties.name"
               :aria-hidden="!visibleCountryIds.has(country.id)"
-              :aria-pressed="country.id === selectedCountryId"
+              :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
+              :aria-pressed="quizMode ? country.id === quizAnswerId : country.id === selectedCountryId"
               @click="selectCountry(country.id, bounds, focusPoint, $event)"
-              @keydown.enter.prevent="selectCountry(country.id, bounds, focusPoint)"
-              @keydown.space.prevent="selectCountry(country.id, bounds, focusPoint)"
+              @keydown.enter.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
+              @keydown.space.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
             >
-              <title>{{ country.properties.name }}</title>
+              <title v-if="!quizMode || quizAnswerId !== null">{{ country.properties.name }}</title>
             </path>
           </g>
         </g>
@@ -226,7 +262,11 @@ async function setProjection(nextId: MapProjectionId) {
       </div>
 
       <div class="map-tools">
-        <span>Scroll to zoom · Drag to move</span>
+        <span>
+          {{ quizMode && quizAnswerId !== null
+            ? 'Click map or press Space to continue'
+            : 'Scroll to zoom · Drag to move' }}
+        </span>
         <button v-if="isZoomed" type="button" @click="resetView">
           Reset view
         </button>
@@ -260,6 +300,10 @@ async function setProjection(nextId: MapProjectionId) {
   cursor: grab;
   user-select: none;
   transition: filter 280ms ease;
+}
+
+.map-container--quiz-answered .world-map {
+  cursor: pointer;
 }
 
 .map-container--detail-blurred .world-map {
@@ -323,6 +367,22 @@ async function setProjection(nextId: MapProjectionId) {
   fill: #e76f51;
   stroke: #8f3522;
   stroke-width: 1.2;
+}
+
+.country--quiz-correct,
+.country--quiz-correct:hover,
+:global(html[data-input-modality='keyboard'] .country--quiz-correct:focus-visible) {
+  fill: #69be89;
+  stroke: #26774a;
+  stroke-width: 1.5;
+}
+
+.country--quiz-wrong,
+.country--quiz-wrong:hover,
+:global(html[data-input-modality='keyboard'] .country--quiz-wrong:focus-visible) {
+  fill: #e76f51;
+  stroke: #8f3522;
+  stroke-width: 1.5;
 }
 
 .map-tools {

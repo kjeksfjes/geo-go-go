@@ -29,6 +29,14 @@ or a smaller subregion without recalculating map paths. Parent regions include
 their child regions and can also be selected directly. Its dropdown uses
 `@zanmato/vue3-treeselect` for tree navigation and single selection.
 
+The **Find the country** mode shows a flag and country name from the active
+region. Click its map location to answer. Each correct first attempt earns one
+point; after every answer, use **Next country** to continue. A session asks each
+eligible state once, and changing regions starts a new session. Territories
+remain visible on the map but are not used as quiz questions.
+After an answer, clicking the map or pressing Space also advances, so the
+player can continue without moving back to the button.
+
 Selection framing uses the main landmass for countries with widely detached
 territories, while every territory remains rendered in the selected color.
 
@@ -40,6 +48,8 @@ territories, while every territory remains rendered in the selected color.
 - `src/composables/useMapZoom.ts` owns wheel and animated country zoom state.
 - `src/data/countries.ts` converts atlas topology and resolves display/flag metadata.
 - `src/data/regions.ts` defines the region hierarchy and country membership.
+- `src/data/quizCountries.ts` defines which atlas entries can be quiz questions.
+- `src/composables/useCountryQuiz.ts` owns question order, answers, and score.
 - `src/App.vue` owns the selected-country UI state.
 
 Atlas ISO numeric IDs are used as stable path keys. Territories or disputed

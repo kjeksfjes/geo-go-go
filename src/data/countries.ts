@@ -51,6 +51,7 @@ const countryOverrides: Record<string, CountryOverride> = {
   Macedonia: { flagCode: 'mk', name: 'North Macedonia' },
   Kosovo: { flagCode: 'xk' },
   'S. Sudan': { flagCode: 'ss', name: 'South Sudan' },
+  eSwatini: { flagCode: 'sz', name: 'Eswatini' },
   'St. Pierre and Miquelon': { flagCode: 'pm', name: 'Saint Pierre and Miquelon' },
   'Wallis and Futuna Is.': { flagCode: 'wf', name: 'Wallis and Futuna' },
   'St-Martin': { flagCode: 'mf', name: 'Saint Martin' },

@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, shallowRef } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import CountryCard from './components/CountryCard.vue'
+import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import WorldMap from './components/WorldMap.vue'
+import { useCountryQuiz } from './composables/useCountryQuiz'
 import { countries, countryInfoById, loadDetailedCountries } from './data/countries'
 import {
   countryIdsByRegion,
@@ -12,6 +14,7 @@ import {
 import { afterPaint, wait } from './utils/paint'
 
 const selectedCountryId = ref<string | null>(null)
+const mode = ref<'explore' | 'find-country'>('explore')
 const activeRegionId = ref<MapRegionId>('world')
 const mapCountries = shallowRef(countries)
 const highDetailEnabled = ref(false)
@@ -27,9 +30,67 @@ const selectedCountry = computed(() =>
     ? countryInfoById.get(selectedCountryId.value) ?? null
     : null,
 )
+const {
+  answeredCountry: quizAnswer,
+  answeredCountryId: quizAnswerId,
+  answer: answerQuiz,
+  currentCountry: quizQuestion,
+  currentCountryId: quizQuestionId,
+  next: nextQuizQuestion,
+  phase: quizPhase,
+  questionNumber: quizQuestionNumber,
+  score: quizScore,
+  start: startQuiz,
+  total: quizTotal,
+} = useCountryQuiz()
+
+function setMode(nextMode: 'explore' | 'find-country') {
+  if (mode.value === nextMode) return
+  mode.value = nextMode
+  selectedCountryId.value = null
+  if (nextMode === 'find-country') startQuiz(visibleCountryIds.value)
+}
+
+function handleMapSelection(countryId: string | null) {
+  if (mode.value === 'find-country') {
+    if (countryId) answerQuiz(countryId)
+  } else {
+    selectedCountryId.value = countryId
+  }
+}
+
+function handleQuizShortcut(event: KeyboardEvent) {
+  if (
+    event.code !== 'Space'
+    || event.repeat
+    || event.altKey
+    || event.ctrlKey
+    || event.metaKey
+    || mode.value !== 'find-country'
+    || quizPhase.value !== 'answered'
+  ) return
+
+  // Leave Space to the focused control (including the existing Next button).
+  const target = event.target
+  if (
+    target instanceof Element
+    && target.closest('button, input, select, textarea, [contenteditable], [role="combobox"], .vue3-treeselect__menu')
+  ) return
+
+  event.preventDefault()
+  nextQuizQuestion()
+}
+
+onMounted(() => document.addEventListener('keydown', handleQuizShortcut))
+onBeforeUnmount(() => document.removeEventListener('keydown', handleQuizShortcut))
 
 function setActiveRegion(regionId: MapRegionId) {
   activeRegionId.value = regionId
+
+  if (mode.value === 'find-country') {
+    startQuiz(visibleCountryIds.value)
+    return
+  }
 
   if (
     selectedCountryId.value
@@ -96,6 +157,35 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
       <p>Explore the map and pick a country.</p>
     </header>
 
+    <div class="mode-selector" role="group" aria-label="Game mode">
+      <button
+        type="button"
+        :aria-pressed="mode === 'explore'"
+        @click="setMode('explore')"
+      >
+        Explore
+      </button>
+      <button
+        type="button"
+        :aria-pressed="mode === 'find-country'"
+        @click="setMode('find-country')"
+      >
+        Find the country
+      </button>
+    </div>
+
+    <CountryQuizPanel
+      v-if="mode === 'find-country'"
+      :phase="quizPhase"
+      :question="quizQuestion"
+      :answer="quizAnswer"
+      :score="quizScore"
+      :question-number="quizQuestionNumber"
+      :total="quizTotal"
+      @next="nextQuizQuestion"
+      @restart="startQuiz(visibleCountryIds)"
+    />
+
     <section class="map-card" aria-label="World map game">
       <WorldMap
         :countries="mapCountries"
@@ -106,13 +196,17 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :active-region="activeRegion"
         :region-options="regions"
         :selected-country-id="selectedCountryId"
+        :quiz-mode="mode === 'find-country'"
+        :quiz-question-id="quizQuestionId"
+        :quiz-answer-id="quizAnswerId"
         :visible-country-ids="visibleCountryIds"
         @detail-change="setHighDetail"
         @region-change="setActiveRegion"
-        @select="selectedCountryId = $event"
+        @select="handleMapSelection"
+        @quiz-next="nextQuizQuestion"
       />
     </section>
 
-    <CountryCard :country="selectedCountry" />
+    <CountryCard v-if="mode === 'explore'" :country="selectedCountry" />
   </main>
 </template>
