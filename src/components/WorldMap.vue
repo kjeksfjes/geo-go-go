@@ -27,7 +27,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  select: [countryId: string]
+  select: [countryId: string | null]
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'region-change': [regionId: MapRegionId]
 }>()
@@ -62,7 +62,7 @@ const {
   zoomToPoint,
 } = useMapZoom(mapWidth, mapHeight, mapContent)
 
-function focusActiveRegion(animated: boolean) {
+function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
   const view = props.activeRegion.view
   if (!view) {
     resetZoom(animated)
@@ -70,7 +70,12 @@ function focusActiveRegion(animated: boolean) {
   }
 
   const point = projectPoint(view.center)
-  if (point) zoomToPoint(point, view.zoom, animated)
+  if (point) zoomToPoint(point, view.zoom, animated, zoomOutFirst)
+}
+
+function resetView() {
+  emit('select', null)
+  focusActiveRegion(true, true)
 }
 
 watch(() => props.activeRegion.id, () => focusActiveRegion(true), { flush: 'post' })
@@ -222,7 +227,7 @@ async function setProjection(nextId: MapProjectionId) {
 
       <div class="map-tools">
         <span>Scroll to zoom · Drag to move</span>
-        <button v-if="isZoomed" type="button" @click="focusActiveRegion(true)">
+        <button v-if="isZoomed" type="button" @click="resetView">
           Reset view
         </button>
       </div>

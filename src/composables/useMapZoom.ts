@@ -67,7 +67,13 @@ export function useMapZoom(
     )
   }
 
-  function animateTo(x: number, y: number, scale: number, duration = 750) {
+  function animateTo(
+    x: number,
+    y: number,
+    scale: number,
+    duration = 750,
+    motion: 'balanced' | 'zoom-out' = 'balanced',
+  ) {
     stopAnimation()
 
     const start = { ...transform }
@@ -91,22 +97,41 @@ export function useMapZoom(
       y: target.y + target.scale * targetAnchor.y,
     }
     const scaleRatio = target.scale / start.scale
+    const zoomingOut = motion === 'zoom-out' && target.scale < start.scale
+    const startCenter = {
+      x: (width.value / 2 - start.x) / start.scale,
+      y: (height.value / 2 - start.y) / start.scale,
+    }
     const startedAt = performance.now()
 
     function frame(now: number) {
       const progress = Math.min(1, (now - startedAt) / duration)
       const eased = progress * progress * (3 - 2 * progress)
-      const nextScale = start.scale * Math.pow(scaleRatio, eased)
-      const anchorX = startAnchorPosition.x
-        + (targetAnchorPosition.x - startAnchorPosition.x) * eased
-      const anchorY = startAnchorPosition.y
-        + (targetAnchorPosition.y - startAnchorPosition.y) * eased
+      if (zoomingOut) {
+        // Pull back around the current view first. Pan toward the destination
+        // more gradually, with both motions still finishing together.
+        const zoomEased = 1 - (1 - progress) * (1 - progress)
+        const nextScale = start.scale * Math.pow(scaleRatio, zoomEased)
+        const centerX = startCenter.x + (targetAnchor.x - startCenter.x) * eased
+        const centerY = startCenter.y + (targetAnchor.y - startCenter.y) * eased
+        setTransform(
+          width.value / 2 - nextScale * centerX,
+          height.value / 2 - nextScale * centerY,
+          nextScale,
+        )
+      } else {
+        const nextScale = start.scale * Math.pow(scaleRatio, eased)
+        const anchorX = startAnchorPosition.x
+          + (targetAnchorPosition.x - startAnchorPosition.x) * eased
+        const anchorY = startAnchorPosition.y
+          + (targetAnchorPosition.y - startAnchorPosition.y) * eased
 
-      setTransform(
-        anchorX - nextScale * targetAnchor.x,
-        anchorY - nextScale * targetAnchor.y,
-        nextScale,
-      )
+        setTransform(
+          anchorX - nextScale * targetAnchor.x,
+          anchorY - nextScale * targetAnchor.y,
+          nextScale,
+        )
+      }
 
       if (progress < 1) {
         animationFrame = requestAnimationFrame(frame)
@@ -134,13 +159,18 @@ export function useMapZoom(
     )
   }
 
-  function zoomToPoint(point: MapPoint, scale: number, animated = true) {
+  function zoomToPoint(
+    point: MapPoint,
+    scale: number,
+    animated = true,
+    zoomOutFirst = false,
+  ) {
     const targetScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale))
     const x = width.value / 2 - targetScale * point[0]
     const y = height.value / 2 - targetScale * point[1]
 
     if (animated) {
-      animateTo(x, y, targetScale)
+      animateTo(x, y, targetScale, 750, zoomOutFirst ? 'zoom-out' : 'balanced')
     } else {
       stopAnimation()
       setTransform(x, y, targetScale)
@@ -175,7 +205,7 @@ export function useMapZoom(
 
   function resetZoom(animated = true) {
     if (animated) {
-      animateTo(0, 0, MIN_ZOOM, 500)
+      animateTo(0, 0, MIN_ZOOM, 500, 'zoom-out')
     } else {
       stopAnimation()
       setTransform(0, 0, MIN_ZOOM)
