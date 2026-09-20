@@ -1,59 +1,28 @@
-import { countries, countryInfoById } from './countries'
+import { countryInfoById, mapUnits } from './countries'
+import type { MapUnitFeature } from '../types/country'
 
-// The atlas includes dependencies, overseas territories, and disputed map
-// features alongside states. This is a practical quiz set, not a statement
-// about diplomatic recognition: it includes Vatican City, Palestine, Kosovo,
-// and Taiwan, while leaving non-state features visible as possible wrong picks.
-const nonStateAtlasNames = new Set([
-  'American Samoa',
-  'Anguilla',
-  'Aruba',
-  'Ashmore and Cartier Is.',
-  'Bermuda',
-  'Br. Indian Ocean Ter.',
-  'British Virgin Is.',
-  'Cayman Is.',
-  'Cook Is.',
-  'Curaçao',
-  'Faeroe Is.',
-  'Falkland Is.',
-  'Fr. Polynesia',
-  'Fr. S. Antarctic Lands',
-  'Greenland',
-  'Guam',
-  'Guernsey',
-  'Heard I. and McDonald Is.',
-  'Hong Kong',
-  'Indian Ocean Ter.',
-  'Isle of Man',
-  'Jersey',
-  'Macao',
-  'Montserrat',
-  'N. Cyprus',
-  'N. Mariana Is.',
-  'New Caledonia',
-  'Niue',
-  'Norfolk Island',
-  'Pitcairn Is.',
-  'Puerto Rico',
-  'S. Geo. and the Is.',
-  'Saint Helena',
-  'Siachen Glacier',
-  'Sint Maarten',
-  'Somaliland',
-  'St-Barthélemy',
-  'St-Martin',
-  'St. Pierre and Miquelon',
-  'Turks and Caicos Is.',
-  'U.S. Virgin Is.',
-  'W. Sahara',
-  'Wallis and Futuna Is.',
-  'Åland',
-])
+// Natural Earth's ADMIN/SOVEREIGNT relationship supplies the default state
+// policy. These are game-policy exceptions, not geographic classifications.
+const includeStateIds = new Set(['PSX']) // Palestine (Gaza and West Bank)
+const excludeStateIds = new Set(['SOL']) // Somaliland is not a quiz state here.
+
+const unitsByEntityId = new Map<string, MapUnitFeature[]>()
+for (const unit of mapUnits) {
+  const units = unitsByEntityId.get(unit.properties.entityId) ?? []
+  units.push(unit)
+  unitsByEntityId.set(unit.properties.entityId, units)
+}
 
 export const quizCountryIds = new Set(
-  countries
-    .filter((country) => !nonStateAtlasNames.has(country.properties.name))
-    .filter((country) => countryInfoById.get(country.id)?.flagCode !== 'un')
-    .map((country) => country.id),
+  [...countryInfoById.values()]
+    .filter(({ id, flagCode }) => {
+      if (excludeStateIds.has(id) || flagCode === 'un') return false
+      if (includeStateIds.has(id)) return true
+      const units = unitsByEntityId.get(id) ?? []
+      return units.some(({ properties }) =>
+        properties.adminName === properties.sovereignName
+        && properties.featureType !== 'Indeterminate',
+      )
+    })
+    .map(({ id }) => id),
 )

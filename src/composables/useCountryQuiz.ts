@@ -35,9 +35,9 @@ export function useCountryQuiz() {
   })
   const questionNumber = computed(() => Math.min(questionIndex.value + 1, total.value))
 
-  function start(visibleCountryIds: ReadonlySet<string>) {
+  function start(visibleEntityIds: ReadonlySet<string>) {
     questionIds.value = shuffle(
-      [...visibleCountryIds].filter((id) => quizCountryIds.has(id)),
+      [...visibleEntityIds].filter((id) => quizCountryIds.has(id)),
     )
     questionIndex.value = 0
     answeredCountryId.value = null

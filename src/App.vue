@@ -4,9 +4,10 @@ import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import WorldMap from './components/WorldMap.vue'
 import { useCountryQuiz } from './composables/useCountryQuiz'
-import { countries, countryInfoById, loadDetailedCountries } from './data/countries'
+import { countryInfoById, loadDetailedMapUnits, mapUnits } from './data/countries'
 import {
-  countryIdsByRegion,
+  entityIdsByRegion,
+  mapUnitIdsByRegion,
   regionById,
   regions,
   type MapRegionId,
@@ -15,16 +16,20 @@ import { afterPaint, wait } from './utils/paint'
 import { locale, setLocale, t } from './i18n'
 
 const selectedCountryId = ref<string | null>(null)
+const selectedMapUnitId = ref<string | null>(null)
 const mode = ref<'explore' | 'find-country'>('explore')
 const activeRegionId = ref<MapRegionId>('world')
-const mapCountries = shallowRef(countries)
+const renderedMapUnits = shallowRef(mapUnits)
 const highDetailEnabled = ref(false)
 const detailLoading = ref(false)
 const detailBlurred = ref(false)
-const detailedCountries = shallowRef<typeof countries | null>(null)
+const detailedMapUnits = shallowRef<typeof mapUnits | null>(null)
 const activeRegion = computed(() => regionById.get(activeRegionId.value) ?? regions[0])
-const visibleCountryIds = computed(() =>
-  countryIdsByRegion.get(activeRegionId.value) ?? countryIdsByRegion.get('world')!,
+const visibleMapUnitIds = computed(() =>
+  mapUnitIdsByRegion.get(activeRegionId.value) ?? mapUnitIdsByRegion.get('world')!,
+)
+const visibleEntityIds = computed(() =>
+  entityIdsByRegion.get(activeRegionId.value) ?? entityIdsByRegion.get('world')!,
 )
 const selectedCountry = computed(() =>
   selectedCountryId.value
@@ -49,15 +54,27 @@ function setMode(nextMode: 'explore' | 'find-country') {
   if (mode.value === nextMode) return
   mode.value = nextMode
   selectedCountryId.value = null
-  if (nextMode === 'find-country') startQuiz(visibleCountryIds.value)
+  selectedMapUnitId.value = null
+  if (nextMode === 'find-country') startQuiz(visibleEntityIds.value)
 }
 
-function handleMapSelection(countryId: string | null) {
+function handleMapSelection(countryId: string | null, mapUnitId: string | null) {
+  selectedMapUnitId.value = mapUnitId
   if (mode.value === 'find-country') {
     if (countryId) answerQuiz(countryId)
   } else {
     selectedCountryId.value = countryId
   }
+}
+
+function advanceQuizQuestion() {
+  selectedMapUnitId.value = null
+  nextQuizQuestion()
+}
+
+function restartQuiz() {
+  selectedMapUnitId.value = null
+  startQuiz(visibleEntityIds.value)
 }
 
 function handleQuizShortcut(event: KeyboardEvent) {
@@ -79,7 +96,7 @@ function handleQuizShortcut(event: KeyboardEvent) {
   ) return
 
   event.preventDefault()
-  nextQuizQuestion()
+  advanceQuizQuestion()
 }
 
 onMounted(() => document.addEventListener('keydown', handleQuizShortcut))
@@ -89,15 +106,19 @@ function setActiveRegion(regionId: MapRegionId) {
   activeRegionId.value = regionId
 
   if (mode.value === 'find-country') {
-    startQuiz(visibleCountryIds.value)
+    selectedMapUnitId.value = null
+    startQuiz(visibleEntityIds.value)
     return
   }
 
   if (
     selectedCountryId.value
-    && !visibleCountryIds.value.has(selectedCountryId.value)
+    && (!visibleEntityIds.value.has(selectedCountryId.value)
+      || !selectedMapUnitId.value
+      || !visibleMapUnitIds.value.has(selectedMapUnitId.value))
   ) {
     selectedCountryId.value = null
+    selectedMapUnitId.value = null
   }
 }
 
@@ -105,13 +126,13 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
   if (detailLoading.value) return
 
   if (!enabled) {
-    mapCountries.value = countries
+    renderedMapUnits.value = mapUnits
     highDetailEnabled.value = false
     return
   }
 
-  if (detailedCountries.value && pathsCached) {
-    mapCountries.value = detailedCountries.value
+  if (detailedMapUnits.value && pathsCached) {
+    renderedMapUnits.value = detailedMapUnits.value
     highDetailEnabled.value = true
     return
   }
@@ -126,16 +147,16 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
     await afterPaint()
     const minimumBlur = reducedMotion ? Promise.resolve() : wait(300)
     const [detailed] = await Promise.all([
-      detailedCountries.value ?? loadDetailedCountries(),
+      detailedMapUnits.value ?? loadDetailedMapUnits(),
       minimumBlur,
     ])
-    detailedCountries.value = detailed
-    mapCountries.value = detailed
+    detailedMapUnits.value = detailed
+    renderedMapUnits.value = detailed
     // Let the detailed paths render while they are still blurred.
     await nextTick()
     await afterPaint()
   } catch (error) {
-    mapCountries.value = countries
+    renderedMapUnits.value = mapUnits
     highDetailEnabled.value = false
     console.error('Could not load the high-detail map.', error)
   } finally {
@@ -187,29 +208,30 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
       :score="quizScore"
       :question-number="quizQuestionNumber"
       :total="quizTotal"
-      @next="nextQuizQuestion"
-      @restart="startQuiz(visibleCountryIds)"
+      @next="advanceQuizQuestion"
+      @restart="restartQuiz"
     />
 
     <section class="map-card" :aria-label="t('worldMapGame')">
       <WorldMap
-        :countries="mapCountries"
-        :detailed-countries="detailedCountries"
+        :map-units="renderedMapUnits"
+        :detailed-map-units="detailedMapUnits"
         :detail-loading="detailLoading"
         :detail-blurred="detailBlurred"
         :high-detail-enabled="highDetailEnabled"
         :active-region="activeRegion"
         :region-options="regions"
         :selected-country-id="selectedCountryId"
+        :selected-map-unit-id="selectedMapUnitId"
         :quiz-mode="mode === 'find-country'"
         :quiz-complete="mode === 'find-country' && quizPhase === 'complete'"
         :quiz-question-id="quizQuestionId"
         :quiz-answer-id="quizAnswerId"
-        :visible-country-ids="visibleCountryIds"
+        :visible-map-unit-ids="visibleMapUnitIds"
         @detail-change="setHighDetail"
         @region-change="setActiveRegion"
         @select="handleMapSelection"
-        @quiz-next="nextQuizQuestion"
+        @quiz-next="advanceQuizQuestion"
       />
     </section>
 

@@ -10,30 +10,31 @@ import {
   type MapProjectionId,
 } from '../composables/useMapProjection'
 import { useMapZoom, type MapBounds, type MapPoint } from '../composables/useMapZoom'
-import type { CountryFeature } from '../types/country'
+import type { MapUnitFeature } from '../types/country'
 import type { MapRegion, MapRegionId } from '../data/regions'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { countryName, t } from '../i18n'
 
 const props = defineProps<{
-  countries: CountryFeature[]
-  detailedCountries: CountryFeature[] | null
+  mapUnits: MapUnitFeature[]
+  detailedMapUnits: MapUnitFeature[] | null
   detailLoading: boolean
   detailBlurred: boolean
   highDetailEnabled: boolean
   activeRegion: MapRegion
   regionOptions: readonly MapRegion[]
   selectedCountryId: string | null
+  selectedMapUnitId: string | null
   quizMode: boolean
   quizComplete: boolean
   quizQuestionId: string | null
   quizAnswerId: string | null
-  visibleCountryIds: ReadonlySet<string>
+  visibleMapUnitIds: ReadonlySet<string>
 }>()
 
 const emit = defineEmits<{
-  select: [countryId: string | null]
+  select: [countryId: string | null, mapUnitId: string | null]
   'quiz-next': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'region-change': [regionId: MapRegionId]
@@ -51,15 +52,15 @@ const { width: measuredWidth } = useElementSize(container)
 const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
 const mapHeight = computed(() => Math.max(280, Math.min(620, mapWidth.value * 0.56)))
 const { countryPaths, hasCachedPaths, projectPoint, spherePath } = useMapProjection(
-  toRef(props, 'countries'),
+  toRef(props, 'mapUnits'),
   mapWidth,
   mapHeight,
   projectionId,
   toRef(props, 'activeRegion'),
-  toRef(props, 'visibleCountryIds'),
+  toRef(props, 'visibleMapUnitIds'),
 )
-// SVG paths paint in DOM order. Keep the cached projected paths untouched and
-// draw a wrong answer above ordinary countries, then the correct one above it.
+// SVG paths paint in DOM order. Put related units above ordinary countries,
+// the clicked unit above its siblings, and the correct answer above a wrong one.
 const paintedCountryPaths = computed(() => {
   const paths = countryPaths.value
   const foregroundIds = props.quizMode
@@ -67,16 +68,44 @@ const paintedCountryPaths = computed(() => {
     : [props.selectedCountryId]
   if (!foregroundIds.some(Boolean)) return paths
 
-  const ordered = [...paths]
+  let ordered = [...paths]
   for (const id of foregroundIds) {
     if (!id) continue
-    const index = ordered.findIndex(({ country }) => country.id === id)
-    if (index >= 0 && index < ordered.length - 1) {
-      ordered.push(...ordered.splice(index, 1))
+    const foreground = ordered.filter(({ country }) => country.properties.entityId === id)
+    ordered = ordered.filter(({ country }) => country.properties.entityId !== id)
+    const selectedIndex = foreground.findIndex(({ country }) => country.id === props.selectedMapUnitId)
+    if (selectedIndex >= 0 && selectedIndex < foreground.length - 1) {
+      foreground.push(...foreground.splice(selectedIndex, 1))
     }
+    ordered.push(...foreground)
   }
   return ordered
 })
+
+function mapUnitClasses(unit: MapUnitFeature) {
+  const entityId = unit.properties.entityId
+  const clicked = unit.id === props.selectedMapUnitId
+
+  if (!props.quizMode) {
+    return {
+      'country--selected': clicked,
+      'country--related': entityId === props.selectedCountryId && !clicked,
+    }
+  }
+
+  const answered = props.quizAnswerId !== null
+  const correct = answered && entityId === props.quizQuestionId
+  const wrong = answered && entityId === props.quizAnswerId && !correct
+  const relatedAnswer = !clicked && props.selectedMapUnitId !== null
+
+  return {
+    'country--quiz-correct': correct && !(relatedAnswer && props.quizAnswerId === props.quizQuestionId),
+    'country--quiz-correct-related': correct && relatedAnswer && props.quizAnswerId === props.quizQuestionId,
+    'country--quiz-wrong': wrong && !relatedAnswer,
+    'country--quiz-wrong-related': wrong && relatedAnswer,
+    'country--quiz-inactive': answered && !correct && !wrong,
+  }
+}
 const {
   consumeDragClick,
   endPan,
@@ -107,7 +136,7 @@ function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
 }
 
 function resetView() {
-  emit('select', null)
+  emit('select', null, null)
   focusActiveRegion(true, true)
 }
 
@@ -124,6 +153,7 @@ watch([mapWidth, mapHeight], () => focusActiveRegion(false), { flush: 'post' })
 
 function selectCountry(
   countryId: string,
+  mapUnitId: string,
   bounds: MapBounds,
   focusPoint: MapPoint | undefined,
   event?: MouseEvent | KeyboardEvent,
@@ -141,11 +171,11 @@ function selectCountry(
     }
     if (props.quizQuestionId && props.quizAnswerId === null) {
       event?.stopPropagation()
-      emit('select', countryId)
+      emit('select', countryId, mapUnitId)
     }
     return
   }
-  emit('select', countryId)
+  emit('select', countryId, mapUnitId)
   zoomToBounds(bounds, focusPoint)
 }
 
@@ -173,14 +203,14 @@ function requestDetailChange(enabled: boolean) {
   emit(
     'detail-change',
     enabled,
-    enabled && props.detailedCountries !== null && hasCachedPaths(props.detailedCountries),
+    enabled && props.detailedMapUnits !== null && hasCachedPaths(props.detailedMapUnits),
   )
 }
 
 async function setProjection(nextId: MapProjectionId) {
   if (nextId === projectionId.value || interactionLocked.value) return
 
-  if (!props.highDetailEnabled || hasCachedPaths(props.countries, nextId)) {
+  if (!props.highDetailEnabled || hasCachedPaths(props.mapUnits, nextId)) {
     projectionId.value = nextId
     return
   }
@@ -246,26 +276,22 @@ async function setProjection(nextId: MapProjectionId) {
               v-for="{ country, path, bounds, focusPoint } in paintedCountryPaths"
               :key="country.id"
               :d="path"
-              v-show="visibleCountryIds.has(country.id)"
+              v-show="visibleMapUnitIds.has(country.id)"
               class="country"
-              :class="{
-                'country--selected': !quizMode && country.id === selectedCountryId,
-                'country--quiz-correct': quizMode && quizAnswerId !== null && country.id === quizQuestionId,
-                'country--quiz-wrong': quizMode && quizAnswerId === country.id && country.id !== quizQuestionId,
-                'country--quiz-inactive': quizMode && quizAnswerId !== null && country.id !== quizQuestionId && country.id !== quizAnswerId,
-              }"
-              :data-country-id="country.id"
+              :class="mapUnitClasses(country)"
+              :data-country-id="country.properties.entityId"
+              :data-map-unit-id="country.id"
               role="button"
-              :tabindex="visibleCountryIds.has(country.id) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
-              :aria-label="countryName(country.id)"
-              :aria-hidden="!visibleCountryIds.has(country.id)"
+              :tabindex="visibleMapUnitIds.has(country.id) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
+              :aria-label="countryName(country.properties.entityId)"
+              :aria-hidden="!visibleMapUnitIds.has(country.id)"
               :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
-              :aria-pressed="quizMode ? country.id === quizAnswerId : country.id === selectedCountryId"
-              @click="selectCountry(country.id, bounds, focusPoint, $event)"
-              @keydown.enter.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
-              @keydown.space.prevent="selectCountry(country.id, bounds, focusPoint, $event)"
+              :aria-pressed="country.id === selectedMapUnitId"
+              @click="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
+              @keydown.enter.prevent="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
+              @keydown.space.prevent="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
             >
-              <title v-if="canShowCountryTooltip(country.id, props)">{{ countryName(country.id) }}</title>
+              <title v-if="canShowCountryTooltip(country.properties.entityId, props)">{{ countryName(country.properties.entityId) }}</title>
             </path>
           </g>
         </g>
@@ -392,28 +418,71 @@ async function setProjection(nextId: MapProjectionId) {
   stroke-width: 2;
 }
 
+.country--related,
+:global(html[data-input-modality='keyboard'] .country--related:focus-visible) {
+  fill: #f1b6a0;
+  stroke: #ba7866;
+  stroke-width: 0.95;
+}
+
+.country--related:hover {
+  fill: #efc06a;
+  stroke: #a7783d;
+}
+
 .country--selected,
-.country--selected:hover,
 :global(html[data-input-modality='keyboard'] .country--selected:focus-visible) {
   fill: #e76f51;
   stroke: #8f3522;
   stroke-width: 1.2;
 }
 
+.country--selected:hover {
+  fill: #ed866a;
+}
+
+.country--quiz-correct-related,
+:global(html[data-input-modality='keyboard'] .country--quiz-correct-related:focus-visible) {
+  fill: #a9dcbc;
+  stroke: #59916e;
+  stroke-width: 1.05;
+}
+
+.country--quiz-correct-related:hover {
+  fill: #bce5c9;
+}
+
 .country--quiz-correct,
-.country--quiz-correct:hover,
 :global(html[data-input-modality='keyboard'] .country--quiz-correct:focus-visible) {
   fill: #69be89;
   stroke: #26774a;
   stroke-width: 1.5;
 }
 
+.country--quiz-correct:hover {
+  fill: #7ccc99;
+}
+
+.country--quiz-wrong-related,
+:global(html[data-input-modality='keyboard'] .country--quiz-wrong-related:focus-visible) {
+  fill: #f1b6a0;
+  stroke: #ba7866;
+  stroke-width: 1.05;
+}
+
+.country--quiz-wrong-related:hover {
+  fill: #f5c6b5;
+}
+
 .country--quiz-wrong,
-.country--quiz-wrong:hover,
 :global(html[data-input-modality='keyboard'] .country--quiz-wrong:focus-visible) {
   fill: #e76f51;
   stroke: #8f3522;
   stroke-width: 1.5;
+}
+
+.country--quiz-wrong:hover {
+  fill: #ed866a;
 }
 
 .map-tools {
