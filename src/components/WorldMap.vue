@@ -54,6 +54,25 @@ const { countryPaths, hasCachedPaths, projectPoint, spherePath } = useMapProject
   mapHeight,
   projectionId,
 )
+// SVG paths paint in DOM order. Keep the cached projected paths untouched and
+// draw a wrong answer above ordinary countries, then the correct one above it.
+const paintedCountryPaths = computed(() => {
+  const paths = countryPaths.value
+  const foregroundIds = props.quizMode
+    ? (props.quizAnswerId === null ? [] : [props.quizAnswerId, props.quizQuestionId])
+    : [props.selectedCountryId]
+  if (!foregroundIds.some(Boolean)) return paths
+
+  const ordered = [...paths]
+  for (const id of foregroundIds) {
+    if (!id) continue
+    const index = ordered.findIndex(({ country }) => country.id === id)
+    if (index >= 0 && index < ordered.length - 1) {
+      ordered.push(...ordered.splice(index, 1))
+    }
+  }
+  return ordered
+})
 const {
   consumeDragClick,
   endPan,
@@ -212,7 +231,7 @@ async function setProjection(nextId: MapProjectionId) {
           <path class="map-sphere" :d="spherePath" />
           <g class="countries">
             <path
-              v-for="{ country, path, bounds, focusPoint } in countryPaths"
+              v-for="{ country, path, bounds, focusPoint } in paintedCountryPaths"
               :key="country.id"
               :d="path"
               v-show="visibleCountryIds.has(country.id)"
