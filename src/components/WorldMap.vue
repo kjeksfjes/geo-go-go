@@ -272,27 +272,44 @@ async function setProjection(nextId: MapProjectionId) {
         <g ref="mapContent" class="map-content">
           <path class="map-sphere" :d="spherePath" />
           <g class="countries">
-            <path
-              v-for="{ country, path, bounds, focusPoint } in paintedCountryPaths"
+            <g
+              v-for="{ country, path, outlinePath, divisionPath, bounds, focusPoint } in paintedCountryPaths"
               :key="country.id"
-              :d="path"
               v-show="visibleMapUnitIds.has(country.id)"
-              class="country"
-              :class="mapUnitClasses(country)"
-              :data-country-id="country.properties.entityId"
-              :data-map-unit-id="country.id"
-              role="button"
-              :tabindex="visibleMapUnitIds.has(country.id) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
-              :aria-label="countryName(country.properties.entityId)"
-              :aria-hidden="!visibleMapUnitIds.has(country.id)"
-              :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
-              :aria-pressed="country.id === selectedMapUnitId"
-              @click="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
-              @keydown.enter.prevent="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
-              @keydown.space.prevent="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
             >
-              <title v-if="canShowCountryTooltip(country.properties.entityId, props)">{{ countryName(country.properties.entityId) }}</title>
-            </path>
+              <path
+                :d="path"
+                class="country"
+                :class="[mapUnitClasses(country), { 'country--split-fill': !!outlinePath }]"
+                :style="outlinePath ? { stroke: 'none' } : undefined"
+                :data-country-id="country.properties.entityId"
+                :data-map-unit-id="country.id"
+                role="button"
+                :tabindex="visibleMapUnitIds.has(country.id) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
+                :aria-label="countryName(country.properties.entityId)"
+                :aria-hidden="!visibleMapUnitIds.has(country.id)"
+                :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
+                :aria-pressed="country.id === selectedMapUnitId"
+                @click="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
+                @keydown.enter.prevent="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
+                @keydown.space.prevent="selectCountry(country.properties.entityId, country.id, bounds, focusPoint, $event)"
+              >
+                <title v-if="canShowCountryTooltip(country.properties.entityId, props)">{{ countryName(country.properties.entityId) }}</title>
+              </path>
+              <path
+                v-if="outlinePath"
+                class="country-outline"
+                :class="mapUnitClasses(country)"
+                :d="outlinePath"
+                aria-hidden="true"
+              />
+              <path
+                v-if="divisionPath"
+                class="regional-division"
+                :d="divisionPath"
+                aria-hidden="true"
+              />
+            </g>
           </g>
         </g>
       </svg>
@@ -398,6 +415,13 @@ async function setProjection(nextId: MapProjectionId) {
   transition: fill 120ms ease, filter 120ms ease;
 }
 
+.country-outline {
+  stroke: #9aa9a9;
+  stroke-width: 0.65;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
 .country--quiz-inactive {
   pointer-events: none;
 }
@@ -483,6 +507,25 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--quiz-wrong:hover {
   fill: #ed866a;
+}
+
+.country-outline {
+  fill: none;
+}
+
+:global(html[data-input-modality='keyboard'] .country--split-fill:focus-visible + .country-outline) {
+  stroke: #172d38;
+  stroke-width: 2;
+}
+
+.regional-division {
+  fill: none;
+  stroke: #6f8991;
+  stroke-width: 0.9;
+  stroke-dasharray: 3 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 .map-tools {

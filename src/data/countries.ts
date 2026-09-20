@@ -1,7 +1,8 @@
 import flagCountries from 'flag-icons/country.json'
 import { geoArea } from 'd3-geo'
 import baseMapUnits from './ne-map-units-50m.json'
-import type { CountryInfo, MapUnitFeature, SovereignInfo } from '../types/country'
+import baseRegionalGeometry from './regional-display-50m.json'
+import type { CountryInfo, MapUnitFeature, RegionalDisplayGeometry, SovereignInfo } from '../types/country'
 
 interface FlagCountry {
   code: string
@@ -24,7 +25,20 @@ const validFlagCodes = new Set(flags.map(({ code }) => code))
 // GU_A3 identifies a rendered map unit. ADM0_A3 identifies the administrative
 // country/quiz answer to which one or more units belong. SOV_A3 independently
 // records Natural Earth's sovereign relationship.
-export const mapUnits = baseMapUnits.features as unknown as MapUnitFeature[]
+type RegionalGeometry = NonNullable<MapUnitFeature['regionalDisplayGeometry']>
+type RegionalGeometryIndex = Record<string, Record<string, RegionalDisplayGeometry>>
+
+function regionalGeometryForUnit(index: RegionalGeometryIndex, unitId: string): RegionalGeometry | undefined {
+  const entries = Object.entries(index)
+    .flatMap(([regionId, units]) => units[unitId] ? [[regionId, units[unitId]] as const] : [])
+  return entries.length ? Object.fromEntries(entries) : undefined
+}
+
+const baseRegionalIndex = baseRegionalGeometry as RegionalGeometryIndex
+export const mapUnits = (baseMapUnits.features as unknown as MapUnitFeature[]).map((unit) => ({
+  ...unit,
+  regionalDisplayGeometry: regionalGeometryForUnit(baseRegionalIndex, unit.id),
+}))
 export const mapUnitById = new Map(mapUnits.map((unit) => [unit.id, unit]))
 
 const unitsBySovereignId = new Map<string, MapUnitFeature[]>()
@@ -76,13 +90,20 @@ for (const [id, units] of unitsByEntityId) {
 let detailedMapUnitsPromise: Promise<MapUnitFeature[]> | undefined
 
 export function loadDetailedMapUnits() {
-  detailedMapUnitsPromise ??= import('./ne-map-units-10m.json')
-    .then(({ default: detailed }) => detailed.features.map((feature) => {
+  detailedMapUnitsPromise ??= Promise.all([
+    import('./ne-map-units-10m.json'),
+    import('./regional-display-10m.json'),
+  ])
+    .then(([{ default: detailed }, { default: detailedRegionalGeometry }]) => detailed.features.map((feature) => {
       const base = mapUnitById.get(feature.id)
       if (!base) return null
       const unit: MapUnitFeature = {
         ...base,
         geometry: feature.geometry as MapUnitFeature['geometry'],
+        regionalDisplayGeometry: regionalGeometryForUnit(
+          detailedRegionalGeometry as RegionalGeometryIndex,
+          feature.id,
+        ) ?? base.regionalDisplayGeometry,
       }
       // The detailed atlas can contain malformed oppositely wound rings.
       // Retain the corresponding 50m unit rather than rendering the globe.

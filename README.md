@@ -28,9 +28,8 @@ Scroll over the map to zoom around the pointer; selecting a country smoothly
 zooms the map to its bounds. Drag a zoomed map to pan, or switch between
 Mercator, Winkel Tripel, Equal Earth, and Natural Earth projections with the
 map control. Regional Equal Area uses an azimuthal equal-area projection;
-Europe uses a 10°E, 52°N origin and a geographic *fitting* frame. That frame
-does not clip Russia's full geometry; its Europe/Asia geographic split remains
-to be addressed. The Nordics also have an explicit fit frame.
+Europe uses a 10°E, 52°N origin and fits the displayed European map units.
+The Nordics have an explicit fit frame.
 The hierarchical region selector can isolate and focus a continent
 or a smaller subregion without recalculating map paths. Its tree is navigation,
 not a source of geographic inheritance: Europe uses Natural Earth's UN-style
@@ -69,8 +68,28 @@ provide the canonical, broadly UN M49-style geography. Custom game groupings
 parent continent. State eligibility is a separate game rule.
 
 Natural Earth does not split Russia's European and Asian territory into map
-units. Russia is one quiz answer and one rendered unit, so a future geographic
-geometry split is still needed for an accurate Europe-focused projection.
+units. The Europe view therefore uses an optional **regional display geometry**
+for Russia at both resolutions. It is derived by intersecting the original
+Natural Earth Russia map unit with the European side of
+[Alexandr Trubetskoy's Europe–Asia boundary](https://sashamaps.net/resources/europe-asia-boundary/),
+following the Caucasus/Caspian, Ural River and Ural Mountains toward the Kara
+Sea. The source [GeoJSON boundary](https://github.com/sashatrubetskoy/asia_europe_border)
+is used with attribution. The artificial closing edges of the European-side
+polygon lie outside Russia; the cut through Russia follows the published
+geographic boundary, not a rectangular crop or SVG mask.
+The European Russia shape is filled separately from its outline: true Natural
+Earth edges retain the ordinary border style, while the cut through Russia is
+drawn as a subtle dashed geographic-division line.
+
+`scripts/build-regional-display.py` generates the separate 50m/10m override
+assets from the boundary GeoJSON and the checked-in Natural Earth units. The
+base Natural Earth geometries are never modified. Region-specific geometry is
+used consistently for projection fitting, drawing, hit-testing and
+click-to-zoom; the map-unit ID and Russia quiz identity remain unchanged.
+Other transcontinental units such as Turkey and Kazakhstan have no override
+yet and may need their own geographic treatment later. To regenerate, install
+Shapely for the build script, download the boundary project's GeoJSON export,
+then pass its file path to `python scripts/build-regional-display.py`.
 
 ## Structure
 

@@ -30,10 +30,7 @@ export const regions: readonly MapRegion[] = [
   { id: 'world', label: 'World', view: null },
   {
     id: 'europe', label: 'Europe', view: { center: [15, 52], zoom: 3.1 },
-    regionalProjection: {
-      center: [10, 52],
-      frame: { west: -35, south: 34, east: 60, north: 75 },
-    },
+    regionalProjection: { center: [10, 52] },
     children: [
       {
         id: 'nordics', label: 'Nordics', view: { center: [8, 64], zoom: 4.25 },

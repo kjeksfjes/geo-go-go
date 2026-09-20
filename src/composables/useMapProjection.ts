@@ -35,6 +35,8 @@ const projectionFactories: Record<Exclude<MapProjectionId, 'regional-equal-area'
 interface ProjectedCountry {
   country: MapUnitFeature
   path: string
+  outlinePath?: string
+  divisionPath?: string
   bounds: MapBounds
   focusPoint: MapPoint | undefined
 }
@@ -45,8 +47,7 @@ interface PathCacheEntry {
 }
 
 function frameBoundary({ west, south, east, north }: GeographicFrame): [number, number][] {
-  // Sample each edge in geographic coordinates. Its projected outline becomes
-  // the display mask as well as the fit geometry, so the two stay aligned.
+  // Sample each edge in geographic coordinates for an explicit fit frame.
   const sampleCount = Math.max(12, Math.ceil(Math.max(east - west, north - south)))
   const coordinates: [number, number][] = []
   for (let index = 0; index <= sampleCount; index++) {
@@ -87,9 +88,19 @@ export function useMapProjection(
   // Retain each projection at the current viewport size. A resize invalidates
   // the old paths, without accumulating maps at every intermediate size.
   const pathCache = new WeakMap<MapUnitFeature[], PathCacheEntry>()
+  const regionsWithDisplayGeometry = new Set(
+    fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
+  )
+
+  function displayFeature(unit: MapUnitFeature): MapUnitFeature {
+    const display = unit.regionalDisplayGeometry?.[activeRegion.value.id]
+    return display ? { ...unit, geometry: display.geometry } : unit
+  }
 
   function cacheKey(id: MapProjectionId) {
-    return id === 'regional-equal-area' ? `${id}:${activeRegion.value.id}` : id
+    return id === 'regional-equal-area' || regionsWithDisplayGeometry.has(activeRegion.value.id)
+      ? `${id}:${activeRegion.value.id}`
+      : id
   }
 
   function hasCachedPaths(source: MapUnitFeature[], id = projectionId.value): boolean {
@@ -112,7 +123,9 @@ export function useMapProjection(
       if (frame) {
         fitGeometry = { type: 'MultiPoint', coordinates: frameBoundary(frame) }
       } else {
-        const selected = fittingUnits.filter((unit) => visibleMapUnitIds.value.has(unit.id))
+        const selected = fittingUnits
+          .filter((unit) => visibleMapUnitIds.value.has(unit.id))
+          .map(displayFeature)
         if (selected.length) fitGeometry = { type: 'FeatureCollection', features: selected }
       }
     } else {
@@ -150,16 +163,18 @@ export function useMapProjection(
       ? source.filter((country) => visibleMapUnitIds.value.has(country.id))
       : source
     const paths: ProjectedCountry[] = renderCountries.map((country) => {
-      const fullBounds = generator.bounds(country) as MapBounds
-      let focusCountry = country
+      const regionalDisplay = country.regionalDisplayGeometry?.[activeRegion.value.id]
+      const displayCountry = displayFeature(country)
+      const fullBounds = generator.bounds(displayCountry) as MapBounds
+      let focusCountry = displayCountry
 
       // A map unit can still contain distant islands or cross the antimeridian.
       // Use its largest landmass for click-to-zoom when the full unit bounds
       // would be misleading, while retaining all of its rendered polygons.
-      if (country.geometry.type === 'MultiPolygon') {
-        const largestLandmass = country.geometry.coordinates
+      if (displayCountry.geometry.type === 'MultiPolygon') {
+        const largestLandmass = displayCountry.geometry.coordinates
           .map((coordinates) => ({
-            ...country,
+            ...displayCountry,
             geometry: { type: 'Polygon' as const, coordinates },
           }))
           .reduce((largest, candidate) =>
@@ -171,7 +186,7 @@ export function useMapProjection(
         const fullHeight = Math.max(1, fullBounds[1][1] - fullBounds[0][1])
         const mainWidth = Math.max(1, mainBounds[1][0] - mainBounds[0][0])
         const mainHeight = Math.max(1, mainBounds[1][1] - mainBounds[0][1])
-        const mainlandAreaShare = geoArea(largestLandmass) / geoArea(country)
+        const mainlandAreaShare = geoArea(largestLandmass) / geoArea(displayCountry)
         const spansMostOfMap = fullWidth > width.value * 0.65
         const hasDistantTerritories = Math.max(
           fullWidth / mainWidth,
@@ -191,7 +206,9 @@ export function useMapProjection(
 
       return {
         country,
-        path: generator(country) ?? '',
+        path: generator(displayCountry) ?? '',
+        outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? '' : undefined,
+        divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? '' : undefined,
         bounds: generator.bounds(focusCountry) as MapBounds,
         focusPoint: focusPoint as MapPoint | undefined,
       }
