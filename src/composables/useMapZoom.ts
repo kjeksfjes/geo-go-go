@@ -5,6 +5,9 @@ export type MapBounds = [[number, number], [number, number]]
 export type MapPoint = [number, number]
 
 const MIN_ZOOM = 1
+// Allow a little more room to pull the map away from an edge while keeping
+// roughly a third of the projected viewport available to drag it back.
+const MAX_EMPTY_VIEWPORT_FRACTION = 0.65
 // Keep a finite safety ceiling while allowing 1:50m microstate geometries to
 // become practically visible. High zoom reveals no detail beyond the source.
 const MAX_ZOOM = 256
@@ -51,12 +54,12 @@ export function useMapZoom(
   }
 
   function constrainTransform(x: number, y: number, scale: number) {
-    // Let either edge travel as far as the viewport center. This keeps the map
-    // recoverable while allowing countries near the antimeridian to be centered.
-    const minX = width.value * (0.5 - scale)
-    const maxX = width.value * 0.5
-    const minY = height.value * (0.5 - scale)
-    const maxY = height.value * 0.5
+    // Permit empty space beyond the projected edges without losing the map.
+    const visibleFraction = 1 - MAX_EMPTY_VIEWPORT_FRACTION
+    const minX = width.value * (visibleFraction - scale)
+    const maxX = width.value * MAX_EMPTY_VIEWPORT_FRACTION
+    const minY = height.value * (visibleFraction - scale)
+    const maxY = height.value * MAX_EMPTY_VIEWPORT_FRACTION
 
     const wrap = horizontalWrap.value
     if (wrap && scale * wrap.period >= width.value) {

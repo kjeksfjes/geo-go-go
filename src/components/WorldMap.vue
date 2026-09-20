@@ -365,11 +365,13 @@ async function setProjection(nextId: MapProjectionId) {
               >
                 <title v-if="canShowCountryTooltip(unit.properties.entityId, props)">{{ countryName(unit.properties.entityId) }}</title>
               </path>
+              <!-- Open border linework must not inherit the country's hover fill. -->
               <path
                 v-if="outlinePath"
                 class="country-outline"
                 :class="geographicUnitClasses(unit)"
                 :d="outlinePath"
+                style="fill: none"
                 aria-hidden="true"
               />
               <path
@@ -581,10 +583,6 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--quiz-wrong:hover {
   fill: #ed866a;
-}
-
-.country-outline {
-  fill: none;
 }
 
 :global(html[data-input-modality='keyboard'] .country--split-fill:focus-visible + .country-outline) {
