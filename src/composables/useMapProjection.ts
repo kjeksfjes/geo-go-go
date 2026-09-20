@@ -37,8 +37,8 @@ interface ProjectedCountry {
 }
 
 interface PathCacheEntry {
-  key: string
-  paths: ProjectedCountry[]
+  sizeKey: string
+  projections: Map<MapProjectionId, ProjectedCountry[]>
 }
 
 export function useMapProjection(
@@ -54,10 +54,15 @@ export function useMapProjection(
     type: 'FeatureCollection',
     features: countries.value,
   }
-  // Cache the last projection of each source array. This keeps both the 50m
-  // and 10m path sets ready after their first render, without retaining every
-  // intermediate map size after repeated resizes.
+  // Retain each projection at the current viewport size. A resize invalidates
+  // the old paths, without accumulating maps at every intermediate size.
   const pathCache = new WeakMap<CountryFeature[], PathCacheEntry>()
+
+  function hasCachedPaths(source: CountryFeature[], id = projectionId.value): boolean {
+    const cached = pathCache.get(source)
+    return cached?.sizeKey === `${width.value}:${height.value}`
+      && cached.projections.has(id)
+  }
 
   const pathGenerator = computed(() => {
     const padding = Math.max(12, Math.min(width.value, height.value) * 0.035)
@@ -74,9 +79,15 @@ export function useMapProjection(
 
   const countryPaths = computed(() => {
     const source = countries.value
-    const cacheKey = `${projectionId.value}:${width.value}:${height.value}`
-    const cached = pathCache.get(source)
-    if (cached?.key === cacheKey) return cached.paths
+    const sizeKey = `${width.value}:${height.value}`
+    let cached = pathCache.get(source)
+    if (cached?.sizeKey === sizeKey) {
+      const paths = cached.projections.get(projectionId.value)
+      if (paths) return paths
+    } else {
+      cached = { sizeKey, projections: new Map() }
+      pathCache.set(source, cached)
+    }
 
     const generator = pathGenerator.value
     const paths: ProjectedCountry[] = source.map((country) => {
@@ -128,11 +139,18 @@ export function useMapProjection(
       }
     })
 
-    pathCache.set(source, { key: cacheKey, paths })
+    cached.projections.set(projectionId.value, paths)
     return paths
   })
 
   const spherePath = computed(() => pathGenerator.value({ type: 'Sphere' }) ?? '')
 
-  return { countryPaths, spherePath }
+  function projectPoint(point: MapPoint): MapPoint | undefined {
+    const projection = pathGenerator.value.projection()
+    if (typeof projection !== 'function') return undefined
+
+    return projection(point) as MapPoint | undefined
+  }
+
+  return { countryPaths, hasCachedPaths, projectPoint, spherePath }
 }

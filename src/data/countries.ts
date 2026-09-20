@@ -128,6 +128,10 @@ export function loadDetailedCountries() {
 
         return country
       }))
+    .catch((error: unknown) => {
+      detailedCountriesPromise = undefined
+      throw error
+    })
 
   return detailedCountriesPromise
 }

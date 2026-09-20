@@ -1,6 +1,22 @@
 import { createApp } from 'vue'
 import 'flag-icons/css/flag-icons.min.css'
+import '@zanmato/vue3-treeselect/dist/vue3-treeselect.min.css'
 import './styles.css'
 import App from './App.vue'
+
+// Read-only TreeSelect inputs can match :focus-visible after a mouse click.
+// Track the active input mode so focus styling is reserved for keyboard use.
+const root = document.documentElement
+document.addEventListener('keydown', (event) => {
+  if (!event.altKey && !event.ctrlKey && !event.metaKey) {
+    root.dataset.inputModality = 'keyboard'
+  }
+}, true)
+document.addEventListener('pointerdown', () => {
+  root.dataset.inputModality = 'pointer'
+}, true)
+document.addEventListener('wheel', () => {
+  root.dataset.inputModality = 'pointer'
+}, { capture: true, passive: true })
 
 createApp(App).mount('#app')

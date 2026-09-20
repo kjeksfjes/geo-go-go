@@ -20,7 +20,7 @@ const emit = defineEmits<{
     :disabled="loading"
     @click="emit('update:modelValue', !props.modelValue)"
   >
-    <span>{{ loading ? 'Loading detail…' : 'High detail' }}</span>
+    <span>High detail</span>
     <span class="detail-toggle__track" aria-hidden="true">
       <span class="detail-toggle__thumb" />
     </span>
@@ -46,14 +46,13 @@ const emit = defineEmits<{
   backdrop-filter: blur(7px);
 }
 
-.detail-toggle:focus-visible {
+:global(html[data-input-modality='keyboard'] .detail-toggle:focus-visible) {
   outline: 2px solid rgba(23, 45, 56, 0.35);
   outline-offset: 2px;
 }
 
 .detail-toggle:disabled {
-  cursor: wait;
-  opacity: 0.72;
+  cursor: default;
 }
 
 .detail-toggle__track {

@@ -134,6 +134,19 @@ export function useMapZoom(
     )
   }
 
+  function zoomToPoint(point: MapPoint, scale: number, animated = true) {
+    const targetScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale))
+    const x = width.value / 2 - targetScale * point[0]
+    const y = height.value / 2 - targetScale * point[1]
+
+    if (animated) {
+      animateTo(x, y, targetScale)
+    } else {
+      stopAnimation()
+      setTransform(x, y, targetScale)
+    }
+  }
+
   function zoomFromWheel(event: WheelEvent, svg: SVGSVGElement) {
     stopAnimation()
 
@@ -239,5 +252,6 @@ export function useMapZoom(
     startPan,
     zoomFromWheel,
     zoomToBounds,
+    zoomToPoint,
   }
 }

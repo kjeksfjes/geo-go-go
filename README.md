@@ -24,7 +24,10 @@ Open the local URL printed by Vite, then hover, focus, or click a country.
 Scroll over the map to zoom around the pointer; selecting a country smoothly
 zooms the map to its bounds. Drag a zoomed map to pan, or switch between
 Mercator, Winkel Tripel, Equal Earth, and Natural Earth projections with the
-map control.
+map control. The hierarchical region selector can isolate and focus a continent
+or a smaller subregion without recalculating map paths. Parent regions include
+their child regions and can also be selected directly. Its dropdown uses
+`@zanmato/vue3-treeselect` for tree navigation and single selection.
 
 Selection framing uses the main landmass for countries with widely detached
 territories, while every territory remains rendered in the selected color.
@@ -36,6 +39,7 @@ territories, while every territory remains rendered in the selected color.
 - `src/composables/useElementSize.ts` observes the responsive map container.
 - `src/composables/useMapZoom.ts` owns wheel and animated country zoom state.
 - `src/data/countries.ts` converts atlas topology and resolves display/flag metadata.
+- `src/data/regions.ts` defines the region hierarchy and country membership.
 - `src/App.vue` owns the selected-country UI state.
 
 Atlas ISO numeric IDs are used as stable path keys. Territories or disputed
