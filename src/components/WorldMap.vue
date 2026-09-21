@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, toRef, watch } from 'vue'
+import { computed, nextTick, ref, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import RegionSelector from './RegionSelector.vue'
@@ -46,6 +46,8 @@ const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
 const bathymetryEnabled = ref(true)
+const reliefEnabled = ref(true)
+const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
@@ -60,6 +62,7 @@ const {
   hasCachedPaths,
   horizontalWrap,
   projectPoint,
+  reliefPaths,
   spherePath,
 } = useMapProjection(
   toRef(props, 'geographicUnits'),
@@ -135,6 +138,10 @@ function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature) {
 function isGeographicUnitVisible(unit: GeographicUnitFeature) {
   return unit.properties.mapUnitIds.some((id) => props.visibleMapUnitIds.has(id))
 }
+const visibleLandPath = computed(() => geographicPaths.value
+  .filter(({ unit }) => isGeographicUnitVisible(unit))
+  .map(({ path }) => path)
+  .join(' '))
 const {
   consumeDragClick,
   endPan,
@@ -345,6 +352,11 @@ async function setProjection(nextId: MapProjectionId) {
         @click="handleMapClick"
       >
         <g ref="mapContent" class="map-content">
+          <defs>
+            <clipPath :id="reliefClipId" clipPathUnits="userSpaceOnUse">
+              <path :d="visibleLandPath" />
+            </clipPath>
+          </defs>
           <path class="map-sphere" :d="spherePath" />
           <g v-if="bathymetryEnabled" class="bathymetry" aria-hidden="true">
             <g
@@ -358,6 +370,25 @@ async function setProjection(nextId: MapProjectionId) {
                 :key="band.depth"
                 class="bathymetry__band"
                 :class="`bathymetry__band--${band.depth}`"
+                :d="band.path"
+              />
+            </g>
+          </g>
+          <g
+            v-for="copyIndex in [0, 1]"
+            :key="`terrain-${copyIndex}`"
+            v-show="copyIndex === 0 || wrapActive"
+            class="terrain"
+            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+            aria-hidden="true"
+          >
+            <path class="terrain__land" :d="visibleLandPath" />
+            <g v-if="reliefEnabled" class="relief" :clip-path="`url(#${reliefClipId})`">
+              <path
+                v-for="band in reliefPaths"
+                :key="band.elevation"
+                class="relief__band"
+                :class="`relief__band--${band.elevation}`"
                 :d="band.path"
               />
             </g>
@@ -442,6 +473,12 @@ async function setProjection(nextId: MapProjectionId) {
           :loading="interactionLocked"
           :model-value="bathymetryEnabled"
           @update:model-value="bathymetryEnabled = $event"
+        />
+        <MapDetailToggle
+          :label="t('relief')"
+          :loading="interactionLocked"
+          :model-value="reliefEnabled"
+          @update:model-value="reliefEnabled = $event"
         />
       </div>
 
@@ -533,8 +570,46 @@ async function setProjection(nextId: MapProjectionId) {
   fill: #8abdcf;
 }
 
-.country {
+.terrain,
+.relief {
+  pointer-events: none;
+}
+
+.terrain__land {
   fill: #f5f2e9;
+}
+
+.relief__band {
+  stroke: none;
+}
+
+.relief__band--500 {
+  fill: #c8cbb6;
+  fill-opacity: 0.12;
+}
+
+.relief__band--1000 {
+  fill: #bcc0a8;
+  fill-opacity: 0.11;
+}
+
+.relief__band--1500 {
+  fill: #afb39a;
+  fill-opacity: 0.12;
+}
+
+.relief__band--2250 {
+  fill: #a0a58b;
+  fill-opacity: 0.13;
+}
+
+.relief__band--3000 {
+  fill: #91977c;
+  fill-opacity: 0.14;
+}
+
+.country {
+  fill: transparent;
   stroke: #9aa9a9;
   stroke-width: 0.65;
   vector-effect: non-scaling-stroke;
@@ -561,7 +636,7 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country:hover,
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
-  fill: #efc06a;
+  fill: rgb(239 192 106 / 72%);
   filter: brightness(1.03);
 }
 
@@ -572,74 +647,74 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--related,
 :global(html[data-input-modality='keyboard'] .country--related:focus-visible) {
-  fill: #f1b6a0;
+  fill: rgb(241 182 160 / 70%);
   stroke: #ba7866;
   stroke-width: 0.95;
 }
 
 .country--related:hover {
-  fill: #efc06a;
+  fill: rgb(239 192 106 / 74%);
   stroke: #a7783d;
 }
 
 .country--selected,
 :global(html[data-input-modality='keyboard'] .country--selected:focus-visible) {
-  fill: #e76f51;
+  fill: rgb(231 111 81 / 82%);
   stroke: #8f3522;
   stroke-width: 1.2;
 }
 
 .country--selected:hover {
-  fill: #ed866a;
+  fill: rgb(237 134 106 / 84%);
 }
 
 .country--identity-hover:not(.country--selected) {
-  fill: #efc06a;
+  fill: rgb(239 192 106 / 72%);
   filter: brightness(1.03);
 }
 
 .country--quiz-correct-related,
 :global(html[data-input-modality='keyboard'] .country--quiz-correct-related:focus-visible) {
-  fill: #a9dcbc;
+  fill: rgb(169 220 188 / 72%);
   stroke: #59916e;
   stroke-width: 1.05;
 }
 
 .country--quiz-correct-related:hover {
-  fill: #bce5c9;
+  fill: rgb(188 229 201 / 76%);
 }
 
 .country--quiz-correct,
 :global(html[data-input-modality='keyboard'] .country--quiz-correct:focus-visible) {
-  fill: #69be89;
+  fill: rgb(105 190 137 / 82%);
   stroke: #26774a;
   stroke-width: 1.5;
 }
 
 .country--quiz-correct:hover {
-  fill: #7ccc99;
+  fill: rgb(124 204 153 / 84%);
 }
 
 .country--quiz-wrong-related,
 :global(html[data-input-modality='keyboard'] .country--quiz-wrong-related:focus-visible) {
-  fill: #f1b6a0;
+  fill: rgb(241 182 160 / 70%);
   stroke: #ba7866;
   stroke-width: 1.05;
 }
 
 .country--quiz-wrong-related:hover {
-  fill: #f5c6b5;
+  fill: rgb(245 198 181 / 76%);
 }
 
 .country--quiz-wrong,
 :global(html[data-input-modality='keyboard'] .country--quiz-wrong:focus-visible) {
-  fill: #e76f51;
+  fill: rgb(231 111 81 / 82%);
   stroke: #8f3522;
   stroke-width: 1.5;
 }
 
 .country--quiz-wrong:hover {
-  fill: #ed866a;
+  fill: rgb(237 134 106 / 84%);
 }
 
 :global(html[data-input-modality='keyboard'] .country--split-fill:focus-visible + .country-outline) {

@@ -11,6 +11,8 @@ After each resolution has rendered once, its projected SVG paths are cached so
 later switches are immediate at the current map size and projection.
 The temporary **Bathymetry** toggle adds three noninteractive ocean-depth bands
 (200m, 2,000m, and 6,000m) behind the country layer for relief-style experiments.
+The adjacent **Relief** toggle adds five similarly simplified elevation bands
+(500m, 1,000m, 1,500m, 2,250m, and 3,000m) without changing map interaction.
 
 It defaults to a conventional Mercator projection. Mercator preserves local
 shapes and angles well, while enlarging areas toward the poles in the familiar
@@ -78,6 +80,15 @@ The bathymetry POC uses Natural Earth's nested 1:10m vector bathymetry bands.
 and 6,000m source files into `src/data/bathymetry.json`. The bands are projected
 by the same D3 projection and transformed by the same pan/zoom group as the
 country geometry; they do not participate in hit-testing or quiz behavior.
+
+The land-relief POC derives five vector elevation bands from NOAA NCEI's
+ETOPO 2022 ice-surface model. `scripts/import-relief.py` uses interpolated
+contours from a sampled NetCDF grid, removes tiny fragments, and simplifies the
+result into smooth SVG-ready geometry in `src/data/relief.json`. At runtime,
+the projected bands are clipped to the currently visible geographic units, so
+regional filtering and regional display geometry remain authoritative. Country
+borders and translucent interaction states are rendered independently above
+the relief, preserving some elevation contrast during hover and quiz feedback.
 
 The checked-in map assets come from Natural Earth 5.1.1 **Admin-0 Map Units**
 at [1:50m](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-details/)

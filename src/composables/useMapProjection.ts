@@ -15,6 +15,7 @@ import type { FeatureCollection, MultiPoint } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
 import { bathymetryBands, type BathymetryDepth } from '../data/bathymetry'
+import { reliefBands, type ReliefElevation } from '../data/relief'
 import type { MapBounds, MapPoint } from './useMapZoom'
 
 export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'natural-earth' | 'regional-equal-area'
@@ -50,6 +51,11 @@ interface ProjectedGeographicUnit {
 
 export interface ProjectedBathymetryBand {
   depth: BathymetryDepth
+  path: string
+}
+
+export interface ProjectedReliefBand {
+  elevation: ReliefElevation
   path: string
 }
 
@@ -101,6 +107,7 @@ export function useMapProjection(
   // the old paths, without accumulating maps at every intermediate size.
   const pathCache = new WeakMap<GeographicUnitFeature[], PathCacheEntry>()
   const bathymetryPathCache = new Map<string, { sizeKey: string; paths: ProjectedBathymetryBand[] }>()
+  const reliefPathCache = new Map<string, { sizeKey: string; paths: ProjectedReliefBand[] }>()
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
   )
@@ -259,6 +266,21 @@ export function useMapProjection(
     return paths
   })
 
+  const reliefPaths = computed(() => {
+    const key = cacheKey(projectionId.value)
+    const sizeKey = `${width.value}:${height.value}`
+    const cached = reliefPathCache.get(key)
+    if (cached?.sizeKey === sizeKey) return cached.paths
+
+    const generator = pathGenerator.value
+    const paths = reliefBands.map(({ elevation, geometry }) => ({
+      elevation,
+      path: generator(geometry) ?? '',
+    }))
+    reliefPathCache.set(key, { sizeKey, paths })
+    return paths
+  })
+
   const horizontalWrap = computed<HorizontalWrap | null>(() => {
     if (projectionId.value !== 'mercator' || activeRegion.value.id !== 'world') return null
     const projection = pathGenerator.value.projection() as GeoProjection
@@ -281,6 +303,7 @@ export function useMapProjection(
     hasCachedPaths,
     horizontalWrap,
     projectPoint,
+    reliefPaths,
     spherePath,
   }
 }
