@@ -9,6 +9,8 @@ and render light, avoids changing geometry in the middle of a gesture, and makes
 coastlines and small countries clearer at close range when desired.
 After each resolution has rendered once, its projected SVG paths are cached so
 later switches are immediate at the current map size and projection.
+The temporary **Bathymetry** toggle adds three noninteractive ocean-depth bands
+(200m, 2,000m, and 6,000m) behind the country layer for relief-style experiments.
 
 It defaults to a conventional Mercator projection. Mercator preserves local
 shapes and angles well, while enlarging areas toward the poles in the familiar
@@ -70,6 +72,12 @@ camera focus remains local. Quiz feedback is separate and unchanged by this
 explore-mode policy.
 
 ## Geographic data
+
+The bathymetry POC uses Natural Earth's nested 1:10m vector bathymetry bands.
+`scripts/import-bathymetry.py` merges and simplifies the selected 200m, 2,000m,
+and 6,000m source files into `src/data/bathymetry.json`. The bands are projected
+by the same D3 projection and transformed by the same pan/zoom group as the
+country geometry; they do not participate in hit-testing or quiz behavior.
 
 The checked-in map assets come from Natural Earth 5.1.1 **Admin-0 Map Units**
 at [1:50m](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-details/)

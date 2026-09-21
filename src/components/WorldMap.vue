@@ -45,6 +45,7 @@ const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
+const bathymetryEnabled = ref(true)
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
@@ -53,7 +54,14 @@ const mapBlurred = computed(() => props.detailBlurred || projectionBlurred.value
 const { width: measuredWidth } = useElementSize(container)
 const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
 const mapHeight = computed(() => Math.max(280, Math.min(620, mapWidth.value * 0.56)))
-const { geographicPaths, hasCachedPaths, horizontalWrap, projectPoint, spherePath } = useMapProjection(
+const {
+  bathymetryPaths,
+  geographicPaths,
+  hasCachedPaths,
+  horizontalWrap,
+  projectPoint,
+  spherePath,
+} = useMapProjection(
   toRef(props, 'geographicUnits'),
   mapWidth,
   mapHeight,
@@ -338,6 +346,22 @@ async function setProjection(nextId: MapProjectionId) {
       >
         <g ref="mapContent" class="map-content">
           <path class="map-sphere" :d="spherePath" />
+          <g v-if="bathymetryEnabled" class="bathymetry" aria-hidden="true">
+            <g
+              v-for="copyIndex in [0, 1]"
+              :key="copyIndex"
+              v-show="copyIndex === 0 || wrapActive"
+              :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+            >
+              <path
+                v-for="band in bathymetryPaths"
+                :key="band.depth"
+                class="bathymetry__band"
+                :class="`bathymetry__band--${band.depth}`"
+                :d="band.path"
+              />
+            </g>
+          </g>
           <g
             v-for="copyIndex in [0, 1]"
             :key="copyIndex"
@@ -413,6 +437,12 @@ async function setProjection(nextId: MapProjectionId) {
           :model-value="highDetailEnabled"
           @update:model-value="requestDetailChange"
         />
+        <MapDetailToggle
+          :label="t('bathymetry')"
+          :loading="interactionLocked"
+          :model-value="bathymetryEnabled"
+          @update:model-value="bathymetryEnabled = $event"
+        />
       </div>
 
       <div class="map-tools">
@@ -480,7 +510,27 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .map-sphere {
-  fill: #dcebf1;
+  fill: #d9ebf2;
+}
+
+.bathymetry {
+  pointer-events: none;
+}
+
+.bathymetry__band {
+  stroke: none;
+}
+
+.bathymetry__band--200 {
+  fill: #c9e0e9;
+}
+
+.bathymetry__band--2000 {
+  fill: #abd0df;
+}
+
+.bathymetry__band--6000 {
+  fill: #8abdcf;
 }
 
 .country {

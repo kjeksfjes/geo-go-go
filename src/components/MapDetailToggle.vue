@@ -3,6 +3,7 @@ import { t } from '../i18n'
 const props = defineProps<{
   loading: boolean
   modelValue: boolean
+  label?: string
 }>()
 
 const emit = defineEmits<{
@@ -21,7 +22,7 @@ const emit = defineEmits<{
     :disabled="loading"
     @click="emit('update:modelValue', !props.modelValue)"
   >
-    <span>{{ t('highDetail') }}</span>
+    <span>{{ label ?? t('highDetail') }}</span>
     <span class="detail-toggle__track" aria-hidden="true">
       <span class="detail-toggle__thumb" />
     </span>

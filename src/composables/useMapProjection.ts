@@ -14,6 +14,7 @@ import { computed, type Ref } from 'vue'
 import type { FeatureCollection, MultiPoint } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
+import { bathymetryBands, type BathymetryDepth } from '../data/bathymetry'
 import type { MapBounds, MapPoint } from './useMapZoom'
 
 export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'natural-earth' | 'regional-equal-area'
@@ -45,6 +46,11 @@ interface ProjectedGeographicUnit {
   displayBounds: MapBounds
   bounds: MapBounds
   focusPoint: MapPoint | undefined
+}
+
+export interface ProjectedBathymetryBand {
+  depth: BathymetryDepth
+  path: string
 }
 
 interface PathCacheEntry {
@@ -94,6 +100,7 @@ export function useMapProjection(
   // Retain each projection at the current viewport size. A resize invalidates
   // the old paths, without accumulating maps at every intermediate size.
   const pathCache = new WeakMap<GeographicUnitFeature[], PathCacheEntry>()
+  const bathymetryPathCache = new Map<string, { sizeKey: string; paths: ProjectedBathymetryBand[] }>()
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
   )
@@ -237,6 +244,21 @@ export function useMapProjection(
 
   const spherePath = computed(() => pathGenerator.value({ type: 'Sphere' }) ?? '')
 
+  const bathymetryPaths = computed(() => {
+    const key = cacheKey(projectionId.value)
+    const sizeKey = `${width.value}:${height.value}`
+    const cached = bathymetryPathCache.get(key)
+    if (cached?.sizeKey === sizeKey) return cached.paths
+
+    const generator = pathGenerator.value
+    const paths = bathymetryBands.map(({ depth, geometry }) => ({
+      depth,
+      path: generator(geometry) ?? '',
+    }))
+    bathymetryPathCache.set(key, { sizeKey, paths })
+    return paths
+  })
+
   const horizontalWrap = computed<HorizontalWrap | null>(() => {
     if (projectionId.value !== 'mercator' || activeRegion.value.id !== 'world') return null
     const projection = pathGenerator.value.projection() as GeoProjection
@@ -253,5 +275,12 @@ export function useMapProjection(
     return projection(point) as MapPoint | undefined
   }
 
-  return { geographicPaths, hasCachedPaths, horizontalWrap, projectPoint, spherePath }
+  return {
+    bathymetryPaths,
+    geographicPaths,
+    hasCachedPaths,
+    horizontalWrap,
+    projectPoint,
+    spherePath,
+  }
 }
