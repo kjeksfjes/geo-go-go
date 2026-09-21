@@ -23,8 +23,11 @@ export interface RegionalDisplayGeometry {
 
 export type MapUnitFeature = Feature<Geometry, CountryProperties> & {
   id: string
+  // Quiz identity may differ from Natural Earth's source ADM0_A3 for an
+  // unrecognized/breakaway map unit. properties.entityId remains the raw ID.
+  quizEntityId: string
   // Optional geometry for a geographic region. The base geometry remains the
-  // unmodified Natural Earth map unit and continues to define quiz identity.
+  // unmodified Natural Earth map unit; quiz identity is a separate policy.
   regionalDisplayGeometry?: Readonly<Record<string, RegionalDisplayGeometry>>
 }
 

@@ -74,7 +74,8 @@ const playableEntityIds: Partial<Record<MapRegionId, ReadonlySet<string>>> = {
 }
 
 function belongsToRegion(unit: MapUnitFeature, id: MapRegionId): boolean {
-  const { entityId, regionUn, subregion } = unit.properties
+  const { regionUn, subregion } = unit.properties
+  const entityId = unit.quizEntityId
   const playableIds = playableEntityIds[id]
   if (playableIds) return playableIds.has(entityId)
 
@@ -107,7 +108,7 @@ function indexRegion(region: MapRegion) {
   regionById.set(region.id, region)
   const matchingUnits = mapUnits.filter((unit) => belongsToRegion(unit, region.id))
   mapUnitIdsByRegion.set(region.id, new Set(matchingUnits.map((unit) => unit.id)))
-  entityIdsByRegion.set(region.id, new Set(matchingUnits.map((unit) => unit.properties.entityId)))
+  entityIdsByRegion.set(region.id, new Set(matchingUnits.map((unit) => unit.quizEntityId)))
   for (const child of region.children ?? []) indexRegion(child)
 }
 

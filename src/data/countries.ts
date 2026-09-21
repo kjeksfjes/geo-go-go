@@ -5,6 +5,7 @@ import baseRegionalGeometry from './regional-display-50m.json'
 import baseCombinedGeometry from './combined-geographic-units-50m.json'
 import baseMeaningfulSubunits from './meaningful-subunits-50m.json'
 import semanticMapUnits from './meaningful-map-units.json'
+import quizIdentityByMapUnitId from './ne-quiz-identity-by-map-unit.json'
 import type { Geometry } from 'geojson'
 import type {
   CountryInfo,
@@ -49,9 +50,15 @@ function regionalGeometryForUnit(index: RegionalGeometryIndex, unitId: string): 
 const baseRegionalIndex = baseRegionalGeometry as RegionalGeometryIndex
 export const mapUnits: MapUnitFeature[] = (baseMapUnits.features as unknown as MapUnitFeature[]).map((unit) => ({
   ...unit,
+  quizEntityId: (quizIdentityByMapUnitId as Record<string, string>)[unit.id] ?? unit.properties.entityId,
   regionalDisplayGeometry: regionalGeometryForUnit(baseRegionalIndex, unit.id),
 }))
 export const mapUnitById = new Map(mapUnits.map((unit) => [unit.id, unit]))
+for (const [unitId, entityId] of Object.entries(quizIdentityByMapUnitId)) {
+  if (!mapUnitById.has(unitId) || !mapUnits.some((unit) => unit.properties.entityId === entityId)) {
+    throw new Error(`Invalid canonical quiz identity for map unit ${unitId}: ${entityId}`)
+  }
+}
 
 const unitsBySovereignId = new Map<string, MapUnitFeature[]>()
 for (const unit of mapUnits) {
@@ -70,14 +77,16 @@ export const sovereignInfoById = new Map<string, SovereignInfo>(
 
 const unitsByEntityId = new Map<string, MapUnitFeature[]>()
 for (const unit of mapUnits) {
-  const siblings = unitsByEntityId.get(unit.properties.entityId) ?? []
+  const siblings = unitsByEntityId.get(unit.quizEntityId) ?? []
   siblings.push(unit)
-  unitsByEntityId.set(unit.properties.entityId, siblings)
+  unitsByEntityId.set(unit.quizEntityId, siblings)
 }
 
 export const countryInfoById = new Map<string, CountryInfo>()
 for (const [id, units] of unitsByEntityId) {
-  const primary = units.find(({ properties }) => properties.name === properties.adminName) ?? units[0]
+  const primary = units.find((unit) => unit.id === id)
+    ?? units.find(({ properties }) => properties.name === properties.adminName)
+    ?? units[0]
   const { adminName, sovereignId, sovereignName } = primary.properties
   const override = entityOverrides[id]
   const isoCode = primary.properties.isoA2.toLowerCase()
@@ -121,7 +130,7 @@ for (const id of independentlyMeaningfulUnitIds) {
     id: componentId,
     sourceKind: 'map-unit',
     sourceId: id,
-    entityId: unit.properties.entityId,
+    entityId: unit.quizEntityId,
     name: unit.properties.name,
     sourceType: unit.properties.featureType,
     nameOverrides: override?.name,
@@ -131,13 +140,15 @@ for (const id of independentlyMeaningfulUnitIds) {
 
 for (const unit of mapSubunits) {
   if (unit.id.startsWith('remainder:')) continue
+  const parent = mapUnitById.get(unit.properties.mapUnitId)
+  if (!parent) throw new Error(`Map subunit has no parent: ${unit.id}`)
   const componentId = `map-subunit:${unit.id}`
   const override = metadataOverrides[componentId]
   componentInfoById.set(componentId, {
     id: componentId,
     sourceKind: 'map-subunit',
     sourceId: unit.id,
-    entityId: unit.properties.entityId,
+    entityId: parent.quizEntityId,
     name: unit.properties.name,
     sourceType: unit.properties.featureType,
     nameOverrides: override?.name,
@@ -176,7 +187,7 @@ function buildGeographicUnits(
           type: 'Feature',
           id: `subunit:${subunitId}`,
           properties: {
-            entityId: unit.properties.entityId,
+            entityId: unit.quizEntityId,
             mapUnitIds: [unit.id],
             componentId: `map-subunit:${subunitId}`,
           },
@@ -195,7 +206,7 @@ function buildGeographicUnits(
           type: 'Feature',
           id: remainder.id,
           properties: {
-            entityId: unit.properties.entityId,
+            entityId: unit.quizEntityId,
             mapUnitIds: [unit.id],
           },
           geometry: remainder.geometry,
@@ -211,14 +222,14 @@ function buildGeographicUnits(
 
     const geographicId = independentlyMeaningfulUnitIds.has(unit.id)
       ? `unit:${unit.id}`
-      : `entity:${unit.properties.entityId}`
+      : `entity:${unit.quizEntityId}`
     const parts = partsByGeographicId.get(geographicId) ?? []
     parts.push(unit)
     partsByGeographicId.set(geographicId, parts)
   }
 
   for (const [id, parts] of partsByGeographicId) {
-    const entityId = parts[0].properties.entityId
+    const entityId = parts[0].quizEntityId
     const geometry = parts.length === 1
       ? parts[0].geometry
       : (parts.some((part) => mapUnitById.get(part.id) === part)
