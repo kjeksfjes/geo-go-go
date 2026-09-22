@@ -21,7 +21,12 @@ export function useMapZoom(
 ) {
   const transform = reactive({ x: 0, y: 0, scale: 1 })
   const isDragging = ref(false)
+  const isWheeling = ref(false)
+  const isAnimating = ref(false)
   let animationFrame: number | undefined
+  let panFrame: number | undefined
+  let wheelEndTimer: number | undefined
+  let pendingPan: { x: number; y: number; scale: number } | undefined
   let dragState: {
     pointerId: number
     startClientX: number
@@ -36,6 +41,9 @@ export function useMapZoom(
   let suppressNextClick = false
 
   const isZoomed = computed(() => transform.scale > MIN_ZOOM + 0.01)
+  const isInteracting = computed(() =>
+    isDragging.value || isWheeling.value || isAnimating.value,
+  )
   const wrapActive = computed(() => {
     const wrap = horizontalWrap.value
     return wrap !== null && transform.scale * wrap.period >= width.value
@@ -52,6 +60,15 @@ export function useMapZoom(
       cancelAnimationFrame(animationFrame)
       animationFrame = undefined
     }
+    isAnimating.value = false
+  }
+
+  function cancelPanUpdate() {
+    if (panFrame !== undefined) {
+      cancelAnimationFrame(panFrame)
+      panFrame = undefined
+    }
+    pendingPan = undefined
   }
 
   function constrainTransform(x: number, y: number, scale: number) {
@@ -91,6 +108,28 @@ export function useMapZoom(
       'transform',
       `translate(${next.x} ${next.y}) scale(${next.scale})`,
     )
+  }
+
+  function applyPendingPan() {
+    panFrame = undefined
+    const pending = pendingPan
+    pendingPan = undefined
+    if (pending) setTransform(pending.x, pending.y, pending.scale)
+  }
+
+  function schedulePan(x: number, y: number, scale: number) {
+    pendingPan = { x, y, scale }
+    panFrame ??= requestAnimationFrame(applyPendingPan)
+  }
+
+  function flushPendingPan() {
+    if (panFrame !== undefined) {
+      cancelAnimationFrame(panFrame)
+      panFrame = undefined
+    }
+    const pending = pendingPan
+    pendingPan = undefined
+    if (pending) setTransform(pending.x, pending.y, pending.scale)
   }
 
   function animateTo(
@@ -138,6 +177,7 @@ export function useMapZoom(
       y: (height.value / 2 - start.y) / start.scale,
     }
     const startedAt = performance.now()
+    isAnimating.value = true
 
     function frame(now: number) {
       const progress = Math.min(1, (now - startedAt) / duration)
@@ -172,6 +212,7 @@ export function useMapZoom(
         animationFrame = requestAnimationFrame(frame)
       } else {
         animationFrame = undefined
+        isAnimating.value = false
       }
     }
 
@@ -219,6 +260,12 @@ export function useMapZoom(
 
   function zoomFromWheel(event: WheelEvent, svg: SVGSVGElement) {
     stopAnimation()
+    isWheeling.value = true
+    if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
+    wheelEndTimer = window.setTimeout(() => {
+      isWheeling.value = false
+      wheelEndTimer = undefined
+    }, 140)
 
     const rect = svg.getBoundingClientRect()
     const pointerX = (event.clientX - rect.left) * width.value / rect.width
@@ -266,6 +313,7 @@ export function useMapZoom(
     if (event.button !== 0 || (transform.scale <= MIN_ZOOM && !wrapActive.value)) return
 
     stopAnimation()
+    cancelPanUpdate()
     suppressNextClick = false
     const rect = svg.getBoundingClientRect()
     dragState = {
@@ -294,7 +342,9 @@ export function useMapZoom(
     }
 
     if (dragState.moved) {
-      setTransform(
+      // Pointer events can arrive faster than the browser can paint. Keep only
+      // the latest position and update the expensive SVG scene once per frame.
+      schedulePan(
         dragState.startX + deltaX * dragState.unitsPerPixelX,
         dragState.startY + deltaY * dragState.unitsPerPixelY,
         transform.scale,
@@ -305,6 +355,7 @@ export function useMapZoom(
   function endPan(event: PointerEvent, svg: SVGSVGElement) {
     if (!dragState || event.pointerId !== dragState.pointerId) return
 
+    flushPendingPan()
     suppressNextClick = dragState.moved
     isDragging.value = false
     if (svg.hasPointerCapture(event.pointerId)) {
@@ -320,11 +371,16 @@ export function useMapZoom(
   }
 
   watch([width, height], () => resetZoom(false))
-  onBeforeUnmount(stopAnimation)
+  onBeforeUnmount(() => {
+    stopAnimation()
+    cancelPanUpdate()
+    if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
+  })
 
   return {
     isZoomed,
     isDragging,
+    isInteracting,
     wrapActive,
     wrapNeighborDirection,
     consumeDragClick,

@@ -108,6 +108,7 @@ export function useMapProjection(
   const pathCache = new WeakMap<GeographicUnitFeature[], PathCacheEntry>()
   const bathymetryPathCache = new Map<string, { sizeKey: string; paths: ProjectedBathymetryBand[] }>()
   const reliefPathCache = new Map<string, { sizeKey: string; paths: ProjectedReliefBand[] }>()
+  const reliefClipPathCache = new Map<string, { sizeKey: string; path: string }>()
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
   )
@@ -163,8 +164,7 @@ export function useMapProjection(
     return geoPath(projection)
   })
 
-  const geographicPaths = computed(() => {
-    const source = geographicUnits.value
+  function projectedGeographicPaths(source: GeographicUnitFeature[]) {
     const id = projectionId.value
     const key = cacheKey(id)
     const sizeKey = `${width.value}:${height.value}`
@@ -247,7 +247,16 @@ export function useMapProjection(
 
     cached.projections.set(key, paths)
     return paths
+  }
+
+  const geographicPaths = computed(() => {
+    const source = geographicUnits.value
+    // Prepare the interaction layer alongside a detailed projection so the
+    // first drag does not pay the 50m projection cost at pointer-down time.
+    if (source !== fittingUnits) projectedGeographicPaths(fittingUnits)
+    return projectedGeographicPaths(source)
   })
+  const interactionGeographicPaths = computed(() => projectedGeographicPaths(fittingUnits))
 
   const spherePath = computed(() => pathGenerator.value({ type: 'Sphere' }) ?? '')
 
@@ -281,6 +290,24 @@ export function useMapProjection(
     return paths
   })
 
+  const reliefClipPath = computed(() => {
+    // Keep clipping independent of the active 10m country layer. Applying a
+    // high-detail compound clip to every relief band is expensive during pan;
+    // the stable 50m geometry is indistinguishable at these elevation edges.
+    const key = `${projectionId.value}:${activeRegion.value.id}`
+    const sizeKey = `${width.value}:${height.value}`
+    const cached = reliefClipPathCache.get(key)
+    if (cached?.sizeKey === sizeKey) return cached.path
+
+    const generator = pathGenerator.value
+    const path = fittingUnits
+      .filter((unit) => unit.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id)))
+      .map((unit) => generator(displayFeature(unit)) ?? '')
+      .join(' ')
+    reliefClipPathCache.set(key, { sizeKey, path })
+    return path
+  })
+
   const horizontalWrap = computed<HorizontalWrap | null>(() => {
     if (projectionId.value !== 'mercator' || activeRegion.value.id !== 'world') return null
     const projection = pathGenerator.value.projection() as GeoProjection
@@ -302,7 +329,9 @@ export function useMapProjection(
     geographicPaths,
     hasCachedPaths,
     horizontalWrap,
+    interactionGeographicPaths,
     projectPoint,
+    reliefClipPath,
     reliefPaths,
     spherePath,
   }

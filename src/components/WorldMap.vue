@@ -61,7 +61,9 @@ const {
   geographicPaths,
   hasCachedPaths,
   horizontalWrap,
+  interactionGeographicPaths,
   projectPoint,
+  reliefClipPath,
   reliefPaths,
   spherePath,
 } = useMapProjection(
@@ -79,29 +81,6 @@ const minimumZoomPoint = computed<MapPoint | null>(() => {
   const center = props.activeRegion.view?.center
   return center ? projectPoint(center) ?? null : null
 })
-// SVG paths paint in DOM order. Put related geographic units above ordinary
-// countries, the clicked unit above its siblings, and correct above wrong.
-const paintedGeographicPaths = computed(() => {
-  const paths = geographicPaths.value
-  const foregroundIds = props.quizMode
-    ? (props.quizAnswerId === null ? [] : [props.quizAnswerId, props.quizQuestionId])
-    : [props.selectedCountryId]
-  if (!foregroundIds.some(Boolean)) return paths
-
-  let ordered = [...paths]
-  for (const id of foregroundIds) {
-    if (!id) continue
-    const foreground = ordered.filter(({ unit }) => unit.properties.entityId === id)
-    ordered = ordered.filter(({ unit }) => unit.properties.entityId !== id)
-    const selectedIndex = foreground.findIndex(({ unit }) => unit.id === props.selectedGeographicUnitId)
-    if (selectedIndex >= 0 && selectedIndex < foreground.length - 1) {
-      foreground.push(...foreground.splice(selectedIndex, 1))
-    }
-    ordered.push(...foreground)
-  }
-  return ordered
-})
-
 function geographicUnitClasses(unit: GeographicUnitFeature) {
   const entityId = unit.properties.entityId
   const clicked = unit.id === props.selectedGeographicUnitId
@@ -138,14 +117,11 @@ function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature) {
 function isGeographicUnitVisible(unit: GeographicUnitFeature) {
   return unit.properties.mapUnitIds.some((id) => props.visibleMapUnitIds.has(id))
 }
-const visibleLandPath = computed(() => geographicPaths.value
-  .filter(({ unit }) => isGeographicUnitVisible(unit))
-  .map(({ path }) => path)
-  .join(' '))
 const {
   consumeDragClick,
   endPan,
   isDragging,
+  isInteracting,
   isZoomed,
   movePan,
   resetZoom,
@@ -156,6 +132,47 @@ const {
   zoomToBounds,
   zoomToPoint,
 } = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap, minimumZoomPoint)
+
+// Interaction uses the stable 50m country layer even when the final map is
+// rendered at 10m. The semantic units and IDs are identical, so selection,
+// accessibility and regional behavior do not change when the paths swap.
+const renderedGeographicPaths = computed(() =>
+  isInteracting.value ? interactionGeographicPaths.value : geographicPaths.value,
+)
+
+// SVG paths paint in DOM order. Put related geographic units above ordinary
+// countries, the clicked unit above its siblings, and correct above wrong.
+const paintedGeographicPaths = computed(() => {
+  const paths = renderedGeographicPaths.value
+  const foregroundIds = props.quizMode
+    ? (props.quizAnswerId === null ? [] : [props.quizAnswerId, props.quizQuestionId])
+    : [props.selectedCountryId]
+  if (!foregroundIds.some(Boolean)) return paths
+
+  let ordered = [...paths]
+  for (const id of foregroundIds) {
+    if (!id) continue
+    const foreground = ordered.filter(({ unit }) => unit.properties.entityId === id)
+    ordered = ordered.filter(({ unit }) => unit.properties.entityId !== id)
+    const selectedIndex = foreground.findIndex(({ unit }) => unit.id === props.selectedGeographicUnitId)
+    if (selectedIndex >= 0 && selectedIndex < foreground.length - 1) {
+      foreground.push(...foreground.splice(selectedIndex, 1))
+    }
+    ordered.push(...foreground)
+  }
+  return ordered
+})
+
+const visibleLandPath = computed(() => renderedGeographicPaths.value
+  .filter(({ unit }) => isGeographicUnitVisible(unit))
+  .map(({ path }) => path)
+  .join(' '))
+const renderedBathymetryPaths = computed(() => isInteracting.value
+  ? bathymetryPaths.value.filter(({ depth }) => depth === 200 || depth === 6000)
+  : bathymetryPaths.value)
+const renderedReliefPaths = computed(() => isInteracting.value
+  ? reliefPaths.value.filter(({ elevation }) => elevation === 500 || elevation === 2250)
+  : reliefPaths.value)
 
 const wrappedGeographicPaths = computed(() => {
   const centerX = horizontalWrap.value?.centerX
@@ -209,6 +226,9 @@ watch(() => props.quizMode, (active) => {
 }, { flush: 'post' })
 watch([() => props.activeRegion.id, () => props.geographicUnits], () => {
   hoveredUnit.value = null
+})
+watch(isInteracting, (active) => {
+  if (active) hoveredUnit.value = null
 })
 watch(projectionId, () => focusActiveRegion(false), { flush: 'post' })
 watch([mapWidth, mapHeight], () => focusActiveRegion(false), { flush: 'post' })
@@ -281,6 +301,12 @@ function clearHoveredUnit(id: string) {
   if (hoveredUnit.value?.id === id) hoveredUnit.value = null
 }
 
+function hoverGeographicUnit(unit: GeographicUnitFeature) {
+  if (!isInteracting.value) {
+    hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
+  }
+}
+
 function requestDetailChange(enabled: boolean) {
   emit(
     'detail-change',
@@ -333,6 +359,7 @@ async function setProjection(nextId: MapProjectionId) {
       class="map-container"
       :class="{
         'map-container--dragging': isDragging,
+        'map-container--interacting': isInteracting,
         'map-container--detail-blurred': mapBlurred,
       }"
       :aria-busy="interactionLocked"
@@ -341,6 +368,7 @@ async function setProjection(nextId: MapProjectionId) {
       <svg
         ref="svg"
         class="world-map"
+        :class="{ 'world-map--wrapped': wrapActive }"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         role="group"
         :aria-label="t('interactiveMap')"
@@ -354,10 +382,17 @@ async function setProjection(nextId: MapProjectionId) {
         <g ref="mapContent" class="map-content">
           <defs>
             <clipPath :id="reliefClipId" clipPathUnits="userSpaceOnUse">
-              <path :d="visibleLandPath" />
+              <path :d="reliefClipPath" />
             </clipPath>
           </defs>
-          <path class="map-sphere" :d="spherePath" />
+          <path
+            v-for="copyIndex in [0, 1]"
+            :key="`sphere-${copyIndex}`"
+            v-show="copyIndex === 0 || wrapActive"
+            class="map-sphere"
+            :d="spherePath"
+            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+          />
           <g v-if="bathymetryEnabled" class="bathymetry" aria-hidden="true">
             <g
               v-for="copyIndex in [0, 1]"
@@ -366,7 +401,7 @@ async function setProjection(nextId: MapProjectionId) {
               :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
             >
               <path
-                v-for="band in bathymetryPaths"
+                v-for="band in renderedBathymetryPaths"
                 :key="band.depth"
                 class="bathymetry__band"
                 :class="`bathymetry__band--${band.depth}`"
@@ -385,7 +420,7 @@ async function setProjection(nextId: MapProjectionId) {
             <path class="terrain__land" :d="visibleLandPath" />
             <g v-if="reliefEnabled" class="relief" :clip-path="`url(#${reliefClipId})`">
               <path
-                v-for="band in reliefPaths"
+                v-for="band in renderedReliefPaths"
                 :key="band.elevation"
                 class="relief__band"
                 :class="`relief__band--${band.elevation}`"
@@ -420,7 +455,7 @@ async function setProjection(nextId: MapProjectionId) {
                 :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
                 :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
                 @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
-                @pointerenter="hoveredUnit = { id: unit.id, entityId: unit.properties.entityId }"
+                @pointerenter="hoverGeographicUnit(unit)"
                 @pointerleave="clearHoveredUnit(unit.id)"
                 @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
                 @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
@@ -547,7 +582,12 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .map-sphere {
-  fill: #d9ebf2;
+  fill: #b7d4e1;
+}
+
+/* Match the repeated sphere where two Mercator copies meet at a pixel edge. */
+.world-map--wrapped {
+  background-color: #b7d4e1;
 }
 
 .bathymetry {
@@ -559,15 +599,15 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .bathymetry__band--200 {
-  fill: #c9e0e9;
+  fill: #a6c9d9;
 }
 
 .bathymetry__band--2000 {
-  fill: #abd0df;
+  fill: #95bdcf;
 }
 
 .bathymetry__band--6000 {
-  fill: #8abdcf;
+  fill: #89b2c7;
 }
 
 .terrain,
@@ -576,7 +616,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .terrain__land {
-  fill: #f5f2e9;
+  fill: #f9f7ef;
 }
 
 .relief__band {
@@ -584,28 +624,28 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .relief__band--500 {
-  fill: #c8cbb6;
-  fill-opacity: 0.12;
+  fill: #d9e3d6;
+  fill-opacity: 0.3;
 }
 
 .relief__band--1000 {
-  fill: #bcc0a8;
-  fill-opacity: 0.11;
+  fill: #cfdbcc;
+  fill-opacity: 0.22;
 }
 
 .relief__band--1500 {
-  fill: #afb39a;
-  fill-opacity: 0.12;
+  fill: #c5d2c3;
+  fill-opacity: 0.19;
 }
 
 .relief__band--2250 {
-  fill: #a0a58b;
-  fill-opacity: 0.13;
+  fill: #bac9b8;
+  fill-opacity: 0.17;
 }
 
 .relief__band--3000 {
-  fill: #91977c;
-  fill-opacity: 0.14;
+  fill: #afc0af;
+  fill-opacity: 0.15;
 }
 
 .country {
@@ -632,6 +672,15 @@ async function setProjection(nextId: MapProjectionId) {
 .map-container--dragging .world-map,
 .map-container--dragging .country {
   cursor: grabbing;
+}
+
+.map-container--dragging .country {
+  pointer-events: none;
+}
+
+.map-container--interacting .country {
+  filter: none;
+  transition: none;
 }
 
 .country:hover,
