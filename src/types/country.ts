@@ -48,6 +48,7 @@ export interface GeographicComponentInfo {
   entityId: string
   name: string
   sourceType: string
+  flagCode?: string
   nameOverrides?: Partial<Record<'en' | 'nb', string>>
   typeOverrides?: Partial<Record<'en' | 'nb', string>>
 }

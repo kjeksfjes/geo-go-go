@@ -1,6 +1,7 @@
 {
   "countryClickUnitIds": [
     "subunit:FXX",
+    "entity:FIN",
     "unit:NOR",
     "subunit:USB",
     "subunit:ESX",

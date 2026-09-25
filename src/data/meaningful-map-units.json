@@ -2,6 +2,7 @@
   "independentMapUnitIdsByEntity": {
     "ATG": ["ACA", "ACB"],
     "FRA": ["FXX", "MYT", "REU", "MTQ", "GLP", "GUF"],
+    "FIN": ["ALD"],
     "GBR": ["WLS", "SCT", "NIR", "ENG"],
     "IOA": ["CXR", "CCK"],
     "NLD": ["NLD", "NLY"],
@@ -28,6 +29,11 @@
     "map-unit:ACA": {
       "type": { "en": "Island", "nb": "Øy" }
     },
+    "map-unit:ALD": {
+      "flagCode": "ax",
+      "name": { "en": "Åland", "nb": "Åland" },
+      "type": { "en": "Autonomous region", "nb": "Selvstyrt region" }
+    },
     "map-unit:ACB": {
       "type": { "en": "Island", "nb": "Øy" }
     },
@@ -52,15 +58,19 @@
       "type": { "en": "Overseas department/region", "nb": "Oversjøisk departement/region" }
     },
     "map-unit:WLS": {
+      "flagCode": "gb-wls",
       "type": { "en": "Constituent country", "nb": "Land i Storbritannia" }
     },
     "map-unit:SCT": {
+      "flagCode": "gb-sct",
       "type": { "en": "Constituent country", "nb": "Land i Storbritannia" }
     },
     "map-unit:NIR": {
+      "flagCode": "gb-nir",
       "type": { "en": "Constituent country", "nb": "Land i Storbritannia" }
     },
     "map-unit:ENG": {
+      "flagCode": "gb-eng",
       "type": { "en": "Constituent country", "nb": "Land i Storbritannia" }
     },
     "map-unit:CXR": {
@@ -103,6 +113,7 @@
       "name": { "en": "Contiguous United States", "nb": "Fastlands-USA" }
     },
     "map-subunit:ESC": {
+      "flagCode": "ic",
       "name": { "nb": "Kanariøyene" },
       "type": { "en": "Autonomous community", "nb": "Autonom region" }
     },

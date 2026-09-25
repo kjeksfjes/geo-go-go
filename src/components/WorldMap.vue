@@ -103,7 +103,8 @@ function geographicUnitClasses(unit: GeographicUnitFeature) {
     return {
       'country--selected': selected,
       'country--related': entityId === props.selectedCountryId && !selected,
-      'country--identity-hover': hoveredUnit.value?.entityId === entityId,
+      'country--identity-hover': hoveredUnit.value?.entityId === entityId
+        && entityId !== props.selectedCountryId,
     }
   }
 
@@ -777,8 +778,8 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .country--related:hover {
-  fill: rgb(239 192 106 / 74%);
-  stroke: #a7783d;
+  fill: rgb(244 195 177 / 76%);
+  stroke: #ba7866;
 }
 
 .country--selected,
@@ -792,7 +793,7 @@ async function setProjection(nextId: MapProjectionId) {
   fill: rgb(237 134 106 / 84%);
 }
 
-.country--identity-hover:not(.country--selected) {
+.country--identity-hover:not(.country--selected, .country--related) {
   fill: rgb(239 192 106 / 72%);
   filter: brightness(1.03);
 }

@@ -14,19 +14,28 @@ const componentDetail = computed(() => {
   const name = componentName(component)
   const type = componentType(component)
   if (!type && (component.name === country.name || name === countryName(country.id))) return null
-  return { name, type }
+  return { name, type, flagCode: component.flagCode }
 })
 </script>
 
 <template>
   <aside class="country-card" aria-live="polite">
     <template v-if="country">
-      <span
-        class="country-card__flag fi"
-        :class="`fi-${country.flagCode}`"
-        role="img"
-        :aria-label="t('flag', { name: countryName(country.id) })"
-      />
+      <div class="country-card__flags">
+        <span
+          class="country-card__flag fi"
+          :class="`fi-${country.flagCode}`"
+          role="img"
+          :aria-label="t('flag', { name: countryName(country.id) })"
+        />
+        <span
+          v-if="componentDetail?.flagCode"
+          class="country-card__flag country-card__flag--component fi"
+          :class="`fi-${componentDetail.flagCode}`"
+          role="img"
+          :aria-label="t('flag', { name: componentDetail.name })"
+        />
+      </div>
       <div>
         <p class="country-card__label">{{ t('selectedCountry') }}</p>
         <h2>{{ countryName(country.id) }}</h2>
@@ -57,6 +66,19 @@ const componentDetail = computed(() => {
   border-radius: 7px;
   box-shadow: 0 10px 28px rgba(23, 45, 56, 0.3);
   font-size: clamp(4rem, 8vw, 6.5rem);
+}
+
+.country-card__flags {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  gap: 0.45rem;
+}
+
+.country-card__flag--component {
+  border-radius: 4px;
+  box-shadow: 0 6px 16px rgba(23, 45, 56, 0.22);
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
 }
 
 .country-card__label,
@@ -103,6 +125,10 @@ h2 {
 
   .country-card__flag {
     font-size: clamp(3rem, 18vw, 4rem);
+  }
+
+  .country-card__flag--component {
+    font-size: 1.7rem;
   }
 }
 </style>

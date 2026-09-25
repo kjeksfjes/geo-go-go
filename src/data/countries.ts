@@ -117,9 +117,17 @@ const mapSubunits = baseMeaningfulSubunits.features as unknown as MapSubunitFeat
 type ComponentMetadataOverride = {
   name?: Partial<Record<'en' | 'nb', string>>
   type?: Partial<Record<'en' | 'nb', string>>
+  flagCode?: string
 }
 const metadataOverrides = semanticMapUnits.metadataOverrides as Record<string, ComponentMetadataOverride>
 export const componentInfoById = new Map<string, GeographicComponentInfo>()
+
+function componentFlagCode(sourceCode: string | undefined, entityId: string): string | undefined {
+  if (!sourceCode) return undefined
+  const code = sourceCode.toLowerCase()
+  if (!validFlagCodes.has(code)) throw new Error(`Unknown component flag: ${sourceCode}`)
+  return code !== countryInfoById.get(entityId)?.flagCode ? code : undefined
+}
 
 for (const id of independentlyMeaningfulUnitIds) {
   const unit = mapUnitById.get(id)
@@ -133,6 +141,10 @@ for (const id of independentlyMeaningfulUnitIds) {
     entityId: unit.quizEntityId,
     name: unit.properties.name,
     sourceType: unit.properties.featureType,
+    // An ISO territory code does not imply a distinct flag in flag-icons;
+    // several entries simply repeat the sovereign flag. Curate only real
+    // secondary flags in the semantic component metadata.
+    flagCode: componentFlagCode(override?.flagCode, unit.quizEntityId),
     nameOverrides: override?.name,
     typeOverrides: override?.type,
   })
@@ -151,6 +163,7 @@ for (const unit of mapSubunits) {
     entityId: parent.quizEntityId,
     name: unit.properties.name,
     sourceType: unit.properties.featureType,
+    flagCode: componentFlagCode(override?.flagCode, parent.quizEntityId),
     nameOverrides: override?.name,
     typeOverrides: override?.type,
   })
