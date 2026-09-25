@@ -317,6 +317,13 @@ export function useMapProjection(
     }
   })
 
+  // Approximate how large one geographic radian appears relative to a
+  // world-fitted map. Regional projections begin at a closer effective zoom.
+  const projectionScale = computed(() => {
+    const projection = pathGenerator.value.projection() as GeoProjection
+    return 2 * Math.PI * projection.scale() / width.value
+  })
+
   function projectPoint(point: MapPoint): MapPoint | undefined {
     const projection = pathGenerator.value.projection()
     if (typeof projection !== 'function') return undefined
@@ -331,6 +338,7 @@ export function useMapProjection(
     horizontalWrap,
     interactionGeographicPaths,
     projectPoint,
+    projectionScale,
     reliefClipPath,
     reliefPaths,
     spherePath,

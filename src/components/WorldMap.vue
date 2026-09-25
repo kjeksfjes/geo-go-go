@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
+import MarineLabels from './MarineLabels.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import RegionSelector from './RegionSelector.vue'
 import { useElementSize } from '../composables/useElementSize'
@@ -47,6 +48,7 @@ const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
 const bathymetryEnabled = ref(true)
 const reliefEnabled = ref(true)
+const marineLabelsEnabled = ref(true)
 const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const projectionLoading = ref(false)
@@ -63,6 +65,7 @@ const {
   horizontalWrap,
   interactionGeographicPaths,
   projectPoint,
+  projectionScale,
   reliefClipPath,
   reliefPaths,
   spherePath,
@@ -118,6 +121,7 @@ function isGeographicUnitVisible(unit: GeographicUnitFeature) {
   return unit.properties.mapUnitIds.some((id) => props.visibleMapUnitIds.has(id))
 }
 const {
+  transform,
   consumeDragClick,
   endPan,
   isDragging,
@@ -479,6 +483,17 @@ async function setProjection(nextId: MapProjectionId) {
               />
             </g>
           </g>
+          <MarineLabels
+            :visible="marineLabelsEnabled && !isInteracting"
+            :width="mapWidth"
+            :height="mapHeight"
+            :transform="transform"
+            :projection-scale="projectionScale"
+            :project-point="projectPoint"
+            :wrap="horizontalWrap"
+            :wrap-active="wrapActive"
+            :wrap-direction="wrapNeighborDirection"
+          />
         </g>
       </svg>
 
@@ -514,6 +529,12 @@ async function setProjection(nextId: MapProjectionId) {
           :loading="interactionLocked"
           :model-value="reliefEnabled"
           @update:model-value="reliefEnabled = $event"
+        />
+        <MapDetailToggle
+          :label="t('waterNames')"
+          :loading="interactionLocked"
+          :model-value="marineLabelsEnabled"
+          @update:model-value="marineLabelsEnabled = $event"
         />
       </div>
 

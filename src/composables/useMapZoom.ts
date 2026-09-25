@@ -378,6 +378,7 @@ export function useMapZoom(
   })
 
   return {
+    transform,
     isZoomed,
     isDragging,
     isInteracting,

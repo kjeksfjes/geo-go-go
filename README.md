@@ -13,6 +13,11 @@ The temporary **Bathymetry** toggle adds three noninteractive ocean-depth bands
 (200m, 2,000m, and 6,000m) behind the country layer for relief-style experiments.
 The adjacent **Relief** toggle adds five similarly simplified elevation bands
 (500m, 1,000m, 1,500m, 2,250m, and 3,000m) without changing map interaction.
+The map also shows major ocean names at world scale and introduces names of
+seas, gulfs, bays, and other smaller waters as you zoom. These labels are
+noninteractive and follow the active projection and map movement. The **Water
+names** toggle can hide them; labels also disappear temporarily during map
+dragging and zooming so they do not distract from motion.
 
 It defaults to a conventional Mercator projection. Mercator preserves local
 shapes and angles well, while enlarging areas toward the poles in the familiar
@@ -74,6 +79,14 @@ camera focus remains local. Quiz feedback is separate and unchanged by this
 explore-mode policy.
 
 ## Geographic data
+
+Marine names and approximate label positions come from Natural Earth's
+[1:10m Geography Marine Polygons](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-physical-labels/).
+`scripts/import-marine-labels.py` extracts a compact set of label anchors into
+`src/data/marine-labels.json`. The five ocean anchors are placed separately
+because the source divides oceans into multiple polygons and some span the map
+seam. Common names have Norwegian Bokmål translations; other marine names use
+the source's English spelling in both languages for now.
 
 The bathymetry POC uses Natural Earth's nested 1:10m vector bathymetry bands.
 `scripts/import-bathymetry.py` merges and simplifies the selected 200m, 2,000m,
@@ -159,6 +172,7 @@ then pass its file path to `python scripts/build-regional-display.py`.
 ## Structure
 
 - `src/components/WorldMap.vue` renders and interacts with the SVG map.
+- `src/components/MarineLabels.vue` places and culls marine labels independently of the map paths.
 - `src/composables/useMapProjection.ts` owns projection and path generation.
 - `src/composables/useElementSize.ts` observes the responsive map container.
 - `src/composables/useMapZoom.ts` owns wheel and animated country zoom state.
