@@ -406,6 +406,7 @@ async function setProjection(nextId: MapProjectionId) {
         :camera="transform"
         :interacting="isInteracting"
         :wrap-offset="canvasWrapOffset"
+        :wrap-period="horizontalWrap?.period ?? null"
         @ready-change="canvasReady = $event"
       />
       <svg

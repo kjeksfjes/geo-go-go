@@ -8,9 +8,9 @@ const MIN_ZOOM = 1
 // Allow a little more room to pull the map away from an edge while keeping
 // roughly a third of the projected viewport available to drag it back.
 const MAX_EMPTY_VIEWPORT_FRACTION = 0.65
-// Keep a finite safety ceiling while allowing 1:50m microstate geometries to
-// become practically visible. High zoom reveals no detail beyond the source.
-const MAX_ZOOM = 256
+// The true 1:10m outlines of microstates are much smaller than their 1:50m
+// counterparts. Keep a finite ceiling, but let them become visible up close.
+const MAX_ZOOM = 16_384
 
 export function useMapZoom(
   width: Ref<number>,

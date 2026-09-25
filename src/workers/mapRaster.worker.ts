@@ -149,6 +149,7 @@ workerScope.onmessage = (event) => {
 
   const frame: CanvasWorkerFrame = {
     type: 'frame',
+    purpose: message.purpose,
     version: message.version,
     requestId: message.requestId,
     camera,

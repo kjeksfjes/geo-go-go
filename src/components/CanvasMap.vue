@@ -9,16 +9,21 @@ const props = defineProps<{
   camera: Readonly<CanvasCamera>
   interacting: boolean
   wrapOffset: number | null
+  wrapPeriod: number | null
 }>()
 
 const emit = defineEmits<{ 'ready-change': [ready: boolean] }>()
 const canvasA = ref<HTMLCanvasElement | null>(null)
 const canvasB = ref<HTMLCanvasElement | null>(null)
+const overviewCanvas = ref<HTMLCanvasElement | null>(null)
 // Leave enough image outside the viewport for several wheel events while the
 // worker prepares the next frame. The overlap prevents exposed bitmap edges.
 const overscan = 1.8
+// At minimum zoom, the camera can move by 65% of the viewport in either
+// direction. Keep a complete map snapshot available for fast zoom-outs.
+const overviewOverscan = 2.4
 let worker: Worker | null = null
-let contexts: Array<ImageBitmapRenderingContext | CanvasRenderingContext2D | null> = [null, null]
+let contexts: Array<ImageBitmapRenderingContext | CanvasRenderingContext2D | null> = [null, null, null]
 let sceneVersion = 0
 let requestId = 0
 let pending = false
@@ -26,25 +31,27 @@ let refreshAfterPending = false
 let forceAfterPending = false
 let swapFrame: number | undefined
 let visibleIndex = 0
+let hasShownDetail = false
+let ready = false
 type Snapshot = {
   camera: CanvasCamera
   width: number
   height: number
   overscan: number
 }
-let snapshots: Array<Snapshot | null> = [null, null]
+let snapshots: Array<Snapshot | null> = [null, null, null]
 
 function canvases() {
-  return [canvasA.value, canvasB.value]
+  return [canvasA.value, canvasB.value, overviewCanvas.value]
 }
 
 function currentCamera(): CanvasCamera {
   return { x: props.camera.x, y: props.camera.y, scale: props.camera.scale }
 }
 
-function pixelRatio() {
+function pixelRatio(imageOverscan = overscan) {
   // Keep the overscanned backing bitmap within common mobile canvas limits.
-  return Math.max(0.5, Math.min(window.devicePixelRatio || 1, 2, 4096 / (props.width * overscan), 4096 / (props.height * overscan)))
+  return Math.max(0.5, Math.min(window.devicePixelRatio || 1, 2, 4096 / (props.width * imageOverscan), 4096 / (props.height * imageOverscan)))
 }
 
 function presentation(index: number) {
@@ -67,6 +74,33 @@ function updatePresentation() {
     const displayScaleX = container ? container.clientWidth / props.width : 1
     const displayScaleY = container ? container.clientHeight / props.height : 1
     element.style.transform = `translate(${frame.x * displayScaleX}px, ${frame.y * displayScaleY}px) scale(${frame.ratio})`
+  }
+  updateVisibility()
+}
+
+function coversViewport(index: number) {
+  const frame = presentation(index)
+  // Allow for subpixel rounding between SVG viewBox units and CSS pixels.
+  const tolerance = 1
+  return frame !== null
+    && frame.x <= tolerance && frame.y <= tolerance
+    && frame.x + frame.ratio * frame.width >= props.width - tolerance
+    && frame.y + frame.ratio * frame.height >= props.height - tolerance
+}
+
+function updateVisibility() {
+  // Never expose the edge of a detail bitmap. The overview is shown instead
+  // of underneath it, so the two camera snapshots cannot form a visible seam.
+  const shownIndex = coversViewport(visibleIndex)
+    ? visibleIndex
+    : hasShownDetail && coversViewport(2) ? 2 : -1
+  for (const [index, element] of canvases().entries()) {
+    element?.style.setProperty('opacity', index === shownIndex ? '1' : '0')
+  }
+  const nextReady = shownIndex !== -1
+  if (nextReady !== ready) {
+    ready = nextReady
+    emit('ready-change', ready)
   }
 }
 
@@ -92,6 +126,7 @@ function requestFrame(force = false) {
   requestId += 1
   const message: CanvasWorkerRequest = {
     type: 'render',
+    purpose: 'detail',
     version: sceneVersion,
     requestId,
     width: props.width,
@@ -104,20 +139,31 @@ function requestFrame(force = false) {
   worker.postMessage(message)
 }
 
-function receiveFrame(frame: CanvasWorkerFrame) {
-  if (frame.version !== sceneVersion || frame.requestId !== requestId) {
-    frame.bitmap.close()
-    return
+function requestOverview() {
+  if (!worker) return
+  const message: CanvasWorkerRequest = {
+    type: 'render',
+    purpose: 'overview',
+    version: sceneVersion,
+    requestId: 0,
+    width: props.width,
+    height: props.height,
+    pixelRatio: Math.min(1, pixelRatio(overviewOverscan)),
+    overscan: overviewOverscan,
+    camera: { x: 0, y: 0, scale: 1 },
+    wrapOffset: props.wrapPeriod,
   }
-  const backIndex = 1 - visibleIndex
-  const element = canvases()[backIndex]
-  const context = contexts[backIndex]
+  worker.postMessage(message)
+}
+
+function paintBitmap(index: number, frame: CanvasWorkerFrame) {
+  const element = canvases()[index]
+  const context = contexts[index]
   if (!element || !context) {
     frame.bitmap.close()
-    return
+    return false
   }
-  // Resize and replace only the hidden back buffer. The front image remains
-  // visible until the replacement is ready to be shown in one paint.
+  // Only ever resize a hidden canvas. Resizing clears its front buffer.
   if (element.width !== frame.bitmap.width) element.width = frame.bitmap.width
   if (element.height !== frame.bitmap.height) element.height = frame.bitmap.height
   if ('transferFromImageBitmap' in context) {
@@ -127,19 +173,42 @@ function receiveFrame(frame: CanvasWorkerFrame) {
     context.drawImage(frame.bitmap, 0, 0)
     frame.bitmap.close()
   }
-  snapshots[backIndex] = { camera: frame.camera, width: frame.width, height: frame.height, overscan: frame.overscan }
-  element.style.width = `${overscan * 100}%`
-  element.style.height = `${overscan * 100}%`
+  snapshots[index] = { camera: frame.camera, width: frame.width, height: frame.height, overscan: frame.overscan }
+  element.style.width = `${frame.overscan * 100}%`
+  element.style.height = `${frame.overscan * 100}%`
   updatePresentation()
+  return true
+}
+
+function receiveFrame(frame: CanvasWorkerFrame) {
+  if (frame.version !== sceneVersion || (frame.purpose === 'detail' && frame.requestId !== requestId)) {
+    frame.bitmap.close()
+    return
+  }
+  if (frame.purpose === 'overview') {
+    paintBitmap(2, frame)
+    return
+  }
+  const backIndex = 1 - visibleIndex
+  // Resize and replace only the hidden back buffer. The front image remains
+  // visible until the replacement is ready to be shown in one paint.
+  if (!paintBitmap(backIndex, frame)) return
+  if (!coversViewport(backIndex)) {
+    // A wheel/animation gesture outran the worker. Do not show this stale
+    // snapshot; ask for one at the camera position we have now.
+    pending = false
+    refreshAfterPending = false
+    forceAfterPending = false
+    requestFrame(true)
+    return
+  }
   swapFrame = requestAnimationFrame(() => {
     swapFrame = undefined
     if (frame.version !== sceneVersion || !canvases()[backIndex]) return
-    updatePresentation()
-    element.style.opacity = '1'
-    canvases()[visibleIndex]?.style.setProperty('opacity', '0')
     visibleIndex = backIndex
+    hasShownDetail = true
+    updatePresentation()
     pending = false
-    emit('ready-change', true)
 
     const refresh = refreshAfterPending
     const force = forceAfterPending
@@ -150,20 +219,23 @@ function receiveFrame(frame: CanvasWorkerFrame) {
 }
 
 function configureScene() {
-  if (!worker || !canvasA.value || !canvasB.value) return
+  if (!worker || !canvasA.value || !canvasB.value || !overviewCanvas.value) return
   sceneVersion += 1
   if (swapFrame !== undefined) cancelAnimationFrame(swapFrame)
   swapFrame = undefined
   pending = false
   refreshAfterPending = false
   forceAfterPending = false
-  snapshots = [null, null]
+  snapshots = [null, null, null]
   visibleIndex = 0
+  hasShownDetail = false
   for (const element of canvases()) element?.style.setProperty('opacity', '0')
+  ready = false
   emit('ready-change', false)
   const message: CanvasWorkerRequest = { type: 'scene', version: sceneVersion, scene: props.scene }
   worker.postMessage(message)
   requestFrame()
+  requestOverview()
 }
 
 watch(() => [props.scene, props.width, props.height], configureScene, { flush: 'post' })
@@ -173,7 +245,9 @@ watch(
     updatePresentation()
     if (needsRefresh()) requestFrame()
   },
-  { flush: 'sync' },
+  // setTransform writes x, y and scale separately. Batch them so a frame is
+  // never requested with a camera assembled from two animation steps.
+  { flush: 'post' },
 )
 watch(() => props.wrapOffset, () => requestFrame(true))
 watch(() => props.interacting, (active) => {
@@ -181,7 +255,7 @@ watch(() => props.interacting, (active) => {
 })
 
 onMounted(() => {
-  if (!canvasA.value || !canvasB.value || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') return
+  if (!canvasA.value || !canvasB.value || !overviewCanvas.value || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') return
   contexts = canvases().map((element) => element?.getContext('bitmaprenderer') ?? element?.getContext('2d') ?? null)
   if (contexts.some((context) => !context)) return
   try {
@@ -211,6 +285,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="canvas-map-layer" aria-hidden="true">
+    <canvas ref="overviewCanvas" class="canvas-map" />
     <canvas ref="canvasA" class="canvas-map" />
     <canvas ref="canvasB" class="canvas-map" />
   </div>
