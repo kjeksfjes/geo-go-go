@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
+import CanvasMap from './CanvasMap.vue'
 import MarineLabels from './MarineLabels.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import RegionSelector from './RegionSelector.vue'
@@ -12,6 +13,7 @@ import {
 } from '../composables/useMapProjection'
 import { useMapZoom, type MapBounds, type MapPoint } from '../composables/useMapZoom'
 import type { GeographicUnitFeature } from '../types/country'
+import type { CanvasMapScene } from '../types/mapCanvas'
 import type { MapRegion, MapRegionId } from '../data/regions'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
@@ -49,6 +51,14 @@ const projectionId = ref<MapProjectionId>('mercator')
 const bathymetryEnabled = ref(true)
 const reliefEnabled = ref(true)
 const marineLabelsEnabled = ref(true)
+// Keep the SVG renderer available for a direct performance comparison.
+const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
+const canvasReady = ref(false)
+const canvasRendererActive = computed(() => canvasRendererEnabled && canvasReady.value)
+// Temporary A/B switch while evaluating a replacement renderer. Full detail
+// is the default; ?motion-fallback=1 restores the old interaction shortcuts.
+const useSimplifiedMotionRendering = new URLSearchParams(window.location.search)
+  .get('motion-fallback') === '1'
 const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const projectionLoading = ref(false)
@@ -141,7 +151,9 @@ const {
 // rendered at 10m. The semantic units and IDs are identical, so selection,
 // accessibility and regional behavior do not change when the paths swap.
 const renderedGeographicPaths = computed(() =>
-  isInteracting.value ? interactionGeographicPaths.value : geographicPaths.value,
+  useSimplifiedMotionRendering && isInteracting.value
+    ? interactionGeographicPaths.value
+    : geographicPaths.value,
 )
 
 // SVG paths paint in DOM order. Put related geographic units above ordinary
@@ -171,12 +183,29 @@ const visibleLandPath = computed(() => renderedGeographicPaths.value
   .filter(({ unit }) => isGeographicUnitVisible(unit))
   .map(({ path }) => path)
   .join(' '))
-const renderedBathymetryPaths = computed(() => isInteracting.value
+const renderedBathymetryPaths = computed(() => useSimplifiedMotionRendering && isInteracting.value
   ? bathymetryPaths.value.filter(({ depth }) => depth === 200 || depth === 6000)
   : bathymetryPaths.value)
-const renderedReliefPaths = computed(() => isInteracting.value
+const renderedReliefPaths = computed(() => useSimplifiedMotionRendering && isInteracting.value
   ? reliefPaths.value.filter(({ elevation }) => elevation === 500 || elevation === 2250)
   : reliefPaths.value)
+
+const canvasScene = computed<CanvasMapScene>(() => ({
+  spherePath: spherePath.value,
+  landPath: geographicPaths.value
+    .filter(({ unit }) => isGeographicUnitVisible(unit))
+    .map(({ path }) => path)
+    .join(' '),
+  bathymetry: bathymetryEnabled.value ? bathymetryPaths.value : [],
+  relief: reliefEnabled.value ? reliefPaths.value : [],
+  reliefClipPath: reliefEnabled.value ? reliefClipPath.value : '',
+  countries: geographicPaths.value
+    .filter(({ unit }) => isGeographicUnitVisible(unit))
+    .map(({ path, outlinePath, divisionPath }) => ({ path, outlinePath, divisionPath })),
+}))
+const canvasWrapOffset = computed(() => wrapActive.value
+  ? horizontalWrap.value?.period ?? null
+  : null)
 
 const wrappedGeographicPaths = computed(() => {
   const centerX = horizontalWrap.value?.centerX
@@ -363,16 +392,26 @@ async function setProjection(nextId: MapProjectionId) {
       class="map-container"
       :class="{
         'map-container--dragging': isDragging,
-        'map-container--interacting': isInteracting,
+        'map-container--interacting': useSimplifiedMotionRendering && isInteracting,
         'map-container--detail-blurred': mapBlurred,
       }"
       :aria-busy="interactionLocked"
       :inert="interactionLocked"
     >
+      <CanvasMap
+        v-if="canvasRendererEnabled"
+        :width="mapWidth"
+        :height="mapHeight"
+        :scene="canvasScene"
+        :camera="transform"
+        :interacting="isInteracting"
+        :wrap-offset="canvasWrapOffset"
+        @ready-change="canvasReady = $event"
+      />
       <svg
         ref="svg"
         class="world-map"
-        :class="{ 'world-map--wrapped': wrapActive }"
+        :class="{ 'world-map--wrapped': wrapActive, 'world-map--canvas': canvasRendererActive }"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         role="group"
         :aria-label="t('interactiveMap')"
@@ -384,20 +423,20 @@ async function setProjection(nextId: MapProjectionId) {
         @click="handleMapClick"
       >
         <g ref="mapContent" class="map-content">
-          <defs>
+          <defs v-if="!canvasRendererActive">
             <clipPath :id="reliefClipId" clipPathUnits="userSpaceOnUse">
               <path :d="reliefClipPath" />
             </clipPath>
           </defs>
           <path
-            v-for="copyIndex in [0, 1]"
+            v-for="copyIndex in canvasRendererActive ? [] : [0, 1]"
             :key="`sphere-${copyIndex}`"
             v-show="copyIndex === 0 || wrapActive"
             class="map-sphere"
             :d="spherePath"
             :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
           />
-          <g v-if="bathymetryEnabled" class="bathymetry" aria-hidden="true">
+          <g v-if="bathymetryEnabled && !canvasRendererActive" class="bathymetry" aria-hidden="true">
             <g
               v-for="copyIndex in [0, 1]"
               :key="copyIndex"
@@ -414,7 +453,7 @@ async function setProjection(nextId: MapProjectionId) {
             </g>
           </g>
           <g
-            v-for="copyIndex in [0, 1]"
+            v-for="copyIndex in canvasRendererActive ? [] : [0, 1]"
             :key="`terrain-${copyIndex}`"
             v-show="copyIndex === 0 || wrapActive"
             class="terrain"
@@ -468,7 +507,7 @@ async function setProjection(nextId: MapProjectionId) {
               </path>
               <!-- Open border linework must not inherit the country's hover fill. -->
               <path
-                v-if="outlinePath"
+                v-if="outlinePath && !canvasRendererActive"
                 class="country-outline"
                 :class="geographicUnitClasses(unit)"
                 :d="outlinePath"
@@ -476,7 +515,7 @@ async function setProjection(nextId: MapProjectionId) {
                 aria-hidden="true"
               />
               <path
-                v-if="divisionPath"
+                v-if="divisionPath && !canvasRendererActive"
                 class="regional-division"
                 :d="divisionPath"
                 aria-hidden="true"
@@ -564,10 +603,13 @@ async function setProjection(nextId: MapProjectionId) {
 .map-container {
   position: relative;
   width: 100%;
-  overflow: hidden;
+  /* Unlike hidden, clip cannot be scrolled by focus/scrollIntoView. */
+  overflow: clip;
 }
 
 .world-map {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: auto;
@@ -577,7 +619,8 @@ async function setProjection(nextId: MapProjectionId) {
   transition: filter 280ms ease;
 }
 
-.map-container--detail-blurred .world-map {
+.map-container--detail-blurred .world-map,
+.map-container--detail-blurred .canvas-map-layer {
   filter: blur(5px);
 }
 
@@ -609,6 +652,10 @@ async function setProjection(nextId: MapProjectionId) {
 /* Match the repeated sphere where two Mercator copies meet at a pixel edge. */
 .world-map--wrapped {
   background-color: #b7d4e1;
+}
+
+.world-map--canvas.world-map--wrapped {
+  background-color: transparent;
 }
 
 .bathymetry {
@@ -677,6 +724,12 @@ async function setProjection(nextId: MapProjectionId) {
   cursor: pointer;
   outline: none;
   transition: fill 120ms ease, filter 120ms ease;
+}
+
+/* Canvas paints the ordinary borders; SVG remains the accessible hit and
+   highlight layer, so selected and hovered borders still render above it. */
+.world-map--canvas .country:not(:hover, :focus-visible, .country--identity-hover, .country--selected, .country--related, .country--quiz-correct, .country--quiz-correct-related, .country--quiz-wrong, .country--quiz-wrong-related) {
+  stroke: none;
 }
 
 .country-outline {
@@ -804,6 +857,7 @@ async function setProjection(nextId: MapProjectionId) {
 
 .map-tools {
   position: absolute;
+  z-index: 2;
   right: 0.8rem;
   bottom: 0.8rem;
   display: flex;
@@ -817,6 +871,7 @@ async function setProjection(nextId: MapProjectionId) {
 
 .map-controls {
   position: absolute;
+  z-index: 2;
   top: 0.8rem;
   left: 0.8rem;
   right: 0.8rem;
