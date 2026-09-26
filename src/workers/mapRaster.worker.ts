@@ -141,11 +141,16 @@ workerScope.onmessage = (event) => {
   const padY = height * (overscan - 1) / 2
   context.setTransform(pixelRatio, 0, 0, pixelRatio, pixelRatio * (padX + camera.x), pixelRatio * (padY + camera.y))
   context.scale(camera.scale, camera.scale)
-  // Keep both adjoining copies in the snapshot. The visible copy can switch
-  // sides during a wheel gesture before the worker has painted another frame.
-  drawScene(context, scene, camera.scale, message.wrapOffset === null
+  // Cover the complete overscanned bitmap, including unusually wide viewports.
+  // Keeping neighbors in one snapshot also avoids exposed edges during a pan.
+  const period = message.wrapOffset
+  const copyCount = period === null
+    ? 0
+    : Math.max(1, Math.ceil(width * overscan / (2 * camera.scale * period)))
+  const offsets = period === null
     ? [0]
-    : [-message.wrapOffset, 0, message.wrapOffset])
+    : Array.from({ length: 2 * copyCount + 1 }, (_, index) => (index - copyCount) * period)
+  drawScene(context, scene, camera.scale, offsets)
 
   const frame: CanvasWorkerFrame = {
     type: 'frame',

@@ -40,14 +40,15 @@ export function useMapZoom(
   } | undefined
   let suppressNextClick = false
 
-  const isZoomed = computed(() => transform.scale > MIN_ZOOM + 0.01)
+  const isZoomed = computed(() =>
+    transform.scale > MIN_ZOOM + 0.01
+    || Math.abs(transform.x) > 1
+    || Math.abs(transform.y) > 1,
+  )
   const isInteracting = computed(() =>
     isDragging.value || isWheeling.value || isAnimating.value,
   )
-  const wrapActive = computed(() => {
-    const wrap = horizontalWrap.value
-    return wrap !== null && transform.scale * wrap.period >= width.value
-  })
+  const wrapActive = computed(() => horizontalWrap.value !== null)
   const wrapNeighborDirection = computed(() => {
     const wrap = horizontalWrap.value
     if (!wrap) return 1
@@ -80,7 +81,7 @@ export function useMapZoom(
     const maxY = height.value * MAX_EMPTY_VIEWPORT_FRACTION
 
     const wrap = horizontalWrap.value
-    if (wrap && scale * wrap.period >= width.value) {
+    if (wrap) {
       const mapCenterX = (width.value / 2 - x) / scale
       const centered = mapCenterX - wrap.centerX + wrap.period / 2
       const wrapped = ((centered % wrap.period) + wrap.period) % wrap.period
@@ -144,7 +145,7 @@ export function useMapZoom(
     const start = { ...transform }
     const target = constrainTransform(x, y, scale)
     const wrap = horizontalWrap.value
-    if (wrap && scale * wrap.period >= width.value) {
+    if (wrap) {
       // Animate toward the nearest equivalent world copy, then normalize each
       // painted frame. Otherwise a click across the seam takes the long way.
       const startCenterX = (width.value / 2 - start.x) / start.scale

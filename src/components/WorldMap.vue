@@ -208,24 +208,54 @@ const canvasScene = computed<CanvasMapScene>(() => ({
     .filter(({ unit }) => isGeographicUnitVisible(unit))
     .map(({ path, outlinePath, divisionPath }) => ({ path, outlinePath, divisionPath })),
 }))
-const canvasWrapOffset = computed(() => wrapActive.value
-  ? horizontalWrap.value?.period ?? null
-  : null)
+const canvasWrapOffset = computed(() => horizontalWrap.value?.period ?? null)
 
-const wrappedGeographicPaths = computed(() => {
-  const centerX = horizontalWrap.value?.centerX
-  if (centerX === undefined) return []
-  // At wrap-active zoom, the viewport is at most one projected world wide.
-  // Only the adjoining half of the neighboring copy can enter it.
-  return paintedGeographicPaths.value.filter(({ displayBounds }) =>
-    wrapNeighborDirection.value > 0
-      ? displayBounds[0][0] <= centerX
-      : displayBounds[1][0] >= centerX,
-  )
+const visibleCopyCount = computed(() => {
+  const period = horizontalWrap.value?.period
+  return period ? Math.max(1, Math.ceil(mapWidth.value / (2 * transform.scale * period))) : 0
+})
+const needsBothNeighbors = computed(() => {
+  const period = horizontalWrap.value?.period
+  return period !== undefined && transform.scale * period < mapWidth.value
 })
 
-function wrapOffset(copyIndex: number) {
-  return copyIndex === 0 ? 0 : wrapNeighborDirection.value * (horizontalWrap.value?.period ?? 0)
+const copyOffsets = computed(() => {
+  const wrap = horizontalWrap.value
+  if (!wrap) return [0]
+  // A narrow projected world can expose more than one repeat on very wide
+  // screens. At closer zoom, only the neighbor toward the seam is needed.
+  if (!needsBothNeighbors.value) return [0, wrapNeighborDirection.value * wrap.period]
+  const count = visibleCopyCount.value
+  return [
+    0,
+    ...Array.from({ length: count }, (_, index) => -(index + 1) * wrap.period),
+    ...Array.from({ length: count }, (_, index) => (index + 1) * wrap.period),
+  ]
+})
+
+const wrappedGeographicPaths = computed(() => {
+  const wrap = horizontalWrap.value
+  const paths = new Map<number, typeof paintedGeographicPaths.value>()
+  if (!wrap) return paths
+  // Filter against every position the viewport can occupy at minimum zoom.
+  // This stays cached while panning, rather than re-filtering on every frame.
+  const halfReach = (wrap.period + mapWidth.value) / 2
+  const left = wrap.centerX - halfReach
+  const right = wrap.centerX + halfReach
+  const count = Math.max(1, Math.ceil(mapWidth.value / (2 * wrap.period)))
+  for (let index = -count; index <= count; index += 1) {
+    if (index === 0) continue
+    const offset = index * wrap.period
+    paths.set(offset, paintedGeographicPaths.value.filter(({ displayBounds }) =>
+      displayBounds[0][0] + offset <= right && displayBounds[1][0] + offset >= left,
+    ))
+  }
+  return paths
+})
+
+function geographicPathsAt(offset: number) {
+  if (offset === 0) return paintedGeographicPaths.value
+  return wrappedGeographicPaths.value.get(offset) ?? []
 }
 
 function offsetBounds(bounds: MapBounds, offset: number): MapBounds {
@@ -441,19 +471,17 @@ async function setProjection(nextId: MapProjectionId) {
             </clipPath>
           </defs>
           <path
-            v-for="copyIndex in canvasRendererActive ? [] : [0, 1]"
-            :key="`sphere-${copyIndex}`"
-            v-show="copyIndex === 0 || wrapActive"
+            v-for="offset in canvasRendererActive ? [] : copyOffsets"
+            :key="`sphere-${offset}`"
             class="map-sphere"
             :d="spherePath"
-            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
           />
           <g v-if="bathymetryEnabled && !canvasRendererActive" class="bathymetry" aria-hidden="true">
             <g
-              v-for="copyIndex in [0, 1]"
-              :key="copyIndex"
-              v-show="copyIndex === 0 || wrapActive"
-              :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+              v-for="offset in copyOffsets"
+              :key="offset"
+              :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             >
               <path
                 v-for="band in renderedBathymetryPaths"
@@ -465,11 +493,10 @@ async function setProjection(nextId: MapProjectionId) {
             </g>
           </g>
           <g
-            v-for="copyIndex in canvasRendererActive ? [] : [0, 1]"
-            :key="`terrain-${copyIndex}`"
-            v-show="copyIndex === 0 || wrapActive"
+            v-for="offset in canvasRendererActive ? [] : copyOffsets"
+            :key="`terrain-${offset}`"
             class="terrain"
-            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             aria-hidden="true"
           >
             <path class="terrain__land" :d="visibleLandPath" />
@@ -484,15 +511,14 @@ async function setProjection(nextId: MapProjectionId) {
             </g>
           </g>
           <g
-            v-for="copyIndex in [0, 1]"
-            :key="copyIndex"
-            v-show="copyIndex === 0 || wrapActive"
+            v-for="offset in copyOffsets"
+            :key="offset"
             class="countries"
-            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
-            :aria-hidden="copyIndex === 1"
+            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
+            :aria-hidden="offset !== 0"
           >
             <g
-              v-for="{ unit, path, outlinePath, divisionPath, bounds, focusPoint } in copyIndex === 0 ? paintedGeographicPaths : wrappedGeographicPaths"
+              v-for="{ unit, path, outlinePath, divisionPath, bounds, focusPoint } in geographicPathsAt(offset)"
               :key="unit.id"
               v-show="isGeographicUnitVisible(unit)"
             >
@@ -504,16 +530,16 @@ async function setProjection(nextId: MapProjectionId) {
                 :data-country-id="unit.properties.entityId"
                 :data-geographic-unit-id="unit.id"
                 role="button"
-                :tabindex="copyIndex === 0 && isGeographicUnitVisible(unit) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
+                :tabindex="offset === 0 && isGeographicUnitVisible(unit) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
                 :aria-label="countryName(unit.properties.entityId)"
                 :aria-hidden="!isGeographicUnitVisible(unit)"
                 :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
                 :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
-                @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
+                @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
                 @pointerenter="hoverGeographicUnit(unit)"
                 @pointerleave="clearHoveredUnit(unit.id)"
-                @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
-                @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
+                @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
+                @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
               >
                 <title v-if="canShowCountryTooltip(unit.properties.entityId, props)">{{ countryName(unit.properties.entityId) }}</title>
               </path>
@@ -541,9 +567,7 @@ async function setProjection(nextId: MapProjectionId) {
             :transform="transform"
             :projection-scale="projectionScale"
             :project-point="projectPoint"
-            :wrap="horizontalWrap"
-            :wrap-active="wrapActive"
-            :wrap-direction="wrapNeighborDirection"
+            :copy-offsets="copyOffsets"
           />
         </g>
       </svg>

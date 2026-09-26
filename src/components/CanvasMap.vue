@@ -61,8 +61,17 @@ function presentation(index: number) {
   const ratio = camera.scale / snapshot.camera.scale
   const padX = snapshot.width * (snapshot.overscan - 1) / 2
   const padY = snapshot.height * (snapshot.overscan - 1) / 2
-  const x = camera.x - ratio * (snapshot.camera.x + padX)
+  let x = camera.x - ratio * (snapshot.camera.x + padX)
   const y = camera.y - ratio * (snapshot.camera.y + padY)
+  if (props.wrapPeriod) {
+    // The camera is normalized by one world width after crossing a seam.
+    // Keep the already-painted bitmap on its nearest equivalent copy instead
+    // of letting that normalization look like a one-frame jump.
+    const cameraCenter = (props.width / 2 - camera.x) / camera.scale
+    const snapshotCenter = (snapshot.width / 2 - snapshot.camera.x) / snapshot.camera.scale
+    const copy = Math.round((cameraCenter - snapshotCenter) / props.wrapPeriod)
+    x += copy * camera.scale * props.wrapPeriod
+  }
   return { x, y, ratio, width: snapshot.width * snapshot.overscan, height: snapshot.height * snapshot.overscan }
 }
 
