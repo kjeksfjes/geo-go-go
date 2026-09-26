@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release:merge": "node scripts/release-merge.mjs"
   },
   "dependencies": {
     "@zanmato/vue3-treeselect": "^0.4.4",
