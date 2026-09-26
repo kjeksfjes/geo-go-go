@@ -14,6 +14,10 @@
     "TZA": ["TZZ", "TZA"]
   },
   "independentMapSubunitIdsByMapUnit": {
+    "AUS": ["AUS", "AUA"],
+    "CHN": ["CHI", "CHH"],
+    "JPN": ["JPK", "JPH", "JPS", "JPY"],
+    "KOR": ["KOR", "KOJ"],
     "USA": ["USK", "USH", "USB"],
     "ESP": ["ESC", "ESI", "ESX"],
     "FXX": ["FXC", "FXX"],
@@ -22,10 +26,43 @@
     "ECU": ["ECG"],
     "NZL": ["NZN", "NZS"]
   },
+  "independentAdmin1RegionsByMapUnit": {
+    "GRC": ["GR-M"]
+  },
+  "sourceSubunitIdsAt10m": {
+    "AUS": ["AUZ"],
+    "KOR": ["KOX", "KXI"]
+  },
   "mergeUnlistedSubunitsInto": {
     "ESP": "ESX"
   },
   "metadataOverrides": {
+    "admin-1:GR-M": {
+      "name": { "en": "Crete", "nb": "Kreta" },
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:AUA": {
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:CHH": {
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:KOJ": {
+      "name": { "en": "Jeju", "nb": "Jeju" },
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:JPK": {
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:JPH": {
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:JPS": {
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "map-subunit:JPY": {
+      "type": { "en": "Island", "nb": "Øy" }
+    },
     "map-unit:ACA": {
       "type": { "en": "Island", "nb": "Øy" }
     },

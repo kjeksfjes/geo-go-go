@@ -111,7 +111,12 @@ for (const [id, units] of unitsByEntityId) {
 const independentlyMeaningfulUnitIds = new Set<string>(
   Object.values(semanticMapUnits.independentMapUnitIdsByEntity).flat(),
 )
-const subunitIdsByMapUnit: Record<string, string[]> = semanticMapUnits.independentMapSubunitIdsByMapUnit
+const subunitIdsByMapUnit: Record<string, string[]> = {
+  ...semanticMapUnits.independentMapSubunitIdsByMapUnit,
+}
+for (const [mapUnitId, regionIds] of Object.entries(semanticMapUnits.independentAdmin1RegionsByMapUnit)) {
+  subunitIdsByMapUnit[mapUnitId] = [...(subunitIdsByMapUnit[mapUnitId] ?? []), ...regionIds]
+}
 const mapSubunits = baseMeaningfulSubunits.features as unknown as MapSubunitFeature[]
 
 type ComponentMetadataOverride = {
@@ -154,11 +159,12 @@ for (const unit of mapSubunits) {
   if (unit.id.startsWith('remainder:')) continue
   const parent = mapUnitById.get(unit.properties.mapUnitId)
   if (!parent) throw new Error(`Map subunit has no parent: ${unit.id}`)
-  const componentId = `map-subunit:${unit.id}`
+  const sourceKind = unit.properties.sourceKind ?? 'map-subunit'
+  const componentId = `${sourceKind}:${unit.id}`
   const override = metadataOverrides[componentId]
   componentInfoById.set(componentId, {
     id: componentId,
-    sourceKind: 'map-subunit',
+    sourceKind,
     sourceId: unit.id,
     entityId: parent.quizEntityId,
     name: unit.properties.name,
@@ -202,7 +208,7 @@ function buildGeographicUnits(
           properties: {
             entityId: unit.quizEntityId,
             mapUnitIds: [unit.id],
-            componentId: `map-subunit:${subunitId}`,
+            componentId: `${subunit.properties.sourceKind ?? 'map-subunit'}:${subunitId}`,
           },
           geometry: subunit.geometry,
         })

@@ -1,12 +1,13 @@
-"""Build curated Admin-0 Map Subunit assets at both map resolutions.
+"""Build curated geographic-component assets at both map resolutions.
 
-Usage: pip install pyshp shapely; python scripts/import-meaningful-subunits.py <50m shapefile> <10m shapefile>
+Usage: pip install pyshp shapely; python scripts/import-meaningful-subunits.py <50m subunits shapefile> <10m subunits shapefile> <10m admin-1 shapefile>
 
-Both shapefiles should be Natural Earth 5.1.1 Admin-0 Map Subunits, with
-their matching .dbf/.shx files beside them. Only IDs explicitly listed in
-meaningful-map-units.json become named components. All other subunits of each
-selected map unit are dissolved into one unnamed, interactive remainder.
-None of these features creates a new quiz identity.
+The first two shapefiles are Natural Earth 5.1.1 Admin-0 Map Subunits. The
+third supplies named Admin-1 regions when an island is not an Admin-0 subunit.
+Its boundary identifies whole coastline polygons from each resolution's
+Admin-0 source, keeping the displayed country and component edges identical.
+All unselected geometry becomes one interactive remainder. None of these
+features creates a new quiz identity.
 """
 
 import json
@@ -22,6 +23,8 @@ from shapely.ops import unary_union
 DATA = Path(__file__).resolve().parents[1] / "src" / "data"
 CONFIG = json.loads((DATA / "meaningful-map-units.json").read_text(encoding="utf-8"))
 SELECTION = CONFIG["independentMapSubunitIdsByMapUnit"]
+ADMIN1_SELECTION = CONFIG.get("independentAdmin1RegionsByMapUnit", {})
+SOURCE_IDS_AT_10M = CONFIG.get("sourceSubunitIdsAt10m", {})
 MERGE_UNLISTED_INTO = CONFIG.get("mergeUnlistedSubunitsInto", {})
 MAP_UNIT_BY_SUBUNIT = {
     subunit_id: unit_id
@@ -87,8 +90,32 @@ def remainder_regional_geometry(resolution, map_unit_id, selected_geometries):
     return result
 
 
-def selected_features(path, resolution, include_metadata):
-    source_by_map_unit = {map_unit_id: {} for map_unit_id in SELECTION}
+def admin1_regions(path):
+    requested = {code: map_unit_id
+                 for map_unit_id, codes in ADMIN1_SELECTION.items()
+                 for code in codes}
+    regions = {}
+    for record in shapefile.Reader(str(path)).iterShapeRecords():
+        data = record.record.as_dict()
+        code = data["iso_3166_2"]
+        if code not in requested:
+            continue
+        if data["adm0_a3"] != requested[code]:
+            raise ValueError(f"Admin-1 region {code} belongs to {data['adm0_a3']}")
+        regions[code] = (data["name_en"], shape(record.shape.__geo_interface__))
+    if set(regions) != set(requested):
+        raise ValueError(f"Missing Admin-1 regions: {sorted(set(requested) - set(regions))}")
+    return regions
+
+
+def polygons(geometry):
+    if geometry.geom_type == "Polygon":
+        return [geometry]
+    return list(geometry.geoms)
+
+
+def selected_features(path, resolution, include_metadata, admin1):
+    source_by_map_unit = {map_unit_id: {} for map_unit_id in SELECTION.keys() | ADMIN1_SELECTION.keys()}
     for record in shapefile.Reader(str(path)).iterShapeRecords():
         data = record.record.as_dict()
         subunit_id = data["SU_A3"]
@@ -98,19 +125,29 @@ def selected_features(path, resolution, include_metadata):
         source_by_map_unit[map_unit_id][subunit_id] = (data, shape(record.shape.__geo_interface__))
 
     features = []
-    for map_unit_id, selected_ids in SELECTION.items():
+    for map_unit_id in source_by_map_unit:
+        selected_ids = SELECTION.get(map_unit_id, [])
         source = source_by_map_unit[map_unit_id]
-        missing = set(selected_ids) - source.keys()
+        selected_source_ids = {
+            source_id
+            for selected_id in selected_ids
+            for source_id in (SOURCE_IDS_AT_10M.get(selected_id, [selected_id])
+                              if resolution == "10m" else [selected_id])
+        }
+        missing = selected_source_ids - source.keys()
         if missing:
             raise ValueError(f"Selected subunits missing from {path}: {sorted(missing)}")
         other_parts = [geometry for subunit_id, (_, geometry) in source.items()
-                       if subunit_id not in selected_ids]
+                       if subunit_id not in selected_source_ids]
         merge_target = MERGE_UNLISTED_INTO.get(map_unit_id)
         if merge_target and merge_target not in selected_ids:
             raise ValueError(f"Remainder target {merge_target} is not selected for {map_unit_id}")
         selected_geometries = []
         for subunit_id in selected_ids:
-            data, geometry = source[subunit_id]
+            source_ids = (SOURCE_IDS_AT_10M.get(subunit_id, [subunit_id])
+                          if resolution == "10m" else [subunit_id])
+            data = source[source_ids[0]][0]
+            geometry = unary_union([source[source_id][1] for source_id in source_ids])
             if data["GU_A3"] != MAP_UNIT_BY_SUBUNIT[subunit_id]:
                 raise ValueError(f"{subunit_id} does not belong to {map_unit_id}")
             if subunit_id == merge_target and other_parts:
@@ -129,12 +166,40 @@ def selected_features(path, resolution, include_metadata):
                 }
             features.append(feature)
 
+        for code in ADMIN1_SELECTION.get(map_unit_id, []):
+            name, region = admin1[code]
+            # Select complete source coastline polygons belonging to the named
+            # region. Intersecting the Admin-1 outline directly would create
+            # slivers where its coastline differs from the Admin-0 source.
+            source_polygons = [part for _, geometry in source.values()
+                               for part in polygons(geometry)]
+            matched = [part for part in source_polygons
+                       if part.intersection(region).area > part.area * 0.5]
+            if not matched:
+                raise ValueError(f"No {resolution} coastline polygons for {code}")
+            geometry = unary_union(matched)
+            selected_geometries.append(geometry)
+            feature = {"type": "Feature", "id": code,
+                       "geometry": polygon_geometry(geometry)}
+            if include_metadata:
+                feature["properties"] = {
+                    "name": name,
+                    "mapUnitId": map_unit_id,
+                    "entityId": next(iter(source.values()))[0]["ADM0_A3"],
+                    "featureType": "Admin-1 region",
+                    "sourceKind": "admin-1",
+                }
+            features.append(feature)
+
         if not other_parts or merge_target:
+            continue
+        remaining = difference(unary_union(other_parts), unary_union(selected_geometries))
+        if remaining.is_empty:
             continue
         remainder = {
             "type": "Feature",
             "id": f"remainder:{map_unit_id}",
-            "geometry": polygon_geometry(unary_union(other_parts)),
+            "geometry": polygon_geometry(remaining),
         }
         if include_metadata:
             remainder["properties"] = {
@@ -153,12 +218,15 @@ def selected_features(path, resolution, include_metadata):
 
 
 def main():
-    source_50m, source_10m = map(Path, sys.argv[1:3])
+    if len(sys.argv) != 4:
+        raise SystemExit(__doc__)
+    source_50m, source_10m, source_admin1 = map(Path, sys.argv[1:4])
+    admin1 = admin1_regions(source_admin1)
     for resolution, path, metadata in (
         ("50m", source_50m, True),
         ("10m", source_10m, False),
     ):
-        features = selected_features(path, resolution, metadata)
+        features = selected_features(path, resolution, metadata, admin1)
         destination = DATA / f"meaningful-subunits-{resolution}.json"
         destination.write_text(
             json.dumps({"type": "FeatureCollection", "features": features},

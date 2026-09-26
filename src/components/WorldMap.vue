@@ -114,6 +114,8 @@ function geographicUnitClasses(unit: GeographicUnitFeature) {
   const relatedAnswer = !clicked && props.selectedGeographicUnitId !== null
 
   return {
+    'country--identity-hover': (props.quizComplete || (!answered && props.quizQuestionId !== null))
+      && hoveredUnit.value?.entityId === entityId,
     'country--quiz-correct': correct && !(relatedAnswer && props.quizAnswerId === props.quizQuestionId),
     'country--quiz-correct-related': correct && relatedAnswer && props.quizAnswerId === props.quizQuestionId,
     'country--quiz-wrong': wrong && !relatedAnswer,

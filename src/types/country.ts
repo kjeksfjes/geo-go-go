@@ -36,6 +36,7 @@ export type MapSubunitFeature = Feature<Geometry, {
   mapUnitId: string
   entityId: string
   featureType: string
+  sourceKind?: 'admin-1'
 }> & {
   id: string
   regionalDisplayGeometry?: Readonly<Record<string, RegionalDisplayGeometry>>
@@ -43,7 +44,7 @@ export type MapSubunitFeature = Feature<Geometry, {
 
 export interface GeographicComponentInfo {
   id: string
-  sourceKind: 'map-unit' | 'map-subunit'
+  sourceKind: 'map-unit' | 'map-subunit' | 'admin-1'
   sourceId: string
   entityId: string
   name: string

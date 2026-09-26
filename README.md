@@ -125,7 +125,8 @@ with `scripts/build-geographic-units.py` after changing the map-unit list.
 
 Selected [Natural Earth Admin-0 Map Subunits](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-details/)
 at 50m and 10m supply source geometries and names for places within a single
-map unit, including Alaska, Hawaii, Corsica, and the Canary Islands.
+map unit, including Alaska, Hawaii, Corsica, Tasmania, Jeju, Hainan, and
+Japan's main islands.
 `SU_A3` identifies the subunit, `GU_A3` links it to the parent map unit, and
 `ADM0_A3` links it to the country/quiz identity. Only the subunit IDs opted in
 by `meaningful-map-units.json` become named components. The importer
@@ -139,6 +140,15 @@ when available, and otherwise a curated type may be shown or omitted. The
 remainder of each selected map unit is retained as an interactive geographic
 unit, so no country geometry is discarded. Subunit selection never changes
 the country used for quiz answers.
+
+Crete is not a Natural Earth Admin-0 subunit. Its named boundary comes from
+[Natural Earth 1:10m Admin-1 States and Provinces](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/).
+The importer uses that boundary to identify complete Greek coastline polygons
+at each map resolution, preserving the source country outline without a rough
+rectangular crop. `independentAdmin1RegionsByMapUnit` records this explicit
+semantic choice; `sourceSubunitIdsAt10m` reconciles source subunit IDs that
+split differently between 50m and 10m. Regeneration now takes both Admin-0
+subunit shapefiles and the 10m Admin-1 shapefile.
 
 For a map unit with regional display geometry, the importer removes selected
 components from the regional remainder too. Kaliningrad is therefore separate
