@@ -5,6 +5,7 @@ import CanvasMap from './CanvasMap.vue'
 import MarineLabels from './MarineLabels.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import RegionSelector from './RegionSelector.vue'
+import SmallCountryMarkers from './SmallCountryMarkers.vue'
 import { useElementSize } from '../composables/useElementSize'
 import {
   projectionOptions,
@@ -19,6 +20,7 @@ import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { countryName, t } from '../i18n'
 import { mapPaletteCssVariables } from '../data/mapPalette'
+import { quizCountryIds } from '../data/quizCountries'
 import {
   backgroundClickAction,
   canActivateGeographicUnit,
@@ -29,6 +31,12 @@ import {
   type MapInteractionState,
 } from '../logic/mapInteraction'
 import { selectionFocusTarget } from '../logic/mapFocus'
+import {
+  smallCountryMarkers as groupSmallCountryMarkers,
+  type SmallCountryAnchor,
+  type SmallCountryFeedbackMarker,
+  type SmallCountryMarker,
+} from '../logic/smallCountryMarkers'
 
 const props = defineProps<{
   geographicUnits: GeographicUnitFeature[]
@@ -216,6 +224,54 @@ const copyOffsets = computed(() => {
   ]
 })
 
+const smallCountryAnchors = computed<SmallCountryAnchor[]>(() => {
+  const byCountry = new Map<string, {
+    unitId: string; x0: number; y0: number; x1: number; y1: number
+  }>()
+  for (const { unit, path, displayBounds } of geographicPaths.value) {
+    const countryId = unit.properties.entityId
+    if (!path || !quizCountryIds.has(countryId) || !isGeographicUnitVisible(unit)) continue
+    const [[x0, y0], [x1, y1]] = displayBounds
+    if (![x0, y0, x1, y1].every(Number.isFinite)) continue
+    const previous = byCountry.get(countryId)
+    byCountry.set(countryId, previous ? {
+      unitId: previous.unitId,
+      x0: Math.min(previous.x0, x0), y0: Math.min(previous.y0, y0),
+      x1: Math.max(previous.x1, x1), y1: Math.max(previous.y1, y1),
+    } : { unitId: unit.id, x0, y0, x1, y1 })
+  }
+  return [...byCountry].map(([countryId, bounds]) => ({
+    countryId,
+    unitId: bounds.unitId,
+    x: (bounds.x0 + bounds.x1) / 2,
+    y: (bounds.y0 + bounds.y1) / 2,
+    width: bounds.x1 - bounds.x0,
+    height: bounds.y1 - bounds.y0,
+  }))
+})
+
+const quizSmallCountryMarkers = computed(() =>
+  props.quizMode && props.quizAnswerId === null && !props.quizComplete && !isInteracting.value
+    ? groupSmallCountryMarkers(
+        smallCountryAnchors.value, transform, copyOffsets.value, mapWidth.value, mapHeight.value,
+      )
+    : [],
+)
+
+const quizFeedbackMarkers = computed<SmallCountryFeedbackMarker[]>(() => {
+  if (!props.quizMode || props.quizAnswerId === null || props.quizComplete || isInteracting.value) return []
+  const answerIds = new Set([props.quizQuestionId, props.quizAnswerId])
+  return groupSmallCountryMarkers(
+    smallCountryAnchors.value.filter((anchor) => answerIds.has(anchor.countryId)),
+    transform, copyOffsets.value, mapWidth.value, mapHeight.value,
+  )
+    .flatMap((marker) => marker.targets.map((target) => ({
+      ...target,
+      status: target.countryId === props.quizQuestionId ? 'correct' as const : 'wrong' as const,
+    })))
+    .sort((a, b) => Number(a.status === 'correct') - Number(b.status === 'correct'))
+})
+
 const wrappedGeographicPaths = computed(() => {
   const wrap = horizontalWrap.value
   const paths = new Map<number, typeof paintedGeographicPaths.value>()
@@ -272,6 +328,9 @@ watch(() => props.quizMode, (active) => {
   if (active) focusActiveRegion(true, true)
 }, { flush: 'post' })
 watch([() => props.activeRegion.id, () => props.geographicUnits], () => {
+  hoveredUnit.value = null
+})
+watch([() => props.quizQuestionId, () => props.quizAnswerId], () => {
   hoveredUnit.value = null
 })
 watch(isInteracting, (active) => {
@@ -365,6 +424,33 @@ function hoverGeographicUnit(unit: GeographicUnitFeature) {
   if (!isInteracting.value) {
     hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
   }
+}
+
+function hoverSmallCountryMarker(marker: SmallCountryMarker | null) {
+  const target = marker?.targets.length === 1 ? marker.targets[0] : null
+  hoveredUnit.value = target && !isInteracting.value
+    ? { id: target.unitId, entityId: target.countryId }
+    : null
+}
+
+function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEvent | KeyboardEvent) {
+  if (event instanceof MouseEvent && (consumeDragClick() || event.detail > 1)) return
+  if (!canActivateGeographicUnit(interactionState.value)) return
+
+  if (marker.targets.length === 1) {
+    const target = marker.targets[0]
+    emit('select', target.countryId, target.unitId)
+    return
+  }
+
+  const xs = marker.targets.map((target) => target.screenX)
+  const ys = marker.targets.map((target) => target.screenY)
+  const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1)
+  const factor = Math.min(24, Math.max(6, Math.min(mapWidth.value, mapHeight.value) * 0.3 / span))
+  zoomToPoint(
+    [(marker.x - transform.x) / transform.scale, (marker.y - transform.y) / transform.scale],
+    transform.scale * factor,
+  )
 }
 
 function requestDetailChange(enabled: boolean) {
@@ -553,6 +639,13 @@ async function setProjection(nextId: MapProjectionId) {
             </g>
           </g>
         </g>
+        <SmallCountryMarkers
+          v-if="quizSmallCountryMarkers.length || quizFeedbackMarkers.length"
+          :markers="quizSmallCountryMarkers"
+          :feedback-markers="quizFeedbackMarkers"
+          @activate="activateSmallCountryMarker"
+          @hover="hoverSmallCountryMarker"
+        />
         <MarineLabels
           :visible="marineLabelsEnabled && !isInteracting"
           :width="mapWidth"
@@ -688,7 +781,8 @@ async function setProjection(nextId: MapProjectionId) {
 
 .world-map {
   position: relative;
-  z-index: 1;
+  /* Keep screen-space quiz markers and labels above painted country highlights. */
+  z-index: 2;
   display: block;
   width: 100%;
   height: 100%;
@@ -699,7 +793,7 @@ async function setProjection(nextId: MapProjectionId) {
 .map-highlights {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;

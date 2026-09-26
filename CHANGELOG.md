@@ -5,6 +5,7 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 ## Unreleased
 
 - In Find the country, nearby parts of a country now share the primary answer highlight; distant components retain a separate related highlight.
+- Added neutral map targets for tiny quiz countries; overlapping targets zoom in before accepting an answer.
 
 ## 0.1.0 — 2026-09-26
 
