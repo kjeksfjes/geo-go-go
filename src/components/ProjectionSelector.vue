@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, type ComponentPublicInstance } from 'vue'
 import TreeSelect from '@zanmato/vue3-treeselect'
 import type { MapProjectionId } from '../composables/useMapProjection'
+import { useMapSelectMenuAnchor } from '../composables/useMapSelectMenuAnchor'
 import { t } from '../i18n'
 
 const props = defineProps<{
@@ -16,6 +17,7 @@ const localizedOptions = computed(() => props.options.map((option) =>
     : option,
 ))
 const treeSelect = ref<ComponentPublicInstance | null>(null)
+const { startAligning, stopAligning } = useMapSelectMenuAnchor('projection-selector', '.projection-control')
 
 function toggleFromControl(event: MouseEvent) {
   event.preventDefault()
@@ -53,6 +55,7 @@ function selectProjection(value: string | null) {
     <span id="projection-selector-label">{{ t('projection') }}</span>
     <TreeSelect
       ref="treeSelect"
+      instance-id="projection-selector"
       :model-value="model"
       :disabled="disabled"
       :options="localizedOptions"
@@ -65,8 +68,11 @@ function selectProjection(value: string | null) {
       :close-on-select="true"
       :open-on-focus="false"
       :append-to-body="true"
+      open-direction="top"
       :max-height="320"
       aria-labelledby="projection-selector-label"
+      @open="startAligning"
+      @close="stopAligning"
       @update:model-value="selectProjection"
     />
   </div>
@@ -75,9 +81,10 @@ function selectProjection(value: string | null) {
 <style scoped>
 .projection-selector {
   display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.7rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  padding: 0.35rem 0.7rem;
   color: #52676e;
   font-size: 0.72rem;
   font-weight: 700;
@@ -141,8 +148,4 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
   outline-offset: 2px;
 }
 
-/* Both popups are portaled; offset this one by its longer field label. */
-body:has(.projection-control .vue3-treeselect--open) .vue3-treeselect__menu {
-  transform: translateX(-4.9rem);
-}
 </style>

@@ -98,30 +98,29 @@ watch(() => props.question?.id, async (countryId) => {
 
 <style scoped>
 .quiz-panel {
-  display: flex;
-  min-height: 112px;
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
   align-items: center;
-  gap: 1.25rem;
-  margin-bottom: 1rem;
-  padding: 1rem 1.25rem;
-  border: 1px solid rgba(82, 103, 110, 0.16);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 8px 28px rgba(23, 45, 56, 0.06);
+  gap: 0.3rem 1.1rem;
+  padding: 1rem 1.2rem;
 }
 
 .quiz-panel__flag {
-  flex: 0 0 auto;
+  grid-column: 1;
+  grid-row: 1;
   width: 1.333333em;
   border-radius: 4px;
   box-shadow: 0 8px 20px rgba(23, 45, 56, 0.25);
-  font-size: clamp(3.2rem, 6vw, 4.5rem);
+  font-size: 3.4rem;
 }
 
 .quiz-panel__message {
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
-  flex: 1;
 }
+
+.quiz-panel__message:first-child { grid-column: 1 / -1; }
 
 .quiz-panel__eyebrow {
   margin: 0 0 0.3rem;
@@ -141,7 +140,7 @@ watch(() => props.question?.id, async (countryId) => {
 
 .quiz-panel__status {
   display: flex;
-  min-height: 3.4rem;
+  min-height: 2.8rem;
   align-items: center;
 }
 
@@ -156,7 +155,8 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel__feedback--wrong { color: #a13d2c; }
 
 .quiz-panel__button {
-  flex: 0 0 auto;
+  grid-column: 1 / -1;
+  justify-self: end;
   padding: 0.65rem 0.95rem;
   border: 0;
   border-radius: 999px;
@@ -180,11 +180,11 @@ watch(() => props.question?.id, async (countryId) => {
 
 @media (max-width: 560px) {
   .quiz-panel {
-    flex-wrap: wrap;
-    gap: 0.8rem;
+    grid-template-columns: 3.7rem minmax(0, 1fr);
+    gap: 0.3rem 0.85rem;
     padding: 0.85rem;
   }
 
-  .quiz-panel__button { margin-left: auto; }
+  .quiz-panel__flag { font-size: 2.8rem; }
 }
 </style>

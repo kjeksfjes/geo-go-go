@@ -54,7 +54,7 @@ const componentDetail = computed(() => {
   display: flex;
   min-height: 128px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1.5rem;
   /* Keep the largest flag within the card's reserved 128px height. */
   padding: 0.75rem 1.25rem;
@@ -114,7 +114,7 @@ h2 {
 }
 
 .country-card__empty {
-  text-align: center;
+  text-align: left;
 }
 
 @media (max-width: 520px) {

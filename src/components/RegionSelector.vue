@@ -3,6 +3,7 @@ import { computed, onMounted, ref, type ComponentPublicInstance } from 'vue'
 import TreeSelect from '@zanmato/vue3-treeselect'
 import type { MapRegion, MapRegionId } from '../data/regions'
 import { regionName, t } from '../i18n'
+import { useMapSelectMenuAnchor } from '../composables/useMapSelectMenuAnchor'
 
 const props = defineProps<{
   options: readonly MapRegion[]
@@ -10,6 +11,7 @@ const props = defineProps<{
 
 const model = defineModel<MapRegionId>({ required: true })
 const treeSelect = ref<ComponentPublicInstance | null>(null)
+const { startAligning, stopAligning } = useMapSelectMenuAnchor('region-selector', '.region-control')
 
 function toggleFromControl(event: MouseEvent) {
   event.preventDefault()
@@ -58,6 +60,7 @@ function selectRegion(value: string | null) {
     <span id="region-selector-label">{{ t('region') }}</span>
     <TreeSelect
       ref="treeSelect"
+      instance-id="region-selector"
       :model-value="model"
       :options="treeOptions"
       :multiple="false"
@@ -70,8 +73,11 @@ function selectRegion(value: string | null) {
       :default-expand-level="0"
       :open-on-focus="false"
       :append-to-body="true"
+      open-direction="top"
       :max-height="320"
       aria-labelledby="region-selector-label"
+      @open="startAligning"
+      @close="stopAligning"
       @update:model-value="selectRegion"
     />
   </div>
@@ -80,9 +86,10 @@ function selectRegion(value: string | null) {
 <style scoped>
 .region-selector {
   display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.7rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  padding: 0.35rem 0.7rem;
   color: #52676e;
   font-size: 0.72rem;
   font-weight: 700;
@@ -91,8 +98,8 @@ function selectRegion(value: string | null) {
 }
 
 .region-selector :deep(.vue3-treeselect) {
-  width: 9rem;
-  min-width: 7rem;
+  width: 8rem;
+  min-width: 8rem;
   color: #172d38;
   font: inherit;
 }
@@ -159,7 +166,7 @@ html[data-input-modality='keyboard'] .region-control:has(.vue3-treeselect__input
   font-size: 0.76rem;
   font-weight: 650;
   line-height: 1.3;
-  transform: translateX(-3.75rem);
+  transform: none;
 }
 
 /* Keep the extra width until the child rows actually leave the DOM on collapse. */

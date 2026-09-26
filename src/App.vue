@@ -30,6 +30,7 @@ const renderedGeographicUnits = shallowRef(geographicUnits)
 const highDetailEnabled = ref(false)
 const detailLoading = ref(false)
 const detailBlurred = ref(false)
+const settingsOpen = ref(false)
 const detailedGeographicUnits = shallowRef<typeof geographicUnits | null>(null)
 const activeRegion = computed(() => regionById.get(activeRegionId.value) ?? regions[0])
 const visibleMapUnitIds = computed(() =>
@@ -113,8 +114,25 @@ function handleQuizShortcut(event: KeyboardEvent) {
   advanceQuizQuestion()
 }
 
-onMounted(() => document.addEventListener('keydown', handleQuizShortcut))
-onBeforeUnmount(() => document.removeEventListener('keydown', handleQuizShortcut))
+function handleSettingsPointerDown(event: PointerEvent) {
+  if (!(event.target instanceof Element)) return
+  if (!event.target.closest('.settings-button, .map-settings-panel')) settingsOpen.value = false
+}
+
+function handleEscape(event: KeyboardEvent) {
+  if (event.key === 'Escape') settingsOpen.value = false
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleQuizShortcut)
+  document.addEventListener('keydown', handleEscape)
+  document.addEventListener('pointerdown', handleSettingsPointerDown)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', handleQuizShortcut)
+  document.removeEventListener('keydown', handleEscape)
+  document.removeEventListener('pointerdown', handleSettingsPointerDown)
+})
 
 function setActiveRegion(regionId: MapRegionId) {
   activeRegionId.value = regionId
@@ -189,43 +207,34 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
 <template>
   <main class="app-shell">
     <header class="app-header">
-      <div class="language-selector" role="group" :aria-label="t('language')">
-        <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="setLocale('en')">EN</button>
-        <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="setLocale('nb')">NO</button>
+      <div class="app-brand">
+        <h1>{{ t('title') }}</h1>
+        <p class="eyebrow">{{ t('eyebrow') }}</p>
+        <p class="visually-hidden">{{ t('subtitle') }}</p>
       </div>
-      <p class="eyebrow">{{ t('eyebrow') }}</p>
-      <h1>{{ t('title') }}</h1>
-      <p>{{ t('subtitle') }}</p>
+      <div class="mode-selector" role="group" :aria-label="t('gameMode')">
+        <button type="button" :aria-pressed="mode === 'explore'" @click="setMode('explore')">
+          {{ t('explore') }}
+        </button>
+        <button type="button" :aria-pressed="mode === 'find-country'" @click="setMode('find-country')">
+          {{ t('findCountry') }}
+        </button>
+      </div>
+      <div class="header-actions">
+        <div class="language-selector" role="group" :aria-label="t('language')">
+          <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="setLocale('en')">EN</button>
+          <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="setLocale('nb')">NO</button>
+        </div>
+        <button
+          class="settings-button"
+          type="button"
+          :aria-label="t('mapSettings')"
+          :aria-expanded="settingsOpen"
+          aria-controls="map-settings-panel"
+          @click="settingsOpen = !settingsOpen"
+        ><span aria-hidden="true">⚙</span></button>
+      </div>
     </header>
-
-    <div class="mode-selector" role="group" :aria-label="t('gameMode')">
-      <button
-        type="button"
-        :aria-pressed="mode === 'explore'"
-        @click="setMode('explore')"
-      >
-        {{ t('explore') }}
-      </button>
-      <button
-        type="button"
-        :aria-pressed="mode === 'find-country'"
-        @click="setMode('find-country')"
-      >
-        {{ t('findCountry') }}
-      </button>
-    </div>
-
-    <CountryQuizPanel
-      v-if="mode === 'find-country'"
-      :phase="quizPhase"
-      :question="quizQuestion"
-      :answer="quizAnswer"
-      :score="quizScore"
-      :question-number="quizQuestionNumber"
-      :total="quizTotal"
-      @next="advanceQuizQuestion"
-      @restart="restartQuiz"
-    />
 
     <section class="map-card" :aria-label="t('worldMapGame')">
       <WorldMap
@@ -234,6 +243,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :detail-loading="detailLoading"
         :detail-blurred="detailBlurred"
         :high-detail-enabled="highDetailEnabled"
+        :settings-open="settingsOpen"
         :active-region="activeRegion"
         :region-options="regions"
         :selected-country-id="selectedCountryId"
@@ -248,8 +258,25 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         @select="handleMapSelection"
         @quiz-next="advanceQuizQuestion"
       />
+      <div v-if="mode === 'find-country'" class="map-overlay" :inert="detailLoading">
+        <div class="map-overlay__card">
+          <CountryQuizPanel
+            :phase="quizPhase"
+            :question="quizQuestion"
+            :answer="quizAnswer"
+            :score="quizScore"
+            :question-number="quizQuestionNumber"
+            :total="quizTotal"
+            @next="advanceQuizQuestion"
+            @restart="restartQuiz"
+          />
+        </div>
+      </div>
+      <div v-else-if="selectedCountry" class="map-overlay" :inert="detailLoading">
+        <div class="map-overlay__card">
+          <CountryCard :country="selectedCountry" :component="selectedComponent" />
+        </div>
+      </div>
     </section>
-
-    <CountryCard v-if="mode === 'explore'" :country="selectedCountry" :component="selectedComponent" />
   </main>
 </template>

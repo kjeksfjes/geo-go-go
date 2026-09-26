@@ -26,6 +26,7 @@ const props = defineProps<{
   detailLoading: boolean
   detailBlurred: boolean
   highDetailEnabled: boolean
+  settingsOpen: boolean
   activeRegion: MapRegion
   regionOptions: readonly MapRegion[]
   selectedCountryId: string | null
@@ -48,6 +49,7 @@ const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
+const controlsOpen = ref(false)
 const bathymetryEnabled = ref(true)
 const reliefEnabled = ref(true)
 const marineLabelsEnabled = ref(true)
@@ -65,9 +67,9 @@ const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
 const mapBlurred = computed(() => props.detailBlurred || projectionBlurred.value)
-const { width: measuredWidth } = useElementSize(container)
+const { width: measuredWidth, height: measuredHeight } = useElementSize(container)
 const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
-const mapHeight = computed(() => Math.max(280, Math.min(620, mapWidth.value * 0.56)))
+const mapHeight = computed(() => Math.max(measuredHeight.value, 280))
 const {
   bathymetryPaths,
   geographicPaths,
@@ -351,7 +353,13 @@ function requestDetailChange(enabled: boolean) {
   )
 }
 
+function changeRegion(regionId: MapRegionId) {
+  controlsOpen.value = false
+  emit('region-change', regionId)
+}
+
 async function setProjection(nextId: MapProjectionId) {
+  controlsOpen.value = false
   if (nextId === projectionId.value || interactionLocked.value) return
 
   if (!props.highDetailEnabled || hasCachedPaths(props.geographicUnits, nextId)) {
@@ -389,7 +397,7 @@ async function setProjection(nextId: MapProjectionId) {
 </script>
 
 <template>
-  <div class="map-stage" :class="{ 'map-stage--busy': interactionLocked }">
+  <div class="map-stage" :class="{ 'map-stage--busy': interactionLocked }" @keydown.esc="controlsOpen = false">
     <div
       ref="container"
       class="map-container"
@@ -540,15 +548,29 @@ async function setProjection(nextId: MapProjectionId) {
         </g>
       </svg>
 
-      <div class="map-controls">
+      <button
+        class="map-controls-toggle"
+        type="button"
+        :aria-expanded="controlsOpen"
+        aria-controls="map-controls"
+        @click="controlsOpen = !controlsOpen"
+      >{{ t('mapControls') }}</button>
+      <div id="map-controls" class="map-controls" :class="{ 'map-controls--open': controlsOpen }">
         <div class="region-control">
+          <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3Z" />
+          </svg>
           <RegionSelector
             :model-value="activeRegion.id"
             :options="regionOptions"
-            @update:model-value="emit('region-change', $event)"
+            @update:model-value="changeRegion"
           />
         </div>
         <div class="projection-control">
+          <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
+            <path d="m2 5 6-2 8 2 6-2v16l-6 2-8-2-6 2V5Zm6-2v16m8-14v16" />
+          </svg>
           <ProjectionSelector
             :model-value="projectionId"
             :disabled="interactionLocked"
@@ -556,11 +578,6 @@ async function setProjection(nextId: MapProjectionId) {
             @update:model-value="setProjection"
           />
         </div>
-        <MapDetailToggle
-          :loading="interactionLocked"
-          :model-value="highDetailEnabled"
-          @update:model-value="requestDetailChange"
-        />
         <MapDetailToggle
           :label="t('bathymetry')"
           :loading="interactionLocked"
@@ -578,6 +595,14 @@ async function setProjection(nextId: MapProjectionId) {
           :loading="interactionLocked"
           :model-value="marineLabelsEnabled"
           @update:model-value="marineLabelsEnabled = $event"
+        />
+      </div>
+
+      <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel">
+        <MapDetailToggle
+          :loading="interactionLocked"
+          :model-value="highDetailEnabled"
+          @update:model-value="requestDetailChange"
         />
       </div>
 
@@ -602,11 +627,13 @@ async function setProjection(nextId: MapProjectionId) {
 .map-stage {
   position: relative;
   width: 100%;
+  height: 100%;
 }
 
 .map-container {
   position: relative;
   width: 100%;
+  height: 100%;
   /* Unlike hidden, clip cannot be scrolled by focus/scrollIntoView. */
   overflow: clip;
 }
@@ -616,8 +643,7 @@ async function setProjection(nextId: MapProjectionId) {
   z-index: 1;
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 65vh;
+  height: 100%;
   cursor: grab;
   user-select: none;
   transition: filter 280ms ease;
@@ -861,9 +887,9 @@ async function setProjection(nextId: MapProjectionId) {
 
 .map-tools {
   position: absolute;
-  z-index: 2;
-  right: 0.8rem;
-  bottom: 0.8rem;
+  z-index: 3;
+  right: 1.5rem;
+  bottom: 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -875,28 +901,67 @@ async function setProjection(nextId: MapProjectionId) {
 
 .map-controls {
   position: absolute;
-  z-index: 2;
-  top: 0.8rem;
-  left: 0.8rem;
-  right: 0.8rem;
+  z-index: 3;
+  bottom: 1.4rem;
+  left: 1.5rem;
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.5rem;
-  pointer-events: none;
+  align-items: center;
+  gap: 0;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  background: rgba(250, 252, 252, 0.9);
+  box-shadow: 0 8px 25px rgba(23, 45, 56, 0.13);
+  backdrop-filter: blur(10px);
 }
 
-.map-controls > * {
-  pointer-events: auto;
+.map-controls > * + * {
+  border-left: 1px solid rgba(82, 103, 110, 0.18);
 }
 
 .projection-control,
 .region-control {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.projection-control {
+  border-right: 1px solid rgba(82, 103, 110, 0.18);
+}
+
+.control-icon {
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: none;
+  margin-left: 0.65rem;
+  color: #17374b;
+}
+
+.map-controls :deep(.detail-toggle) {
+  min-height: 2.55rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.map-controls-toggle {
+  display: none;
+}
+
+.map-settings-panel {
+  position: absolute;
+  z-index: 4;
+  top: 0.85rem;
+  right: 1.25rem;
+  padding: 0.5rem;
   border: 1px solid rgba(82, 103, 110, 0.18);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 3px 12px rgba(23, 45, 56, 0.08);
-  backdrop-filter: blur(7px);
+  border-radius: 16px;
+  background: rgba(250, 252, 252, 0.95);
+  box-shadow: 0 12px 30px rgba(23, 45, 56, 0.15);
+  backdrop-filter: blur(12px);
 }
 
 .map-tools span,
@@ -918,6 +983,56 @@ async function setProjection(nextId: MapProjectionId) {
 .map-tools button:hover,
 :global(html[data-input-modality='keyboard'] .map-tools button:focus-visible) {
   background: #fff;
+}
+
+@media (max-width: 1100px) {
+  .map-tools { top: 0.8rem; bottom: auto; }
+  .map-tools span { display: none; }
+}
+
+@media (max-width: 850px) {
+  .map-controls-toggle {
+    position: absolute;
+    z-index: 3;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    left: 0.75rem;
+    display: block;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid rgba(82, 103, 110, 0.16);
+    border-radius: 999px;
+    color: #172d38;
+    background: rgba(250, 252, 252, 0.92);
+    box-shadow: 0 8px 25px rgba(23, 45, 56, 0.13);
+    font-size: 0.8rem;
+    font-weight: 750;
+    cursor: pointer;
+  }
+
+  :global(html[data-input-modality='keyboard'] .map-controls-toggle:focus-visible) {
+    outline: 2px solid #172d38;
+    outline-offset: 2px;
+  }
+
+  .map-controls {
+    bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 3rem);
+    left: 0.75rem;
+    display: none;
+    width: min(18rem, calc(100% - 1.5rem));
+    max-height: min(25rem, 65%);
+    flex-direction: column;
+    align-items: stretch;
+    overflow-y: auto;
+    border-radius: 16px;
+    padding: 0.45rem;
+  }
+
+  .map-controls--open { display: flex; }
+  .map-controls > * + * { border-left: 0; border-top: 1px solid rgba(82, 103, 110, 0.18); }
+  .projection-control { border-right: 0; }
+  .map-controls :deep(.detail-toggle) { width: 100%; justify-content: space-between; }
+  .map-tools { top: auto; right: 0.75rem; bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+  .map-tools button { max-width: 8rem; text-align: center; }
+  .map-settings-panel { top: 0.75rem; right: 0.75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
