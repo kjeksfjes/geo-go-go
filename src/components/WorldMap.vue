@@ -18,7 +18,17 @@ import type { MapRegion, MapRegionId } from '../data/regions'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { countryName, t } from '../i18n'
-import { isCountryLevelSelection, sharedFocusUnitIds } from '../data/mapSelection'
+import { mapPaletteCssVariables } from '../data/mapPalette'
+import {
+  backgroundClickAction,
+  canActivateGeographicUnit,
+  countryClickAction,
+  geographicUnitClasses as classesForUnit,
+  hasVisualHighlight,
+  isPrimarySelectedExploreUnit as isPrimaryExploreUnit,
+  type MapInteractionState,
+} from '../logic/mapInteraction'
+import { selectionFocusTarget } from '../logic/mapFocus'
 
 const props = defineProps<{
   geographicUnits: GeographicUnitFeature[]
@@ -57,12 +67,17 @@ const marineLabelsEnabled = ref(true)
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
 const canvasReady = ref(false)
 const canvasRendererActive = computed(() => canvasRendererEnabled && canvasReady.value)
-// Temporary A/B switch while evaluating a replacement renderer. Full detail
-// is the default; ?motion-fallback=1 restores the old interaction shortcuts.
-const useSimplifiedMotionRendering = new URLSearchParams(window.location.search)
-  .get('motion-fallback') === '1'
 const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
+const interactionState = computed<MapInteractionState>(() => ({
+  selectedCountryId: props.selectedCountryId,
+  selectedGeographicUnitId: props.selectedGeographicUnitId,
+  hoveredEntityId: hoveredUnit.value?.entityId ?? null,
+  quizMode: props.quizMode,
+  quizComplete: props.quizComplete,
+  quizQuestionId: props.quizQuestionId,
+  quizAnswerId: props.quizAnswerId,
+}))
 const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
@@ -98,44 +113,11 @@ const minimumZoomPoint = computed<MapPoint | null>(() => {
   return center ? projectPoint(center) ?? null : null
 })
 function geographicUnitClasses(unit: GeographicUnitFeature) {
-  const entityId = unit.properties.entityId
-  const clicked = unit.id === props.selectedGeographicUnitId
-
-  if (!props.quizMode) {
-    const selected = isPrimarySelectedExploreUnit(unit)
-    return {
-      'country--selected': selected,
-      'country--related': entityId === props.selectedCountryId && !selected,
-      'country--identity-hover': hoveredUnit.value?.entityId === entityId
-        && entityId !== props.selectedCountryId,
-    }
-  }
-
-  const answered = props.quizAnswerId !== null
-  const correct = answered && entityId === props.quizQuestionId
-  const wrong = answered && entityId === props.quizAnswerId && !correct
-  const relatedAnswer = !clicked && props.selectedGeographicUnitId !== null
-
-  return {
-    'country--identity-hover': (props.quizComplete || (!answered && props.quizQuestionId !== null))
-      && hoveredUnit.value?.entityId === entityId,
-    'country--quiz-correct': correct && !(relatedAnswer && props.quizAnswerId === props.quizQuestionId),
-    'country--quiz-correct-related': correct && relatedAnswer && props.quizAnswerId === props.quizQuestionId,
-    'country--quiz-wrong': wrong && !relatedAnswer,
-    'country--quiz-wrong-related': wrong && relatedAnswer,
-    'country--quiz-inactive': answered && !correct && !wrong,
-  }
-}
-
-function hasVisualHighlight(unit: GeographicUnitFeature) {
-  return Object.entries(geographicUnitClasses(unit))
-    .some(([name, active]) => name !== 'country--quiz-inactive' && active)
+  return classesForUnit(unit, interactionState.value)
 }
 
 function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature) {
-  if (unit.properties.entityId !== props.selectedCountryId) return false
-  return isCountryLevelSelection(props.selectedCountryId, props.selectedGeographicUnitId)
-    || unit.id === props.selectedGeographicUnitId
+  return isPrimaryExploreUnit(unit, interactionState.value)
 }
 
 function isGeographicUnitVisible(unit: GeographicUnitFeature) {
@@ -161,7 +143,7 @@ const {
 // The canvas supplies detailed coastlines. Its SVG interaction layer only
 // needs the lighter 50m hit geometry; active highlights use detailed paths.
 const renderedGeographicPaths = computed(() =>
-  canvasRendererActive.value || (useSimplifiedMotionRendering && isInteracting.value)
+  canvasRendererActive.value
     ? interactionGeographicPaths.value
     : geographicPaths.value,
 )
@@ -192,19 +174,12 @@ const paintedGeographicPaths = computed(() => {
   return ordered
 })
 const highlightedGeographicPaths = computed(() => paintedGeographicPaths.value
-  .filter(({ unit }) => isGeographicUnitVisible(unit) && hasVisualHighlight(unit)))
+  .filter(({ unit }) => isGeographicUnitVisible(unit) && hasVisualHighlight(unit, interactionState.value)))
 
 const visibleLandPath = computed(() => renderedGeographicPaths.value
   .filter(({ unit }) => isGeographicUnitVisible(unit))
   .map(({ path }) => path)
   .join(' '))
-const renderedBathymetryPaths = computed(() => useSimplifiedMotionRendering && isInteracting.value
-  ? bathymetryPaths.value.filter(({ depth }) => depth === 200 || depth === 6000)
-  : bathymetryPaths.value)
-const renderedReliefPaths = computed(() => useSimplifiedMotionRendering && isInteracting.value
-  ? reliefPaths.value.filter(({ elevation }) => elevation === 500 || elevation === 2250)
-  : reliefPaths.value)
-
 const canvasScene = computed<CanvasMapScene>(() => ({
   spherePath: spherePath.value,
   bathymetry: bathymetryEnabled.value ? bathymetryPaths.value : [],
@@ -266,10 +241,6 @@ function geographicPathsAt(offset: number) {
   return wrappedGeographicPaths.value.get(offset) ?? []
 }
 
-function offsetBounds(bounds: MapBounds, offset: number): MapBounds {
-  return [[bounds[0][0] + offset, bounds[0][1]], [bounds[1][0] + offset, bounds[1][1]]]
-}
-
 function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
   // This projection is already fitted to the selected region at scale 1.
   if (projectionId.value === 'regional-equal-area') {
@@ -328,56 +299,48 @@ function selectCountry(
     event.stopPropagation()
     return
   }
-  if (props.quizMode) {
-    // Ignore the second click of a double-click, including if the first click
-    // advanced from the previous question.
-    if (event instanceof MouseEvent && event.detail > 1) {
-      event.stopPropagation()
-      return
-    }
-    if (props.quizQuestionId && props.quizAnswerId === null) {
-      event?.stopPropagation()
-      emit('select', countryId, geographicUnitId)
-    }
+  const action = countryClickAction(
+    countryId,
+    geographicUnitId,
+    event instanceof MouseEvent ? event.detail : 0,
+    interactionState.value,
+  )
+  if (action === 'ignore-stop') {
+    event?.stopPropagation()
     return
   }
+  if (action === 'ignore') return
   event?.stopPropagation()
-  if (props.selectedCountryId === countryId && props.selectedGeographicUnitId === geographicUnitId) {
+  if (action === 'clear') {
     emit('select', null, null)
     return
   }
   emit('select', countryId, geographicUnitId)
+  if (props.quizMode) return
   const detailed = canvasRendererActive.value
     ? detailedGeographicPathById.value.get(geographicUnitId)
     : undefined
-  bounds = detailed?.bounds ?? bounds
-  focusPoint = detailed?.focusPoint ?? focusPoint
-  const group = sharedFocusUnitIds(geographicUnitId)
-  const sharedPaths = group && geographicPaths.value.filter(({ unit }) =>
-    group.includes(unit.id) && isGeographicUnitVisible(unit),
+  const target = selectionFocusTarget(
+    geographicUnitId,
+    detailed?.bounds ?? bounds,
+    detailed?.focusPoint ?? focusPoint,
+    geographicPaths.value,
+    props.visibleMapUnitIds,
+    horizontalOffset,
   )
-  if (sharedPaths && sharedPaths.length > 1) {
-    const x0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][0])) + horizontalOffset
-    const y0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][1]))
-    const x1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][0])) + horizontalOffset
-    const y1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][1]))
-    zoomToBounds([[x0, y0], [x1, y1]])
-  } else {
-    zoomToBounds(
-      offsetBounds(bounds, horizontalOffset),
-      focusPoint ? [focusPoint[0] + horizontalOffset, focusPoint[1]] : undefined,
-    )
-  }
+  zoomToBounds(target.bounds, target.focusPoint)
 }
 
 function handleMapClick(event: MouseEvent) {
   if (!props.quizMode) {
-    if (!consumeDragClick() && props.selectedCountryId !== null) emit('select', null, null)
+    if (!consumeDragClick() && backgroundClickAction(event.detail, interactionState.value) === 'clear') {
+      emit('select', null, null)
+    }
     return
   }
   if (props.quizAnswerId === null) return
-  if (consumeDragClick() || event.detail > 1) return
-  emit('quiz-next')
+  if (consumeDragClick()) return
+  if (backgroundClickAction(event.detail, interactionState.value) === 'next') emit('quiz-next')
 }
 
 function handleWheel(event: WheelEvent) {
@@ -460,6 +423,7 @@ async function setProjection(nextId: MapProjectionId) {
     <div
       ref="container"
       class="map-container"
+      :style="mapPaletteCssVariables"
       :class="{
         'map-container--dragging': isDragging,
         'map-container--interacting': isInteracting,
@@ -512,7 +476,7 @@ async function setProjection(nextId: MapProjectionId) {
               :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             >
               <path
-                v-for="band in renderedBathymetryPaths"
+                v-for="band in bathymetryPaths"
                 :key="band.depth"
                 class="bathymetry__band"
                 :class="`bathymetry__band--${band.depth}`"
@@ -530,7 +494,7 @@ async function setProjection(nextId: MapProjectionId) {
             <path class="terrain__land" :d="visibleLandPath" />
             <g v-if="reliefEnabled" class="relief" :clip-path="`url(#${reliefClipId})`">
               <path
-                v-for="band in renderedReliefPaths"
+                v-for="band in reliefPaths"
                 :key="band.elevation"
                 class="relief__band"
                 :class="`relief__band--${band.elevation}`"
@@ -558,10 +522,10 @@ async function setProjection(nextId: MapProjectionId) {
                 :data-country-id="unit.properties.entityId"
                 :data-geographic-unit-id="unit.id"
                 role="button"
-                :tabindex="offset === 0 && isGeographicUnitVisible(unit) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
+                :tabindex="offset === 0 && isGeographicUnitVisible(unit) && canActivateGeographicUnit(interactionState) ? 0 : -1"
                 :aria-label="countryName(unit.properties.entityId)"
                 :aria-hidden="!isGeographicUnitVisible(unit)"
-                :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
+                :aria-disabled="!canActivateGeographicUnit(interactionState)"
                 :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
                 @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
                 @pointerenter="hoverGeographicUnit(unit)"
@@ -770,12 +734,12 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .map-sphere {
-  fill: #61acd3;
+  fill: var(--map-ocean);
 }
 
 /* Match the repeated sphere where two Mercator copies meet at a pixel edge. */
 .world-map--wrapped {
-  background-color: #61acd3;
+  background-color: var(--map-ocean);
 }
 
 .world-map--canvas.world-map--wrapped {
@@ -791,15 +755,15 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .bathymetry__band--200 {
-  fill: #78bbdc;
+  fill: var(--map-bathymetry-200);
 }
 
 .bathymetry__band--2000 {
-  fill: #63add3;
+  fill: var(--map-bathymetry-2000);
 }
 
 .bathymetry__band--6000 {
-  fill: #509dcc;
+  fill: var(--map-bathymetry-6000);
 }
 
 .terrain,
@@ -808,7 +772,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .terrain__land {
-  fill: #fcf8e9;
+  fill: var(--map-land);
 }
 
 .relief__band {
@@ -816,33 +780,33 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .relief__band--500 {
-  fill: #bfd6a4;
-  fill-opacity: 0.3;
+  fill: var(--map-relief-500);
+  fill-opacity: var(--map-relief-500-opacity);
 }
 
 .relief__band--1000 {
-  fill: #abc991;
-  fill-opacity: 0.23;
+  fill: var(--map-relief-1000);
+  fill-opacity: var(--map-relief-1000-opacity);
 }
 
 .relief__band--1500 {
-  fill: #9bbc88;
-  fill-opacity: 0.2;
+  fill: var(--map-relief-1500);
+  fill-opacity: var(--map-relief-1500-opacity);
 }
 
 .relief__band--2250 {
-  fill: #8caa82;
-  fill-opacity: 0.17;
+  fill: var(--map-relief-2250);
+  fill-opacity: var(--map-relief-2250-opacity);
 }
 
 .relief__band--3000 {
-  fill: #7d9d77;
-  fill-opacity: 0.14;
+  fill: var(--map-relief-3000);
+  fill-opacity: var(--map-relief-3000-opacity);
 }
 
 .country {
   fill: transparent;
-  stroke: #5e7680;
+  stroke: var(--map-border);
   stroke-width: 0.85;
   vector-effect: non-scaling-stroke;
   cursor: pointer;
@@ -857,7 +821,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .country-outline {
-  stroke: #5e7680;
+  stroke: var(--map-border);
   stroke-width: 0.85;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
@@ -990,7 +954,7 @@ async function setProjection(nextId: MapProjectionId) {
 
 .regional-division {
   fill: none;
-  stroke: #547987;
+  stroke: var(--map-regional-division);
   stroke-width: 1;
   stroke-dasharray: 3 3;
   stroke-linecap: round;

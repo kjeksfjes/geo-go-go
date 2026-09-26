@@ -1,4 +1,5 @@
 import type { CanvasWorkerFrame, CanvasWorkerRequest, CanvasMapScene } from '../types/mapCanvas'
+import { mapPalette } from '../data/mapPalette'
 
 type DrawPath = Path2D | null
 type Bounds = [[number, number], [number, number]]
@@ -14,19 +15,6 @@ interface PreparedScene {
 const workerScope = self as unknown as {
   onmessage: ((event: MessageEvent<CanvasWorkerRequest>) => void) | null
   postMessage: (message: CanvasWorkerFrame, transfer: Transferable[]) => void
-}
-
-const bathymetryColors: Record<number, string> = {
-  200: '#78bbdc',
-  2000: '#63add3',
-  6000: '#509dcc',
-}
-const reliefColors: Record<number, [string, number]> = {
-  500: ['#bfd6a4', 0.3],
-  1000: ['#abc991', 0.23],
-  1500: ['#9bbc88', 0.2],
-  2250: ['#8caa82', 0.17],
-  3000: ['#7d9d77', 0.14],
 }
 
 let sceneVersion = 0
@@ -76,7 +64,7 @@ function drawScene(
     context.save()
     context.translate(offset, 0)
     if (prepared.sphere) {
-      context.fillStyle = '#61acd3'
+      context.fillStyle = mapPalette.ocean
       context.fill(prepared.sphere)
     }
     context.restore()
@@ -87,7 +75,7 @@ function drawScene(
     context.translate(offset, 0)
     for (const band of prepared.bathymetry) {
       if (!band.path) continue
-      context.fillStyle = bathymetryColors[band.depth] ?? '#509dcc'
+      context.fillStyle = mapPalette.bathymetry[band.depth] ?? mapPalette.bathymetry[6000]
       context.fill(band.path)
     }
     context.restore()
@@ -96,7 +84,7 @@ function drawScene(
   for (const { offset, countries } of visibleCountries) {
     context.save()
     context.translate(offset, 0)
-    context.fillStyle = '#fcf8e9'
+    context.fillStyle = mapPalette.land
     for (const country of countries) {
       if (country.path) context.fill(country.path)
     }
@@ -105,7 +93,7 @@ function drawScene(
       context.clip(prepared.reliefClip)
       for (const band of prepared.relief) {
         if (!band.path) continue
-        const [color, opacity] = reliefColors[band.elevation] ?? ['#7d9d77', 0.14]
+        const [color, opacity] = mapPalette.relief[band.elevation] ?? mapPalette.relief[3000]
         context.fillStyle = color
         context.globalAlpha = opacity
         context.fill(band.path)
@@ -117,7 +105,7 @@ function drawScene(
 
   context.lineJoin = 'round'
   context.lineWidth = 0.85 / cameraScale
-  context.strokeStyle = '#5e7680'
+  context.strokeStyle = mapPalette.border
   for (const { offset, countries } of visibleCountries) {
     context.save()
     context.translate(offset, 0)
@@ -126,7 +114,7 @@ function drawScene(
       if (border) context.stroke(border)
       if (country.division) {
         context.save()
-        context.strokeStyle = '#547987'
+        context.strokeStyle = mapPalette.regionalDivision
         context.lineWidth = 1 / cameraScale
         context.setLineDash([3 / cameraScale, 3 / cameraScale])
         context.stroke(country.division)

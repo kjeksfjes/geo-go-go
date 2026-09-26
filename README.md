@@ -1,6 +1,6 @@
 # Geo Go Go
 
-A small interactive world-map proof of concept built with Vue 3, TypeScript,
+A small interactive world-map geography game built with Vue 3, TypeScript,
 Vite, Natural Earth Admin-0 Map Units, `d3-geo`, and `flag-icons`.
 
 The map starts with Natural Earth's 1:50m Admin-0 Map Units. A **High detail**
@@ -9,7 +9,7 @@ and render light, avoids changing geometry in the middle of a gesture, and makes
 coastlines and small countries clearer at close range when desired.
 After each resolution has rendered once, its projected SVG paths are cached so
 later switches are immediate at the current map size and projection.
-The temporary **Bathymetry** toggle adds three noninteractive ocean-depth bands
+The **Bathymetry** toggle adds three noninteractive ocean-depth bands
 (200m, 2,000m, and 6,000m) behind the country layer for relief-style experiments.
 The adjacent **Relief** toggle adds five similarly simplified elevation bands
 (500m, 1,000m, 1,500m, 2,250m, and 3,000m) without changing map interaction.
@@ -21,9 +21,8 @@ dragging and zooming so they do not distract from motion.
 
 It defaults to a conventional Mercator projection. Mercator preserves local
 shapes and angles well, while enlarging areas toward the poles in the familiar
-way. At closer zoom levels, the World view wraps horizontally when panning
-across the map edge. The initial full-world view keeps the conventional map
-seam rather than showing duplicate land in the side margins.
+way. The World view wraps horizontally at every zoom level when panning
+across the map edge.
 
 ## Run locally
 
@@ -181,11 +180,15 @@ then pass its file path to `python scripts/build-regional-display.py`.
 
 ## Structure
 
-- `src/components/WorldMap.vue` renders and interacts with the SVG map.
+- `src/components/WorldMap.vue` coordinates the map UI, SVG hit paths, and highlights.
+- `src/components/CanvasMap.vue` and `src/workers/mapRaster.worker.ts` paint the default map in an off-main-thread canvas; SVG remains the fallback.
 - `src/components/MarineLabels.vue` places and culls marine labels independently of the map paths.
+- `src/logic/mapInteraction.ts` owns Explore/quiz map feedback and click policy.
+- `src/logic/mapFocus.ts` owns click-to-zoom target rules.
 - `src/composables/useMapProjection.ts` owns projection and path generation.
 - `src/composables/useElementSize.ts` observes the responsive map container.
 - `src/composables/useMapZoom.ts` owns wheel and animated country zoom state.
+- `src/data/mapPalette.ts` shares geographic map colors between SVG and canvas.
 - `src/data/countries.ts` indexes map units, quiz identities, and sovereigns.
 - `src/data/meaningful-map-units.json` curates meaningful map units, subunits, and optional metadata.
 - `src/data/regions.ts` defines selector hierarchy and geographic unit membership.

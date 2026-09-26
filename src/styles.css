@@ -1,7 +1,7 @@
 :root {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #172d38;
-  background: #61acd3;
+  background: var(--map-ocean, #61acd3);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -157,7 +157,7 @@ html[data-input-modality='keyboard'] .settings-button:focus-visible {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: #61acd3;
+  background: var(--map-ocean, #61acd3);
 }
 
 .map-overlay {
@@ -187,25 +187,162 @@ html[data-input-modality='keyboard'] .settings-button:focus-visible {
   bottom: 0;
 }
 
+.map-select-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  padding: 0.35rem 0.7rem;
+  color: #52676e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.map-select-field .vue3-treeselect {
+  position: static;
+  width: var(--map-select-width);
+  min-width: var(--map-select-width);
+  color: #172d38;
+  font: inherit;
+}
+
+.map-select-field .vue3-treeselect__control,
+.map-select-field .vue3-treeselect--focused .vue3-treeselect__control,
+.map-select-field .vue3-treeselect--open .vue3-treeselect__control {
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.map-select-field .vue3-treeselect__single-value,
+.map-select-field .vue3-treeselect--focused .vue3-treeselect__single-value {
+  padding-left: 0;
+  color: #172d38;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+}
+
+.map-select-field .vue3-treeselect__input {
+  opacity: 0;
+  cursor: pointer;
+}
+
+.map-select-field .vue3-treeselect__control,
+.map-select-field .vue3-treeselect__input-container,
+.map-select-field .vue3-treeselect--searchable .vue3-treeselect__value-container {
+  cursor: pointer;
+}
+
+.map-select-field .vue3-treeselect__control-arrow {
+  color: #172d38;
+}
+
+html[data-input-modality='keyboard'] .region-control:has(.vue3-treeselect__input:focus-visible),
+html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__input:focus-visible) {
+  outline: 2px solid rgba(23, 45, 56, 0.35);
+  outline-offset: 2px;
+}
+
 /* The selected value sits on the second line; center the arrow on the whole
    two-line selector instead of the TreeSelect input's own line. */
-.region-selector,
-.projection-selector { position: relative; }
-
-.region-selector .vue3-treeselect,
-.projection-selector .vue3-treeselect { position: static; }
-
-.region-selector .vue3-treeselect__control-arrow-container,
-.projection-selector .vue3-treeselect__control-arrow-container {
+.map-select-field .vue3-treeselect__control-arrow-container {
   position: absolute;
   z-index: 1;
   top: 50%;
   right: 0.35rem;
   display: grid;
-  width: 1.4rem;
+  width: 1.1rem;
   height: 2.2rem;
   place-items: center;
   transform: translateY(-50%);
+}
+
+/* TreeSelect portals both menus outside the components and the clipped map. */
+.vue3-treeselect__menu {
+  min-width: min(15.5rem, calc(100vw - 2rem));
+  padding: 0.4rem;
+  border: 1px solid rgba(82, 103, 110, 0.18);
+  border-radius: 0.8rem;
+  background: #fff;
+  box-shadow: 0 14px 32px rgba(23, 45, 56, 0.16);
+  color: #172d38;
+  font-size: 0.76rem;
+  font-weight: 650;
+  line-height: 1.3;
+  transform: none;
+}
+
+/* Keep the extra width until the child rows actually leave on collapse. */
+.vue3-treeselect__menu:has(.vue3-treeselect__indent-level-1) {
+  min-width: min(calc(15.5rem + 15px), calc(100vw - 2rem));
+}
+
+.vue3-treeselect--open-below .vue3-treeselect__menu,
+.vue3-treeselect--open-above .vue3-treeselect__menu {
+  border-radius: 0.8rem;
+  border-color: rgba(82, 103, 110, 0.18);
+  box-shadow: 0 14px 32px rgba(23, 45, 56, 0.16);
+}
+
+.vue3-treeselect__option {
+  display: flex;
+  min-height: 2.4rem;
+  flex-direction: row-reverse;
+  align-items: center;
+  margin: 1px 0;
+  border-radius: 0.5rem;
+}
+
+.vue3-treeselect__option--highlight {
+  background: #edf5f8;
+}
+
+.vue3-treeselect--single .vue3-treeselect__option--selected,
+.vue3-treeselect--single .vue3-treeselect__option--selected:hover {
+  color: #8f3522;
+  background: #fceee9;
+}
+
+.vue3-treeselect__option-arrow-container,
+.vue3-treeselect__option-arrow-placeholder {
+  display: grid;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.4rem;
+  flex: none;
+  place-items: center;
+}
+
+.vue3-treeselect__option-arrow {
+  color: #52676e;
+}
+
+.vue3-treeselect__indent-level-0 .vue3-treeselect__option {
+  padding-left: 0.15rem;
+}
+
+.vue3-treeselect__indent-level-1 .vue3-treeselect__option {
+  padding-left: 1rem;
+}
+
+.vue3-treeselect__label-container {
+  display: flex;
+  min-width: 0;
+  height: 2.4rem;
+  flex: 1;
+  align-items: center;
+}
+
+.vue3-treeselect__label {
+  display: block;
+  padding-left: 0.55rem;
 }
 
 @media (max-width: 1000px) {
