@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { locale } from '../i18n'
-import type { HorizontalWrap } from '../composables/useMapProjection'
 import type { MapPoint } from '../composables/useMapZoom'
 
 const props = defineProps<{
@@ -12,9 +11,7 @@ const props = defineProps<{
   transform: Readonly<{ x: number; y: number; scale: number }>
   projectionScale: number
   projectPoint: (point: MapPoint) => MapPoint | undefined
-  wrap: HorizontalWrap | null
-  wrapActive: boolean
-  wrapDirection: number
+  copyOffsets: readonly number[]
 }>()
 
 interface ProjectedLabel extends MarineLabel {
@@ -24,13 +21,12 @@ interface ProjectedLabel extends MarineLabel {
   displayName: string
 }
 
-const primaryGroup = ref<SVGGElement | null>(null)
-const wrappedGroup = ref<SVGGElement | null>(null)
+const groups = new Map<number, SVGGElement>()
 let updateFrame: number | undefined
 
-function assignGroup(element: unknown, copyIndex: number) {
-  if (copyIndex === 0) primaryGroup.value = element as SVGGElement | null
-  else wrappedGroup.value = element as SVGGElement | null
+function assignGroup(element: unknown, offset: number) {
+  if (element) groups.set(offset, element as SVGGElement)
+  else groups.delete(offset)
 }
 
 function labelLines(name: string, kind: string) {
@@ -83,17 +79,13 @@ function updateLabels() {
   const effectiveScale = Math.max(1, props.projectionScale * scale)
   const labelLevel = Math.min(9.9, 1 + 1.5 * Math.log2(effectiveScale))
   const baseFont = Math.max(12, Math.min(17, props.width / 65))
-  const fontSize = `${baseFont / scale}px`
+  const fontSize = `${baseFont}px`
   const candidates: Candidate[] = []
   const elements: SVGElement[] = []
-  const groups = [primaryGroup.value, props.wrapActive ? wrappedGroup.value : null]
-
-  for (const [copyIndex, group] of groups.entries()) {
+  for (const offset of props.copyOffsets) {
+    const group = groups.get(offset)
     if (!group) continue
     if (group.style.fontSize !== fontSize) group.style.fontSize = fontSize
-    const offset = copyIndex === 1 && props.wrap
-      ? props.wrapDirection * props.wrap.period
-      : 0
 
     for (const [index, label] of projectedLabels.value.entries()) {
       const element = group.children.item(index) as SVGElement | null
@@ -106,6 +98,11 @@ function updateLabels() {
       const halfHeight = label.lines.length > 1 ? baseFont * 1.2 : fontPixels * 0.7
       const x = props.transform.x + scale * (label.x + offset)
       const y = props.transform.y + scale * label.y
+      // Keep text in viewport coordinates, outside the scaled map group.
+      // Firefox can otherwise soften labels while zooming the SVG scene.
+      element.setAttribute('x', String(x))
+      element.setAttribute('y', String(y))
+      for (const line of Array.from(element.children)) line.setAttribute('x', String(x))
       const box: Candidate['box'] = [x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight]
       const eligible = labelLevel >= label.minLabel
         && labelLevel <= label.maxLabel
@@ -148,7 +145,7 @@ watch(
   () => [
     props.transform.x, props.transform.y, props.transform.scale,
     props.width, props.height, props.projectionScale,
-    props.wrapActive, props.wrapDirection, projectedLabels.value,
+    props.copyOffsets, projectedLabels.value,
   ],
   scheduleUpdate,
   { flush: 'post' },
@@ -162,17 +159,13 @@ onBeforeUnmount(() => {
 <template>
   <g v-show="visible" class="marine-labels" aria-hidden="true">
     <g
-      v-for="copyIndex in [0, 1]"
-      :key="copyIndex"
-      :ref="(element) => assignGroup(element, copyIndex)"
-      v-show="copyIndex === 0 || wrapActive"
-      :transform="copyIndex === 1 && wrap ? `translate(${wrapDirection * wrap.period} 0)` : undefined"
+      v-for="offset in copyOffsets"
+      :key="offset"
+      :ref="(element) => assignGroup(element, offset)"
     >
       <text
         v-for="label in projectedLabels"
         :key="label.id"
-        :x="label.x"
-        :y="label.y"
         class="marine-label"
         :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
         style="display: none"
@@ -180,7 +173,6 @@ onBeforeUnmount(() => {
         <tspan
           v-for="(line, index) in label.lines"
           :key="index"
-          :x="label.x"
           :dy="index === 0 && label.lines.length > 1 ? '-0.55em' : index > 0 ? '1.35em' : undefined"
         >{{ label.kind === 'ocean' ? line.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : line }}</tspan>
       </text>

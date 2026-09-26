@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
+import CanvasMap from './CanvasMap.vue'
 import MarineLabels from './MarineLabels.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import RegionSelector from './RegionSelector.vue'
@@ -12,11 +13,22 @@ import {
 } from '../composables/useMapProjection'
 import { useMapZoom, type MapBounds, type MapPoint } from '../composables/useMapZoom'
 import type { GeographicUnitFeature } from '../types/country'
+import type { CanvasMapScene } from '../types/mapCanvas'
 import type { MapRegion, MapRegionId } from '../data/regions'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { countryName, t } from '../i18n'
-import { isCountryLevelSelection, sharedFocusUnitIds } from '../data/mapSelection'
+import { mapPaletteCssVariables } from '../data/mapPalette'
+import {
+  backgroundClickAction,
+  canActivateGeographicUnit,
+  countryClickAction,
+  geographicUnitClasses as classesForUnit,
+  hasVisualHighlight,
+  isPrimarySelectedExploreUnit as isPrimaryExploreUnit,
+  type MapInteractionState,
+} from '../logic/mapInteraction'
+import { selectionFocusTarget } from '../logic/mapFocus'
 
 const props = defineProps<{
   geographicUnits: GeographicUnitFeature[]
@@ -24,6 +36,7 @@ const props = defineProps<{
   detailLoading: boolean
   detailBlurred: boolean
   highDetailEnabled: boolean
+  settingsOpen: boolean
   activeRegion: MapRegion
   regionOptions: readonly MapRegion[]
   selectedCountryId: string | null
@@ -46,18 +59,33 @@ const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
+const controlsOpen = ref(false)
 const bathymetryEnabled = ref(true)
 const reliefEnabled = ref(true)
 const marineLabelsEnabled = ref(true)
+// Keep the SVG renderer available for a direct performance comparison.
+const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
+const canvasReady = ref(false)
+const canvasRendererActive = computed(() => canvasRendererEnabled && canvasReady.value)
 const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
+const interactionState = computed<MapInteractionState>(() => ({
+  selectedCountryId: props.selectedCountryId,
+  selectedGeographicUnitId: props.selectedGeographicUnitId,
+  hoveredEntityId: hoveredUnit.value?.entityId ?? null,
+  quizMode: props.quizMode,
+  quizComplete: props.quizComplete,
+  quizQuestionId: props.quizQuestionId,
+  quizAnswerId: props.quizAnswerId,
+}))
+const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
 const mapBlurred = computed(() => props.detailBlurred || projectionBlurred.value)
-const { width: measuredWidth } = useElementSize(container)
+const { width: measuredWidth, height: measuredHeight } = useElementSize(container)
 const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
-const mapHeight = computed(() => Math.max(280, Math.min(620, mapWidth.value * 0.56)))
+const mapHeight = computed(() => Math.max(measuredHeight.value, 280))
 const {
   bathymetryPaths,
   geographicPaths,
@@ -85,36 +113,11 @@ const minimumZoomPoint = computed<MapPoint | null>(() => {
   return center ? projectPoint(center) ?? null : null
 })
 function geographicUnitClasses(unit: GeographicUnitFeature) {
-  const entityId = unit.properties.entityId
-  const clicked = unit.id === props.selectedGeographicUnitId
-
-  if (!props.quizMode) {
-    const selected = isPrimarySelectedExploreUnit(unit)
-    return {
-      'country--selected': selected,
-      'country--related': entityId === props.selectedCountryId && !selected,
-      'country--identity-hover': hoveredUnit.value?.entityId === entityId,
-    }
-  }
-
-  const answered = props.quizAnswerId !== null
-  const correct = answered && entityId === props.quizQuestionId
-  const wrong = answered && entityId === props.quizAnswerId && !correct
-  const relatedAnswer = !clicked && props.selectedGeographicUnitId !== null
-
-  return {
-    'country--quiz-correct': correct && !(relatedAnswer && props.quizAnswerId === props.quizQuestionId),
-    'country--quiz-correct-related': correct && relatedAnswer && props.quizAnswerId === props.quizQuestionId,
-    'country--quiz-wrong': wrong && !relatedAnswer,
-    'country--quiz-wrong-related': wrong && relatedAnswer,
-    'country--quiz-inactive': answered && !correct && !wrong,
-  }
+  return classesForUnit(unit, interactionState.value)
 }
 
 function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature) {
-  if (unit.properties.entityId !== props.selectedCountryId) return false
-  return isCountryLevelSelection(props.selectedCountryId, props.selectedGeographicUnitId)
-    || unit.id === props.selectedGeographicUnitId
+  return isPrimaryExploreUnit(unit, interactionState.value)
 }
 
 function isGeographicUnitVisible(unit: GeographicUnitFeature) {
@@ -137,12 +140,16 @@ const {
   zoomToPoint,
 } = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap, minimumZoomPoint)
 
-// Interaction uses the stable 50m country layer even when the final map is
-// rendered at 10m. The semantic units and IDs are identical, so selection,
-// accessibility and regional behavior do not change when the paths swap.
+// The canvas supplies detailed coastlines. Its SVG interaction layer only
+// needs the lighter 50m hit geometry; active highlights use detailed paths.
 const renderedGeographicPaths = computed(() =>
-  isInteracting.value ? interactionGeographicPaths.value : geographicPaths.value,
+  canvasRendererActive.value
+    ? interactionGeographicPaths.value
+    : geographicPaths.value,
 )
+const detailedGeographicPathById = computed(() => new Map(
+  geographicPaths.value.map((projected) => [projected.unit.id, projected]),
+))
 
 // SVG paths paint in DOM order. Put related geographic units above ordinary
 // countries, the clicked unit above its siblings, and correct above wrong.
@@ -166,36 +173,72 @@ const paintedGeographicPaths = computed(() => {
   }
   return ordered
 })
+const highlightedGeographicPaths = computed(() => paintedGeographicPaths.value
+  .filter(({ unit }) => isGeographicUnitVisible(unit) && hasVisualHighlight(unit, interactionState.value)))
 
 const visibleLandPath = computed(() => renderedGeographicPaths.value
   .filter(({ unit }) => isGeographicUnitVisible(unit))
   .map(({ path }) => path)
   .join(' '))
-const renderedBathymetryPaths = computed(() => isInteracting.value
-  ? bathymetryPaths.value.filter(({ depth }) => depth === 200 || depth === 6000)
-  : bathymetryPaths.value)
-const renderedReliefPaths = computed(() => isInteracting.value
-  ? reliefPaths.value.filter(({ elevation }) => elevation === 500 || elevation === 2250)
-  : reliefPaths.value)
+const canvasScene = computed<CanvasMapScene>(() => ({
+  spherePath: spherePath.value,
+  bathymetry: bathymetryEnabled.value ? bathymetryPaths.value : [],
+  relief: reliefEnabled.value ? reliefPaths.value : [],
+  reliefClipPath: reliefEnabled.value ? reliefClipPath.value : '',
+  countries: geographicPaths.value
+    .filter(({ unit }) => isGeographicUnitVisible(unit))
+    .map(({ path, outlinePath, divisionPath, displayBounds }) => ({
+      path, outlinePath, divisionPath, bounds: displayBounds,
+    })),
+}))
+const canvasWrapOffset = computed(() => horizontalWrap.value?.period ?? null)
 
-const wrappedGeographicPaths = computed(() => {
-  const centerX = horizontalWrap.value?.centerX
-  if (centerX === undefined) return []
-  // At wrap-active zoom, the viewport is at most one projected world wide.
-  // Only the adjoining half of the neighboring copy can enter it.
-  return paintedGeographicPaths.value.filter(({ displayBounds }) =>
-    wrapNeighborDirection.value > 0
-      ? displayBounds[0][0] <= centerX
-      : displayBounds[1][0] >= centerX,
-  )
+const visibleCopyCount = computed(() => {
+  const period = horizontalWrap.value?.period
+  return period ? Math.max(1, Math.ceil(mapWidth.value / (2 * transform.scale * period))) : 0
+})
+const needsBothNeighbors = computed(() => {
+  const period = horizontalWrap.value?.period
+  return period !== undefined && transform.scale * period < mapWidth.value
 })
 
-function wrapOffset(copyIndex: number) {
-  return copyIndex === 0 ? 0 : wrapNeighborDirection.value * (horizontalWrap.value?.period ?? 0)
-}
+const copyOffsets = computed(() => {
+  const wrap = horizontalWrap.value
+  if (!wrap) return [0]
+  // A narrow projected world can expose more than one repeat on very wide
+  // screens. At closer zoom, only the neighbor toward the seam is needed.
+  if (!needsBothNeighbors.value) return [0, wrapNeighborDirection.value * wrap.period]
+  const count = visibleCopyCount.value
+  return [
+    0,
+    ...Array.from({ length: count }, (_, index) => -(index + 1) * wrap.period),
+    ...Array.from({ length: count }, (_, index) => (index + 1) * wrap.period),
+  ]
+})
 
-function offsetBounds(bounds: MapBounds, offset: number): MapBounds {
-  return [[bounds[0][0] + offset, bounds[0][1]], [bounds[1][0] + offset, bounds[1][1]]]
+const wrappedGeographicPaths = computed(() => {
+  const wrap = horizontalWrap.value
+  const paths = new Map<number, typeof paintedGeographicPaths.value>()
+  if (!wrap) return paths
+  // Filter against every position the viewport can occupy at minimum zoom.
+  // This stays cached while panning, rather than re-filtering on every frame.
+  const halfReach = (wrap.period + mapWidth.value) / 2
+  const left = wrap.centerX - halfReach
+  const right = wrap.centerX + halfReach
+  const count = Math.max(1, Math.ceil(mapWidth.value / (2 * wrap.period)))
+  for (let index = -count; index <= count; index += 1) {
+    if (index === 0) continue
+    const offset = index * wrap.period
+    paths.set(offset, paintedGeographicPaths.value.filter(({ displayBounds }) =>
+      displayBounds[0][0] + offset <= right && displayBounds[1][0] + offset >= left,
+    ))
+  }
+  return paths
+})
+
+function geographicPathsAt(offset: number) {
+  if (offset === 0) return paintedGeographicPaths.value
+  return wrappedGeographicPaths.value.get(offset) ?? []
 }
 
 function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
@@ -232,7 +275,14 @@ watch([() => props.activeRegion.id, () => props.geographicUnits], () => {
   hoveredUnit.value = null
 })
 watch(isInteracting, (active) => {
-  if (active) hoveredUnit.value = null
+  if (active) {
+    hoveredUnit.value = null
+  } else {
+    // Firefox can retain a highlight rasterized at the start of a zoom and
+    // keep scaling that texture after motion stops. Recreate only the painted
+    // highlight paths at the final camera scale; hit paths and map stay put.
+    highlightRevision.value += 1
+  }
 })
 watch(projectionId, () => focusActiveRegion(false), { flush: 'post' })
 watch([mapWidth, mapHeight], () => focusActiveRegion(false), { flush: 'post' })
@@ -249,42 +299,48 @@ function selectCountry(
     event.stopPropagation()
     return
   }
-  if (props.quizMode) {
-    // Ignore the second click of a double-click, including if the first click
-    // advanced from the previous question.
-    if (event instanceof MouseEvent && event.detail > 1) {
-      event.stopPropagation()
-      return
-    }
-    if (props.quizQuestionId && props.quizAnswerId === null) {
-      event?.stopPropagation()
-      emit('select', countryId, geographicUnitId)
-    }
+  const action = countryClickAction(
+    countryId,
+    geographicUnitId,
+    event instanceof MouseEvent ? event.detail : 0,
+    interactionState.value,
+  )
+  if (action === 'ignore-stop') {
+    event?.stopPropagation()
+    return
+  }
+  if (action === 'ignore') return
+  event?.stopPropagation()
+  if (action === 'clear') {
+    emit('select', null, null)
     return
   }
   emit('select', countryId, geographicUnitId)
-  const group = sharedFocusUnitIds(geographicUnitId)
-  const sharedPaths = group && geographicPaths.value.filter(({ unit }) =>
-    group.includes(unit.id) && isGeographicUnitVisible(unit),
+  if (props.quizMode) return
+  const detailed = canvasRendererActive.value
+    ? detailedGeographicPathById.value.get(geographicUnitId)
+    : undefined
+  const target = selectionFocusTarget(
+    geographicUnitId,
+    detailed?.bounds ?? bounds,
+    detailed?.focusPoint ?? focusPoint,
+    geographicPaths.value,
+    props.visibleMapUnitIds,
+    horizontalOffset,
   )
-  if (sharedPaths && sharedPaths.length > 1) {
-    const x0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][0])) + horizontalOffset
-    const y0 = Math.min(...sharedPaths.map(({ displayBounds }) => displayBounds[0][1]))
-    const x1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][0])) + horizontalOffset
-    const y1 = Math.max(...sharedPaths.map(({ displayBounds }) => displayBounds[1][1]))
-    zoomToBounds([[x0, y0], [x1, y1]])
-  } else {
-    zoomToBounds(
-      offsetBounds(bounds, horizontalOffset),
-      focusPoint ? [focusPoint[0] + horizontalOffset, focusPoint[1]] : undefined,
-    )
-  }
+  zoomToBounds(target.bounds, target.focusPoint)
 }
 
 function handleMapClick(event: MouseEvent) {
-  if (!props.quizMode || props.quizAnswerId === null) return
-  if (consumeDragClick() || event.detail > 1) return
-  emit('quiz-next')
+  if (!props.quizMode) {
+    if (!consumeDragClick() && backgroundClickAction(event.detail, interactionState.value) === 'clear') {
+      emit('select', null, null)
+    }
+    return
+  }
+  if (props.quizAnswerId === null) return
+  if (consumeDragClick()) return
+  if (backgroundClickAction(event.detail, interactionState.value) === 'next') emit('quiz-next')
 }
 
 function handleWheel(event: WheelEvent) {
@@ -319,7 +375,13 @@ function requestDetailChange(enabled: boolean) {
   )
 }
 
+function changeRegion(regionId: MapRegionId) {
+  controlsOpen.value = false
+  emit('region-change', regionId)
+}
+
 async function setProjection(nextId: MapProjectionId) {
+  controlsOpen.value = false
   if (nextId === projectionId.value || interactionLocked.value) return
 
   if (!props.highDetailEnabled || hasCachedPaths(props.geographicUnits, nextId)) {
@@ -357,22 +419,33 @@ async function setProjection(nextId: MapProjectionId) {
 </script>
 
 <template>
-  <div class="map-stage" :class="{ 'map-stage--busy': interactionLocked }">
+  <div class="map-stage" :class="{ 'map-stage--busy': interactionLocked }" @keydown.esc="controlsOpen = false">
     <div
       ref="container"
       class="map-container"
+      :style="mapPaletteCssVariables"
       :class="{
         'map-container--dragging': isDragging,
         'map-container--interacting': isInteracting,
-        'map-container--detail-blurred': mapBlurred,
       }"
       :aria-busy="interactionLocked"
       :inert="interactionLocked"
     >
+      <CanvasMap
+        v-if="canvasRendererEnabled"
+        :width="mapWidth"
+        :height="mapHeight"
+        :scene="canvasScene"
+        :camera="transform"
+        :interacting="isInteracting"
+        :wrap-offset="canvasWrapOffset"
+        :wrap-period="horizontalWrap?.period ?? null"
+        @ready-change="canvasReady = $event"
+      />
       <svg
         ref="svg"
         class="world-map"
-        :class="{ 'world-map--wrapped': wrapActive }"
+        :class="{ 'world-map--wrapped': wrapActive, 'world-map--canvas': canvasRendererActive }"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         role="group"
         :aria-label="t('interactiveMap')"
@@ -384,28 +457,26 @@ async function setProjection(nextId: MapProjectionId) {
         @click="handleMapClick"
       >
         <g ref="mapContent" class="map-content">
-          <defs>
+          <defs v-if="!canvasRendererActive">
             <clipPath :id="reliefClipId" clipPathUnits="userSpaceOnUse">
               <path :d="reliefClipPath" />
             </clipPath>
           </defs>
           <path
-            v-for="copyIndex in [0, 1]"
-            :key="`sphere-${copyIndex}`"
-            v-show="copyIndex === 0 || wrapActive"
+            v-for="offset in canvasRendererActive ? [] : copyOffsets"
+            :key="`sphere-${offset}`"
             class="map-sphere"
             :d="spherePath"
-            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
           />
-          <g v-if="bathymetryEnabled" class="bathymetry" aria-hidden="true">
+          <g v-if="bathymetryEnabled && !canvasRendererActive" class="bathymetry" aria-hidden="true">
             <g
-              v-for="copyIndex in [0, 1]"
-              :key="copyIndex"
-              v-show="copyIndex === 0 || wrapActive"
-              :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+              v-for="offset in copyOffsets"
+              :key="offset"
+              :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             >
               <path
-                v-for="band in renderedBathymetryPaths"
+                v-for="band in bathymetryPaths"
                 :key="band.depth"
                 class="bathymetry__band"
                 :class="`bathymetry__band--${band.depth}`"
@@ -414,17 +485,16 @@ async function setProjection(nextId: MapProjectionId) {
             </g>
           </g>
           <g
-            v-for="copyIndex in [0, 1]"
-            :key="`terrain-${copyIndex}`"
-            v-show="copyIndex === 0 || wrapActive"
+            v-for="offset in canvasRendererActive ? [] : copyOffsets"
+            :key="`terrain-${offset}`"
             class="terrain"
-            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
+            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             aria-hidden="true"
           >
             <path class="terrain__land" :d="visibleLandPath" />
             <g v-if="reliefEnabled" class="relief" :clip-path="`url(#${reliefClipId})`">
               <path
-                v-for="band in renderedReliefPaths"
+                v-for="band in reliefPaths"
                 :key="band.elevation"
                 class="relief__band"
                 :class="`relief__band--${band.elevation}`"
@@ -433,42 +503,41 @@ async function setProjection(nextId: MapProjectionId) {
             </g>
           </g>
           <g
-            v-for="copyIndex in [0, 1]"
-            :key="copyIndex"
-            v-show="copyIndex === 0 || wrapActive"
+            v-for="offset in copyOffsets"
+            :key="offset"
             class="countries"
-            :transform="copyIndex === 0 ? undefined : `translate(${wrapOffset(copyIndex)} 0)`"
-            :aria-hidden="copyIndex === 1"
+            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
+            :aria-hidden="offset !== 0"
           >
             <g
-              v-for="{ unit, path, outlinePath, divisionPath, bounds, focusPoint } in copyIndex === 0 ? paintedGeographicPaths : wrappedGeographicPaths"
+              v-for="{ unit, path, outlinePath, divisionPath, bounds, focusPoint } in geographicPathsAt(offset)"
               :key="unit.id"
               v-show="isGeographicUnitVisible(unit)"
             >
               <path
                 :d="path"
                 class="country"
-                :class="[geographicUnitClasses(unit), { 'country--split-fill': !!outlinePath }]"
+                :class="[geographicUnitClasses(unit), { 'country--split-fill': !!outlinePath, 'country--hit-only': canvasRendererActive }]"
                 :style="outlinePath ? { stroke: 'none' } : undefined"
                 :data-country-id="unit.properties.entityId"
                 :data-geographic-unit-id="unit.id"
                 role="button"
-                :tabindex="copyIndex === 0 && isGeographicUnitVisible(unit) && (!quizMode || (quizQuestionId && quizAnswerId === null)) ? 0 : -1"
+                :tabindex="offset === 0 && isGeographicUnitVisible(unit) && canActivateGeographicUnit(interactionState) ? 0 : -1"
                 :aria-label="countryName(unit.properties.entityId)"
                 :aria-hidden="!isGeographicUnitVisible(unit)"
-                :aria-disabled="quizMode && (quizQuestionId === null || quizAnswerId !== null)"
+                :aria-disabled="!canActivateGeographicUnit(interactionState)"
                 :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
-                @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
+                @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
                 @pointerenter="hoverGeographicUnit(unit)"
                 @pointerleave="clearHoveredUnit(unit.id)"
-                @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
-                @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, wrapOffset(copyIndex))"
+                @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
+                @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
               >
                 <title v-if="canShowCountryTooltip(unit.properties.entityId, props)">{{ countryName(unit.properties.entityId) }}</title>
               </path>
               <!-- Open border linework must not inherit the country's hover fill. -->
               <path
-                v-if="outlinePath"
+                v-if="outlinePath && !canvasRendererActive"
                 class="country-outline"
                 :class="geographicUnitClasses(unit)"
                 :d="outlinePath"
@@ -476,36 +545,76 @@ async function setProjection(nextId: MapProjectionId) {
                 aria-hidden="true"
               />
               <path
-                v-if="divisionPath"
+                v-if="divisionPath && !canvasRendererActive"
                 class="regional-division"
                 :d="divisionPath"
                 aria-hidden="true"
               />
             </g>
           </g>
-          <MarineLabels
-            :visible="marineLabelsEnabled && !isInteracting"
-            :width="mapWidth"
-            :height="mapHeight"
-            :transform="transform"
-            :projection-scale="projectionScale"
-            :project-point="projectPoint"
-            :wrap="horizontalWrap"
-            :wrap-active="wrapActive"
-            :wrap-direction="wrapNeighborDirection"
-          />
+        </g>
+        <MarineLabels
+          :visible="marineLabelsEnabled && !isInteracting"
+          :width="mapWidth"
+          :height="mapHeight"
+          :transform="transform"
+          :projection-scale="projectionScale"
+          :project-point="projectPoint"
+          :copy-offsets="copyOffsets"
+        />
+      </svg>
+
+      <!-- Keep painted highlights in their own SVG. Firefox otherwise keeps a
+           low-resolution raster of the much larger interaction group after a
+           close zoom, especially when a component also highlights its parent. -->
+      <svg
+        v-if="canvasRendererActive"
+        :key="highlightRevision"
+        class="map-highlights"
+        :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
+        aria-hidden="true"
+      >
+        <g :transform="`translate(${transform.x} ${transform.y}) scale(${transform.scale})`">
+          <g
+            v-for="offset in copyOffsets"
+            :key="offset"
+            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
+          >
+            <path
+              v-for="{ unit, path, outlinePath } in highlightedGeographicPaths"
+              :key="unit.id"
+              :d="detailedGeographicPathById.get(unit.id)?.path ?? path"
+              class="country country--visual"
+              :class="geographicUnitClasses(unit)"
+              :style="(detailedGeographicPathById.get(unit.id)?.outlinePath ?? outlinePath) ? { stroke: 'none' } : undefined"
+            />
+          </g>
         </g>
       </svg>
 
-      <div class="map-controls">
+      <button
+        class="map-controls-toggle"
+        type="button"
+        :aria-expanded="controlsOpen"
+        aria-controls="map-controls"
+        @click="controlsOpen = !controlsOpen"
+      >{{ t('mapControls') }}</button>
+      <div id="map-controls" class="map-controls" :class="{ 'map-controls--open': controlsOpen }">
         <div class="region-control">
+          <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3Z" />
+          </svg>
           <RegionSelector
             :model-value="activeRegion.id"
             :options="regionOptions"
-            @update:model-value="emit('region-change', $event)"
+            @update:model-value="changeRegion"
           />
         </div>
         <div class="projection-control">
+          <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
+            <path d="m2 5 6-2 8 2 6-2v16l-6 2-8-2-6 2V5Zm6-2v16m8-14v16" />
+          </svg>
           <ProjectionSelector
             :model-value="projectionId"
             :disabled="interactionLocked"
@@ -513,11 +622,6 @@ async function setProjection(nextId: MapProjectionId) {
             @update:model-value="setProjection"
           />
         </div>
-        <MapDetailToggle
-          :loading="interactionLocked"
-          :model-value="highDetailEnabled"
-          @update:model-value="requestDetailChange"
-        />
         <MapDetailToggle
           :label="t('bathymetry')"
           :loading="interactionLocked"
@@ -538,6 +642,14 @@ async function setProjection(nextId: MapProjectionId) {
         />
       </div>
 
+      <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel">
+        <MapDetailToggle
+          :loading="interactionLocked"
+          :model-value="highDetailEnabled"
+          @update:model-value="requestDetailChange"
+        />
+      </div>
+
       <div class="map-tools">
         <span>
           {{ quizMode && quizAnswerId !== null ? t('continueHint') : t('mapHint') }}
@@ -547,7 +659,11 @@ async function setProjection(nextId: MapProjectionId) {
         </button>
       </div>
     </div>
-    <div v-if="interactionLocked" class="map-loading-overlay">
+    <div
+      v-if="interactionLocked"
+      class="map-loading-overlay"
+      :class="{ 'map-loading-overlay--blurred': mapBlurred }"
+    >
       <p v-if="mapBlurred" class="map-loading-status" role="status">
         {{ t('loadingMap') }}
       </p>
@@ -559,26 +675,35 @@ async function setProjection(nextId: MapProjectionId) {
 .map-stage {
   position: relative;
   width: 100%;
+  height: 100%;
 }
 
 .map-container {
   position: relative;
   width: 100%;
-  overflow: hidden;
+  height: 100%;
+  /* Unlike hidden, clip cannot be scrolled by focus/scrollIntoView. */
+  overflow: clip;
 }
 
 .world-map {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 65vh;
+  height: 100%;
   cursor: grab;
   user-select: none;
-  transition: filter 280ms ease;
 }
 
-.map-container--detail-blurred .world-map {
-  filter: blur(5px);
+.map-highlights {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .map-loading-overlay {
@@ -588,6 +713,12 @@ async function setProjection(nextId: MapProjectionId) {
   display: grid;
   place-items: center;
   cursor: default;
+  backdrop-filter: blur(0);
+  transition: backdrop-filter 280ms ease;
+}
+
+.map-loading-overlay--blurred {
+  backdrop-filter: blur(5px);
 }
 
 .map-loading-status {
@@ -603,12 +734,16 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .map-sphere {
-  fill: #b7d4e1;
+  fill: var(--map-ocean);
 }
 
 /* Match the repeated sphere where two Mercator copies meet at a pixel edge. */
 .world-map--wrapped {
-  background-color: #b7d4e1;
+  background-color: var(--map-ocean);
+}
+
+.world-map--canvas.world-map--wrapped {
+  background-color: transparent;
 }
 
 .bathymetry {
@@ -620,15 +755,15 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .bathymetry__band--200 {
-  fill: #a6c9d9;
+  fill: var(--map-bathymetry-200);
 }
 
 .bathymetry__band--2000 {
-  fill: #95bdcf;
+  fill: var(--map-bathymetry-2000);
 }
 
 .bathymetry__band--6000 {
-  fill: #89b2c7;
+  fill: var(--map-bathymetry-6000);
 }
 
 .terrain,
@@ -637,7 +772,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .terrain__land {
-  fill: #f9f7ef;
+  fill: var(--map-land);
 }
 
 .relief__band {
@@ -645,49 +780,77 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .relief__band--500 {
-  fill: #d9e3d6;
-  fill-opacity: 0.3;
+  fill: var(--map-relief-500);
+  fill-opacity: var(--map-relief-500-opacity);
 }
 
 .relief__band--1000 {
-  fill: #cfdbcc;
-  fill-opacity: 0.22;
+  fill: var(--map-relief-1000);
+  fill-opacity: var(--map-relief-1000-opacity);
 }
 
 .relief__band--1500 {
-  fill: #c5d2c3;
-  fill-opacity: 0.19;
+  fill: var(--map-relief-1500);
+  fill-opacity: var(--map-relief-1500-opacity);
 }
 
 .relief__band--2250 {
-  fill: #bac9b8;
-  fill-opacity: 0.17;
+  fill: var(--map-relief-2250);
+  fill-opacity: var(--map-relief-2250-opacity);
 }
 
 .relief__band--3000 {
-  fill: #afc0af;
-  fill-opacity: 0.15;
+  fill: var(--map-relief-3000);
+  fill-opacity: var(--map-relief-3000-opacity);
 }
 
 .country {
   fill: transparent;
-  stroke: #9aa9a9;
-  stroke-width: 0.65;
+  stroke: var(--map-border);
+  stroke-width: 0.85;
   vector-effect: non-scaling-stroke;
   cursor: pointer;
   outline: none;
-  transition: fill 120ms ease, filter 120ms ease;
+  transition: fill 120ms ease;
+}
+
+/* Canvas paints the ordinary borders; SVG remains the accessible hit and
+   highlight layer, so selected and hovered borders still render above it. */
+.world-map--canvas .country:not(:hover, :focus-visible, .country--identity-hover, .country--selected, .country--related, .country--quiz-correct, .country--quiz-correct-related, .country--quiz-wrong, .country--quiz-wrong-related) {
+  stroke: none;
 }
 
 .country-outline {
-  stroke: #9aa9a9;
-  stroke-width: 0.65;
+  stroke: var(--map-border);
+  stroke-width: 0.85;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 
 .country--quiz-inactive {
   pointer-events: none;
+}
+
+.world-map--canvas .country.country--hit-only {
+  fill: none;
+  stroke: none;
+  pointer-events: visibleFill;
+  transition: none;
+}
+
+.world-map--canvas .country--hit-only.country--quiz-inactive,
+.map-container--dragging .world-map--canvas .country--hit-only {
+  pointer-events: none;
+}
+
+.world-map--canvas .country.country--hit-only:focus-visible {
+  fill: rgb(239 192 106 / 72%);
+  stroke: #172d38;
+}
+
+.country--visual {
+  pointer-events: none;
+  transition: none;
 }
 
 .map-container--dragging .world-map,
@@ -700,14 +863,12 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .map-container--interacting .country {
-  filter: none;
   transition: none;
 }
 
 .country:hover,
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
   fill: rgb(239 192 106 / 72%);
-  filter: brightness(1.03);
 }
 
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
@@ -723,8 +884,8 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .country--related:hover {
-  fill: rgb(239 192 106 / 74%);
-  stroke: #a7783d;
+  fill: rgb(244 195 177 / 76%);
+  stroke: #ba7866;
 }
 
 .country--selected,
@@ -738,9 +899,8 @@ async function setProjection(nextId: MapProjectionId) {
   fill: rgb(237 134 106 / 84%);
 }
 
-.country--identity-hover:not(.country--selected) {
+.country--identity-hover:not(.country--selected, .country--related) {
   fill: rgb(239 192 106 / 72%);
-  filter: brightness(1.03);
 }
 
 .country--quiz-correct-related,
@@ -794,8 +954,8 @@ async function setProjection(nextId: MapProjectionId) {
 
 .regional-division {
   fill: none;
-  stroke: #6f8991;
-  stroke-width: 0.9;
+  stroke: var(--map-regional-division);
+  stroke-width: 1;
   stroke-dasharray: 3 3;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
@@ -804,8 +964,9 @@ async function setProjection(nextId: MapProjectionId) {
 
 .map-tools {
   position: absolute;
-  right: 0.8rem;
-  bottom: 0.8rem;
+  z-index: 3;
+  right: 1.5rem;
+  bottom: 1.4rem;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -817,27 +978,67 @@ async function setProjection(nextId: MapProjectionId) {
 
 .map-controls {
   position: absolute;
-  top: 0.8rem;
-  left: 0.8rem;
-  right: 0.8rem;
+  z-index: 3;
+  bottom: 1.4rem;
+  left: 1.5rem;
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.5rem;
-  pointer-events: none;
+  align-items: center;
+  gap: 0;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  background: rgba(250, 252, 252, 0.9);
+  box-shadow: 0 8px 25px rgba(23, 45, 56, 0.13);
+  backdrop-filter: blur(10px);
 }
 
-.map-controls > * {
-  pointer-events: auto;
+.map-controls > * + * {
+  border-left: 1px solid rgba(82, 103, 110, 0.18);
 }
 
 .projection-control,
 .region-control {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.projection-control {
+  border-right: 1px solid rgba(82, 103, 110, 0.18);
+}
+
+.control-icon {
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: none;
+  margin-left: 0.65rem;
+  color: #17374b;
+}
+
+.map-controls :deep(.detail-toggle) {
+  min-height: 2.55rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.map-controls-toggle {
+  display: none;
+}
+
+.map-settings-panel {
+  position: absolute;
+  z-index: 4;
+  top: 0.85rem;
+  right: 1.25rem;
+  padding: 0.5rem;
   border: 1px solid rgba(82, 103, 110, 0.18);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 3px 12px rgba(23, 45, 56, 0.08);
-  backdrop-filter: blur(7px);
+  border-radius: 16px;
+  background: rgba(250, 252, 252, 0.95);
+  box-shadow: 0 12px 30px rgba(23, 45, 56, 0.15);
+  backdrop-filter: blur(12px);
 }
 
 .map-tools span,
@@ -859,6 +1060,56 @@ async function setProjection(nextId: MapProjectionId) {
 .map-tools button:hover,
 :global(html[data-input-modality='keyboard'] .map-tools button:focus-visible) {
   background: #fff;
+}
+
+@media (max-width: 1100px) {
+  .map-tools { top: 0.8rem; bottom: auto; }
+  .map-tools span { display: none; }
+}
+
+@media (max-width: 850px) {
+  .map-controls-toggle {
+    position: absolute;
+    z-index: 3;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    left: 0.75rem;
+    display: block;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid rgba(82, 103, 110, 0.16);
+    border-radius: 999px;
+    color: #172d38;
+    background: rgba(250, 252, 252, 0.92);
+    box-shadow: 0 8px 25px rgba(23, 45, 56, 0.13);
+    font-size: 0.8rem;
+    font-weight: 750;
+    cursor: pointer;
+  }
+
+  :global(html[data-input-modality='keyboard'] .map-controls-toggle:focus-visible) {
+    outline: 2px solid #172d38;
+    outline-offset: 2px;
+  }
+
+  .map-controls {
+    bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 3rem);
+    left: 0.75rem;
+    display: none;
+    width: min(18rem, calc(100% - 1.5rem));
+    max-height: min(25rem, 65%);
+    flex-direction: column;
+    align-items: stretch;
+    overflow-y: auto;
+    border-radius: 16px;
+    padding: 0.45rem;
+  }
+
+  .map-controls--open { display: flex; }
+  .map-controls > * + * { border-left: 0; border-top: 1px solid rgba(82, 103, 110, 0.18); }
+  .projection-control { border-right: 0; }
+  .map-controls :deep(.detail-toggle) { width: 100%; justify-content: space-between; }
+  .map-tools { top: auto; right: 0.75rem; bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+  .map-tools button { max-width: 8rem; text-align: center; }
+  .map-settings-panel { top: 0.75rem; right: 0.75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

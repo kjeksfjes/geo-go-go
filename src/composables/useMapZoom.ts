@@ -8,9 +8,9 @@ const MIN_ZOOM = 1
 // Allow a little more room to pull the map away from an edge while keeping
 // roughly a third of the projected viewport available to drag it back.
 const MAX_EMPTY_VIEWPORT_FRACTION = 0.65
-// Keep a finite safety ceiling while allowing 1:50m microstate geometries to
-// become practically visible. High zoom reveals no detail beyond the source.
-const MAX_ZOOM = 256
+// The true 1:10m outlines of microstates are much smaller than their 1:50m
+// counterparts. Keep a finite ceiling, but let them become visible up close.
+const MAX_ZOOM = 16_384
 
 export function useMapZoom(
   width: Ref<number>,
@@ -25,8 +25,10 @@ export function useMapZoom(
   const isAnimating = ref(false)
   let animationFrame: number | undefined
   let panFrame: number | undefined
+  let wheelFrame: number | undefined
   let wheelEndTimer: number | undefined
   let pendingPan: { x: number; y: number; scale: number } | undefined
+  let pendingWheel: { delta: number; pointerX: number; pointerY: number } | undefined
   let dragState: {
     pointerId: number
     startClientX: number
@@ -40,14 +42,15 @@ export function useMapZoom(
   } | undefined
   let suppressNextClick = false
 
-  const isZoomed = computed(() => transform.scale > MIN_ZOOM + 0.01)
+  const isZoomed = computed(() =>
+    transform.scale > MIN_ZOOM + 0.01
+    || Math.abs(transform.x) > 1
+    || Math.abs(transform.y) > 1,
+  )
   const isInteracting = computed(() =>
     isDragging.value || isWheeling.value || isAnimating.value,
   )
-  const wrapActive = computed(() => {
-    const wrap = horizontalWrap.value
-    return wrap !== null && transform.scale * wrap.period >= width.value
-  })
+  const wrapActive = computed(() => horizontalWrap.value !== null)
   const wrapNeighborDirection = computed(() => {
     const wrap = horizontalWrap.value
     if (!wrap) return 1
@@ -71,6 +74,14 @@ export function useMapZoom(
     pendingPan = undefined
   }
 
+  function cancelWheelUpdate() {
+    if (wheelFrame !== undefined) {
+      cancelAnimationFrame(wheelFrame)
+      wheelFrame = undefined
+    }
+    pendingWheel = undefined
+  }
+
   function constrainTransform(x: number, y: number, scale: number) {
     // Permit empty space beyond the projected edges without losing the map.
     const visibleFraction = 1 - MAX_EMPTY_VIEWPORT_FRACTION
@@ -80,7 +91,7 @@ export function useMapZoom(
     const maxY = height.value * MAX_EMPTY_VIEWPORT_FRACTION
 
     const wrap = horizontalWrap.value
-    if (wrap && scale * wrap.period >= width.value) {
+    if (wrap) {
       const mapCenterX = (width.value / 2 - x) / scale
       const centered = mapCenterX - wrap.centerX + wrap.period / 2
       const wrapped = ((centered % wrap.period) + wrap.period) % wrap.period
@@ -140,11 +151,12 @@ export function useMapZoom(
     motion: 'balanced' | 'zoom-out' = 'balanced',
   ) {
     stopAnimation()
+    cancelWheelUpdate()
 
     const start = { ...transform }
     const target = constrainTransform(x, y, scale)
     const wrap = horizontalWrap.value
-    if (wrap && scale * wrap.period >= width.value) {
+    if (wrap) {
       // Animate toward the nearest equivalent world copy, then normalize each
       // painted frame. Otherwise a click across the seam takes the long way.
       const startCenterX = (width.value / 2 - start.x) / start.scale
@@ -254,25 +266,17 @@ export function useMapZoom(
       animateTo(x, y, targetScale, 750, zoomOutFirst ? 'zoom-out' : 'balanced')
     } else {
       stopAnimation()
+      cancelWheelUpdate()
       setTransform(x, y, targetScale)
     }
   }
 
-  function zoomFromWheel(event: WheelEvent, svg: SVGSVGElement) {
-    stopAnimation()
-    isWheeling.value = true
-    if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
-    wheelEndTimer = window.setTimeout(() => {
-      isWheeling.value = false
-      wheelEndTimer = undefined
-    }, 140)
-
-    const rect = svg.getBoundingClientRect()
-    const pointerX = (event.clientX - rect.left) * width.value / rect.width
-    const pointerY = (event.clientY - rect.top) * height.value / rect.height
-    const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE
-      ? event.deltaY * 16
-      : event.deltaY
+  function applyPendingWheel() {
+    wheelFrame = undefined
+    const pending = pendingWheel
+    pendingWheel = undefined
+    if (!pending) return
+    const { delta, pointerX, pointerY } = pending
     const nextScale = Math.max(
       MIN_ZOOM,
       Math.min(MAX_ZOOM, transform.scale * Math.exp(-delta * 0.0015)),
@@ -300,6 +304,31 @@ export function useMapZoom(
     }
   }
 
+  function zoomFromWheel(event: WheelEvent, svg: SVGSVGElement) {
+    stopAnimation()
+    isWheeling.value = true
+    if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
+    wheelEndTimer = window.setTimeout(() => {
+      isWheeling.value = false
+      wheelEndTimer = undefined
+    }, 140)
+
+    const rect = svg.getBoundingClientRect()
+    const pointerX = (event.clientX - rect.left) * width.value / rect.width
+    const pointerY = (event.clientY - rect.top) * height.value / rect.height
+    const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+      ? event.deltaY * 16
+      : event.deltaY
+    if (pendingWheel) {
+      pendingWheel.delta += delta
+      pendingWheel.pointerX = pointerX
+      pendingWheel.pointerY = pointerY
+    } else {
+      pendingWheel = { delta, pointerX, pointerY }
+    }
+    wheelFrame ??= requestAnimationFrame(applyPendingWheel)
+  }
+
   function resetZoom(animated = true) {
     if (animated) {
       animateTo(0, 0, MIN_ZOOM, 500, 'zoom-out')
@@ -313,6 +342,7 @@ export function useMapZoom(
     if (event.button !== 0 || (transform.scale <= MIN_ZOOM && !wrapActive.value)) return
 
     stopAnimation()
+    cancelWheelUpdate()
     cancelPanUpdate()
     suppressNextClick = false
     const rect = svg.getBoundingClientRect()
@@ -373,6 +403,7 @@ export function useMapZoom(
   watch([width, height], () => resetZoom(false))
   onBeforeUnmount(() => {
     stopAnimation()
+    cancelWheelUpdate()
     cancelPanUpdate()
     if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
   })

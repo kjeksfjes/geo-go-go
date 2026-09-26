@@ -68,7 +68,7 @@ export const regions: readonly MapRegion[] = [
 const playableEntityIds: Partial<Record<MapRegionId, ReadonlySet<string>>> = {
   // A playable grouping can cross canonical regions. Greenland belongs to
   // Nordics here, but its canonical North American unit does not enter Europe.
-  nordics: new Set(['DNK', 'FRO', 'FIN', 'GRL', 'ISL', 'NOR', 'SWE', 'ALD']),
+  nordics: new Set(['DNK', 'FRO', 'FIN', 'GRL', 'ISL', 'NOR', 'SWE']),
   baltics: new Set(['EST', 'LVA', 'LTU']),
   balkans: new Set(['ALB', 'BIH', 'BGR', 'HRV', 'GRC', 'KOS', 'MKD', 'MNE', 'ROU', 'SRB', 'SVN', 'TUR']),
 }

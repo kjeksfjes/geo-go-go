@@ -1,7 +1,4 @@
 import {
-  geoCentroid,
-  geoArea,
-  geoBounds,
   geoAzimuthalEqualArea,
   geoEqualEarth,
   geoMercator,
@@ -17,6 +14,7 @@ import type { GeographicFrame, MapRegion } from '../data/regions'
 import { bathymetryBands, type BathymetryDepth } from '../data/bathymetry'
 import { reliefBands, type ReliefElevation } from '../data/relief'
 import type { MapBounds, MapPoint } from './useMapZoom'
+import { projectedUnitFocus } from '../logic/mapFocus'
 
 export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'natural-earth' | 'regional-equal-area'
 export interface HorizontalWrap {
@@ -185,63 +183,14 @@ export function useMapProjection(
     const paths: ProjectedGeographicUnit[] = renderUnits.map((unit) => {
       const regionalDisplay = unit.regionalDisplayGeometry?.[activeRegion.value.id]
       const displayUnit = displayFeature(unit)
-      const fullBounds = generator.bounds(displayUnit) as MapBounds
-      let focusUnit = displayUnit
-      let centerOnBounds = false
-
-      // A geographic unit can still contain distant islands or cross the antimeridian.
-      // Use its largest landmass for click-to-zoom when the full unit bounds
-      // would be misleading, while retaining all of its rendered polygons.
-      if (displayUnit.geometry.type === 'MultiPolygon') {
-        const largestLandmass = displayUnit.geometry.coordinates
-          .map((coordinates) => ({
-            ...displayUnit,
-            geometry: { type: 'Polygon' as const, coordinates },
-          }))
-          .reduce((largest, candidate) =>
-            geoArea(candidate) > geoArea(largest) ? candidate : largest,
-          )
-
-        const mainBounds = generator.bounds(largestLandmass) as MapBounds
-        const fullWidth = Math.max(1, fullBounds[1][0] - fullBounds[0][0])
-        const fullHeight = Math.max(1, fullBounds[1][1] - fullBounds[0][1])
-        const mainWidth = Math.max(1, mainBounds[1][0] - mainBounds[0][0])
-        const mainHeight = Math.max(1, mainBounds[1][1] - mainBounds[0][1])
-        const mainlandAreaShare = geoArea(largestLandmass) / geoArea(displayUnit)
-        const spansMostOfMap = fullWidth > width.value * 0.65
-        const hasWideProjectedFootprint = Math.max(
-          fullWidth / mainWidth,
-          fullHeight / mainHeight,
-        ) > 2
-        const mainlandDominates = mainlandAreaShare > 0.75
-        if (mainlandDominates && (spansMostOfMap || hasWideProjectedFootprint)) {
-          const [[west, south], [east, north]] = geoBounds(displayUnit)
-          const longitudeSpan = east >= west ? east - west : east + 360 - west
-          // Keep a compact island group together even if one island accounts
-          // for most of its land area. A broad geographic spread still focuses
-          // the main landmass, as for distant overseas or outlying territory.
-          const geographicallyBroad = longitudeSpan > 12 || north - south > 12
-          if (spansMostOfMap || geographicallyBroad) {
-            focusUnit = largestLandmass
-          } else {
-            centerOnBounds = true
-          }
-        }
-      }
-
-      const projection = generator.projection()
-      const focusPoint = !centerOnBounds && typeof projection === 'function'
-        ? projection(geoCentroid(focusUnit)) ?? undefined
-        : undefined
+      const focus = projectedUnitFocus(generator, displayUnit, width.value)
 
       return {
         unit,
         path: generator(displayUnit) ?? '',
         outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? '' : undefined,
         divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? '' : undefined,
-        displayBounds: fullBounds,
-        bounds: generator.bounds(focusUnit) as MapBounds,
-        focusPoint: focusPoint as MapPoint | undefined,
+        ...focus,
       }
     })
 

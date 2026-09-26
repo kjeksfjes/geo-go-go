@@ -111,15 +111,28 @@ for (const [id, units] of unitsByEntityId) {
 const independentlyMeaningfulUnitIds = new Set<string>(
   Object.values(semanticMapUnits.independentMapUnitIdsByEntity).flat(),
 )
-const subunitIdsByMapUnit: Record<string, string[]> = semanticMapUnits.independentMapSubunitIdsByMapUnit
+const subunitIdsByMapUnit: Record<string, string[]> = {
+  ...semanticMapUnits.independentMapSubunitIdsByMapUnit,
+}
+for (const [mapUnitId, regionIds] of Object.entries(semanticMapUnits.independentAdmin1RegionsByMapUnit)) {
+  subunitIdsByMapUnit[mapUnitId] = [...(subunitIdsByMapUnit[mapUnitId] ?? []), ...regionIds]
+}
 const mapSubunits = baseMeaningfulSubunits.features as unknown as MapSubunitFeature[]
 
 type ComponentMetadataOverride = {
   name?: Partial<Record<'en' | 'nb', string>>
   type?: Partial<Record<'en' | 'nb', string>>
+  flagCode?: string
 }
 const metadataOverrides = semanticMapUnits.metadataOverrides as Record<string, ComponentMetadataOverride>
 export const componentInfoById = new Map<string, GeographicComponentInfo>()
+
+function componentFlagCode(sourceCode: string | undefined, entityId: string): string | undefined {
+  if (!sourceCode) return undefined
+  const code = sourceCode.toLowerCase()
+  if (!validFlagCodes.has(code)) throw new Error(`Unknown component flag: ${sourceCode}`)
+  return code !== countryInfoById.get(entityId)?.flagCode ? code : undefined
+}
 
 for (const id of independentlyMeaningfulUnitIds) {
   const unit = mapUnitById.get(id)
@@ -133,6 +146,10 @@ for (const id of independentlyMeaningfulUnitIds) {
     entityId: unit.quizEntityId,
     name: unit.properties.name,
     sourceType: unit.properties.featureType,
+    // An ISO territory code does not imply a distinct flag in flag-icons;
+    // several entries simply repeat the sovereign flag. Curate only real
+    // secondary flags in the semantic component metadata.
+    flagCode: componentFlagCode(override?.flagCode, unit.quizEntityId),
     nameOverrides: override?.name,
     typeOverrides: override?.type,
   })
@@ -142,15 +159,17 @@ for (const unit of mapSubunits) {
   if (unit.id.startsWith('remainder:')) continue
   const parent = mapUnitById.get(unit.properties.mapUnitId)
   if (!parent) throw new Error(`Map subunit has no parent: ${unit.id}`)
-  const componentId = `map-subunit:${unit.id}`
+  const sourceKind = unit.properties.sourceKind ?? 'map-subunit'
+  const componentId = `${sourceKind}:${unit.id}`
   const override = metadataOverrides[componentId]
   componentInfoById.set(componentId, {
     id: componentId,
-    sourceKind: 'map-subunit',
+    sourceKind,
     sourceId: unit.id,
     entityId: parent.quizEntityId,
     name: unit.properties.name,
     sourceType: unit.properties.featureType,
+    flagCode: componentFlagCode(override?.flagCode, parent.quizEntityId),
     nameOverrides: override?.name,
     typeOverrides: override?.type,
   })
@@ -189,7 +208,7 @@ function buildGeographicUnits(
           properties: {
             entityId: unit.quizEntityId,
             mapUnitIds: [unit.id],
-            componentId: `map-subunit:${subunitId}`,
+            componentId: `${subunit.properties.sourceKind ?? 'map-subunit'}:${subunitId}`,
           },
           geometry: subunit.geometry,
         })
