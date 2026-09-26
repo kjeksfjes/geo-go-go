@@ -756,27 +756,27 @@ async function setProjection(nextId: MapProjectionId) {
 
 .relief__band--500 {
   fill: #bfd6a4;
-  fill-opacity: 0.4;
+  fill-opacity: 0.3;
 }
 
 .relief__band--1000 {
   fill: #abc991;
-  fill-opacity: 0.3;
+  fill-opacity: 0.23;
 }
 
 .relief__band--1500 {
   fill: #9bbc88;
-  fill-opacity: 0.26;
+  fill-opacity: 0.2;
 }
 
 .relief__band--2250 {
   fill: #8caa82;
-  fill-opacity: 0.22;
+  fill-opacity: 0.17;
 }
 
 .relief__band--3000 {
   fill: #7d9d77;
-  fill-opacity: 0.18;
+  fill-opacity: 0.14;
 }
 
 .country {

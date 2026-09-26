@@ -22,11 +22,11 @@ const bathymetryColors: Record<number, string> = {
   6000: '#509dcc',
 }
 const reliefColors: Record<number, [string, number]> = {
-  500: ['#bfd6a4', 0.4],
-  1000: ['#abc991', 0.3],
-  1500: ['#9bbc88', 0.26],
-  2250: ['#8caa82', 0.22],
-  3000: ['#7d9d77', 0.18],
+  500: ['#bfd6a4', 0.3],
+  1000: ['#abc991', 0.23],
+  1500: ['#9bbc88', 0.2],
+  2250: ['#8caa82', 0.17],
+  3000: ['#7d9d77', 0.14],
 }
 
 let sceneVersion = 0
@@ -86,7 +86,7 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
       context.clip(prepared.reliefClip)
       for (const band of prepared.relief) {
         if (!band.path) continue
-        const [color, opacity] = reliefColors[band.elevation] ?? ['#7d9d77', 0.18]
+        const [color, opacity] = reliefColors[band.elevation] ?? ['#7d9d77', 0.14]
         context.fillStyle = color
         context.globalAlpha = opacity
         context.fill(band.path)
