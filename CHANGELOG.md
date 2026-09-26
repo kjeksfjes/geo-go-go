@@ -4,6 +4,8 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+- In Find the country, nearby parts of a country now share the primary answer highlight; distant components retain a separate related highlight.
+
 ## 0.1.0 — 2026-09-26
 
 First local release milestone.
