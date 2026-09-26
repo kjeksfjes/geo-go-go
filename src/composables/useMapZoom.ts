@@ -25,8 +25,10 @@ export function useMapZoom(
   const isAnimating = ref(false)
   let animationFrame: number | undefined
   let panFrame: number | undefined
+  let wheelFrame: number | undefined
   let wheelEndTimer: number | undefined
   let pendingPan: { x: number; y: number; scale: number } | undefined
+  let pendingWheel: { delta: number; pointerX: number; pointerY: number } | undefined
   let dragState: {
     pointerId: number
     startClientX: number
@@ -70,6 +72,14 @@ export function useMapZoom(
       panFrame = undefined
     }
     pendingPan = undefined
+  }
+
+  function cancelWheelUpdate() {
+    if (wheelFrame !== undefined) {
+      cancelAnimationFrame(wheelFrame)
+      wheelFrame = undefined
+    }
+    pendingWheel = undefined
   }
 
   function constrainTransform(x: number, y: number, scale: number) {
@@ -141,6 +151,7 @@ export function useMapZoom(
     motion: 'balanced' | 'zoom-out' = 'balanced',
   ) {
     stopAnimation()
+    cancelWheelUpdate()
 
     const start = { ...transform }
     const target = constrainTransform(x, y, scale)
@@ -255,25 +266,17 @@ export function useMapZoom(
       animateTo(x, y, targetScale, 750, zoomOutFirst ? 'zoom-out' : 'balanced')
     } else {
       stopAnimation()
+      cancelWheelUpdate()
       setTransform(x, y, targetScale)
     }
   }
 
-  function zoomFromWheel(event: WheelEvent, svg: SVGSVGElement) {
-    stopAnimation()
-    isWheeling.value = true
-    if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
-    wheelEndTimer = window.setTimeout(() => {
-      isWheeling.value = false
-      wheelEndTimer = undefined
-    }, 140)
-
-    const rect = svg.getBoundingClientRect()
-    const pointerX = (event.clientX - rect.left) * width.value / rect.width
-    const pointerY = (event.clientY - rect.top) * height.value / rect.height
-    const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE
-      ? event.deltaY * 16
-      : event.deltaY
+  function applyPendingWheel() {
+    wheelFrame = undefined
+    const pending = pendingWheel
+    pendingWheel = undefined
+    if (!pending) return
+    const { delta, pointerX, pointerY } = pending
     const nextScale = Math.max(
       MIN_ZOOM,
       Math.min(MAX_ZOOM, transform.scale * Math.exp(-delta * 0.0015)),
@@ -301,6 +304,31 @@ export function useMapZoom(
     }
   }
 
+  function zoomFromWheel(event: WheelEvent, svg: SVGSVGElement) {
+    stopAnimation()
+    isWheeling.value = true
+    if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
+    wheelEndTimer = window.setTimeout(() => {
+      isWheeling.value = false
+      wheelEndTimer = undefined
+    }, 140)
+
+    const rect = svg.getBoundingClientRect()
+    const pointerX = (event.clientX - rect.left) * width.value / rect.width
+    const pointerY = (event.clientY - rect.top) * height.value / rect.height
+    const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+      ? event.deltaY * 16
+      : event.deltaY
+    if (pendingWheel) {
+      pendingWheel.delta += delta
+      pendingWheel.pointerX = pointerX
+      pendingWheel.pointerY = pointerY
+    } else {
+      pendingWheel = { delta, pointerX, pointerY }
+    }
+    wheelFrame ??= requestAnimationFrame(applyPendingWheel)
+  }
+
   function resetZoom(animated = true) {
     if (animated) {
       animateTo(0, 0, MIN_ZOOM, 500, 'zoom-out')
@@ -314,6 +342,7 @@ export function useMapZoom(
     if (event.button !== 0 || (transform.scale <= MIN_ZOOM && !wrapActive.value)) return
 
     stopAnimation()
+    cancelWheelUpdate()
     cancelPanUpdate()
     suppressNextClick = false
     const rect = svg.getBoundingClientRect()
@@ -374,6 +403,7 @@ export function useMapZoom(
   watch([width, height], () => resetZoom(false))
   onBeforeUnmount(() => {
     stopAnimation()
+    cancelWheelUpdate()
     cancelPanUpdate()
     if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
   })

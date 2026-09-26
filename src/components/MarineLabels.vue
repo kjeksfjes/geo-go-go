@@ -79,7 +79,7 @@ function updateLabels() {
   const effectiveScale = Math.max(1, props.projectionScale * scale)
   const labelLevel = Math.min(9.9, 1 + 1.5 * Math.log2(effectiveScale))
   const baseFont = Math.max(12, Math.min(17, props.width / 65))
-  const fontSize = `${baseFont / scale}px`
+  const fontSize = `${baseFont}px`
   const candidates: Candidate[] = []
   const elements: SVGElement[] = []
   for (const offset of props.copyOffsets) {
@@ -98,6 +98,11 @@ function updateLabels() {
       const halfHeight = label.lines.length > 1 ? baseFont * 1.2 : fontPixels * 0.7
       const x = props.transform.x + scale * (label.x + offset)
       const y = props.transform.y + scale * label.y
+      // Keep text in viewport coordinates, outside the scaled map group.
+      // Firefox can otherwise soften labels while zooming the SVG scene.
+      element.setAttribute('x', String(x))
+      element.setAttribute('y', String(y))
+      for (const line of Array.from(element.children)) line.setAttribute('x', String(x))
       const box: Candidate['box'] = [x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight]
       const eligible = labelLevel >= label.minLabel
         && labelLevel <= label.maxLabel
@@ -157,13 +162,10 @@ onBeforeUnmount(() => {
       v-for="offset in copyOffsets"
       :key="offset"
       :ref="(element) => assignGroup(element, offset)"
-      :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
     >
       <text
         v-for="label in projectedLabels"
         :key="label.id"
-        :x="label.x"
-        :y="label.y"
         class="marine-label"
         :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
         style="display: none"
@@ -171,7 +173,6 @@ onBeforeUnmount(() => {
         <tspan
           v-for="(line, index) in label.lines"
           :key="index"
-          :x="label.x"
           :dy="index === 0 && label.lines.length > 1 ? '-0.55em' : index > 0 ? '1.35em' : undefined"
         >{{ label.kind === 'ocean' ? line.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : line }}</tspan>
       </text>

@@ -6,11 +6,15 @@ export interface CanvasCamera {
 
 export interface CanvasMapScene {
   spherePath: string
-  landPath: string
   bathymetry: Array<{ depth: number; path: string }>
   relief: Array<{ elevation: number; path: string }>
   reliefClipPath: string
-  countries: Array<{ path: string; outlinePath?: string; divisionPath?: string }>
+  countries: Array<{
+    path: string
+    outlinePath?: string
+    divisionPath?: string
+    bounds: [[number, number], [number, number]]
+  }>
 }
 
 export type CanvasWorkerRequest =

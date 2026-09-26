@@ -1,14 +1,14 @@
 import type { CanvasWorkerFrame, CanvasWorkerRequest, CanvasMapScene } from '../types/mapCanvas'
 
 type DrawPath = Path2D | null
+type Bounds = [[number, number], [number, number]]
 
 interface PreparedScene {
   sphere: DrawPath
-  land: DrawPath
   bathymetry: Array<{ depth: number; path: DrawPath }>
   relief: Array<{ elevation: number; path: DrawPath }>
   reliefClip: DrawPath
-  countries: Array<{ path: DrawPath; outline: DrawPath; division: DrawPath }>
+  countries: Array<{ path: DrawPath; outline: DrawPath; division: DrawPath; bounds: Bounds }>
 }
 
 const workerScope = self as unknown as {
@@ -40,19 +40,38 @@ function pathFrom(source?: string): DrawPath {
 function prepare(source: CanvasMapScene): PreparedScene {
   return {
     sphere: pathFrom(source.spherePath),
-    land: pathFrom(source.landPath),
     bathymetry: source.bathymetry.map(({ depth, path }) => ({ depth, path: pathFrom(path) })),
     relief: source.relief.map(({ elevation, path }) => ({ elevation, path: pathFrom(path) })),
     reliefClip: pathFrom(source.reliefClipPath),
-    countries: source.countries.map(({ path, outlinePath, divisionPath }) => ({
+    countries: source.countries.map(({ path, outlinePath, divisionPath, bounds }) => ({
       path: pathFrom(path),
       outline: pathFrom(outlinePath),
       division: pathFrom(divisionPath),
+      bounds,
     })),
   }
 }
 
-function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: PreparedScene, cameraScale: number, offsets: number[]) {
+function intersectsViewport(bounds: Bounds, offset: number, viewport: Bounds) {
+  return bounds[0][0] + offset <= viewport[1][0]
+    && bounds[1][0] + offset >= viewport[0][0]
+    && bounds[0][1] <= viewport[1][1]
+    && bounds[1][1] >= viewport[0][1]
+}
+
+function drawScene(
+  context: OffscreenCanvasRenderingContext2D,
+  prepared: PreparedScene,
+  cameraScale: number,
+  offsets: number[],
+  viewport: Bounds,
+) {
+  // A close-up usually intersects only a few countries. Reuse that short list
+  // for the land fill and border passes instead of replaying every 10m path.
+  const visibleCountries = offsets.map((offset) => ({
+    offset,
+    countries: prepared.countries.filter(({ bounds }) => intersectsViewport(bounds, offset, viewport)),
+  }))
   for (const offset of offsets) {
     context.save()
     context.translate(offset, 0)
@@ -74,14 +93,14 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
     context.restore()
   }
 
-  for (const offset of offsets) {
+  for (const { offset, countries } of visibleCountries) {
     context.save()
     context.translate(offset, 0)
-    if (prepared.land) {
-      context.fillStyle = '#fcf8e9'
-      context.fill(prepared.land)
+    context.fillStyle = '#fcf8e9'
+    for (const country of countries) {
+      if (country.path) context.fill(country.path)
     }
-    if (prepared.reliefClip && prepared.relief.length) {
+    if (countries.length && prepared.reliefClip && prepared.relief.length) {
       context.save()
       context.clip(prepared.reliefClip)
       for (const band of prepared.relief) {
@@ -99,10 +118,10 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
   context.lineJoin = 'round'
   context.lineWidth = 0.85 / cameraScale
   context.strokeStyle = '#5e7680'
-  for (const offset of offsets) {
+  for (const { offset, countries } of visibleCountries) {
     context.save()
     context.translate(offset, 0)
-    for (const country of prepared.countries) {
+    for (const country of countries) {
       const border = country.outline ?? country.path
       if (border) context.stroke(border)
       if (country.division) {
@@ -150,7 +169,16 @@ workerScope.onmessage = (event) => {
   const offsets = period === null
     ? [0]
     : Array.from({ length: 2 * copyCount + 1 }, (_, index) => (index - copyCount) * period)
-  drawScene(context, scene, camera.scale, offsets)
+  const viewport: Bounds = [
+    [(-padX - camera.x) / camera.scale, (-padY - camera.y) / camera.scale],
+    [(width + padX - camera.x) / camera.scale, (height + padY - camera.y) / camera.scale],
+  ]
+  // Only Mercator wraps. Each projected world fits within the map width, so
+  // skip copies that cannot reach this bitmap at the current camera position.
+  const visibleOffsets = period === null
+    ? offsets
+    : offsets.filter((offset) => offset <= viewport[1][0] && offset + width >= viewport[0][0])
+  drawScene(context, scene, camera.scale, visibleOffsets, viewport)
 
   const frame: CanvasWorkerFrame = {
     type: 'frame',

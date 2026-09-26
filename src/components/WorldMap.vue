@@ -63,6 +63,7 @@ const useSimplifiedMotionRendering = new URLSearchParams(window.location.search)
   .get('motion-fallback') === '1'
 const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
+const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
@@ -126,6 +127,11 @@ function geographicUnitClasses(unit: GeographicUnitFeature) {
   }
 }
 
+function hasVisualHighlight(unit: GeographicUnitFeature) {
+  return Object.entries(geographicUnitClasses(unit))
+    .some(([name, active]) => name !== 'country--quiz-inactive' && active)
+}
+
 function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature) {
   if (unit.properties.entityId !== props.selectedCountryId) return false
   return isCountryLevelSelection(props.selectedCountryId, props.selectedGeographicUnitId)
@@ -152,14 +158,16 @@ const {
   zoomToPoint,
 } = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap, minimumZoomPoint)
 
-// Interaction uses the stable 50m country layer even when the final map is
-// rendered at 10m. The semantic units and IDs are identical, so selection,
-// accessibility and regional behavior do not change when the paths swap.
+// The canvas supplies detailed coastlines. Its SVG interaction layer only
+// needs the lighter 50m hit geometry; active highlights use detailed paths.
 const renderedGeographicPaths = computed(() =>
-  useSimplifiedMotionRendering && isInteracting.value
+  canvasRendererActive.value || (useSimplifiedMotionRendering && isInteracting.value)
     ? interactionGeographicPaths.value
     : geographicPaths.value,
 )
+const detailedGeographicPathById = computed(() => new Map(
+  geographicPaths.value.map((projected) => [projected.unit.id, projected]),
+))
 
 // SVG paths paint in DOM order. Put related geographic units above ordinary
 // countries, the clicked unit above its siblings, and correct above wrong.
@@ -183,6 +191,8 @@ const paintedGeographicPaths = computed(() => {
   }
   return ordered
 })
+const highlightedGeographicPaths = computed(() => paintedGeographicPaths.value
+  .filter(({ unit }) => isGeographicUnitVisible(unit) && hasVisualHighlight(unit)))
 
 const visibleLandPath = computed(() => renderedGeographicPaths.value
   .filter(({ unit }) => isGeographicUnitVisible(unit))
@@ -197,16 +207,14 @@ const renderedReliefPaths = computed(() => useSimplifiedMotionRendering && isInt
 
 const canvasScene = computed<CanvasMapScene>(() => ({
   spherePath: spherePath.value,
-  landPath: geographicPaths.value
-    .filter(({ unit }) => isGeographicUnitVisible(unit))
-    .map(({ path }) => path)
-    .join(' '),
   bathymetry: bathymetryEnabled.value ? bathymetryPaths.value : [],
   relief: reliefEnabled.value ? reliefPaths.value : [],
   reliefClipPath: reliefEnabled.value ? reliefClipPath.value : '',
   countries: geographicPaths.value
     .filter(({ unit }) => isGeographicUnitVisible(unit))
-    .map(({ path, outlinePath, divisionPath }) => ({ path, outlinePath, divisionPath })),
+    .map(({ path, outlinePath, divisionPath, displayBounds }) => ({
+      path, outlinePath, divisionPath, bounds: displayBounds,
+    })),
 }))
 const canvasWrapOffset = computed(() => horizontalWrap.value?.period ?? null)
 
@@ -296,7 +304,14 @@ watch([() => props.activeRegion.id, () => props.geographicUnits], () => {
   hoveredUnit.value = null
 })
 watch(isInteracting, (active) => {
-  if (active) hoveredUnit.value = null
+  if (active) {
+    hoveredUnit.value = null
+  } else {
+    // Firefox can retain a highlight rasterized at the start of a zoom and
+    // keep scaling that texture after motion stops. Recreate only the painted
+    // highlight paths at the final camera scale; hit paths and map stay put.
+    highlightRevision.value += 1
+  }
 })
 watch(projectionId, () => focusActiveRegion(false), { flush: 'post' })
 watch([mapWidth, mapHeight], () => focusActiveRegion(false), { flush: 'post' })
@@ -332,6 +347,11 @@ function selectCountry(
     return
   }
   emit('select', countryId, geographicUnitId)
+  const detailed = canvasRendererActive.value
+    ? detailedGeographicPathById.value.get(geographicUnitId)
+    : undefined
+  bounds = detailed?.bounds ?? bounds
+  focusPoint = detailed?.focusPoint ?? focusPoint
   const group = sharedFocusUnitIds(geographicUnitId)
   const sharedPaths = group && geographicPaths.value.filter(({ unit }) =>
     group.includes(unit.id) && isGeographicUnitVisible(unit),
@@ -442,8 +462,7 @@ async function setProjection(nextId: MapProjectionId) {
       class="map-container"
       :class="{
         'map-container--dragging': isDragging,
-        'map-container--interacting': useSimplifiedMotionRendering && isInteracting,
-        'map-container--detail-blurred': mapBlurred,
+        'map-container--interacting': isInteracting,
       }"
       :aria-busy="interactionLocked"
       :inert="interactionLocked"
@@ -534,7 +553,7 @@ async function setProjection(nextId: MapProjectionId) {
               <path
                 :d="path"
                 class="country"
-                :class="[geographicUnitClasses(unit), { 'country--split-fill': !!outlinePath }]"
+                :class="[geographicUnitClasses(unit), { 'country--split-fill': !!outlinePath, 'country--hit-only': canvasRendererActive }]"
                 :style="outlinePath ? { stroke: 'none' } : undefined"
                 :data-country-id="unit.properties.entityId"
                 :data-geographic-unit-id="unit.id"
@@ -569,15 +588,43 @@ async function setProjection(nextId: MapProjectionId) {
               />
             </g>
           </g>
-          <MarineLabels
-            :visible="marineLabelsEnabled && !isInteracting"
-            :width="mapWidth"
-            :height="mapHeight"
-            :transform="transform"
-            :projection-scale="projectionScale"
-            :project-point="projectPoint"
-            :copy-offsets="copyOffsets"
-          />
+        </g>
+        <MarineLabels
+          :visible="marineLabelsEnabled && !isInteracting"
+          :width="mapWidth"
+          :height="mapHeight"
+          :transform="transform"
+          :projection-scale="projectionScale"
+          :project-point="projectPoint"
+          :copy-offsets="copyOffsets"
+        />
+      </svg>
+
+      <!-- Keep painted highlights in their own SVG. Firefox otherwise keeps a
+           low-resolution raster of the much larger interaction group after a
+           close zoom, especially when a component also highlights its parent. -->
+      <svg
+        v-if="canvasRendererActive"
+        :key="highlightRevision"
+        class="map-highlights"
+        :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
+        aria-hidden="true"
+      >
+        <g :transform="`translate(${transform.x} ${transform.y}) scale(${transform.scale})`">
+          <g
+            v-for="offset in copyOffsets"
+            :key="offset"
+            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
+          >
+            <path
+              v-for="{ unit, path, outlinePath } in highlightedGeographicPaths"
+              :key="unit.id"
+              :d="detailedGeographicPathById.get(unit.id)?.path ?? path"
+              class="country country--visual"
+              :class="geographicUnitClasses(unit)"
+              :style="(detailedGeographicPathById.get(unit.id)?.outlinePath ?? outlinePath) ? { stroke: 'none' } : undefined"
+            />
+          </g>
         </g>
       </svg>
 
@@ -648,7 +695,11 @@ async function setProjection(nextId: MapProjectionId) {
         </button>
       </div>
     </div>
-    <div v-if="interactionLocked" class="map-loading-overlay">
+    <div
+      v-if="interactionLocked"
+      class="map-loading-overlay"
+      :class="{ 'map-loading-overlay--blurred': mapBlurred }"
+    >
       <p v-if="mapBlurred" class="map-loading-status" role="status">
         {{ t('loadingMap') }}
       </p>
@@ -679,12 +730,16 @@ async function setProjection(nextId: MapProjectionId) {
   height: 100%;
   cursor: grab;
   user-select: none;
-  transition: filter 280ms ease;
 }
 
-.map-container--detail-blurred .world-map,
-.map-container--detail-blurred .canvas-map-layer {
-  filter: blur(5px);
+.map-highlights {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .map-loading-overlay {
@@ -694,6 +749,12 @@ async function setProjection(nextId: MapProjectionId) {
   display: grid;
   place-items: center;
   cursor: default;
+  backdrop-filter: blur(0);
+  transition: backdrop-filter 280ms ease;
+}
+
+.map-loading-overlay--blurred {
+  backdrop-filter: blur(5px);
 }
 
 .map-loading-status {
@@ -786,7 +847,7 @@ async function setProjection(nextId: MapProjectionId) {
   vector-effect: non-scaling-stroke;
   cursor: pointer;
   outline: none;
-  transition: fill 120ms ease, filter 120ms ease;
+  transition: fill 120ms ease;
 }
 
 /* Canvas paints the ordinary borders; SVG remains the accessible hit and
@@ -806,6 +867,28 @@ async function setProjection(nextId: MapProjectionId) {
   pointer-events: none;
 }
 
+.world-map--canvas .country.country--hit-only {
+  fill: none;
+  stroke: none;
+  pointer-events: visibleFill;
+  transition: none;
+}
+
+.world-map--canvas .country--hit-only.country--quiz-inactive,
+.map-container--dragging .world-map--canvas .country--hit-only {
+  pointer-events: none;
+}
+
+.world-map--canvas .country.country--hit-only:focus-visible {
+  fill: rgb(239 192 106 / 72%);
+  stroke: #172d38;
+}
+
+.country--visual {
+  pointer-events: none;
+  transition: none;
+}
+
 .map-container--dragging .world-map,
 .map-container--dragging .country {
   cursor: grabbing;
@@ -816,14 +899,12 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .map-container--interacting .country {
-  filter: none;
   transition: none;
 }
 
 .country:hover,
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
   fill: rgb(239 192 106 / 72%);
-  filter: brightness(1.03);
 }
 
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
@@ -856,7 +937,6 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--identity-hover:not(.country--selected, .country--related) {
   fill: rgb(239 192 106 / 72%);
-  filter: brightness(1.03);
 }
 
 .country--quiz-correct-related,
