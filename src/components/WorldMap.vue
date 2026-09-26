@@ -326,6 +326,11 @@ function selectCountry(
     }
     return
   }
+  event?.stopPropagation()
+  if (props.selectedCountryId === countryId && props.selectedGeographicUnitId === geographicUnitId) {
+    emit('select', null, null)
+    return
+  }
   emit('select', countryId, geographicUnitId)
   const group = sharedFocusUnitIds(geographicUnitId)
   const sharedPaths = group && geographicPaths.value.filter(({ unit }) =>
@@ -346,7 +351,11 @@ function selectCountry(
 }
 
 function handleMapClick(event: MouseEvent) {
-  if (!props.quizMode || props.quizAnswerId === null) return
+  if (!props.quizMode) {
+    if (!consumeDragClick() && props.selectedCountryId !== null) emit('select', null, null)
+    return
+  }
+  if (props.quizAnswerId === null) return
   if (consumeDragClick() || event.detail > 1) return
   emit('quiz-next')
 }
@@ -700,12 +709,12 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .map-sphere {
-  fill: #b7d4e1;
+  fill: #61acd3;
 }
 
 /* Match the repeated sphere where two Mercator copies meet at a pixel edge. */
 .world-map--wrapped {
-  background-color: #b7d4e1;
+  background-color: #61acd3;
 }
 
 .world-map--canvas.world-map--wrapped {
@@ -721,15 +730,15 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .bathymetry__band--200 {
-  fill: #a6c9d9;
+  fill: #78bbdc;
 }
 
 .bathymetry__band--2000 {
-  fill: #95bdcf;
+  fill: #63add3;
 }
 
 .bathymetry__band--6000 {
-  fill: #89b2c7;
+  fill: #509dcc;
 }
 
 .terrain,
@@ -738,7 +747,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .terrain__land {
-  fill: #f9f7ef;
+  fill: #fcf8e9;
 }
 
 .relief__band {
@@ -746,34 +755,34 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .relief__band--500 {
-  fill: #d9e3d6;
-  fill-opacity: 0.3;
+  fill: #bfd6a4;
+  fill-opacity: 0.4;
 }
 
 .relief__band--1000 {
-  fill: #cfdbcc;
-  fill-opacity: 0.22;
+  fill: #abc991;
+  fill-opacity: 0.3;
 }
 
 .relief__band--1500 {
-  fill: #c5d2c3;
-  fill-opacity: 0.19;
+  fill: #9bbc88;
+  fill-opacity: 0.26;
 }
 
 .relief__band--2250 {
-  fill: #bac9b8;
-  fill-opacity: 0.17;
+  fill: #8caa82;
+  fill-opacity: 0.22;
 }
 
 .relief__band--3000 {
-  fill: #afc0af;
-  fill-opacity: 0.15;
+  fill: #7d9d77;
+  fill-opacity: 0.18;
 }
 
 .country {
   fill: transparent;
-  stroke: #9aa9a9;
-  stroke-width: 0.65;
+  stroke: #5e7680;
+  stroke-width: 0.85;
   vector-effect: non-scaling-stroke;
   cursor: pointer;
   outline: none;
@@ -787,8 +796,8 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .country-outline {
-  stroke: #9aa9a9;
-  stroke-width: 0.65;
+  stroke: #5e7680;
+  stroke-width: 0.85;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
@@ -901,8 +910,8 @@ async function setProjection(nextId: MapProjectionId) {
 
 .regional-division {
   fill: none;
-  stroke: #6f8991;
-  stroke-width: 0.9;
+  stroke: #547987;
+  stroke-width: 1;
   stroke-dasharray: 3 3;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;

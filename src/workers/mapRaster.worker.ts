@@ -17,16 +17,16 @@ const workerScope = self as unknown as {
 }
 
 const bathymetryColors: Record<number, string> = {
-  200: '#a6c9d9',
-  2000: '#95bdcf',
-  6000: '#89b2c7',
+  200: '#78bbdc',
+  2000: '#63add3',
+  6000: '#509dcc',
 }
 const reliefColors: Record<number, [string, number]> = {
-  500: ['#d9e3d6', 0.3],
-  1000: ['#cfdbcc', 0.22],
-  1500: ['#c5d2c3', 0.19],
-  2250: ['#bac9b8', 0.17],
-  3000: ['#afc0af', 0.15],
+  500: ['#bfd6a4', 0.4],
+  1000: ['#abc991', 0.3],
+  1500: ['#9bbc88', 0.26],
+  2250: ['#8caa82', 0.22],
+  3000: ['#7d9d77', 0.18],
 }
 
 let sceneVersion = 0
@@ -57,7 +57,7 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
     context.save()
     context.translate(offset, 0)
     if (prepared.sphere) {
-      context.fillStyle = '#b7d4e1'
+      context.fillStyle = '#61acd3'
       context.fill(prepared.sphere)
     }
     context.restore()
@@ -68,7 +68,7 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
     context.translate(offset, 0)
     for (const band of prepared.bathymetry) {
       if (!band.path) continue
-      context.fillStyle = bathymetryColors[band.depth] ?? '#89b2c7'
+      context.fillStyle = bathymetryColors[band.depth] ?? '#509dcc'
       context.fill(band.path)
     }
     context.restore()
@@ -78,7 +78,7 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
     context.save()
     context.translate(offset, 0)
     if (prepared.land) {
-      context.fillStyle = '#f9f7ef'
+      context.fillStyle = '#fcf8e9'
       context.fill(prepared.land)
     }
     if (prepared.reliefClip && prepared.relief.length) {
@@ -86,7 +86,7 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
       context.clip(prepared.reliefClip)
       for (const band of prepared.relief) {
         if (!band.path) continue
-        const [color, opacity] = reliefColors[band.elevation] ?? ['#afc0af', 0.15]
+        const [color, opacity] = reliefColors[band.elevation] ?? ['#7d9d77', 0.18]
         context.fillStyle = color
         context.globalAlpha = opacity
         context.fill(band.path)
@@ -97,8 +97,8 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
   }
 
   context.lineJoin = 'round'
-  context.lineWidth = 0.65 / cameraScale
-  context.strokeStyle = '#9aa9a9'
+  context.lineWidth = 0.85 / cameraScale
+  context.strokeStyle = '#5e7680'
   for (const offset of offsets) {
     context.save()
     context.translate(offset, 0)
@@ -107,8 +107,8 @@ function drawScene(context: OffscreenCanvasRenderingContext2D, prepared: Prepare
       if (border) context.stroke(border)
       if (country.division) {
         context.save()
-        context.strokeStyle = '#6f8991'
-        context.lineWidth = 0.9 / cameraScale
+        context.strokeStyle = '#547987'
+        context.lineWidth = 1 / cameraScale
         context.setLineDash([3 / cameraScale, 3 / cameraScale])
         context.stroke(country.division)
         context.restore()
