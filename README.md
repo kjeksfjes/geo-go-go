@@ -1,28 +1,10 @@
 # Geo Go Go
 
-A small interactive world-map geography game built with Vue 3, TypeScript,
-Vite, Natural Earth Admin-0 Map Units, `d3-geo`, and `flag-icons`.
+A small interactive world-map geography game built with Vue 3, TypeScript, Vite, Natural Earth Admin-0 Map Units, `d3-geo`, and `flag-icons`.
 
-The map starts with Natural Earth's 1:50m Admin-0 Map Units. A **High detail**
-toggle lazily loads the corresponding 1:10m units when requested. This keeps the initial download
-and render light, avoids changing geometry in the middle of a gesture, and makes
-coastlines and small countries clearer at close range when desired.
-After each resolution has rendered once, its projected SVG paths are cached so
-later switches are immediate at the current map size and projection.
-The **Bathymetry** toggle adds three noninteractive ocean-depth bands
-(200m, 2,000m, and 6,000m) behind the country layer for relief-style experiments.
-The adjacent **Relief** toggle adds five similarly simplified elevation bands
-(500m, 1,000m, 1,500m, 2,250m, and 3,000m) without changing map interaction.
-The map also shows major ocean names at world scale and introduces names of
-seas, gulfs, bays, and other smaller waters as you zoom. These labels are
-noninteractive and follow the active projection and map movement. The **Water
-names** toggle can hide them; labels also disappear temporarily during map
-dragging and zooming so they do not distract from motion.
+The map starts with Natural Earth's 1:50m Admin-0 Map Units. A **High detail** toggle lazily loads the corresponding 1:10m units when requested. This keeps the initial download and render light, avoids changing geometry in the middle of a gesture, and makes coastlines and small countries clearer at close range when desired. After each resolution has rendered once, its projected SVG paths are cached so later switches are immediate at the current map size and projection. The **Bathymetry** toggle adds three noninteractive ocean-depth bands (200m, 2,000m, and 6,000m) behind the country layer for relief-style experiments. The adjacent **Relief** toggle adds five similarly simplified elevation bands (500m, 1,000m, 1,500m, 2,250m, and 3,000m) without changing map interaction. The map also shows major ocean names at world scale and introduces names of seas, gulfs, bays, and other smaller waters as you zoom. These labels are noninteractive and follow the active projection and map movement. The **Water names** toggle can hide them; labels also disappear temporarily during map dragging and zooming so they do not distract from motion.
 
-It defaults to a conventional Mercator projection. Mercator preserves local
-shapes and angles well, while enlarging areas toward the poles in the familiar
-way. The World view wraps horizontally at every zoom level when panning
-across the map edge.
+It defaults to a conventional Mercator projection. Mercator preserves local shapes and angles well, while enlarging areas toward the poles in the familiar way. The World view wraps horizontally at every zoom level when panning across the map edge.
 
 ## Run locally
 
@@ -31,171 +13,43 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite, then hover, focus, or click a country.
-Use the EN/NO control to switch between English and Norwegian Bokmål. The app
-starts in the browser's language when supported and remembers a manual choice.
-Scroll over the map to zoom around the pointer; selecting a country smoothly
-zooms the map to its bounds. Drag a zoomed map to pan, or switch between
-Mercator, Winkel Tripel, Equal Earth, and Natural Earth projections with the
-map control. Regional Equal Area uses an azimuthal equal-area projection;
-Europe uses a 10°E, 52°N origin and fits the displayed European map units.
-The Nordics have an explicit fit frame.
-The hierarchical region selector can isolate and focus a continent
-or a smaller subregion without recalculating map paths. Its tree is navigation,
-not a source of geographic inheritance: Europe uses Natural Earth's UN-style
-region classification, whereas Nordics is a separate playable grouping that
-includes Greenland. Its dropdown uses
-`@zanmato/vue3-treeselect` for tree navigation and single selection.
+Open the local URL printed by Vite, then hover, focus, or click a country. Use the EN/NO control to switch between English and Norwegian Bokmål. The app starts in the browser's language when supported and remembers a manual choice. Scroll over the map to zoom around the pointer; selecting a country smoothly zooms the map to its bounds. Drag a zoomed map to pan, or switch between Mercator, Winkel Tripel, Equal Earth, and Natural Earth projections with the map control. Regional Equal Area uses an azimuthal equal-area projection; Europe uses a 10°E, 52°N origin and fits the displayed European map units. The Nordics have an explicit fit frame. The hierarchical region selector can isolate and focus a continent or a smaller subregion. Projected paths are reused when the projection and display geometry are unchanged; region-specific views may need new paths. The selector tree is navigation, not a source of geographic inheritance: Europe uses Natural Earth's UN-style region classification, whereas Nordics is a separate playable grouping that includes Greenland. Its dropdown uses `@zanmato/vue3-treeselect` for tree navigation and single selection.
 
-The **Find the country** mode shows a flag and country name from the active
-region. Click its map location to answer. Each correct first attempt earns one
-point; after every answer, use **Next country** to continue. A session asks each
-eligible state once, and changing regions starts a new session. Territories
-remain visible on the map but are not used as quiz questions.
-After an answer, clicking the map or pressing Space also advances, so the
-player can continue without moving back to the button.
+The **Find the country** mode shows a flag and country name from the active region. Click its map location to answer. Each correct first attempt earns one point; after every answer, use **Next country** to continue. A session asks each eligible state once, and changing regions starts a new session. Territories remain visible on the map but are not used as quiz questions. After an answer, clicking the map or pressing Space also advances, so the player can continue without moving back to the button.
 
-Natural Earth map units are rendering parts, not automatically separate quiz
-areas. By default, parts sharing one quiz identity are dissolved into one
-geographic interaction unit, removing internal administrative edges (as with
-Bosnia and Herzegovina, Serbia, and Belgium). The small opt-in list in
-`src/data/meaningful-map-units.json` keeps genuinely distinct components separate:
-mainland France and French Guiana, for example, remain separate geographic
-units tied to the same France answer. Hover and click target the complete
-geographic unit; the clicked unit highlights strongly, while other units of
-the same quiz identity highlight softly. Answer checking and the country card
-use the shared quiz identity. The country card can also show the selected
-component's own name and a smaller educational type label.
+Natural Earth map units are rendering parts, not automatically separate quiz areas. By default, parts sharing one quiz identity are dissolved into one geographic interaction unit, removing internal administrative edges (as with Bosnia and Herzegovina, Serbia, and Belgium). The small opt-in list in `src/data/meaningful-map-units.json` keeps genuinely distinct components separate: mainland France and French Guiana, for example, remain separate geographic units tied to the same France answer. Hover and click target the complete geographic unit; the clicked unit highlights strongly, while other units of the same quiz identity highlight softly. Answer checking and the country card use the shared quiz identity. The country card can also show the selected component's own name and a smaller educational type label.
 
-Explore-mode selection has a separate, small camera/selection policy in
-`src/data/selection-behavior.json`. Clicking a configured main country unit
-highlights all of that quiz identity's parts, while clicking a named component
-highlights that component strongly and its siblings softly. Nearby components
-can share a camera footprint (for example mainland Italy, Sicily, and Sardinia);
-distant components keep their own click-to-zoom focus. Hover is broader:
-every visible part sharing a quiz identity highlights together, even when its
-camera focus remains local. Quiz feedback is separate and unchanged by this
-explore-mode policy.
+Explore-mode selection has a separate, small camera/selection policy in `src/data/selection-behavior.json`. Clicking a configured main country unit highlights all of that quiz identity's parts, while clicking a named component highlights that component strongly and its siblings softly. Nearby components can share a camera footprint (for example mainland Italy, Sicily, and Sardinia); distant components keep their own click-to-zoom focus. Hover is broader: every visible part sharing a quiz identity highlights together, even when its camera focus remains local. Quiz feedback is separate and unchanged by this explore-mode policy.
 
 ## Geographic data
 
-Marine names and approximate label positions come from Natural Earth's
-[1:10m Geography Marine Polygons](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-physical-labels/).
-`scripts/import-marine-labels.py` extracts a compact set of label anchors into
-`src/data/marine-labels.json`. The five ocean anchors are placed separately
-because the source divides oceans into multiple polygons and some span the map
-seam. Common names have Norwegian Bokmål translations; other marine names use
-the source's English spelling in both languages for now.
+Marine names and approximate label positions come from Natural Earth's [1:10m Geography Marine Polygons](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-physical-labels/). `scripts/import-marine-labels.py` extracts a compact set of label anchors into `src/data/marine-labels.json`. The five ocean anchors are placed separately because the source divides oceans into multiple polygons and some span the map seam. Common names have Norwegian Bokmål translations; other marine names use the source's English spelling in both languages for now.
 
-The bathymetry POC uses Natural Earth's nested 1:10m vector bathymetry bands.
-`scripts/import-bathymetry.py` merges and simplifies the selected 200m, 2,000m,
-and 6,000m source files into `src/data/bathymetry.json`. The bands are projected
-by the same D3 projection and transformed by the same pan/zoom group as the
-country geometry; they do not participate in hit-testing or quiz behavior.
+The bathymetry POC uses Natural Earth's nested 1:10m vector bathymetry bands. `scripts/import-bathymetry.py` merges and simplifies the selected 200m, 2,000m, and 6,000m source files into `src/data/bathymetry.json`. The bands are projected by the same D3 projection and transformed by the same pan/zoom group as the country geometry; they do not participate in hit-testing or quiz behavior.
 
-The land-relief POC derives five vector elevation bands from NOAA NCEI's
-ETOPO 2022 ice-surface model. `scripts/import-relief.py` uses interpolated
-contours from a sampled NetCDF grid, removes tiny fragments, and simplifies the
-result into smooth SVG-ready geometry in `src/data/relief.json`. At runtime,
-the projected bands are clipped to the currently visible geographic units, so
-regional filtering and regional display geometry remain authoritative. Country
-borders and translucent interaction states are rendered independently above
-the relief, preserving some elevation contrast during hover and quiz feedback.
+The land-relief POC derives five vector elevation bands from NOAA NCEI's ETOPO 2022 ice-surface model. `scripts/import-relief.py` uses interpolated contours from a sampled NetCDF grid, removes tiny fragments, and simplifies the result into smooth SVG-ready geometry in `src/data/relief.json`. At runtime, the projected bands are clipped to the currently visible geographic units, so regional filtering and regional display geometry remain authoritative. Country borders and translucent interaction states are rendered independently above the relief, preserving some elevation contrast during hover and quiz feedback.
 
-The checked-in map assets come from Natural Earth 5.1.1 **Admin-0 Map Units**
-at [1:50m](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-details/)
-and [1:10m](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-details/).
-`scripts/import-natural-earth.py` converts their shapefiles
-to compact GeoJSON. The 50m table defines the unit IDs and metadata; the 10m
-file supplies geometry for the same units, keeping detail switches stable.
-`GU_A3` identifies a source map unit, `ADM0_A3` groups units into a country/quiz
-identity, and `SOV_A3` records the separate sovereign relationship. Dependency
-parent links are optional. Natural Earth's `REGION_UN` and `SUBREGION` fields
-provide the canonical, broadly UN M49-style geography. Custom game groupings
-(Nordics, Baltics, Balkans, Middle East) are overlays, never inherited into a
-parent continent. State eligibility is a separate game rule.
+The checked-in map assets come from Natural Earth 5.1.1 **Admin-0 Map Units** at [1:50m](https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-details/) and [1:10m](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-details/). `scripts/import-natural-earth.py` converts their shapefiles to compact GeoJSON. The 50m table defines the unit IDs and metadata; the 10m file supplies geometry for the same units, keeping detail switches stable. `GU_A3` identifies a source map unit, `ADM0_A3` groups units into a country/quiz identity, and `SOV_A3` records the separate sovereign relationship. Dependency parent links are optional. Natural Earth's `REGION_UN` and `SUBREGION` fields provide the canonical, broadly UN M49-style geography. Custom game groupings (Nordics, Baltics, Balkans, Middle East) are overlays, never inherited into a parent continent. State eligibility is a separate game rule.
 
-Natural Earth's "Geo unit" type does not say whether a split should be an
-independent game area: it marks Vojvodina and French Guiana alike. The explicit
-meaningful-unit list provides that semantic decision. The generated
-`combined-geographic-units-50m.json` and `combined-geographic-units-10m.json`
-contain dissolved geometry for unlisted multi-part identities; regenerate them
-with `scripts/build-geographic-units.py` after changing the map-unit list.
+Natural Earth's "Geo unit" type does not say whether a split should be an independent game area: it marks Vojvodina and French Guiana alike. The explicit meaningful-unit list provides that semantic decision. The generated `combined-geographic-units-50m.json` and `combined-geographic-units-10m.json` contain dissolved geometry for unlisted multi-part identities; regenerate them with `scripts/build-geographic-units.py` after changing the map-unit list.
 
-Selected [Natural Earth Admin-0 Map Subunits](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-details/)
-at 50m and 10m supply source geometries and names for places within a single
-map unit, including Alaska, Hawaii, Corsica, Tasmania, Jeju, Hainan, and
-Japan's main islands.
-`SU_A3` identifies the subunit, `GU_A3` links it to the parent map unit, and
-`ADM0_A3` links it to the country/quiz identity. Only the subunit IDs opted in
-by `meaningful-map-units.json` become named components. The importer
-`scripts/import-meaningful-subunits.py` dissolves all other subunits of each
-selected map unit into one unnamed interactive remainder, so source splits do
-not automatically become educational components. The same config holds a small set of
-optional English/Norwegian name and type overrides. Natural Earth's `TYPE`
-field is usually only "Geo unit" or "Geo subunit," not a useful educational
-label such as "State" or "Archipelago"; informative source types are used
-when available, and otherwise a curated type may be shown or omitted. The
-remainder of each selected map unit is retained as an interactive geographic
-unit, so no country geometry is discarded. Subunit selection never changes
-the country used for quiz answers.
+Selected [Natural Earth Admin-0 Map Subunits](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-details/) at 50m and 10m supply source geometries and names for places within a single map unit, including Alaska, Hawaii, Corsica, Tasmania, Jeju, Hainan, and Japan's main islands. `SU_A3` identifies the subunit, `GU_A3` links it to the parent map unit, and `ADM0_A3` links it to the country/quiz identity. Only the subunit IDs opted in by `meaningful-map-units.json` become named components. The importer `scripts/import-meaningful-subunits.py` dissolves all other subunits of each selected map unit into one unnamed interactive remainder, so source splits do not automatically become educational components. The same config holds a small set of optional English/Norwegian name and type overrides. Natural Earth's `TYPE` field is usually only "Geo unit" or "Geo subunit," not a useful educational label such as "State" or "Archipelago"; informative source types are used when available, and otherwise a curated type may be shown or omitted. The remainder of each selected map unit is retained as an interactive geographic unit, so no country geometry is discarded. Subunit selection never changes the country used for quiz answers.
 
-Crete is not a Natural Earth Admin-0 subunit. Its named boundary comes from
-[Natural Earth 1:10m Admin-1 States and Provinces](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/).
-The importer uses that boundary to identify complete Greek coastline polygons
-at each map resolution, preserving the source country outline without a rough
-rectangular crop. `independentAdmin1RegionsByMapUnit` records this explicit
-semantic choice; `sourceSubunitIdsAt10m` reconciles source subunit IDs that
-split differently between 50m and 10m. Regeneration now takes both Admin-0
-subunit shapefiles and the 10m Admin-1 shapefile.
+Crete is not a Natural Earth Admin-0 subunit. Its named boundary comes from [Natural Earth 1:10m Admin-1 States and Provinces](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/). The importer uses that boundary to identify complete Greek coastline polygons at each map resolution, preserving the source country outline without a rough rectangular crop. `independentAdmin1RegionsByMapUnit` records this explicit semantic choice; `sourceSubunitIdsAt10m` reconciles source subunit IDs that split differently between 50m and 10m. Regeneration now takes both Admin-0 subunit shapefiles and the 10m Admin-1 shapefile.
 
-For a map unit with regional display geometry, the importer removes selected
-components from the regional remainder too. Kaliningrad is therefore separate
-from the rest of Russia without being drawn twice in the Europe view; the
-existing dashed Europe–Asia division remains on the Russian remainder.
+For a map unit with regional display geometry, the importer removes selected components from the regional remainder too. Kaliningrad is therefore separate from the rest of Russia without being drawn twice in the Europe view; the existing dashed Europe–Asia division remains on the Russian remainder.
 
-Natural Earth does not split Russia's European and Asian territory into map
-units. The Europe view therefore uses an optional **regional display geometry**
-for Russia at both resolutions. It is derived by intersecting the original
-Natural Earth Russia map unit with the European side of
-[Alexandr Trubetskoy's Europe–Asia boundary](https://sashamaps.net/resources/europe-asia-boundary/),
-following the Caucasus/Caspian, Ural River and Ural Mountains toward the Kara
-Sea. The source [GeoJSON boundary](https://github.com/sashatrubetskoy/asia_europe_border)
-is used with attribution. The artificial closing edges of the European-side
-polygon lie outside Russia; the cut through Russia follows the published
-geographic boundary, not a rectangular crop or SVG mask.
-The European Russia shape is filled separately from its outline: true Natural
-Earth edges retain the ordinary border style, while the cut through Russia is
-drawn as a subtle dashed geographic-division line.
+Natural Earth does not split Russia's European and Asian territory into map units. The Europe view therefore uses an optional **regional display geometry** for Russia at both resolutions. It is derived by intersecting the original Natural Earth Russia map unit with the European side of [Alexandr Trubetskoy's Europe–Asia boundary](https://sashamaps.net/resources/europe-asia-boundary/), following the Caucasus/Caspian, Ural River and Ural Mountains toward the Kara Sea. The source [GeoJSON boundary](https://github.com/sashatrubetskoy/asia_europe_border) is used with attribution. The artificial closing edges of the European-side polygon lie outside Russia; the cut through Russia follows the published geographic boundary, not a rectangular crop or SVG mask. The European Russia shape is filled separately from its outline: true Natural Earth edges retain the ordinary border style, while the cut through Russia is drawn as a subtle dashed geographic-division line.
 
-`scripts/build-regional-display.py` generates the separate 50m/10m override
-assets from the boundary GeoJSON and the checked-in Natural Earth units. The
-base Natural Earth geometries are never modified. Region-specific geometry is
-used consistently for projection fitting, drawing, hit-testing and
-click-to-zoom; the map-unit ID and Russia quiz identity remain unchanged.
-Other transcontinental units such as Turkey and Kazakhstan have no override
-yet and may need their own geographic treatment later. To regenerate, install
-Shapely for the build script, download the boundary project's GeoJSON export,
-then pass its file path to `python scripts/build-regional-display.py`.
+`scripts/build-regional-display.py` generates the separate 50m/10m override assets from the boundary GeoJSON and the checked-in Natural Earth units. The base Natural Earth geometries are never modified. Region-specific geometry is used consistently for projection fitting, drawing, hit-testing and click-to-zoom; the map-unit ID and Russia quiz identity remain unchanged. Other transcontinental units such as Turkey and Kazakhstan have no override yet and may need their own geographic treatment later. To regenerate, install Shapely for the build script, download the boundary project's GeoJSON export, then pass its file path to `python scripts/build-regional-display.py`.
 
-## Structure
+The detailed layer is matched back to 50m map-unit IDs, so switching resolution cannot change the selectable unit set. Detailed geometries pass a spherical-area sanity check; malformed features fall back to the safe 1:50m unit.
 
-- `src/components/WorldMap.vue` coordinates the map UI, SVG hit paths, and highlights.
-- `src/components/CanvasMap.vue` and `src/workers/mapRaster.worker.ts` paint the default map in an off-main-thread canvas; SVG remains the fallback.
-- `src/components/MarineLabels.vue` places and culls marine labels independently of the map paths.
-- `src/logic/mapInteraction.ts` owns Explore/quiz map feedback and click policy.
-- `src/logic/mapFocus.ts` owns click-to-zoom target rules.
-- `src/composables/useMapProjection.ts` owns projection and path generation.
-- `src/composables/useElementSize.ts` observes the responsive map container.
-- `src/composables/useMapZoom.ts` owns wheel and animated country zoom state.
-- `src/data/mapPalette.ts` shares geographic map colors between SVG and canvas.
-- `src/data/countries.ts` indexes map units, quiz identities, and sovereigns.
-- `src/data/meaningful-map-units.json` curates meaningful map units, subunits, and optional metadata.
-- `src/data/regions.ts` defines selector hierarchy and geographic unit membership.
-- `src/data/quizCountries.ts` defines which identities can be quiz questions.
-- `src/composables/useCountryQuiz.ts` owns question order, answers, and score.
-- `src/App.vue` owns the selected-country UI state.
+## Architecture at a glance
 
-The detailed layer is matched back to 50m map-unit IDs, so switching resolution
-cannot change the selectable unit set. Detailed geometries pass a spherical-area
-sanity check; malformed features fall back to the safe 1:50m unit.
+Data flows from geographic units and quiz identities through a D3 projection into a painted map and a separate interaction layer. The map reports clicks back to the app; the app owns selection and quiz state.
+
+- **Data and rules:** `src/data/countries.ts` links Natural Earth map units, meaningful geographic components, and quiz identities. `src/data/regions.ts` defines geographic membership and playable groups; `src/data/quizCountries.ts` decides which identities can be questions. Curated exceptions live in the JSON configuration under `src/data/`.
+- **App state:** `src/App.vue` owns mode, active region, detail level, and the selected identity/component. `src/composables/useCountryQuiz.ts` owns the question sequence, answers, and score. They pass state to the map and receive selection events from it.
+- **Projection and interaction:** `src/components/WorldMap.vue` coordinates the map. `src/composables/useMapProjection.ts` generates and caches projected paths; `src/composables/useMapZoom.ts` manages the camera. The small policies in `src/logic/mapInteraction.ts` and `src/logic/mapFocus.ts` decide highlight, click, and focus behavior without drawing the map.
+- **Drawing:** `src/components/CanvasMap.vue` and `src/workers/mapRaster.worker.ts` paint the default map off the main thread. SVG paths remain for hit-testing and crisp highlights, and can draw the full map as a fallback. `src/components/MarineLabels.vue` draws labels separately; `src/data/mapPalette.ts` keeps canvas and SVG geographic colors in sync.
