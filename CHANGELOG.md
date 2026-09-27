@@ -20,6 +20,7 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 - Framed the initial mobile world view more closely around Europe and Africa, centered near northeastern Libya.
 - Added an immediate loading screen and deferred the geography-heavy game bundle until after its first paint.
 - Moved optional bathymetry and relief data off the mobile startup path and load each layer only when needed.
+- Reused the loading spinner for detailed maps, projection changes, and deferred visual-layer toggles.
 
 ## 0.2.0 — 2026-09-27
 

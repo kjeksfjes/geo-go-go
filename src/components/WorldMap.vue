@@ -3,6 +3,7 @@ import { geoArea } from 'd3-geo'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
+import LoadingIndicator from './LoadingIndicator.vue'
 import MarineLabels from './MarineLabels.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import RegionSelector from './RegionSelector.vue'
@@ -925,19 +926,21 @@ async function setProjection(nextId: MapProjectionId) {
         </div>
         <MapDetailToggle
           :label="t('bathymetry')"
-          :loading="interactionLocked || bathymetryLoading"
+          :loading="bathymetryLoading"
+          :disabled="interactionLocked"
           :model-value="bathymetryEnabled"
           @update:model-value="setBathymetryEnabled"
         />
         <MapDetailToggle
           :label="t('relief')"
-          :loading="interactionLocked || reliefLoading"
+          :loading="reliefLoading"
+          :disabled="interactionLocked"
           :model-value="reliefEnabled"
           @update:model-value="setReliefEnabled"
         />
         <MapDetailToggle
           :label="t('waterNames')"
-          :loading="interactionLocked"
+          :disabled="interactionLocked"
           :model-value="marineLabelsEnabled"
           @update:model-value="marineLabelsEnabled = $event"
         />
@@ -952,7 +955,8 @@ async function setProjection(nextId: MapProjectionId) {
           </div>
         </div>
         <MapDetailToggle
-          :loading="interactionLocked"
+          :loading="detailLoading"
+          :disabled="projectionLoading"
           :model-value="highDetailEnabled"
           @update:model-value="requestDetailChange"
         />
@@ -972,9 +976,7 @@ async function setProjection(nextId: MapProjectionId) {
       class="map-loading-overlay"
       :class="{ 'map-loading-overlay--blurred': mapBlurred }"
     >
-      <p v-if="mapBlurred" class="map-loading-status" role="status">
-        {{ t('loadingMap') }}
-      </p>
+      <LoadingIndicator v-if="mapBlurred" :label="t('loadingMap')" />
     </div>
   </div>
 </template>
@@ -1038,18 +1040,6 @@ async function setProjection(nextId: MapProjectionId) {
 
 .map-loading-overlay--blurred {
   backdrop-filter: blur(5px);
-}
-
-.map-loading-status {
-  margin: 0;
-  padding: 0.7rem 1rem;
-  border: 1px solid rgba(82, 103, 110, 0.18);
-  border-radius: 999px;
-  color: #172d38;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 8px 24px rgba(23, 45, 56, 0.14);
-  font-size: 0.8rem;
-  font-weight: 700;
 }
 
 .map-sphere {

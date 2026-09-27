@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { t } from '../i18n'
-const props = defineProps<{
-  loading: boolean
+import LoadingSpinner from './LoadingSpinner.vue'
+
+const props = withDefaults(defineProps<{
+  loading?: boolean
+  disabled?: boolean
   modelValue: boolean
   label?: string
-}>()
+}>(), {
+  loading: false,
+  disabled: false,
+})
 
 const emit = defineEmits<{
   'update:modelValue': [enabled: boolean]
@@ -19,12 +25,15 @@ const emit = defineEmits<{
     role="switch"
     :aria-checked="modelValue"
     :aria-busy="loading"
-    :disabled="loading"
+    :disabled="loading || disabled"
     @click="emit('update:modelValue', !props.modelValue)"
   >
     <span>{{ label ?? t('highDetail') }}</span>
-    <span class="detail-toggle__track" aria-hidden="true">
-      <span class="detail-toggle__thumb" />
+    <span class="detail-toggle__indicator" aria-hidden="true">
+      <LoadingSpinner v-if="loading" />
+      <span v-else class="detail-toggle__track">
+        <span class="detail-toggle__thumb" />
+      </span>
     </span>
   </button>
 </template>
@@ -57,8 +66,18 @@ const emit = defineEmits<{
   cursor: default;
 }
 
+.detail-toggle__indicator {
+  --loading-spinner-size: 1rem;
+  display: grid;
+  width: 1.8rem;
+  height: 1rem;
+  flex: none;
+  place-items: center;
+}
+
 .detail-toggle__track {
   position: relative;
+  display: block;
   width: 1.8rem;
   height: 1rem;
   border-radius: 999px;
