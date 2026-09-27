@@ -1,6 +1,6 @@
 import type { Geometry } from 'geojson'
 
-export type ReliefElevation = 500 | 1000 | 1500 | 2250 | 3000
+export type ReliefElevation = 500 | 1000 | 1500 | 2250 | 3000 | 4000
 
 export interface ReliefBand {
   elevation: ReliefElevation

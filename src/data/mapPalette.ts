@@ -3,6 +3,7 @@
 export const mapPalette = {
   ocean: '#61acd3',
   land: '#fcf8e9',
+  reliefLand: '#e3ded2',
   contextLand: '#c2d2cf',
   contextBorder: '#7396a0',
   border: '#5e7680',
@@ -13,18 +14,22 @@ export const mapPalette = {
     2000: '#63add3',
     6000: '#509dcc',
   } as Record<number, string>,
+  // These elevation polygons are nested. Screen-blend each warm tint over the
+  // darker relief land so every additional band increases lightness.
   relief: {
-    500: ['#bfd6a4', 0.3],
-    1000: ['#abc991', 0.23],
-    1500: ['#9bbc88', 0.2],
-    2250: ['#8caa82', 0.17],
-    3000: ['#7d9d77', 0.14],
+    500: ['#f1dfad', 0.38],
+    1000: ['#f3d7a0', 0.32],
+    1500: ['#f4d095', 0.28],
+    2250: ['#f5d6a4', 0.25],
+    3000: ['#f8e5c4', 0.22],
+    4000: ['#fbf1dc', 0.2],
   } as Record<number, [string, number]>,
 }
 
 export const mapPaletteCssVariables: Record<string, string> = {
   '--map-ocean': mapPalette.ocean,
   '--map-land': mapPalette.land,
+  '--map-relief-land': mapPalette.reliefLand,
   '--map-context-land': mapPalette.contextLand,
   '--map-context-border': mapPalette.contextBorder,
   '--map-border': mapPalette.border,
