@@ -11,8 +11,8 @@ import { computed, type Ref } from 'vue'
 import type { FeatureCollection, MultiPoint } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
-import { bathymetryBands, type BathymetryDepth } from '../data/bathymetry'
-import { reliefBands, type ReliefElevation } from '../data/relief'
+import type { BathymetryBand, BathymetryDepth } from '../data/bathymetry'
+import type { ReliefBand, ReliefElevation } from '../data/relief'
 import type { MapBounds, MapPoint } from './useMapZoom'
 import { projectedUnitFocus } from '../logic/mapFocus'
 
@@ -92,6 +92,8 @@ export function useMapProjection(
   projectionId: Ref<MapProjectionId>,
   activeRegion: Ref<MapRegion>,
   visibleMapUnitIds: Ref<ReadonlySet<string>>,
+  bathymetryBands: Ref<readonly BathymetryBand[]>,
+  reliefBands: Ref<readonly ReliefBand[]>,
 ) {
   // Keep fitting tied to the initial 50m geographic units. A resolution swap may change
   // coastline extents by a fraction, but it must not move the coordinate
@@ -104,8 +106,16 @@ export function useMapProjection(
   // Retain each projection at the current viewport size. A resize invalidates
   // the old paths, without accumulating maps at every intermediate size.
   const pathCache = new WeakMap<GeographicUnitFeature[], PathCacheEntry>()
-  const bathymetryPathCache = new Map<string, { sizeKey: string; paths: ProjectedBathymetryBand[] }>()
-  const reliefPathCache = new Map<string, { sizeKey: string; paths: ProjectedReliefBand[] }>()
+  const bathymetryPathCache = new Map<string, {
+    sizeKey: string
+    source: readonly BathymetryBand[]
+    paths: ProjectedBathymetryBand[]
+  }>()
+  const reliefPathCache = new Map<string, {
+    sizeKey: string
+    source: readonly ReliefBand[]
+    paths: ProjectedReliefBand[]
+  }>()
   const reliefClipPathCache = new Map<string, { sizeKey: string; path: string }>()
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
@@ -261,30 +271,32 @@ export function useMapProjection(
   const bathymetryPaths = computed(() => {
     const key = cacheKey(projectionId.value)
     const sizeKey = `${width.value}:${height.value}`
+    const source = bathymetryBands.value
     const cached = bathymetryPathCache.get(key)
-    if (cached?.sizeKey === sizeKey) return cached.paths
+    if (cached?.sizeKey === sizeKey && cached.source === source) return cached.paths
 
     const generator = pathGenerator.value
-    const paths = bathymetryBands.map(({ depth, geometry }) => ({
+    const paths = source.map(({ depth, geometry }) => ({
       depth,
       path: generator(geometry) ?? '',
     }))
-    bathymetryPathCache.set(key, { sizeKey, paths })
+    bathymetryPathCache.set(key, { sizeKey, source, paths })
     return paths
   })
 
   const reliefPaths = computed(() => {
     const key = cacheKey(projectionId.value)
     const sizeKey = `${width.value}:${height.value}`
+    const source = reliefBands.value
     const cached = reliefPathCache.get(key)
-    if (cached?.sizeKey === sizeKey) return cached.paths
+    if (cached?.sizeKey === sizeKey && cached.source === source) return cached.paths
 
     const generator = pathGenerator.value
-    const paths = reliefBands.map(({ elevation, geometry }) => ({
+    const paths = source.map(({ elevation, geometry }) => ({
       elevation,
       path: generator(geometry) ?? '',
     }))
-    reliefPathCache.set(key, { sizeKey, paths })
+    reliefPathCache.set(key, { sizeKey, source, paths })
     return paths
   })
 

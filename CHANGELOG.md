@@ -18,6 +18,8 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 - Reworked the phone layout around a compact game toolbar and map HUD, moving language into settings and giving more of the screen back to the map.
 - Disabled bathymetry and relief by default on touch-first mobile devices to improve initial map performance; both remain available in map controls.
 - Framed the initial mobile world view more closely around Europe and Africa, centered near northeastern Libya.
+- Added an immediate loading screen and deferred the geography-heavy game bundle until after its first paint.
+- Moved optional bathymetry and relief data off the mobile startup path and load each layer only when needed.
 
 ## 0.2.0 — 2026-09-27
 

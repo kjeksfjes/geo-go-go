@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { geoArea } from 'd3-geo'
-import { computed, nextTick, onBeforeUnmount, ref, toRef, useId, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
 import MarineLabels from './MarineLabels.vue'
@@ -23,6 +23,8 @@ import {
 import type { GeographicUnitFeature } from '../types/country'
 import type { CanvasMapScene } from '../types/mapCanvas'
 import type { MapRegion, MapRegionId } from '../data/regions'
+import { loadBathymetryBands, type BathymetryBand } from '../data/bathymetry'
+import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { countryName, t, type Locale } from '../i18n'
@@ -81,6 +83,10 @@ const controlsOpen = ref(false)
 const usesMobileMapDefaults = window.matchMedia('(hover: none) and (pointer: coarse)').matches
 const bathymetryEnabled = ref(!usesMobileMapDefaults)
 const reliefEnabled = ref(!usesMobileMapDefaults)
+const bathymetryLoading = ref(false)
+const reliefLoading = ref(false)
+const bathymetryBands = shallowRef<readonly BathymetryBand[]>([])
+const reliefBands = shallowRef<readonly ReliefBand[]>([])
 const marineLabelsEnabled = ref(true)
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
@@ -126,6 +132,8 @@ const {
   projectionId,
   toRef(props, 'activeRegion'),
   toRef(props, 'visibleMapUnitIds'),
+  bathymetryBands,
+  reliefBands,
 )
 // Global projections keep their world-sized canvas. At minimum zoom, center
 // the filtered region within that canvas instead of returning to world origin.
@@ -587,6 +595,42 @@ function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEven
   )
 }
 
+async function ensureBathymetryLoaded() {
+  if (bathymetryBands.value.length || bathymetryLoading.value) return
+  bathymetryLoading.value = true
+  try {
+    bathymetryBands.value = await loadBathymetryBands()
+  } catch (error) {
+    bathymetryEnabled.value = false
+    console.error('Could not load bathymetry.', error)
+  } finally {
+    bathymetryLoading.value = false
+  }
+}
+
+async function ensureReliefLoaded() {
+  if (reliefBands.value.length || reliefLoading.value) return
+  reliefLoading.value = true
+  try {
+    reliefBands.value = await loadReliefBands()
+  } catch (error) {
+    reliefEnabled.value = false
+    console.error('Could not load relief.', error)
+  } finally {
+    reliefLoading.value = false
+  }
+}
+
+function setBathymetryEnabled(enabled: boolean) {
+  bathymetryEnabled.value = enabled
+  if (enabled) void ensureBathymetryLoaded()
+}
+
+function setReliefEnabled(enabled: boolean) {
+  reliefEnabled.value = enabled
+  if (enabled) void ensureReliefLoaded()
+}
+
 function requestDetailChange(enabled: boolean) {
   emit(
     'detail-change',
@@ -594,6 +638,14 @@ function requestDetailChange(enabled: boolean) {
     enabled && props.detailedGeographicUnits !== null && hasCachedPaths(props.detailedGeographicUnits),
   )
 }
+
+onMounted(async () => {
+  // Let the playable base map paint before optional visual layers compete for
+  // bandwidth and main-thread projection work on desktop.
+  await afterPaint()
+  if (bathymetryEnabled.value) void ensureBathymetryLoaded()
+  if (reliefEnabled.value) void ensureReliefLoaded()
+})
 
 onBeforeUnmount(() => {
   if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
@@ -873,15 +925,15 @@ async function setProjection(nextId: MapProjectionId) {
         </div>
         <MapDetailToggle
           :label="t('bathymetry')"
-          :loading="interactionLocked"
+          :loading="interactionLocked || bathymetryLoading"
           :model-value="bathymetryEnabled"
-          @update:model-value="bathymetryEnabled = $event"
+          @update:model-value="setBathymetryEnabled"
         />
         <MapDetailToggle
           :label="t('relief')"
-          :loading="interactionLocked"
+          :loading="interactionLocked || reliefLoading"
           :model-value="reliefEnabled"
-          @update:model-value="reliefEnabled = $event"
+          @update:model-value="setReliefEnabled"
         />
         <MapDetailToggle
           :label="t('waterNames')"
