@@ -4,6 +4,8 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.3.0 — 2026-09-27
+
 ### Fixes
 
 - Kept the mobile app shell and map controls inside Safari's changing safe area, prevented page zoom and viewport drift beneath browser chrome, and kept the fully zoomed-out world vertically centered.
@@ -15,8 +17,9 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ### Improvements
 
-- Reworked the phone layout around a compact game toolbar and map HUD, moving language into settings and giving more of the screen back to the map.
-- Disabled bathymetry and relief by default on touch-first mobile devices to improve initial map performance; both remain available in map controls.
+- Reworked the phone layout around a compact game toolbar and map HUD, placing Region beside the game mode and moving language and visual map options into settings.
+- Slimmed down the mobile selectors and retained their map, region, and settings icons.
+- Disabled bathymetry and relief by default on touch-first mobile devices to improve initial map performance; both remain available in settings.
 - Framed the initial mobile world view more closely around Europe and Africa, centered near northeastern Libya.
 - Added an immediate loading screen and deferred the geography-heavy game bundle until after its first paint.
 - Moved optional bathymetry and relief data off the mobile startup path and load each layer only when needed.
