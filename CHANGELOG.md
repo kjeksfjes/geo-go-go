@@ -4,11 +4,15 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
-- In Find the country, nearby parts of a country now share the primary answer highlight; distant components retain a separate related highlight.
-- Added neutral map targets for tiny quiz countries; overlapping targets zoom in before accepting an answer.
-- Regional views now keep navigation near the chosen area, preserve click-to-zoom focus at the regional zoom limit, and show nearby non-playable land as subdued context.
-- Transcontinental land outside a regional display boundary, such as Asian Russia in Europe, now appears as muted context with a clearer dashed division.
-- Use the full name South Georgia and the South Sandwich Islands in country labels.
+## 0.2.0 — 2026-09-27
+
+- Made tiny quiz countries easier to find and select with neutral map targets, including a zoom step for overlapping targets.
+- Unified quiz highlights across nearby parts of the same country while keeping distant components visually distinct.
+- Kept regional navigation focused on the chosen area and added subdued, non-interactive surrounding land; Asian Russia remains visible as context in the Europe view.
+- Limited regional quiz questions to countries whose principal map unit belongs to the region, so overseas islands do not prompt for France or the Netherlands in the North America quiz.
+- Improved wrong-answer feedback with an optional clicked-country reveal, a saved “Always show” preference, and a “Show on map” action for locating the correct answer.
+- Identified clicked geographic components in quiz feedback and named Bonaire, Sint Eustatius, and Saba individually without making them separate quiz countries.
+- Restored the full South Georgia and the South Sandwich Islands name.
 
 ## 0.1.0 — 2026-09-26
 
