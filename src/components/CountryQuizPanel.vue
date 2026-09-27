@@ -58,7 +58,7 @@ watch(() => props.question?.id, async (countryId) => {
 </script>
 
 <template>
-  <section class="quiz-panel" :class="`quiz-panel--${phase}`" :aria-label="t('quiz')">
+  <section class="quiz-panel map-overlay__content" :class="`quiz-panel--${phase}`" :aria-label="t('quiz')">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
         <p class="quiz-panel__eyebrow">{{ t('regionComplete') }}</p>
@@ -153,7 +153,6 @@ watch(() => props.question?.id, async (countryId) => {
   grid-template-columns: 4.5rem minmax(0, 1fr);
   align-items: start;
   gap: 0.45rem 1.1rem;
-  padding: 1rem 1.2rem;
 }
 
 .quiz-panel__flag {
@@ -293,7 +292,6 @@ watch(() => props.question?.id, async (countryId) => {
   .quiz-panel {
     grid-template-columns: 2.75rem minmax(0, 1fr);
     gap: 0.25rem 0.65rem;
-    padding: 0.65rem 0.75rem;
   }
 
   .quiz-panel__flag {

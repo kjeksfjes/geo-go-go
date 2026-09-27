@@ -126,16 +126,21 @@ export function useMapProjection(
     return display ? { ...unit, geometry: display.geometry } : unit
   }
 
-  function cacheKey(id: MapProjectionId) {
-    return id === 'regional-equal-area' || regionsWithDisplayGeometry.has(activeRegion.value.id)
-      ? `${id}:${activeRegion.value.id}`
-      : id
+  function projectionCacheKey(id: MapProjectionId) {
+    return id === 'regional-equal-area' ? `${id}:${activeRegion.value.id}` : id
+  }
+
+  function geographicCacheKey(id: MapProjectionId) {
+    const projectionKey = projectionCacheKey(id)
+    return id !== 'regional-equal-area' && regionsWithDisplayGeometry.has(activeRegion.value.id)
+      ? `${projectionKey}:${activeRegion.value.id}`
+      : projectionKey
   }
 
   function hasCachedPaths(source: GeographicUnitFeature[], id = projectionId.value): boolean {
     const cached = pathCache.get(source)
     return cached?.sizeKey === `${width.value}:${height.value}`
-      && cached.projections.has(cacheKey(id))
+      && cached.projections.has(geographicCacheKey(id))
   }
 
   const pathGenerator = computed(() => {
@@ -174,7 +179,7 @@ export function useMapProjection(
 
   function projectedGeographicPaths(source: GeographicUnitFeature[]) {
     const id = projectionId.value
-    const key = cacheKey(id)
+    const key = geographicCacheKey(id)
     const sizeKey = `${width.value}:${height.value}`
     let cached = pathCache.get(source)
     if (cached?.sizeKey === sizeKey) {
@@ -186,6 +191,37 @@ export function useMapProjection(
     }
 
     const generator = pathGenerator.value
+    const baseKey = projectionCacheKey(id)
+    let basePaths = cached.projections.get(baseKey)
+    if (!basePaths && key !== baseKey) {
+      basePaths = source.map((unit) => ({
+        unit,
+        path: generator(unit) ?? '',
+        ...projectedUnitFocus(generator, unit, width.value),
+      }))
+      cached.projections.set(baseKey, basePaths)
+    }
+
+    // Global projections do not change when a region is selected. Reuse all
+    // base paths and replace only units with region-specific display geometry
+    // instead of reprojecting the complete atlas for Europe's Russia split.
+    if (basePaths) {
+      const paths = basePaths.map((projected) => {
+        const regionalDisplay = projected.unit.regionalDisplayGeometry?.[activeRegion.value.id]
+        if (!regionalDisplay) return projected
+        const displayUnit = { ...projected.unit, geometry: regionalDisplay.geometry }
+        return {
+          unit: projected.unit,
+          path: generator(displayUnit) ?? '',
+          outlinePath: generator(regionalDisplay.outline) ?? '',
+          divisionPath: generator(regionalDisplay.division) ?? '',
+          ...projectedUnitFocus(generator, displayUnit, width.value),
+        }
+      })
+      cached.projections.set(key, paths)
+      return paths
+    }
+
     // A regional view never needs paths for geographic units hidden by its filter.
     const renderUnits = id === 'regional-equal-area'
       ? source.filter((unit) => unit.properties.mapUnitIds.some((mapUnitId) => visibleMapUnitIds.value.has(mapUnitId)))
@@ -269,7 +305,7 @@ export function useMapProjection(
   const spherePath = computed(() => pathGenerator.value({ type: 'Sphere' }) ?? '')
 
   const bathymetryPaths = computed(() => {
-    const key = cacheKey(projectionId.value)
+    const key = projectionCacheKey(projectionId.value)
     const sizeKey = `${width.value}:${height.value}`
     const source = bathymetryBands.value
     const cached = bathymetryPathCache.get(key)
@@ -285,7 +321,7 @@ export function useMapProjection(
   })
 
   const reliefPaths = computed(() => {
-    const key = cacheKey(projectionId.value)
+    const key = projectionCacheKey(projectionId.value)
     const sizeKey = `${width.value}:${height.value}`
     const source = reliefBands.value
     const cached = reliefPathCache.get(key)

@@ -1268,6 +1268,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .projection-control {
+  --map-select-arrow-right: 0.8rem;
   display: flex;
   align-items: center;
   min-width: 0;
@@ -1275,6 +1276,18 @@ async function setProjection(nextId: MapProjectionId) {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.86);
 }
+
+.projection-control :deep(.map-select-field) {
+  min-width: 0;
+  flex: 1;
+}
+
+.projection-control :deep(.map-select-field .vue3-treeselect) {
+  width: 100%;
+  min-width: 0;
+}
+
+.projection-control :deep(.vue3-treeselect__single-value) { padding-right: 1.75rem; }
 
 .control-icon {
   width: 1.4rem;
