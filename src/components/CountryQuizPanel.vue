@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import type { QuizPhase } from '../composables/useCountryQuiz'
-import type { CountryInfo } from '../types/country'
-import { countryName, t } from '../i18n'
+import type { CountryInfo, GeographicComponentInfo } from '../types/country'
+import { componentName, countryName, t } from '../i18n'
 
 const props = defineProps<{
   phase: QuizPhase
   question: CountryInfo | null
   answer: CountryInfo | null
+  answerComponent: GeographicComponentInfo | null
+  alwaysShowWrongAnswer: boolean
   score: number
   questionNumber: number
   total: number
@@ -16,19 +18,39 @@ const props = defineProps<{
 const emit = defineEmits<{
   next: []
   restart: []
+  'show-answer': []
+  'update:alwaysShowWrongAnswer': [value: boolean]
 }>()
 
 const nextButton = ref<HTMLButtonElement | null>(null)
+const alwaysShowButton = ref<HTMLButtonElement | null>(null)
 const questionHeading = ref<HTMLHeadingElement | null>(null)
 const isCorrect = computed(() => props.answer?.id === props.question?.id)
+const revealedAnswer = ref(false)
+const showWrongAnswer = computed(() => props.alwaysShowWrongAnswer || revealedAnswer.value)
+
+async function revealAnswer() {
+  revealedAnswer.value = true
+  if (document.documentElement.dataset.inputModality !== 'keyboard') return
+  await nextTick()
+  alwaysShowButton.value?.focus()
+}
+
+function toggleAlwaysShow() {
+  // Turning the preference off should hide future answers, not this one.
+  revealedAnswer.value = true
+  emit('update:alwaysShowWrongAnswer', !props.alwaysShowWrongAnswer)
+}
 
 watch(() => props.phase, async (phase) => {
+  if (phase !== 'answered') revealedAnswer.value = false
   if (phase !== 'answered' || document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
   nextButton.value?.focus()
 })
 
 watch(() => props.question?.id, async (countryId) => {
+  revealedAnswer.value = false
   if (!countryId || document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
   questionHeading.value?.focus()
@@ -66,32 +88,61 @@ watch(() => props.question?.id, async (countryId) => {
           {{ t('questionStatus', { number: questionNumber, total, score }) }}
         </p>
         <h2 ref="questionHeading" tabindex="-1">{{ t('find', { name: countryName(question.id) }) }}</h2>
-        <div class="quiz-panel__status" aria-live="polite">
-          <p v-if="phase === 'question'" class="quiz-panel__hint">
-            {{ t('clickLocation') }}
-          </p>
-          <p
-            v-else
-            class="quiz-panel__feedback"
-            :class="isCorrect ? 'quiz-panel__feedback--correct' : 'quiz-panel__feedback--wrong'"
-          >
-            <template v-if="isCorrect">{{ t('correct') }}</template>
-            <template v-else>{{ t('wrong') }}</template>
-          </p>
-        </div>
       </div>
-      <button
-        ref="nextButton"
-        class="quiz-panel__button"
-        :class="{ 'quiz-panel__button--reserved': phase !== 'answered' }"
-        type="button"
-        :disabled="phase !== 'answered'"
-        :aria-hidden="phase !== 'answered'"
-        :tabindex="phase === 'answered' ? 0 : -1"
-        @click="emit('next')"
-      >
-        {{ questionNumber === total ? t('seeResults') : t('nextCountry') }}
-      </button>
+      <div class="quiz-panel__status" aria-live="polite">
+        <p v-if="phase === 'question'" class="quiz-panel__hint">
+          {{ t('clickLocation') }}
+        </p>
+        <p
+          v-else-if="isCorrect"
+          class="quiz-panel__feedback quiz-panel__feedback--correct"
+        >
+          {{ t('correct') }}
+        </p>
+        <template v-else-if="answer">
+          <p class="quiz-panel__feedback quiz-panel__feedback--wrong">{{ t('wrong') }}</p>
+          <div class="quiz-panel__answer">
+            <template v-if="showWrongAnswer">
+              <span>{{ t('youClickedBefore') }}<strong>{{ countryName(answer.id) }}</strong><span v-if="answerComponent"> · {{ componentName(answerComponent) }}</span>{{ t('youClickedAfter') }}</span>
+              <button
+                ref="alwaysShowButton"
+                class="quiz-panel__text-button quiz-panel__text-button--preference"
+                type="button"
+                :aria-pressed="alwaysShowWrongAnswer"
+                @click="toggleAlwaysShow"
+              >
+                {{ t('alwaysShowAnswer') }}<span v-if="alwaysShowWrongAnswer" aria-hidden="true"> ✓</span>
+              </button>
+            </template>
+            <button v-else class="quiz-panel__text-button" type="button" @click="revealAnswer">
+              {{ t('whatDidIClick') }}
+            </button>
+          </div>
+        </template>
+      </div>
+      <div class="quiz-panel__actions">
+        <button
+          v-if="phase === 'answered' && !isCorrect"
+          class="quiz-panel__button quiz-panel__button--secondary"
+          type="button"
+          :aria-label="t('showCountryOnMap', { name: countryName(question.id) })"
+          @click="emit('show-answer')"
+        >
+          {{ t('showOnMap') }}
+        </button>
+        <button
+          ref="nextButton"
+          class="quiz-panel__button"
+          :class="{ 'quiz-panel__button--reserved': phase !== 'answered' }"
+          type="button"
+          :disabled="phase !== 'answered'"
+          :aria-hidden="phase !== 'answered'"
+          :tabindex="phase === 'answered' ? 0 : -1"
+          @click="emit('next')"
+        >
+          {{ questionNumber === total ? t('seeResults') : t('nextCountry') }}
+        </button>
+      </div>
     </template>
   </section>
 </template>
@@ -100,14 +151,15 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel {
   display: grid;
   grid-template-columns: 4.5rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.3rem 1.1rem;
+  align-items: start;
+  gap: 0.45rem 1.1rem;
   padding: 1rem 1.2rem;
 }
 
 .quiz-panel__flag {
   grid-column: 1;
   grid-row: 1;
+  align-self: center;
   width: 1.333333em;
   border-radius: 4px;
   box-shadow: 0 8px 20px rgba(23, 45, 56, 0.25);
@@ -139,9 +191,13 @@ watch(() => props.question?.id, async (countryId) => {
 }
 
 .quiz-panel__status {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
-  min-height: 2.8rem;
-  align-items: center;
+  min-height: 3rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
 }
 
 .quiz-panel__hint,
@@ -154,9 +210,48 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel__feedback--correct { color: #28704a; }
 .quiz-panel__feedback--wrong { color: #a13d2c; }
 
-.quiz-panel__button {
+.quiz-panel__answer {
+  color: #52676e;
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.quiz-panel__answer strong { font-weight: 800; }
+
+.quiz-panel__text-button {
+  border: 0;
+  padding: 0;
+  color: #172d38;
+  background: none;
+  font: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.quiz-panel__answer .quiz-panel__text-button { margin-left: 0.35rem; }
+.quiz-panel__answer .quiz-panel__text-button:first-child { margin-left: 0; }
+.quiz-panel__text-button:hover { color: #a13d2c; }
+.quiz-panel__text-button--preference {
+  color: #687a80;
+  font-size: 0.76rem;
+  font-weight: 400;
+  text-decoration-color: #a7b3b6;
+}
+
+.quiz-panel__actions {
   grid-column: 1 / -1;
-  justify-self: end;
+  grid-row: 3;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.1rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid #d9e3e6;
+}
+
+.quiz-panel__button {
   padding: 0.65rem 0.95rem;
   border: 0;
   border-radius: 999px;
@@ -169,11 +264,27 @@ watch(() => props.question?.id, async (countryId) => {
 
 .quiz-panel__button:hover { background: #315060; }
 
+.quiz-panel > .quiz-panel__button {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
+.quiz-panel__button--secondary {
+  color: #52676e;
+  background: transparent;
+}
+
+.quiz-panel__button--secondary:hover {
+  color: #172d38;
+  background: #e6eef1;
+}
+
 .quiz-panel__button--reserved {
   visibility: hidden;
 }
 
-:global(html[data-input-modality='keyboard'] .quiz-panel__button:focus-visible) {
+:global(html[data-input-modality='keyboard'] .quiz-panel__button:focus-visible),
+:global(html[data-input-modality='keyboard'] .quiz-panel__text-button:focus-visible) {
   outline: 2px solid #172d38;
   outline-offset: 3px;
 }
@@ -186,5 +297,7 @@ watch(() => props.question?.id, async (countryId) => {
   }
 
   .quiz-panel__flag { font-size: 2.8rem; }
+
+  .quiz-panel__status { min-height: 4rem; }
 }
 </style>

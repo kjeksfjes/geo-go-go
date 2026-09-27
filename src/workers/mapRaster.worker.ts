@@ -7,6 +7,7 @@ type Bounds = [[number, number], [number, number]]
 interface PreparedScene {
   sphere: DrawPath
   bathymetry: Array<{ depth: number; path: DrawPath }>
+  contextCountries: Array<{ path: DrawPath; bounds: Bounds }>
   relief: Array<{ elevation: number; path: DrawPath }>
   reliefClip: DrawPath
   countries: Array<{ path: DrawPath; outline: DrawPath; division: DrawPath; bounds: Bounds }>
@@ -29,6 +30,7 @@ function prepare(source: CanvasMapScene): PreparedScene {
   return {
     sphere: pathFrom(source.spherePath),
     bathymetry: source.bathymetry.map(({ depth, path }) => ({ depth, path: pathFrom(path) })),
+    contextCountries: source.contextCountries.map(({ path, bounds }) => ({ path: pathFrom(path), bounds })),
     relief: source.relief.map(({ elevation, path }) => ({ elevation, path: pathFrom(path) })),
     reliefClip: pathFrom(source.reliefClipPath),
     countries: source.countries.map(({ path, outlinePath, divisionPath, bounds }) => ({
@@ -59,6 +61,7 @@ function drawScene(
   const visibleCountries = offsets.map((offset) => ({
     offset,
     countries: prepared.countries.filter(({ bounds }) => intersectsViewport(bounds, offset, viewport)),
+    contextCountries: prepared.contextCountries.filter(({ bounds }) => intersectsViewport(bounds, offset, viewport)),
   }))
   for (const offset of offsets) {
     context.save()
@@ -81,9 +84,13 @@ function drawScene(
     context.restore()
   }
 
-  for (const { offset, countries } of visibleCountries) {
+  for (const { offset, contextCountries, countries } of visibleCountries) {
     context.save()
     context.translate(offset, 0)
+    context.fillStyle = mapPalette.contextLand
+    for (const country of contextCountries) {
+      if (country.path) context.fill(country.path)
+    }
     context.fillStyle = mapPalette.land
     for (const country of countries) {
       if (country.path) context.fill(country.path)
@@ -104,6 +111,16 @@ function drawScene(
   }
 
   context.lineJoin = 'round'
+  context.lineWidth = 0.6 / cameraScale
+  context.strokeStyle = mapPalette.contextBorder
+  for (const { offset, contextCountries } of visibleCountries) {
+    context.save()
+    context.translate(offset, 0)
+    for (const country of contextCountries) {
+      if (country.path) context.stroke(country.path)
+    }
+    context.restore()
+  }
   context.lineWidth = 0.85 / cameraScale
   context.strokeStyle = mapPalette.border
   for (const { offset, countries } of visibleCountries) {
@@ -116,7 +133,7 @@ function drawScene(
         context.save()
         context.strokeStyle = mapPalette.regionalDivision
         context.lineWidth = 1 / cameraScale
-        context.setLineDash([3 / cameraScale, 3 / cameraScale])
+        context.setLineDash(mapPalette.regionalDivisionDash.map((length) => length / cameraScale))
         context.stroke(country.division)
         context.restore()
       }

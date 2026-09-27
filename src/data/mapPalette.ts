@@ -3,8 +3,11 @@
 export const mapPalette = {
   ocean: '#61acd3',
   land: '#fcf8e9',
+  contextLand: '#c2d2cf',
+  contextBorder: '#7396a0',
   border: '#5e7680',
   regionalDivision: '#547987',
+  regionalDivisionDash: [7, 6],
   bathymetry: {
     200: '#78bbdc',
     2000: '#63add3',
@@ -22,8 +25,11 @@ export const mapPalette = {
 export const mapPaletteCssVariables: Record<string, string> = {
   '--map-ocean': mapPalette.ocean,
   '--map-land': mapPalette.land,
+  '--map-context-land': mapPalette.contextLand,
+  '--map-context-border': mapPalette.contextBorder,
   '--map-border': mapPalette.border,
   '--map-regional-division': mapPalette.regionalDivision,
+  '--map-regional-division-dash': mapPalette.regionalDivisionDash.join(' '),
   ...Object.fromEntries(Object.entries(mapPalette.bathymetry)
     .map(([depth, color]) => [`--map-bathymetry-${depth}`, color])),
   ...Object.fromEntries(Object.entries(mapPalette.relief)

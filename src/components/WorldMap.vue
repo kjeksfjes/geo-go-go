@@ -1,17 +1,19 @@
 <script setup lang="ts">
+import { geoArea } from 'd3-geo'
 import { computed, nextTick, ref, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
 import MarineLabels from './MarineLabels.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import RegionSelector from './RegionSelector.vue'
+import SmallCountryMarkers from './SmallCountryMarkers.vue'
 import { useElementSize } from '../composables/useElementSize'
 import {
   projectionOptions,
   useMapProjection,
   type MapProjectionId,
 } from '../composables/useMapProjection'
-import { useMapZoom, type MapBounds, type MapPoint } from '../composables/useMapZoom'
+import { useMapZoom, type MapBounds, type MapPoint, type MapViewConstraint } from '../composables/useMapZoom'
 import type { GeographicUnitFeature } from '../types/country'
 import type { CanvasMapScene } from '../types/mapCanvas'
 import type { MapRegion, MapRegionId } from '../data/regions'
@@ -19,6 +21,7 @@ import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { countryName, t } from '../i18n'
 import { mapPaletteCssVariables } from '../data/mapPalette'
+import { quizCountryIds } from '../data/quizCountries'
 import {
   backgroundClickAction,
   canActivateGeographicUnit,
@@ -29,6 +32,12 @@ import {
   type MapInteractionState,
 } from '../logic/mapInteraction'
 import { selectionFocusTarget } from '../logic/mapFocus'
+import {
+  smallCountryMarkers as groupSmallCountryMarkers,
+  type SmallCountryAnchor,
+  type SmallCountryFeedbackMarker,
+  type SmallCountryMarker,
+} from '../logic/smallCountryMarkers'
 
 const props = defineProps<{
   geographicUnits: GeographicUnitFeature[]
@@ -45,6 +54,7 @@ const props = defineProps<{
   quizComplete: boolean
   quizQuestionId: string | null
   quizAnswerId: string | null
+  alwaysShowWrongAnswer: boolean
   visibleMapUnitIds: ReadonlySet<string>
 }>()
 
@@ -88,6 +98,7 @@ const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
 const mapHeight = computed(() => Math.max(measuredHeight.value, 280))
 const {
   bathymetryPaths,
+  contextGeographicPaths,
   geographicPaths,
   hasCachedPaths,
   horizontalWrap,
@@ -111,6 +122,43 @@ const minimumZoomPoint = computed<MapPoint | null>(() => {
   if (props.activeRegion.id === 'world' || projectionId.value === 'regional-equal-area') return null
   const center = props.activeRegion.view?.center
   return center ? projectPoint(center) ?? null : null
+})
+const regionViewConstraint = computed<MapViewConstraint | null>(() => {
+  if (props.activeRegion.id === 'world') return null
+  if (projectionId.value !== 'regional-equal-area') {
+    const view = props.activeRegion.view
+    const center = view && projectPoint(view.center)
+    if (!view || !center) return null
+    // The global projections need an explicit region-centered navigation
+    // envelope. A member's remote geometry must not open up the whole world.
+    const reach = view.panReach ?? 0.45
+    const radiusX = mapWidth.value * reach / view.zoom
+    const radiusY = mapHeight.value * reach / view.zoom
+    return {
+      minScale: Math.max(1.15, view.zoom * 0.8),
+      bounds: [
+        [center[0] - radiusX, center[1] - radiusY],
+        [center[0] + radiusX, center[1] + radiusY],
+      ],
+    }
+  }
+
+  // A regional projection is already fitted to the region at scale one. Its
+  // displayed (not global source) geometry defines where its camera may pan.
+  const visiblePaths = interactionGeographicPaths.value.filter(({ unit }) => isGeographicUnitVisible(unit))
+  if (!visiblePaths.length) return null
+  const left = Math.min(...visiblePaths.map(({ displayBounds }) => displayBounds[0][0]))
+  const top = Math.min(...visiblePaths.map(({ displayBounds }) => displayBounds[0][1]))
+  const right = Math.max(...visiblePaths.map(({ displayBounds }) => displayBounds[1][0]))
+  const bottom = Math.max(...visiblePaths.map(({ displayBounds }) => displayBounds[1][1]))
+  if (![left, top, right, bottom].every(Number.isFinite)) return null
+  return {
+    minScale: 1,
+    bounds: [
+      [left - mapWidth.value * 0.2, top - mapHeight.value * 0.2],
+      [right + mapWidth.value * 0.2, bottom + mapHeight.value * 0.2],
+    ],
+  }
 })
 function geographicUnitClasses(unit: GeographicUnitFeature) {
   return classesForUnit(unit, interactionState.value)
@@ -138,7 +186,7 @@ const {
   zoomFromWheel,
   zoomToBounds,
   zoomToPoint,
-} = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap, minimumZoomPoint)
+} = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap, minimumZoomPoint, regionViewConstraint)
 
 // The canvas supplies detailed coastlines. Its SVG interaction layer only
 // needs the lighter 50m hit geometry; active highlights use detailed paths.
@@ -183,6 +231,7 @@ const visibleLandPath = computed(() => renderedGeographicPaths.value
 const canvasScene = computed<CanvasMapScene>(() => ({
   spherePath: spherePath.value,
   bathymetry: bathymetryEnabled.value ? bathymetryPaths.value : [],
+  contextCountries: contextGeographicPaths.value,
   relief: reliefEnabled.value ? reliefPaths.value : [],
   reliefClipPath: reliefEnabled.value ? reliefClipPath.value : '',
   countries: geographicPaths.value
@@ -214,6 +263,54 @@ const copyOffsets = computed(() => {
     ...Array.from({ length: count }, (_, index) => -(index + 1) * wrap.period),
     ...Array.from({ length: count }, (_, index) => (index + 1) * wrap.period),
   ]
+})
+
+const smallCountryAnchors = computed<SmallCountryAnchor[]>(() => {
+  const byCountry = new Map<string, {
+    unitId: string; x0: number; y0: number; x1: number; y1: number
+  }>()
+  for (const { unit, path, displayBounds } of geographicPaths.value) {
+    const countryId = unit.properties.entityId
+    if (!path || !quizCountryIds.has(countryId) || !isGeographicUnitVisible(unit)) continue
+    const [[x0, y0], [x1, y1]] = displayBounds
+    if (![x0, y0, x1, y1].every(Number.isFinite)) continue
+    const previous = byCountry.get(countryId)
+    byCountry.set(countryId, previous ? {
+      unitId: previous.unitId,
+      x0: Math.min(previous.x0, x0), y0: Math.min(previous.y0, y0),
+      x1: Math.max(previous.x1, x1), y1: Math.max(previous.y1, y1),
+    } : { unitId: unit.id, x0, y0, x1, y1 })
+  }
+  return [...byCountry].map(([countryId, bounds]) => ({
+    countryId,
+    unitId: bounds.unitId,
+    x: (bounds.x0 + bounds.x1) / 2,
+    y: (bounds.y0 + bounds.y1) / 2,
+    width: bounds.x1 - bounds.x0,
+    height: bounds.y1 - bounds.y0,
+  }))
+})
+
+const quizSmallCountryMarkers = computed(() =>
+  props.quizMode && props.quizAnswerId === null && !props.quizComplete && !isInteracting.value
+    ? groupSmallCountryMarkers(
+        smallCountryAnchors.value, transform, copyOffsets.value, mapWidth.value, mapHeight.value,
+      )
+    : [],
+)
+
+const quizFeedbackMarkers = computed<SmallCountryFeedbackMarker[]>(() => {
+  if (!props.quizMode || props.quizAnswerId === null || props.quizComplete || isInteracting.value) return []
+  const answerIds = new Set([props.quizQuestionId, props.quizAnswerId])
+  return groupSmallCountryMarkers(
+    smallCountryAnchors.value.filter((anchor) => answerIds.has(anchor.countryId)),
+    transform, copyOffsets.value, mapWidth.value, mapHeight.value,
+  )
+    .flatMap((marker) => marker.targets.map((target) => ({
+      ...target,
+      status: target.countryId === props.quizQuestionId ? 'correct' as const : 'wrong' as const,
+    })))
+    .sort((a, b) => Number(a.status === 'correct') - Number(b.status === 'correct'))
 })
 
 const wrappedGeographicPaths = computed(() => {
@@ -274,6 +371,9 @@ watch(() => props.quizMode, (active) => {
 watch([() => props.activeRegion.id, () => props.geographicUnits], () => {
   hoveredUnit.value = null
 })
+watch([() => props.quizQuestionId, () => props.quizAnswerId], () => {
+  hoveredUnit.value = null
+})
 watch(isInteracting, (active) => {
   if (active) {
     hoveredUnit.value = null
@@ -331,6 +431,31 @@ function selectCountry(
   zoomToBounds(target.bounds, target.focusPoint)
 }
 
+function focusCountry(countryId: string) {
+  const candidates = geographicPaths.value.filter(({ unit, path }) =>
+    path && unit.properties.entityId === countryId && isGeographicUnitVisible(unit),
+  )
+  if (!candidates.length) return
+
+  // The country-level unit is the usual camera target. Some identities only
+  // have component units; then prefer their largest visible land area.
+  const main = candidates.find(({ unit }) => unit.id === `entity:${countryId}`)
+    ?? candidates.reduce((largest, candidate) =>
+      geoArea(candidate.unit) > geoArea(largest.unit) ? candidate : largest,
+    )
+  const target = selectionFocusTarget(
+    main.unit.id,
+    main.bounds,
+    main.focusPoint,
+    geographicPaths.value,
+    props.visibleMapUnitIds,
+    0,
+  )
+  zoomToBounds(target.bounds, target.focusPoint)
+}
+
+defineExpose({ focusCountry })
+
 function handleMapClick(event: MouseEvent) {
   if (!props.quizMode) {
     if (!consumeDragClick() && backgroundClickAction(event.detail, interactionState.value) === 'clear') {
@@ -365,6 +490,33 @@ function hoverGeographicUnit(unit: GeographicUnitFeature) {
   if (!isInteracting.value) {
     hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
   }
+}
+
+function hoverSmallCountryMarker(marker: SmallCountryMarker | null) {
+  const target = marker?.targets.length === 1 ? marker.targets[0] : null
+  hoveredUnit.value = target && !isInteracting.value
+    ? { id: target.unitId, entityId: target.countryId }
+    : null
+}
+
+function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEvent | KeyboardEvent) {
+  if (event instanceof MouseEvent && (consumeDragClick() || event.detail > 1)) return
+  if (!canActivateGeographicUnit(interactionState.value)) return
+
+  if (marker.targets.length === 1) {
+    const target = marker.targets[0]
+    emit('select', target.countryId, target.unitId)
+    return
+  }
+
+  const xs = marker.targets.map((target) => target.screenX)
+  const ys = marker.targets.map((target) => target.screenY)
+  const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1)
+  const factor = Math.min(24, Math.max(6, Math.min(mapWidth.value, mapHeight.value) * 0.3 / span))
+  zoomToPoint(
+    [(marker.x - transform.x) / transform.scale, (marker.y - transform.y) / transform.scale],
+    transform.scale * factor,
+  )
 }
 
 function requestDetailChange(enabled: boolean) {
@@ -484,6 +636,15 @@ async function setProjection(nextId: MapProjectionId) {
               />
             </g>
           </g>
+          <g v-if="!canvasRendererActive && contextGeographicPaths.length" class="context-land" aria-hidden="true">
+            <g
+              v-for="offset in copyOffsets"
+              :key="offset"
+              :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
+            >
+              <path v-for="(country, index) in contextGeographicPaths" :key="index" :d="country.path" />
+            </g>
+          </g>
           <g
             v-for="offset in canvasRendererActive ? [] : copyOffsets"
             :key="`terrain-${offset}`"
@@ -553,6 +714,14 @@ async function setProjection(nextId: MapProjectionId) {
             </g>
           </g>
         </g>
+        <SmallCountryMarkers
+          v-if="quizSmallCountryMarkers.length || quizFeedbackMarkers.length"
+          :markers="quizSmallCountryMarkers"
+          :feedback-markers="quizFeedbackMarkers"
+          :always-show-wrong-answer="alwaysShowWrongAnswer"
+          @activate="activateSmallCountryMarker"
+          @hover="hoverSmallCountryMarker"
+        />
         <MarineLabels
           :visible="marineLabelsEnabled && !isInteracting"
           :width="mapWidth"
@@ -688,7 +857,8 @@ async function setProjection(nextId: MapProjectionId) {
 
 .world-map {
   position: relative;
-  z-index: 1;
+  /* Keep screen-space quiz markers and labels above painted country highlights. */
+  z-index: 2;
   display: block;
   width: 100%;
   height: 100%;
@@ -699,7 +869,7 @@ async function setProjection(nextId: MapProjectionId) {
 .map-highlights {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -768,6 +938,14 @@ async function setProjection(nextId: MapProjectionId) {
 
 .terrain,
 .relief {
+  pointer-events: none;
+}
+
+.context-land {
+  fill: var(--map-context-land);
+  stroke: var(--map-context-border);
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 
@@ -956,7 +1134,7 @@ async function setProjection(nextId: MapProjectionId) {
   fill: none;
   stroke: var(--map-regional-division);
   stroke-width: 1;
-  stroke-dasharray: 3 3;
+  stroke-dasharray: var(--map-regional-division-dash);
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
   pointer-events: none;

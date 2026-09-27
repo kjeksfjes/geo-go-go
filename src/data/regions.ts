@@ -1,4 +1,4 @@
-import { mapUnits } from './countries'
+import { mapUnits, primaryMapUnitByEntityId } from './countries'
 import type { MapUnitFeature } from '../types/country'
 import type { MapPoint } from '../composables/useMapZoom'
 
@@ -18,7 +18,7 @@ export interface GeographicFrame {
 export interface MapRegion {
   id: MapRegionId
   label: string
-  view: { center: MapPoint; zoom: number } | null
+  view: { center: MapPoint; zoom: number; panReach?: number } | null
   regionalProjection?: { center: MapPoint; roll?: number; frame?: GeographicFrame }
   children?: readonly MapRegion[]
 }
@@ -33,7 +33,7 @@ export const regions: readonly MapRegion[] = [
     regionalProjection: { center: [10, 52] },
     children: [
       {
-        id: 'nordics', label: 'Nordics', view: { center: [8, 64], zoom: 4.25 },
+        id: 'nordics', label: 'Nordics', view: { center: [8, 64], zoom: 4.25, panReach: 0.75 },
         regionalProjection: {
           center: [15, 64],
           frame: { west: -75, south: 53, east: 36, north: 84 },
@@ -103,12 +103,21 @@ function belongsToRegion(unit: MapUnitFeature, id: MapRegionId): boolean {
 export const regionById = new Map<MapRegionId, MapRegion>()
 export const mapUnitIdsByRegion = new Map<MapRegionId, ReadonlySet<string>>()
 export const entityIdsByRegion = new Map<MapRegionId, ReadonlySet<string>>()
+export const quizEntityIdsByRegion = new Map<MapRegionId, ReadonlySet<string>>()
 
 function indexRegion(region: MapRegion) {
   regionById.set(region.id, region)
   const matchingUnits = mapUnits.filter((unit) => belongsToRegion(unit, region.id))
   mapUnitIdsByRegion.set(region.id, new Set(matchingUnits.map((unit) => unit.id)))
   entityIdsByRegion.set(region.id, new Set(matchingUnits.map((unit) => unit.quizEntityId)))
+  // Overseas parts stay visible and interactive without making their parent
+  // country a regional quiz question. Playable overlays still match the
+  // principal unit through their explicit entity lists above.
+  quizEntityIdsByRegion.set(region.id, new Set(
+    matchingUnits
+      .filter((unit) => primaryMapUnitByEntityId.get(unit.quizEntityId) === unit)
+      .map((unit) => unit.quizEntityId),
+  ))
   for (const child of region.children ?? []) indexRegion(child)
 }
 

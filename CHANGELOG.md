@@ -4,6 +4,16 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.2.0 — 2026-09-27
+
+- Made tiny quiz countries easier to find and select with neutral map targets, including a zoom step for overlapping targets.
+- Unified quiz highlights across nearby parts of the same country while keeping distant components visually distinct.
+- Kept regional navigation focused on the chosen area and added subdued, non-interactive surrounding land; Asian Russia remains visible as context in the Europe view.
+- Limited regional quiz questions to countries whose principal map unit belongs to the region, so overseas islands do not prompt for France or the Netherlands in the North America quiz.
+- Improved wrong-answer feedback with an optional clicked-country reveal, a saved “Always show” preference, and a “Show on map” action for locating the correct answer.
+- Identified clicked geographic components in quiz feedback and named Bonaire, Sint Eustatius, and Saba individually without making them separate quiz countries.
+- Restored the full South Georgia and the South Sandwich Islands name.
+
 ## 0.1.0 — 2026-09-26
 
 First local release milestone.

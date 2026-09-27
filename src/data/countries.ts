@@ -28,6 +28,7 @@ const entityOverrides: Record<string, { name?: string; flagCode?: string }> = {
   VAT: { name: 'Vatican City' },
   CZE: { name: 'Czechia' },
   TUR: { name: 'Türkiye' },
+  SGS: { name: 'South Georgia and the South Sandwich Islands' },
   PSX: { flagCode: 'ps' },
 }
 
@@ -82,11 +83,20 @@ for (const unit of mapUnits) {
   unitsByEntityId.set(unit.quizEntityId, siblings)
 }
 
+// A quiz identity can have map units on several continents. Its principal
+// unit supplies the default geographic home for regional question selection.
+export const primaryMapUnitByEntityId = new Map<string, MapUnitFeature>()
+for (const [id, units] of unitsByEntityId) {
+  primaryMapUnitByEntityId.set(id,
+    units.find((unit) => unit.id === id)
+    ?? units.find(({ properties }) => properties.name === properties.adminName)
+    ?? units[0],
+  )
+}
+
 export const countryInfoById = new Map<string, CountryInfo>()
 for (const [id, units] of unitsByEntityId) {
-  const primary = units.find((unit) => unit.id === id)
-    ?? units.find(({ properties }) => properties.name === properties.adminName)
-    ?? units[0]
+  const primary = primaryMapUnitByEntityId.get(id)!
   const { adminName, sovereignId, sovereignName } = primary.properties
   const override = entityOverrides[id]
   const isoCode = primary.properties.isoA2.toLowerCase()

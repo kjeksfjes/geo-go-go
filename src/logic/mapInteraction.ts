@@ -1,5 +1,5 @@
 import type { GeographicUnitFeature } from '../types/country'
-import { isCountryLevelSelection } from '../data/mapSelection'
+import { isCountryLevelSelection, isPrimaryQuizHighlightUnit } from '../data/mapSelection'
 
 export interface MapInteractionState {
   selectedCountryId: string | null
@@ -19,8 +19,6 @@ export function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature, state:
 
 export function geographicUnitClasses(unit: GeographicUnitFeature, state: MapInteractionState) {
   const entityId = unit.properties.entityId
-  const clicked = unit.id === state.selectedGeographicUnitId
-
   if (!state.quizMode) {
     const selected = isPrimarySelectedExploreUnit(unit, state)
     return {
@@ -34,15 +32,15 @@ export function geographicUnitClasses(unit: GeographicUnitFeature, state: MapInt
   const answered = state.quizAnswerId !== null
   const correct = answered && entityId === state.quizQuestionId
   const wrong = answered && entityId === state.quizAnswerId && !correct
-  const relatedAnswer = !clicked && state.selectedGeographicUnitId !== null
+  const primaryAnswer = isPrimaryQuizHighlightUnit(unit, state.selectedGeographicUnitId)
 
   return {
     'country--identity-hover': (state.quizComplete || (!answered && state.quizQuestionId !== null))
       && state.hoveredEntityId === entityId,
-    'country--quiz-correct': correct && !(relatedAnswer && state.quizAnswerId === state.quizQuestionId),
-    'country--quiz-correct-related': correct && relatedAnswer && state.quizAnswerId === state.quizQuestionId,
-    'country--quiz-wrong': wrong && !relatedAnswer,
-    'country--quiz-wrong-related': wrong && relatedAnswer,
+    'country--quiz-correct': correct && primaryAnswer,
+    'country--quiz-correct-related': correct && !primaryAnswer,
+    'country--quiz-wrong': wrong && primaryAnswer,
+    'country--quiz-wrong-related': wrong && !primaryAnswer,
     'country--quiz-inactive': answered && !correct && !wrong,
   }
 }

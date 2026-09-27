@@ -3,6 +3,10 @@ import type { HorizontalWrap } from './useMapProjection'
 
 export type MapBounds = [[number, number], [number, number]]
 export type MapPoint = [number, number]
+export interface MapViewConstraint {
+  minScale: number
+  bounds: MapBounds
+}
 
 const MIN_ZOOM = 1
 // Allow a little more room to pull the map away from an edge while keeping
@@ -18,6 +22,7 @@ export function useMapZoom(
   mapContent: Ref<SVGGElement | null>,
   horizontalWrap: Ref<HorizontalWrap | null>,
   minimumZoomPoint: Ref<MapPoint | null>,
+  viewConstraint: Ref<MapViewConstraint | null>,
 ) {
   const transform = reactive({ x: 0, y: 0, scale: 1 })
   const isDragging = ref(false)
@@ -83,6 +88,21 @@ export function useMapZoom(
   }
 
   function constrainTransform(x: number, y: number, scale: number) {
+    const regionalView = viewConstraint.value
+    scale = Math.max(regionalView?.minScale ?? MIN_ZOOM, scale)
+    if (regionalView) {
+      // Bounds already include the selected region's intentional breathing
+      // room. They affect navigation, never quiz membership.
+      const [[left, top], [right, bottom]] = regionalView.bounds
+      const centerX = Math.max(left, Math.min(right, (width.value / 2 - x) / scale))
+      const centerY = Math.max(top, Math.min(bottom, (height.value / 2 - y) / scale))
+      return {
+        x: width.value / 2 - scale * centerX,
+        y: height.value / 2 - scale * centerY,
+        scale,
+      }
+    }
+
     // Permit empty space beyond the projected edges without losing the map.
     const visibleFraction = 1 - MAX_EMPTY_VIEWPORT_FRACTION
     const minX = width.value * (visibleFraction - scale)
@@ -107,8 +127,8 @@ export function useMapZoom(
     }
   }
 
-  function setTransform(x: number, y: number, scale: number) {
-    const next = constrainTransform(x, y, scale)
+  function setTransform(x: number, y: number, scale: number, constrain = true) {
+    const next = constrain ? constrainTransform(x, y, scale) : { x, y, scale }
     transform.x = next.x
     transform.y = next.y
     transform.scale = next.scale
@@ -188,6 +208,14 @@ export function useMapZoom(
       x: (width.value / 2 - start.x) / start.scale,
       y: (height.value / 2 - start.y) / start.scale,
     }
+    const regionalView = viewConstraint.value
+    const enteringRegionalView = regionalView !== null && (
+      start.scale < regionalView.minScale
+      || startCenter.x < regionalView.bounds[0][0]
+      || startCenter.x > regionalView.bounds[1][0]
+      || startCenter.y < regionalView.bounds[0][1]
+      || startCenter.y > regionalView.bounds[1][1]
+    )
     const startedAt = performance.now()
     isAnimating.value = true
 
@@ -205,6 +233,7 @@ export function useMapZoom(
           width.value / 2 - nextScale * centerX,
           height.value / 2 - nextScale * centerY,
           nextScale,
+          !enteringRegionalView,
         )
       } else {
         const nextScale = start.scale * Math.pow(scaleRatio, eased)
@@ -217,12 +246,14 @@ export function useMapZoom(
           anchorX - nextScale * targetAnchor.x,
           anchorY - nextScale * targetAnchor.y,
           nextScale,
+          !enteringRegionalView,
         )
       }
 
       if (progress < 1) {
         animationFrame = requestAnimationFrame(frame)
       } else {
+        if (enteringRegionalView) setTransform(target.x, target.y, target.scale)
         animationFrame = undefined
         isAnimating.value = false
       }
@@ -237,6 +268,7 @@ export function useMapZoom(
     const boundsHeight = Math.max(1, y1 - y0)
     const scale = Math.max(
       1.8,
+      viewConstraint.value?.minScale ?? MIN_ZOOM,
       Math.min(MAX_ZOOM, 0.68 / Math.max(boundsWidth / width.value, boundsHeight / height.value)),
     )
 
@@ -258,7 +290,7 @@ export function useMapZoom(
     animated = true,
     zoomOutFirst = false,
   ) {
-    const targetScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale))
+    const targetScale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM, Math.min(MAX_ZOOM, scale))
     const x = width.value / 2 - targetScale * point[0]
     const y = height.value / 2 - targetScale * point[1]
 
@@ -277,8 +309,9 @@ export function useMapZoom(
     pendingWheel = undefined
     if (!pending) return
     const { delta, pointerX, pointerY } = pending
+    const minimumScale = viewConstraint.value?.minScale ?? MIN_ZOOM
     const nextScale = Math.max(
-      MIN_ZOOM,
+      minimumScale,
       Math.min(MAX_ZOOM, transform.scale * Math.exp(-delta * 0.0015)),
     )
     const ratio = nextScale / transform.scale
@@ -286,10 +319,11 @@ export function useMapZoom(
     const wheelX = pointerX - (pointerX - transform.x) * ratio
     const wheelY = pointerY - (pointerY - transform.y) * ratio
     const center = minimumZoomPoint.value
-    if (center && nextScale < 1.5) {
+    const settleScale = minimumScale * 1.5
+    if (center && nextScale < settleScale) {
       // Ease the pointer-anchored zoom toward the region's center before the
       // minimum is reached, avoiding a final-frame snap across the canvas.
-      const weight = (1.5 - nextScale) / (1.5 - MIN_ZOOM)
+      const weight = (settleScale - nextScale) / (settleScale - minimumScale)
       const centeredX = width.value / 2 - nextScale * center[0]
       const centeredY = height.value / 2 - nextScale * center[1]
       setTransform(
@@ -297,7 +331,7 @@ export function useMapZoom(
         wheelY + (centeredY - wheelY) * weight,
         nextScale,
       )
-    } else if (nextScale === MIN_ZOOM) {
+    } else if (nextScale === minimumScale && !viewConstraint.value) {
       setTransform(0, 0, MIN_ZOOM)
     } else {
       setTransform(wheelX, wheelY, nextScale)
@@ -339,7 +373,7 @@ export function useMapZoom(
   }
 
   function startPan(event: PointerEvent, svg: SVGSVGElement) {
-    if (event.button !== 0 || (transform.scale <= MIN_ZOOM && !wrapActive.value)) return
+    if (event.button !== 0 || (transform.scale <= MIN_ZOOM && !wrapActive.value && !viewConstraint.value)) return
 
     stopAnimation()
     cancelWheelUpdate()

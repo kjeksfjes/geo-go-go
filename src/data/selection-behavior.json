@@ -28,5 +28,15 @@
     ["subunit:NZN", "subunit:NZS"],
     ["subunit:FXX", "subunit:FXC"],
     ["subunit:ESX", "subunit:ESI"]
-  ]
+  ],
+  "quizSeparateHighlightUnitIdsByEntity": {
+    "ECU": ["subunit:ECG"],
+    "ESP": ["subunit:ESC"],
+    "FRA": ["unit:GLP", "unit:GUF", "unit:MTQ", "unit:MYT", "unit:REU"],
+    "NLD": ["subunit:NL-BQ1", "subunit:NL-BQ2", "subunit:NL-BQ3"],
+    "NOR": ["unit:NJM", "unit:NSV"],
+    "NZL": ["unit:TKL"],
+    "PRT": ["unit:PAZ", "unit:PMD"],
+    "USA": ["subunit:USH", "subunit:USK"]
+  }
 }
