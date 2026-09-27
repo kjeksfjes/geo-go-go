@@ -1,13 +1,12 @@
 import {
   geoAzimuthalEqualArea,
-  geoEqualEarth,
   geoMercator,
   geoNaturalEarth1,
   geoPath,
   type GeoProjection,
 } from 'd3-geo'
-import { geoWinkel3 } from 'd3-geo-projection'
-import { computed, type Ref } from 'vue'
+import { geoMiller, geoWinkel3 } from 'd3-geo-projection'
+import { computed, shallowRef, type Ref } from 'vue'
 import type { FeatureCollection, MultiPoint } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
@@ -16,24 +15,36 @@ import type { ReliefBand, ReliefElevation } from '../data/relief'
 import type { MapBounds, MapPoint } from './useMapZoom'
 import { projectedUnitFocus } from '../logic/mapFocus'
 
-export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'natural-earth' | 'regional-equal-area'
+export type MapProjectionId = 'mercator' | 'miller' | 'winkel-tripel' | 'natural-earth' | 'regional-equal-area'
+export interface MapProjectionOption {
+  id: MapProjectionId
+  label: string
+  supportsHorizontalWrap?: boolean
+}
 export interface HorizontalWrap {
   period: number
   centerX: number
 }
 
-export const projectionOptions: Array<{ id: MapProjectionId; label: string }> = [
-  { id: 'mercator', label: 'Mercator' },
+export interface ProjectionDebugState {
+  key: string
+  result: 'cache hit' | 'full projection' | 'regional override'
+  durationMs: number
+  unitCount: number
+}
+
+export const projectionOptions: MapProjectionOption[] = [
+  { id: 'mercator', label: 'Mercator', supportsHorizontalWrap: true },
+  { id: 'miller', label: 'Miller Cylindrical', supportsHorizontalWrap: true },
   { id: 'winkel-tripel', label: 'Winkel Tripel' },
-  { id: 'equal-earth', label: 'Equal Earth' },
   { id: 'natural-earth', label: 'Natural Earth' },
   { id: 'regional-equal-area', label: 'Regional Equal Area' },
 ]
 
 const projectionFactories: Record<Exclude<MapProjectionId, 'regional-equal-area'>, () => GeoProjection> = {
   mercator: geoMercator,
+  miller: geoMiller,
   'winkel-tripel': geoWinkel3,
-  'equal-earth': geoEqualEarth,
   'natural-earth': geoNaturalEarth1,
 }
 
@@ -117,6 +128,7 @@ export function useMapProjection(
     paths: ProjectedReliefBand[]
   }>()
   const reliefClipPathCache = new Map<string, { sizeKey: string; path: string }>()
+  const projectionDebug = shallowRef<ProjectionDebugState | null>(null)
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
   )
@@ -126,16 +138,21 @@ export function useMapProjection(
     return display ? { ...unit, geometry: display.geometry } : unit
   }
 
-  function cacheKey(id: MapProjectionId) {
-    return id === 'regional-equal-area' || regionsWithDisplayGeometry.has(activeRegion.value.id)
-      ? `${id}:${activeRegion.value.id}`
-      : id
+  function projectionCacheKey(id: MapProjectionId) {
+    return id === 'regional-equal-area' ? `${id}:${activeRegion.value.id}` : id
+  }
+
+  function geographicCacheKey(id: MapProjectionId) {
+    const projectionKey = projectionCacheKey(id)
+    return id !== 'regional-equal-area' && regionsWithDisplayGeometry.has(activeRegion.value.id)
+      ? `${projectionKey}:${activeRegion.value.id}`
+      : projectionKey
   }
 
   function hasCachedPaths(source: GeographicUnitFeature[], id = projectionId.value): boolean {
     const cached = pathCache.get(source)
     return cached?.sizeKey === `${width.value}:${height.value}`
-      && cached.projections.has(cacheKey(id))
+      && cached.projections.has(geographicCacheKey(id))
   }
 
   const pathGenerator = computed(() => {
@@ -172,20 +189,67 @@ export function useMapProjection(
     return geoPath(projection)
   })
 
-  function projectedGeographicPaths(source: GeographicUnitFeature[]) {
+  function projectedGeographicPaths(source: GeographicUnitFeature[], trackDebug = false) {
+    const startedAt = trackDebug ? performance.now() : 0
     const id = projectionId.value
-    const key = cacheKey(id)
+    const key = geographicCacheKey(id)
     const sizeKey = `${width.value}:${height.value}`
     let cached = pathCache.get(source)
     if (cached?.sizeKey === sizeKey) {
       const paths = cached.projections.get(key)
-      if (paths) return paths
+      if (paths) {
+        if (trackDebug) projectionDebug.value = {
+          key,
+          result: 'cache hit',
+          durationMs: performance.now() - startedAt,
+          unitCount: paths.length,
+        }
+        return paths
+      }
     } else {
       cached = { sizeKey, projections: new Map() }
       pathCache.set(source, cached)
     }
 
     const generator = pathGenerator.value
+    const baseKey = projectionCacheKey(id)
+    let basePaths = cached.projections.get(baseKey)
+    const reusedBasePaths = basePaths !== undefined
+    if (!basePaths && key !== baseKey) {
+      basePaths = source.map((unit) => ({
+        unit,
+        path: generator(unit) ?? '',
+        ...projectedUnitFocus(generator, unit, width.value),
+      }))
+      cached.projections.set(baseKey, basePaths)
+    }
+
+    // Global projections do not change when a region is selected. Reuse all
+    // base paths and replace only units with region-specific display geometry
+    // instead of reprojecting the complete atlas for Europe's Russia split.
+    if (basePaths) {
+      const paths = basePaths.map((projected) => {
+        const regionalDisplay = projected.unit.regionalDisplayGeometry?.[activeRegion.value.id]
+        if (!regionalDisplay) return projected
+        const displayUnit = { ...projected.unit, geometry: regionalDisplay.geometry }
+        return {
+          unit: projected.unit,
+          path: generator(displayUnit) ?? '',
+          outlinePath: generator(regionalDisplay.outline) ?? '',
+          divisionPath: generator(regionalDisplay.division) ?? '',
+          ...projectedUnitFocus(generator, displayUnit, width.value),
+        }
+      })
+      cached.projections.set(key, paths)
+      if (trackDebug) projectionDebug.value = {
+        key,
+        result: reusedBasePaths ? 'regional override' : 'full projection',
+        durationMs: performance.now() - startedAt,
+        unitCount: paths.length,
+      }
+      return paths
+    }
+
     // A regional view never needs paths for geographic units hidden by its filter.
     const renderUnits = id === 'regional-equal-area'
       ? source.filter((unit) => unit.properties.mapUnitIds.some((mapUnitId) => visibleMapUnitIds.value.has(mapUnitId)))
@@ -205,6 +269,12 @@ export function useMapProjection(
     })
 
     cached.projections.set(key, paths)
+    if (trackDebug) projectionDebug.value = {
+      key,
+      result: 'full projection',
+      durationMs: performance.now() - startedAt,
+      unitCount: paths.length,
+    }
     return paths
   }
 
@@ -213,7 +283,7 @@ export function useMapProjection(
     // Prepare the interaction layer alongside a detailed projection so the
     // first drag does not pay the 50m projection cost at pointer-down time.
     if (source !== fittingUnits) projectedGeographicPaths(fittingUnits)
-    return projectedGeographicPaths(source)
+    return projectedGeographicPaths(source, true)
   })
   const interactionGeographicPaths = computed(() => projectedGeographicPaths(fittingUnits))
 
@@ -269,7 +339,7 @@ export function useMapProjection(
   const spherePath = computed(() => pathGenerator.value({ type: 'Sphere' }) ?? '')
 
   const bathymetryPaths = computed(() => {
-    const key = cacheKey(projectionId.value)
+    const key = projectionCacheKey(projectionId.value)
     const sizeKey = `${width.value}:${height.value}`
     const source = bathymetryBands.value
     const cached = bathymetryPathCache.get(key)
@@ -285,7 +355,7 @@ export function useMapProjection(
   })
 
   const reliefPaths = computed(() => {
-    const key = cacheKey(projectionId.value)
+    const key = projectionCacheKey(projectionId.value)
     const sizeKey = `${width.value}:${height.value}`
     const source = reliefBands.value
     const cached = reliefPathCache.get(key)
@@ -319,7 +389,11 @@ export function useMapProjection(
   })
 
   const horizontalWrap = computed<HorizontalWrap | null>(() => {
-    if (projectionId.value !== 'mercator' || activeRegion.value.id !== 'world') return null
+    const wrapEnabled = activeRegion.value.id === 'world'
+      || activeRegion.value.view?.horizontalWrap === true
+    const projectionWraps = projectionOptions.find(({ id }) => id === projectionId.value)
+      ?.supportsHorizontalWrap === true
+    if (!projectionWraps || !wrapEnabled) return null
     const projection = pathGenerator.value.projection() as GeoProjection
     return {
       period: 2 * Math.PI * projection.scale(),
@@ -341,6 +415,11 @@ export function useMapProjection(
     return projection(point) as MapPoint | undefined
   }
 
+  function unprojectPoint(point: MapPoint): MapPoint | undefined {
+    const projection = pathGenerator.value.projection() as GeoProjection
+    return projection.invert?.(point) as MapPoint | undefined
+  }
+
   return {
     bathymetryPaths,
     contextGeographicPaths,
@@ -349,9 +428,11 @@ export function useMapProjection(
     horizontalWrap,
     interactionGeographicPaths,
     projectPoint,
+    projectionDebug,
     projectionScale,
     reliefClipPath,
     reliefPaths,
     spherePath,
+    unprojectPoint,
   }
 }

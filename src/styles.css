@@ -109,6 +109,7 @@ select { font: inherit; }
 }
 
 .header-region-control {
+  --map-select-arrow-right: 0.8rem;
   display: flex;
   min-width: 0;
   height: 2.45rem;
@@ -151,7 +152,7 @@ select { font: inherit; }
 
 .header-region-control .map-select-field .vue3-treeselect__single-value {
   overflow: hidden;
-  padding-right: 1rem;
+  padding-right: 1.75rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -205,6 +206,13 @@ select { font: inherit; }
   cursor: pointer;
 }
 
+.settings-button svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .settings-button:hover,
 .settings-button[aria-expanded='true'] { background: rgba(23, 45, 56, 0.08); }
 
@@ -241,6 +249,8 @@ html[data-input-modality='keyboard'] .settings-button:focus-visible {
   backdrop-filter: blur(12px);
   pointer-events: auto;
 }
+
+.map-overlay__content { padding: 0.75rem; }
 
 /* Both portaled TreeSelect menus open beneath their controls. Their final
    gap from the header or settings panel is set by useMapSelectMenuAnchor. */
@@ -319,7 +329,7 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
   position: absolute;
   z-index: 1;
   top: 50%;
-  right: 0.35rem;
+  right: var(--map-select-arrow-right, 0.35rem);
   display: grid;
   width: 1.1rem;
   height: 2.2rem;
@@ -462,4 +472,5 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
   .settings-button { width: 2.35rem; height: 2.35rem; }
   .map-overlay { top: 0.5rem; left: 0.5rem; width: min(390px, calc(100% - 1rem)); }
   .map-overlay__card { border-radius: 15px; }
+  .map-overlay__content { padding: 0.65rem; }
 }

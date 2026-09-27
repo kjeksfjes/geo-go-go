@@ -11,6 +11,9 @@ export interface MapHomeView {
   point: MapPoint
   scale: number
 }
+export interface ZoomToBoundsOptions {
+  preferredScale?: number
+}
 
 const MIN_ZOOM = 1
 // Allow a little more room to pull the map away from an edge while keeping
@@ -34,6 +37,7 @@ export function useMapZoom(
   const isPinching = ref(false)
   const isWheeling = ref(false)
   const isAnimating = ref(false)
+  let manuallyZoomed = false
   let animationFrame: number | undefined
   let panFrame: number | undefined
   let wheelFrame: number | undefined
@@ -285,15 +289,31 @@ export function useMapZoom(
     animationFrame = requestAnimationFrame(frame)
   }
 
-  function zoomToBounds(bounds: MapBounds, focusPoint?: MapPoint) {
+  function zoomToBounds(
+    bounds: MapBounds,
+    focusPoint?: MapPoint,
+    { preferredScale }: ZoomToBoundsOptions = {},
+  ) {
     const [[x0, y0], [x1, y1]] = bounds
     const boundsWidth = Math.max(1, x1 - x0)
     const boundsHeight = Math.max(1, y1 - y0)
-    const scale = Math.max(
-      1.8,
-      viewConstraint.value?.minScale ?? MIN_ZOOM,
+    const minimumScale = Math.max(1.8, viewConstraint.value?.minScale ?? MIN_ZOOM)
+    const fitScale = Math.max(
+      minimumScale,
       Math.min(MAX_ZOOM, 0.68 / Math.max(boundsWidth / width.value, boundsHeight / height.value)),
     )
+    const preserveManualScale = preferredScale !== undefined
+      && manuallyZoomed
+      && transform.scale > preferredScale
+    const requestedScale = preferredScale === undefined
+      ? fitScale
+      : Math.max(minimumScale, preserveManualScale ? transform.scale : preferredScale)
+    const scale = Math.min(fitScale, requestedScale)
+
+    // Programmatic fitting replaces a manual zoom unless the adaptive focus
+    // policy can preserve it. A country that forces us to pull back also ends
+    // that override, so the next ordinary country returns to the preference.
+    manuallyZoomed = preserveManualScale && scale >= transform.scale - 0.01
 
     // When moving from a small target to a larger one, pull back around the
     // current view before traversing the map. The balanced (target-anchored)
@@ -313,6 +333,7 @@ export function useMapZoom(
     animated = true,
     zoomOutFirst = false,
   ) {
+    manuallyZoomed = false
     const targetScale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM, Math.min(MAX_ZOOM, scale))
     const x = width.value / 2 - targetScale * point[0]
     const y = height.value / 2 - targetScale * point[1]
@@ -337,6 +358,7 @@ export function useMapZoom(
       minimumScale,
       Math.min(MAX_ZOOM, transform.scale * Math.exp(-delta * 0.0015)),
     )
+    manuallyZoomed = true
     const ratio = nextScale / transform.scale
 
     const wheelX = pointerX - (pointerX - transform.x) * ratio
@@ -387,6 +409,7 @@ export function useMapZoom(
   }
 
   function resetZoom(animated = true) {
+    manuallyZoomed = false
     const home = homeTransform()
     if (animated) {
       animateTo(home.x, home.y, home.scale, 500, 'zoom-out')
@@ -469,6 +492,7 @@ export function useMapZoom(
         const distance = Math.hypot(first[0] - second[0], first[1] - second[1])
         const scale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM,
           Math.min(MAX_ZOOM, pinch.scale * distance / pinch.distance))
+        manuallyZoomed = true
         const centerX = (first[0] + second[0]) / 2
         const centerY = (first[1] + second[1]) / 2
         schedulePan(centerX - pinch.anchor[0] * scale, centerY - pinch.anchor[1] * scale, scale)
@@ -548,6 +572,9 @@ export function useMapZoom(
     transform,
     isZoomed,
     isDragging,
+    isPinching,
+    isWheeling,
+    isAnimating,
     isInteracting,
     wrapActive,
     wrapNeighborDirection,

@@ -4,6 +4,21 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.4.0 — 2026-09-27
+
+### Improvements
+
+- Tuned the starting position and zoom for each region, and combined Central America and the Caribbean into one focused region.
+- Added an optional adaptive country focus that avoids zooming too close to ordinary countries, preserves a closer manual zoom, and also applies to “Show on map” in the quiz.
+- Added a copyable map diagnostics panel behind `?debug`, including center, zoom, viewport-relative region fit, rendering, layer, gesture, and path-cache details.
+- Added Miller Cylindrical as a horizontally wrapping projection and removed the similar Equal Earth option.
+- Unified map-card spacing, aligned selector arrows, replaced the settings emoji with an icon, and refined compact quiz feedback on phones.
+
+### Fixes
+
+- Reused projected world geometry when entering Europe so its regional Russia split no longer delays the first transition.
+- Extended horizontal map tiling to the North America and Oceania region views so land near the antimeridian is not cut off.
+
 ## 0.3.0 — 2026-09-27
 
 ### Improvements

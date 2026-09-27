@@ -58,7 +58,7 @@ watch(() => props.question?.id, async (countryId) => {
 </script>
 
 <template>
-  <section class="quiz-panel" :class="`quiz-panel--${phase}`" :aria-label="t('quiz')">
+  <section class="quiz-panel map-overlay__content" :class="`quiz-panel--${phase}`" :aria-label="t('quiz')">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
         <p class="quiz-panel__eyebrow">{{ t('regionComplete') }}</p>
@@ -153,7 +153,6 @@ watch(() => props.question?.id, async (countryId) => {
   grid-template-columns: 4.5rem minmax(0, 1fr);
   align-items: start;
   gap: 0.45rem 1.1rem;
-  padding: 1rem 1.2rem;
 }
 
 .quiz-panel__flag {
@@ -211,6 +210,10 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel__feedback--wrong { color: #a13d2c; }
 
 .quiz-panel__answer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  row-gap: 0;
   color: #52676e;
   font-size: 0.82rem;
   line-height: 1.2;
@@ -230,8 +233,7 @@ watch(() => props.question?.id, async (countryId) => {
   cursor: pointer;
 }
 
-.quiz-panel__answer .quiz-panel__text-button { margin-left: 0.35rem; }
-.quiz-panel__answer .quiz-panel__text-button:first-child { margin-left: 0; }
+.quiz-panel__answer .quiz-panel__text-button { margin-left: 0; }
 .quiz-panel__text-button:hover { color: #a13d2c; }
 .quiz-panel__text-button--preference {
   color: #687a80;
@@ -293,12 +295,12 @@ watch(() => props.question?.id, async (countryId) => {
   .quiz-panel {
     grid-template-columns: 2.75rem minmax(0, 1fr);
     gap: 0.25rem 0.65rem;
-    padding: 0.65rem 0.75rem;
   }
 
   .quiz-panel__flag {
     align-self: start;
     margin-top: 0.1rem;
+    box-shadow: 0 2px 6px rgba(23, 45, 56, 0.16);
     font-size: 2rem;
   }
 
@@ -343,9 +345,5 @@ watch(() => props.question?.id, async (countryId) => {
     font-size: 0.76rem;
   }
 
-  .quiz-panel__text-button {
-    min-height: 2rem;
-    padding-block: 0.2rem;
-  }
 }
 </style>

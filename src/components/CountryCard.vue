@@ -19,7 +19,7 @@ const componentDetail = computed(() => {
 </script>
 
 <template>
-  <aside class="country-card" aria-live="polite">
+  <aside class="country-card map-overlay__content" aria-live="polite">
     <template v-if="country">
       <div class="country-card__flags">
         <span
@@ -57,7 +57,6 @@ const componentDetail = computed(() => {
   justify-content: flex-start;
   gap: 1.5rem;
   /* Keep the largest flag within the card's reserved 128px height. */
-  padding: 0.75rem 1.25rem;
 }
 
 .country-card__flag {
@@ -121,7 +120,6 @@ h2 {
   .country-card {
     min-height: 0;
     gap: 0.65rem;
-    padding: 0.6rem 0.75rem;
   }
 
   .country-card__flag {
