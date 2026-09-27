@@ -1362,8 +1362,11 @@ async function setProjection(nextId: MapProjectionId) {
     font-weight: 700;
   }
 
+  .map-settings-language :deep(.language-selector) { padding: 0.15rem; }
+
   .map-settings-language :deep(.language-selector button) {
-    min-height: 2.25rem;
+    min-height: 2.05rem;
+    padding: 0.25rem 0.6rem;
   }
 }
 

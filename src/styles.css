@@ -205,6 +205,13 @@ select { font: inherit; }
   cursor: pointer;
 }
 
+.settings-button svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .settings-button:hover,
 .settings-button[aria-expanded='true'] { background: rgba(23, 45, 56, 0.08); }
 
