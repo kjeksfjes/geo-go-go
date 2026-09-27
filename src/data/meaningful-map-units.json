@@ -5,7 +5,7 @@
     "FIN": ["ALD"],
     "GBR": ["WLS", "SCT", "NIR", "ENG"],
     "IOA": ["CXR", "CCK"],
-    "NLD": ["NLD", "NLY"],
+    "NLD": ["NLD"],
     "NOR": ["NOR", "NJM", "NSV"],
     "NZL": ["NZL", "TKL"],
     "PNG": ["PNX", "PNB"],
@@ -27,7 +27,8 @@
     "NZL": ["NZN", "NZS"]
   },
   "independentAdmin1RegionsByMapUnit": {
-    "GRC": ["GR-M"]
+    "GRC": ["GR-M"],
+    "NLY": ["NL-BQ1", "NL-BQ2", "NL-BQ3"]
   },
   "sourceSubunitIdsAt10m": {
     "AUS": ["AUZ"],
@@ -115,9 +116,6 @@
     },
     "map-unit:CCK": {
       "type": { "en": "External territory", "nb": "Oversjøisk territorium" }
-    },
-    "map-unit:NLY": {
-      "type": { "en": "Special municipalities", "nb": "Særskilte kommuner" }
     },
     "map-unit:TKL": {
       "type": { "en": "Territory", "nb": "Territorium" }

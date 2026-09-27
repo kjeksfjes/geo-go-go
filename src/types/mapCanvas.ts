@@ -7,6 +7,7 @@ export interface CanvasCamera {
 export interface CanvasMapScene {
   spherePath: string
   bathymetry: Array<{ depth: number; path: string }>
+  contextCountries: Array<{ path: string; bounds: [[number, number], [number, number]] }>
   relief: Array<{ elevation: number; path: string }>
   reliefClipPath: string
   countries: Array<{

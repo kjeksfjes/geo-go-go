@@ -207,6 +207,55 @@ export function useMapProjection(
   })
   const interactionGeographicPaths = computed(() => projectedGeographicPaths(fittingUnits))
 
+  // Context land uses the stable 50m source even when active countries use
+  // 10m geometry. Keep only nearby units; they are visual context, not hit
+  // targets or quiz members.
+  const contextGeographicPaths = computed(() => {
+    if (activeRegion.value.id === 'world') return []
+    const selected = interactionGeographicPaths.value
+      .filter(({ unit }) => unit.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id)))
+    if (!selected.length) return []
+
+    const left = Math.min(...selected.map(({ displayBounds }) => displayBounds[0][0]))
+    const top = Math.min(...selected.map(({ displayBounds }) => displayBounds[0][1]))
+    const right = Math.max(...selected.map(({ displayBounds }) => displayBounds[1][0]))
+    const bottom = Math.max(...selected.map(({ displayBounds }) => displayBounds[1][1]))
+    const viewScale = projectionId.value === 'regional-equal-area'
+      ? 1
+      : Math.max(1.15, (activeRegion.value.view?.zoom ?? 1) * 0.8)
+    // Cover the whole permitted camera area (a half viewport plus the pan
+    // margin beyond the playable land), without painting the rest of Earth.
+    const padX = width.value * 0.8 / viewScale
+    const padY = height.value * 0.8 / viewScale
+    const candidates = projectionId.value === 'regional-equal-area'
+      ? fittingUnits.filter((unit) => !unit.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id)))
+        .map((unit) => {
+          const displayUnit = displayFeature(unit)
+          const generator = pathGenerator.value
+          return { path: generator(displayUnit) ?? '', bounds: generator.bounds(displayUnit) }
+        })
+      : interactionGeographicPaths.value
+        .filter(({ unit }) => !unit.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id)))
+        .map(({ path, displayBounds }) => ({ path, bounds: displayBounds }))
+
+    // A region-specific display geometry can cut a transcontinental map unit.
+    // Paint its unmodified source geometry underneath the active regional part:
+    // the portion beyond the geographic division then becomes muted context,
+    // while hit-testing, quiz identity, fitting, and focus stay regional.
+    const generator = pathGenerator.value
+    for (const unit of fittingUnits) {
+      if (!unit.regionalDisplayGeometry?.[activeRegion.value.id]
+        || !unit.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id))) continue
+      candidates.push({ path: generator(unit) ?? '', bounds: generator.bounds(unit) })
+    }
+
+    return candidates.filter(({ path, bounds }) => path
+      && Number.isFinite(bounds[0][0]) && Number.isFinite(bounds[0][1])
+      && Number.isFinite(bounds[1][0]) && Number.isFinite(bounds[1][1])
+      && bounds[0][0] <= right + padX && bounds[1][0] >= left - padX
+      && bounds[0][1] <= bottom + padY && bounds[1][1] >= top - padY)
+  })
+
   const spherePath = computed(() => pathGenerator.value({ type: 'Sphere' }) ?? '')
 
   const bathymetryPaths = computed(() => {
@@ -282,6 +331,7 @@ export function useMapProjection(
 
   return {
     bathymetryPaths,
+    contextGeographicPaths,
     geographicPaths,
     hasCachedPaths,
     horizontalWrap,

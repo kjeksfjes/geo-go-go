@@ -91,18 +91,15 @@ def remainder_regional_geometry(resolution, map_unit_id, selected_geometries):
 
 
 def admin1_regions(path):
-    requested = {code: map_unit_id
-                 for map_unit_id, codes in ADMIN1_SELECTION.items()
-                 for code in codes}
+    requested = {code for codes in ADMIN1_SELECTION.values() for code in codes}
     regions = {}
     for record in shapefile.Reader(str(path)).iterShapeRecords():
         data = record.record.as_dict()
         code = data["iso_3166_2"]
         if code not in requested:
             continue
-        if data["adm0_a3"] != requested[code]:
-            raise ValueError(f"Admin-1 region {code} belongs to {data['adm0_a3']}")
-        regions[code] = (data["name_en"], shape(record.shape.__geo_interface__))
+        regions[code] = (data["name_en"], data["type_en"], data["adm0_a3"],
+                         shape(record.shape.__geo_interface__))
     if set(regions) != set(requested):
         raise ValueError(f"Missing Admin-1 regions: {sorted(set(requested) - set(regions))}")
     return regions
@@ -167,7 +164,9 @@ def selected_features(path, resolution, include_metadata, admin1):
             features.append(feature)
 
         for code in ADMIN1_SELECTION.get(map_unit_id, []):
-            name, region = admin1[code]
+            name, feature_type, entity_id, region = admin1[code]
+            if entity_id != next(iter(source.values()))[0]["ADM0_A3"]:
+                raise ValueError(f"Admin-1 region {code} belongs to {entity_id}, not {map_unit_id}")
             # Select complete source coastline polygons belonging to the named
             # region. Intersecting the Admin-1 outline directly would create
             # slivers where its coastline differs from the Admin-0 source.
@@ -185,8 +184,8 @@ def selected_features(path, resolution, include_metadata, admin1):
                 feature["properties"] = {
                     "name": name,
                     "mapUnitId": map_unit_id,
-                    "entityId": next(iter(source.values()))[0]["ADM0_A3"],
-                    "featureType": "Admin-1 region",
+                    "entityId": entity_id,
+                    "featureType": feature_type or "Admin-1 region",
                     "sourceKind": "admin-1",
                 }
             features.append(feature)

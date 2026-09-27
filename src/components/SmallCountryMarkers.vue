@@ -6,9 +6,10 @@ import {
 } from '../logic/smallCountryMarkers'
 import { countryName, t } from '../i18n'
 
-defineProps<{
+const props = defineProps<{
   markers: readonly SmallCountryMarker[]
   feedbackMarkers: readonly SmallCountryFeedbackMarker[]
+  alwaysShowWrongAnswer: boolean
 }>()
 const emit = defineEmits<{
   activate: [marker: SmallCountryMarker, event: MouseEvent | KeyboardEvent]
@@ -22,6 +23,7 @@ function markerLabel(marker: SmallCountryMarker) {
 }
 
 function feedbackLabel(marker: SmallCountryFeedbackMarker) {
+  if (marker.status === 'wrong' && !props.alwaysShowWrongAnswer) return t('wrongAnswerMarker')
   return t(marker.status === 'correct' ? 'correctSmallCountry' : 'wrongSmallCountry', {
     name: countryName(marker.countryId),
   })
@@ -62,7 +64,7 @@ function feedbackLabel(marker: SmallCountryFeedbackMarker) {
       role="img"
       :aria-label="feedbackLabel(marker)"
     >
-      <title>{{ countryName(marker.countryId) }}</title>
+      <title v-if="marker.status === 'correct' || alwaysShowWrongAnswer">{{ countryName(marker.countryId) }}</title>
       <circle class="small-country-marker__hit" :r="SMALL_COUNTRY_HIT_RADIUS" />
       <circle class="small-country-marker__pin" r="9" />
       <circle class="small-country-marker__center" r="3" />

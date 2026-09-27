@@ -6,6 +6,9 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 - In Find the country, nearby parts of a country now share the primary answer highlight; distant components retain a separate related highlight.
 - Added neutral map targets for tiny quiz countries; overlapping targets zoom in before accepting an answer.
+- Regional views now keep navigation near the chosen area, preserve click-to-zoom focus at the regional zoom limit, and show nearby non-playable land as subdued context.
+- Transcontinental land outside a regional display boundary, such as Asian Russia in Europe, now appears as muted context with a clearer dashed division.
+- Use the full name South Georgia and the South Sandwich Islands in country labels.
 
 ## 0.1.0 — 2026-09-26
 
