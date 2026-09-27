@@ -2,3 +2,21 @@ node_modules
 dist
 .DS_Store
 *.local
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+.npmrc
+.netrc
+.zshrc
+.bashrc
+.bash_profile
+.profile
+.azure/
+.aws/
+.config/gh/
+*.pem
+*.key
+*.p12
+*.pfx
