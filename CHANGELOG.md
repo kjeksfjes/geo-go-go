@@ -6,15 +6,6 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## 0.3.0 — 2026-09-27
 
-### Fixes
-
-- Kept the mobile app shell and map controls inside Safari's changing safe area, prevented page zoom and viewport drift beneath browser chrome, and kept the fully zoomed-out world vertically centered.
-- Prevented long presses on the map and app controls from starting text selection or an iOS callout.
-- Removed Safari's rectangular tap flash from country shapes.
-- Prevented the country under a finger from flashing as hovered when starting a map pan.
-- Blocked iOS text-selection, copy callouts, and the tap-then-hold loupe across the map surface while leaving card text selectable.
-- Prevented either finger release after pinch-zooming from being interpreted as a country tap.
-
 ### Improvements
 
 - Reworked the phone layout around a compact game toolbar and map HUD, placing Region beside the game mode and moving language and visual map options into settings.
@@ -24,6 +15,15 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 - Added an immediate loading screen and deferred the geography-heavy game bundle until after its first paint.
 - Moved optional bathymetry and relief data off the mobile startup path and load each layer only when needed.
 - Reused the loading spinner for detailed maps, projection changes, and deferred visual-layer toggles.
+
+### Fixes
+
+- Kept the mobile app shell and map controls inside Safari's changing safe area, prevented page zoom and viewport drift beneath browser chrome, and kept the fully zoomed-out world vertically centered.
+- Prevented long presses on the map and app controls from starting text selection or an iOS callout.
+- Removed Safari's rectangular tap flash from country shapes.
+- Prevented the country under a finger from flashing as hovered when starting a map pan.
+- Blocked iOS text-selection, copy callouts, and the tap-then-hold loupe across the map surface while leaving card text selectable.
+- Prevented either finger release after pinch-zooming from being interpreted as a country tap.
 
 ## 0.2.0 — 2026-09-27
 
