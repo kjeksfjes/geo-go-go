@@ -385,7 +385,9 @@ export function useMapProjection(
   })
 
   const horizontalWrap = computed<HorizontalWrap | null>(() => {
-    if (projectionId.value !== 'mercator' || activeRegion.value.id !== 'world') return null
+    const wrapEnabled = activeRegion.value.id === 'world'
+      || activeRegion.value.view?.horizontalWrap === true
+    if (projectionId.value !== 'mercator' || !wrapEnabled) return null
     const projection = pathGenerator.value.projection() as GeoProjection
     return {
       period: 2 * Math.PI * projection.scale(),

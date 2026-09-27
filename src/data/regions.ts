@@ -18,7 +18,7 @@ export interface GeographicFrame {
 export interface MapRegion {
   id: MapRegionId
   label: string
-  view: { center: MapPoint; zoom: number; panReach?: number } | null
+  view: { center: MapPoint; zoom: number; panReach?: number; horizontalWrap?: boolean } | null
   regionalProjection?: { center: MapPoint; roll?: number; frame?: GeographicFrame }
   children?: readonly MapRegion[]
 }
@@ -55,7 +55,7 @@ export const regions: readonly MapRegion[] = [
     ],
   },
   {
-    id: 'north-america', label: 'North America', view: { center: [-102.74, 52.73], zoom: 2.11 },
+    id: 'north-america', label: 'North America', view: { center: [-102.74, 52.73], zoom: 2.11, horizontalWrap: true },
     children: [
       {
         id: 'central-america-caribbean',
@@ -65,7 +65,7 @@ export const regions: readonly MapRegion[] = [
     ],
   },
   { id: 'south-america', label: 'South America', view: { center: [-61.68, -26.07], zoom: 2.92 } },
-  { id: 'oceania', label: 'Oceania', view: { center: [145.05, -26.9], zoom: 4.25 } },
+  { id: 'oceania', label: 'Oceania', view: { center: [145.05, -26.9], zoom: 4.25, horizontalWrap: true } },
 ]
 
 const playableEntityIds: Partial<Record<MapRegionId, ReadonlySet<string>>> = {
