@@ -5,7 +5,7 @@ import type { MapPoint } from '../composables/useMapZoom'
 export type MapRegionId =
   | 'world' | 'europe' | 'nordics' | 'baltics' | 'balkans'
   | 'africa' | 'asia' | 'east-asia' | 'southeast-asia' | 'south-asia' | 'central-asia'
-  | 'middle-east' | 'north-america' | 'central-america' | 'caribbean'
+  | 'middle-east' | 'north-america' | 'central-america-caribbean'
   | 'south-america' | 'oceania'
 
 export interface GeographicFrame {
@@ -29,7 +29,7 @@ export interface MapRegion {
 export const regions: readonly MapRegion[] = [
   { id: 'world', label: 'World', view: null },
   {
-    id: 'europe', label: 'Europe', view: { center: [15, 52], zoom: 3.1 },
+    id: 'europe', label: 'Europe', view: { center: [24.77, 58.02], zoom: 3.1 },
     regionalProjection: { center: [10, 52] },
     children: [
       {
@@ -40,29 +40,32 @@ export const regions: readonly MapRegion[] = [
         },
       },
       { id: 'baltics', label: 'Baltics', view: { center: [25, 57.5], zoom: 7 } },
-      { id: 'balkans', label: 'Balkans', view: { center: [22, 43], zoom: 5.7 } },
+      { id: 'balkans', label: 'Balkans', view: { center: [29.72, 41.73], zoom: 11.56 } },
     ],
   },
-  { id: 'africa', label: 'Africa', view: { center: [20, 2], zoom: 2.35 } },
+  { id: 'africa', label: 'Africa', view: { center: [20.13, 2.17], zoom: 2.84 } },
   {
-    id: 'asia', label: 'Asia', view: { center: [88, 34], zoom: 1.85 },
+    id: 'asia', label: 'Asia', view: { center: [87, 26.2], zoom: 2.69 },
     children: [
-      { id: 'middle-east', label: 'Middle East', view: { center: [44, 28], zoom: 4.25 } },
-      { id: 'central-asia', label: 'Central Asia', view: { center: [69, 42], zoom: 4 } },
-      { id: 'south-asia', label: 'South Asia', view: { center: [78, 22], zoom: 3.8 } },
-      { id: 'east-asia', label: 'East Asia', view: { center: [115, 37], zoom: 3 } },
-      { id: 'southeast-asia', label: 'Southeast Asia', view: { center: [108, 8], zoom: 4 } },
+      { id: 'middle-east', label: 'Middle East', view: { center: [43.51, 28.76], zoom: 5.76 } },
+      { id: 'central-asia', label: 'Central Asia', view: { center: [67.47, 46.21], zoom: 7.24 } },
+      { id: 'south-asia', label: 'South Asia', view: { center: [72.08, 24.09], zoom: 5.93 } },
+      { id: 'east-asia', label: 'East Asia', view: { center: [111.99, 37.53], zoom: 4.85 } },
+      { id: 'southeast-asia', label: 'Southeast Asia', view: { center: [114.44, 7.9], zoom: 5.49 } },
     ],
   },
   {
-    id: 'north-america', label: 'North America', view: { center: [-100, 38], zoom: 1.95 },
+    id: 'north-america', label: 'North America', view: { center: [-102.74, 52.73], zoom: 2.11 },
     children: [
-      { id: 'central-america', label: 'Central America', view: { center: [-88, 15], zoom: 5.2 } },
-      { id: 'caribbean', label: 'Caribbean', view: { center: [-70, 18], zoom: 5 } },
+      {
+        id: 'central-america-caribbean',
+        label: 'Central America & Caribbean',
+        view: { center: [-89.44, 20.1], zoom: 7.31 },
+      },
     ],
   },
-  { id: 'south-america', label: 'South America', view: { center: [-61, -18], zoom: 2.45 } },
-  { id: 'oceania', label: 'Oceania', view: { center: [150, -19], zoom: 2.15 } },
+  { id: 'south-america', label: 'South America', view: { center: [-61.68, -26.07], zoom: 2.92 } },
+  { id: 'oceania', label: 'Oceania', view: { center: [145.05, -26.9], zoom: 4.25 } },
 ]
 
 const playableEntityIds: Partial<Record<MapRegionId, ReadonlySet<string>>> = {
@@ -88,8 +91,7 @@ function belongsToRegion(unit: MapUnitFeature, id: MapRegionId): boolean {
       && ['Northern America', 'Central America', 'Caribbean'].includes(subregion)
     case 'south-america': return regionUn === 'Americas' && subregion === 'South America'
     case 'oceania': return regionUn === 'Oceania'
-    case 'central-america': return subregion === 'Central America'
-    case 'caribbean': return subregion === 'Caribbean'
+    case 'central-america-caribbean': return ['Central America', 'Caribbean'].includes(subregion)
     case 'central-asia': return subregion === 'Central Asia'
     case 'south-asia': return subregion === 'Southern Asia'
     case 'east-asia': return subregion === 'Eastern Asia'

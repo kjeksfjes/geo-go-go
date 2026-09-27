@@ -4,6 +4,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef,
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
 import LoadingIndicator from './LoadingIndicator.vue'
+import MapDebugPanel from './MapDebugPanel.vue'
 import MarineLabels from './MarineLabels.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import SmallCountryMarkers from './SmallCountryMarkers.vue'
@@ -12,6 +13,7 @@ import {
   projectionOptions,
   useMapProjection,
   type MapProjectionId,
+  type ProjectionDebugState,
 } from '../composables/useMapProjection'
 import {
   useMapZoom,
@@ -27,7 +29,7 @@ import { loadBathymetryBands, type BathymetryBand } from '../data/bathymetry'
 import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
-import { countryName, t, type Locale } from '../i18n'
+import { countryName, regionName, t, type Locale } from '../i18n'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { quizCountryIds } from '../data/quizCountries'
 import {
@@ -46,6 +48,8 @@ import {
   type SmallCountryFeedbackMarker,
   type SmallCountryMarker,
 } from '../logic/smallCountryMarkers'
+
+const PREFERRED_COUNTRY_FOCUS_SCALE = 5
 
 const props = defineProps<{
   geographicUnits: GeographicUnitFeature[]
@@ -85,6 +89,7 @@ const reliefLoading = ref(false)
 const bathymetryBands = shallowRef<readonly BathymetryBand[]>([])
 const reliefBands = shallowRef<readonly ReliefBand[]>([])
 const marineLabelsEnabled = ref(true)
+const adaptiveCountryZoomEnabled = ref(false)
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
 const canvasReady = ref(false)
@@ -103,6 +108,33 @@ const interactionState = computed<MapInteractionState>(() => ({
 const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
+const debugEnabled = new URLSearchParams(window.location.search).has('debug')
+interface MapDebugVerticalFit {
+  span: number
+  topGap: number
+  bottomGap: number
+}
+interface MapDebugMetrics {
+  zoom: number
+  countryFocus: string
+  center: MapPoint | null
+  regionVerticalFit: MapDebugVerticalFit | null
+  selectionVerticalFit: MapDebugVerticalFit | null
+  region: string
+  projection: string
+  detail: string
+  renderer: string
+  width: number
+  height: number
+  pixelRatio: number
+  bathymetry: boolean
+  relief: boolean
+  waterNames: boolean
+  gesture: string
+  paths: ProjectionDebugState | null
+}
+const debugMetrics = shallowRef<MapDebugMetrics | null>(null)
+let debugTimer: number | undefined
 let compatibilityClickTimer: number | undefined
 let suppressCompatibilityClick = false
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
@@ -118,10 +150,12 @@ const {
   horizontalWrap,
   interactionGeographicPaths,
   projectPoint,
+  projectionDebug,
   projectionScale,
   reliefClipPath,
   reliefPaths,
   spherePath,
+  unprojectPoint,
 } = useMapProjection(
   toRef(props, 'geographicUnits'),
   mapWidth,
@@ -205,6 +239,9 @@ const {
   consumeDragClick,
   endPan,
   isDragging,
+  isPinching,
+  isWheeling,
+  isAnimating,
   isInteracting,
   isZoomed,
   movePan,
@@ -224,6 +261,90 @@ const {
   regionViewConstraint,
   homeView,
 )
+
+function updateDebugMetrics() {
+  const projectedCenter: MapPoint = [
+    (mapWidth.value / 2 - transform.x) / transform.scale,
+    (mapHeight.value / 2 - transform.y) / transform.scale,
+  ]
+  const unprojected = unprojectPoint(projectedCenter)
+  const center = unprojected?.every(Number.isFinite)
+    ? [((unprojected[0] + 180) % 360 + 360) % 360 - 180, unprojected[1]] as MapPoint
+    : null
+  const projection = projectionId.value === 'regional-equal-area'
+    ? t('regionalEqualArea')
+    : projectionOptions.find(({ id }) => id === projectionId.value)?.label ?? projectionId.value
+  const gesture = isPinching.value
+    ? 'Pinching'
+    : isDragging.value
+      ? 'Dragging'
+      : isWheeling.value
+        ? 'Wheel zoom'
+        : isAnimating.value
+          ? 'Animating'
+          : 'Idle'
+  const visibleRegionPaths = geographicPaths.value.filter(({ unit }) => isGeographicUnitVisible(unit))
+  const regionBounds: MapBounds | null = visibleRegionPaths.length
+    ? [
+        [
+          Math.min(...visibleRegionPaths.map(({ displayBounds }) => displayBounds[0][0])),
+          Math.min(...visibleRegionPaths.map(({ displayBounds }) => displayBounds[0][1])),
+        ],
+        [
+          Math.max(...visibleRegionPaths.map(({ displayBounds }) => displayBounds[1][0])),
+          Math.max(...visibleRegionPaths.map(({ displayBounds }) => displayBounds[1][1])),
+        ],
+      ]
+    : null
+  const selectedPath = props.selectedGeographicUnitId
+    ? geographicPaths.value.find(({ unit }) =>
+        unit.id === props.selectedGeographicUnitId && isGeographicUnitVisible(unit),
+      )
+    : undefined
+  const selectionBounds = selectedPath
+    ? selectionFocusTarget(
+        selectedPath.unit.id,
+        selectedPath.bounds,
+        selectedPath.focusPoint,
+        geographicPaths.value,
+        props.visibleMapUnitIds,
+        0,
+      ).bounds
+    : null
+
+  function verticalFit(bounds: MapBounds | null): MapDebugVerticalFit | null {
+    if (!bounds) return null
+    const top = bounds[0][1] * transform.scale + transform.y
+    const bottom = bounds[1][1] * transform.scale + transform.y
+    return {
+      span: (bottom - top) / mapHeight.value,
+      topGap: top / mapHeight.value,
+      bottomGap: (mapHeight.value - bottom) / mapHeight.value,
+    }
+  }
+
+  debugMetrics.value = {
+    zoom: transform.scale,
+    countryFocus: adaptiveCountryZoomEnabled.value
+      ? `Adaptive · ${PREFERRED_COUNTRY_FOCUS_SCALE.toFixed(2)}× preferred`
+      : 'Fit to country',
+    center,
+    regionVerticalFit: verticalFit(regionBounds),
+    selectionVerticalFit: verticalFit(selectionBounds),
+    region: regionName(props.activeRegion),
+    projection,
+    detail: `${props.highDetailEnabled ? '10m' : '50m'}${props.detailLoading ? ' · loading' : ''}`,
+    renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG',
+    width: mapWidth.value,
+    height: mapHeight.value,
+    pixelRatio: window.devicePixelRatio || 1,
+    bathymetry: bathymetryEnabled.value,
+    relief: reliefEnabled.value,
+    waterNames: marineLabelsEnabled.value,
+    gesture,
+    paths: projectionDebug.value,
+  }
+}
 
 // The canvas supplies detailed coastlines. Its SVG interaction layer only
 // needs the lighter 50m hit geometry; active highlights use detailed paths.
@@ -465,7 +586,13 @@ function selectCountry(
     props.visibleMapUnitIds,
     horizontalOffset,
   )
-  zoomToBounds(target.bounds, target.focusPoint)
+  zoomToBounds(
+    target.bounds,
+    target.focusPoint,
+    adaptiveCountryZoomEnabled.value
+      ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
+      : undefined,
+  )
 }
 
 function focusCountry(countryId: string) {
@@ -488,7 +615,13 @@ function focusCountry(countryId: string) {
     props.visibleMapUnitIds,
     0,
   )
-  zoomToBounds(target.bounds, target.focusPoint)
+  zoomToBounds(
+    target.bounds,
+    target.focusPoint,
+    adaptiveCountryZoomEnabled.value
+      ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
+      : undefined,
+  )
 }
 
 defineExpose({ focusCountry })
@@ -637,6 +770,11 @@ function requestDetailChange(enabled: boolean) {
 }
 
 onMounted(async () => {
+  if (debugEnabled) {
+    updateDebugMetrics()
+    debugTimer = window.setInterval(updateDebugMetrics, 125)
+  }
+
   // Let the playable base map paint before optional visual layers compete for
   // bandwidth and main-thread projection work on desktop.
   await afterPaint()
@@ -645,6 +783,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (debugTimer !== undefined) window.clearInterval(debugTimer)
   if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
 })
 
@@ -903,6 +1042,11 @@ async function setProjection(nextId: MapProjectionId) {
           />
         </div>
         <MapDetailToggle
+          :label="t('adaptiveCountryZoom')"
+          :model-value="adaptiveCountryZoomEnabled"
+          @update:model-value="adaptiveCountryZoomEnabled = $event"
+        />
+        <MapDetailToggle
           :label="t('bathymetry')"
           :loading="bathymetryLoading"
           :disabled="interactionLocked"
@@ -938,6 +1082,7 @@ async function setProjection(nextId: MapProjectionId) {
           {{ t('resetView') }}
         </button>
       </div>
+      <MapDebugPanel v-if="debugEnabled && debugMetrics" v-bind="debugMetrics" />
     </div>
     <div
       v-if="interactionLocked"

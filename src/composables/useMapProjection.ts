@@ -7,7 +7,7 @@ import {
   type GeoProjection,
 } from 'd3-geo'
 import { geoWinkel3 } from 'd3-geo-projection'
-import { computed, type Ref } from 'vue'
+import { computed, shallowRef, type Ref } from 'vue'
 import type { FeatureCollection, MultiPoint } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
@@ -20,6 +20,13 @@ export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'na
 export interface HorizontalWrap {
   period: number
   centerX: number
+}
+
+export interface ProjectionDebugState {
+  key: string
+  result: 'cache hit' | 'full projection' | 'regional override'
+  durationMs: number
+  unitCount: number
 }
 
 export const projectionOptions: Array<{ id: MapProjectionId; label: string }> = [
@@ -117,6 +124,7 @@ export function useMapProjection(
     paths: ProjectedReliefBand[]
   }>()
   const reliefClipPathCache = new Map<string, { sizeKey: string; path: string }>()
+  const projectionDebug = shallowRef<ProjectionDebugState | null>(null)
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
   )
@@ -177,14 +185,23 @@ export function useMapProjection(
     return geoPath(projection)
   })
 
-  function projectedGeographicPaths(source: GeographicUnitFeature[]) {
+  function projectedGeographicPaths(source: GeographicUnitFeature[], trackDebug = false) {
+    const startedAt = trackDebug ? performance.now() : 0
     const id = projectionId.value
     const key = geographicCacheKey(id)
     const sizeKey = `${width.value}:${height.value}`
     let cached = pathCache.get(source)
     if (cached?.sizeKey === sizeKey) {
       const paths = cached.projections.get(key)
-      if (paths) return paths
+      if (paths) {
+        if (trackDebug) projectionDebug.value = {
+          key,
+          result: 'cache hit',
+          durationMs: performance.now() - startedAt,
+          unitCount: paths.length,
+        }
+        return paths
+      }
     } else {
       cached = { sizeKey, projections: new Map() }
       pathCache.set(source, cached)
@@ -193,6 +210,7 @@ export function useMapProjection(
     const generator = pathGenerator.value
     const baseKey = projectionCacheKey(id)
     let basePaths = cached.projections.get(baseKey)
+    const reusedBasePaths = basePaths !== undefined
     if (!basePaths && key !== baseKey) {
       basePaths = source.map((unit) => ({
         unit,
@@ -219,6 +237,12 @@ export function useMapProjection(
         }
       })
       cached.projections.set(key, paths)
+      if (trackDebug) projectionDebug.value = {
+        key,
+        result: reusedBasePaths ? 'regional override' : 'full projection',
+        durationMs: performance.now() - startedAt,
+        unitCount: paths.length,
+      }
       return paths
     }
 
@@ -241,6 +265,12 @@ export function useMapProjection(
     })
 
     cached.projections.set(key, paths)
+    if (trackDebug) projectionDebug.value = {
+      key,
+      result: 'full projection',
+      durationMs: performance.now() - startedAt,
+      unitCount: paths.length,
+    }
     return paths
   }
 
@@ -249,7 +279,7 @@ export function useMapProjection(
     // Prepare the interaction layer alongside a detailed projection so the
     // first drag does not pay the 50m projection cost at pointer-down time.
     if (source !== fittingUnits) projectedGeographicPaths(fittingUnits)
-    return projectedGeographicPaths(source)
+    return projectedGeographicPaths(source, true)
   })
   const interactionGeographicPaths = computed(() => projectedGeographicPaths(fittingUnits))
 
@@ -377,6 +407,11 @@ export function useMapProjection(
     return projection(point) as MapPoint | undefined
   }
 
+  function unprojectPoint(point: MapPoint): MapPoint | undefined {
+    const projection = pathGenerator.value.projection() as GeoProjection
+    return projection.invert?.(point) as MapPoint | undefined
+  }
+
   return {
     bathymetryPaths,
     contextGeographicPaths,
@@ -385,9 +420,11 @@ export function useMapProjection(
     horizontalWrap,
     interactionGeographicPaths,
     projectPoint,
+    projectionDebug,
     projectionScale,
     reliefClipPath,
     reliefPaths,
     spherePath,
+    unprojectPoint,
   }
 }

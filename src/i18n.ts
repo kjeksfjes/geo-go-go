@@ -36,7 +36,7 @@ const messages = {
     language: 'Language', eyebrow: 'A tiny geography game', title: 'Where in the world?',
     subtitle: 'Explore the map and pick a country.', gameMode: 'Game mode',
     explore: 'Explore', findCountry: 'Find the country', worldMapGame: 'World map game',
-    region: 'Region', projection: 'Projection', regionalEqualArea: 'Regional Equal Area', mapSettings: 'Map settings', mapControls: 'Map controls', highDetail: 'High detail', bathymetry: 'Bathymetry', relief: 'Relief', waterNames: 'Water names',
+    region: 'Region', projection: 'Projection', regionalEqualArea: 'Regional Equal Area', mapSettings: 'Map settings', mapControls: 'Map controls', highDetail: 'High detail', bathymetry: 'Bathymetry', relief: 'Relief', waterNames: 'Water names', adaptiveCountryZoom: 'Adaptive country zoom',
     interactiveMap: 'Interactive world map', resetView: 'Reset view',
     mapHint: 'Scroll to zoom · Drag to move', continueHint: 'Click map or press Space to continue',
     loadingMap: 'Loading detailed map…', selectedCountry: 'Selected country',
@@ -58,7 +58,7 @@ const messages = {
     language: 'Språk', eyebrow: 'Et lite geografispill', title: 'Hvor i verden?',
     subtitle: 'Utforsk kartet og velg et land.', gameMode: 'Spillmodus',
     explore: 'Utforsk', findCountry: 'Finn landet', worldMapGame: 'Verdenskartspill',
-    region: 'Region', projection: 'Projeksjon', regionalEqualArea: 'Regional arealriktig', mapSettings: 'Kartinnstillinger', mapControls: 'Kartvalg', highDetail: 'Høy detaljgrad', bathymetry: 'Havdybde', relief: 'Terreng', waterNames: 'Havnavn',
+    region: 'Region', projection: 'Projeksjon', regionalEqualArea: 'Regional arealriktig', mapSettings: 'Kartinnstillinger', mapControls: 'Kartvalg', highDetail: 'Høy detaljgrad', bathymetry: 'Havdybde', relief: 'Terreng', waterNames: 'Havnavn', adaptiveCountryZoom: 'Tilpasset landzoom',
     interactiveMap: 'Interaktivt verdenskart', resetView: 'Tilbakestill visning',
     mapHint: 'Rull for å zoome · Dra for å flytte', continueHint: 'Klikk på kartet eller trykk mellomrom for å fortsette',
     loadingMap: 'Laster detaljert kart…', selectedCountry: 'Valgt land',
@@ -89,7 +89,7 @@ const norwegianRegions: Record<MapRegion['id'], string> = {
   balkans: 'Balkan', africa: 'Afrika', asia: 'Asia', 'middle-east': 'Midtøsten',
   'central-asia': 'Sentral-Asia', 'south-asia': 'Sør-Asia', 'east-asia': 'Øst-Asia',
   'southeast-asia': 'Sørøst-Asia', 'north-america': 'Nord-Amerika',
-  'central-america': 'Mellom-Amerika', caribbean: 'Karibia',
+  'central-america-caribbean': 'Mellom-Amerika og Karibia',
   'south-america': 'Sør-Amerika', oceania: 'Oseania',
 }
 

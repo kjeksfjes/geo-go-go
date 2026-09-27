@@ -210,6 +210,10 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel__feedback--wrong { color: #a13d2c; }
 
 .quiz-panel__answer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  row-gap: 0;
   color: #52676e;
   font-size: 0.82rem;
   line-height: 1.2;
@@ -229,8 +233,7 @@ watch(() => props.question?.id, async (countryId) => {
   cursor: pointer;
 }
 
-.quiz-panel__answer .quiz-panel__text-button { margin-left: 0.35rem; }
-.quiz-panel__answer .quiz-panel__text-button:first-child { margin-left: 0; }
+.quiz-panel__answer .quiz-panel__text-button { margin-left: 0; }
 .quiz-panel__text-button:hover { color: #a13d2c; }
 .quiz-panel__text-button--preference {
   color: #687a80;
