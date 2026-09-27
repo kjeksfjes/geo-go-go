@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
+import RegionSelector from './components/RegionSelector.vue'
 import WorldMap from './components/WorldMap.vue'
 import { useCountryQuiz } from './composables/useCountryQuiz'
 import {
@@ -151,7 +152,9 @@ function handleQuizShortcut(event: KeyboardEvent) {
 
 function handleSettingsPointerDown(event: PointerEvent) {
   if (!(event.target instanceof Element)) return
-  if (!event.target.closest('.settings-button, .map-settings-panel')) settingsOpen.value = false
+  if (!event.target.closest(
+    '.settings-button, .map-settings-panel, .vue3-treeselect__portal-target[data-instance-id="projection-selector"]',
+  )) settingsOpen.value = false
 }
 
 function handleEscape(event: KeyboardEvent) {
@@ -247,13 +250,26 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         <p class="eyebrow">{{ t('eyebrow') }}</p>
         <p class="visually-hidden">{{ t('subtitle') }}</p>
       </div>
-      <div class="mode-selector" role="group" :aria-label="t('gameMode')">
-        <button type="button" :aria-pressed="mode === 'explore'" @click="setMode('explore')">
-          {{ t('explore') }}
-        </button>
-        <button type="button" :aria-pressed="mode === 'find-country'" @click="setMode('find-country')">
-          {{ t('findCountry') }}
-        </button>
+      <div class="header-navigation">
+        <div class="mode-selector" role="group" :aria-label="t('gameMode')">
+          <button type="button" :aria-pressed="mode === 'explore'" @click="setMode('explore')">
+            {{ t('explore') }}
+          </button>
+          <button type="button" :aria-pressed="mode === 'find-country'" @click="setMode('find-country')">
+            {{ t('findCountry') }}
+          </button>
+        </div>
+        <div class="header-region-control">
+          <svg class="header-region-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3Z" />
+          </svg>
+          <RegionSelector
+            :model-value="activeRegionId"
+            :options="regions"
+            @update:model-value="setActiveRegion"
+          />
+        </div>
       </div>
       <div class="header-actions">
         <div class="language-selector" role="group" :aria-label="t('language')">
@@ -282,7 +298,6 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :settings-open="settingsOpen"
         :locale="locale"
         :active-region="activeRegion"
-        :region-options="regions"
         :selected-country-id="selectedCountryId"
         :selected-geographic-unit-id="selectedGeographicUnitId"
         :quiz-mode="mode === 'find-country'"
@@ -293,7 +308,6 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :visible-map-unit-ids="visibleMapUnitIds"
         @detail-change="setHighDetail"
         @locale-change="setLocale"
-        @region-change="setActiveRegion"
         @select="handleMapSelection"
         @quiz-next="advanceQuizQuestion"
       />

@@ -100,6 +100,62 @@ select { font: inherit; }
   box-shadow: 0 4px 18px rgba(23, 45, 56, 0.07);
 }
 
+.header-navigation {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-self: center;
+  gap: 0.55rem;
+}
+
+.header-region-control {
+  display: flex;
+  min-width: 0;
+  height: 2.45rem;
+  align-items: center;
+  border: 1px solid rgba(82, 103, 110, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 4px 18px rgba(23, 45, 56, 0.07);
+}
+
+.header-region-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+  margin-left: 0.6rem;
+  color: #17374b;
+}
+
+.header-region-control .map-select-field {
+  min-width: 0;
+  height: 100%;
+  justify-content: center;
+  padding: 0.3rem 0.65rem;
+}
+
+.header-region-control .map-select-field > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.header-region-control .map-select-field .vue3-treeselect {
+  width: 7rem;
+  min-width: 0;
+}
+
+.header-region-control .map-select-field .vue3-treeselect__single-value {
+  overflow: hidden;
+  padding-right: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mode-selector button,
 .language-selector button {
   min-height: 2rem;
@@ -186,12 +242,12 @@ html[data-input-modality='keyboard'] .settings-button:focus-visible {
   pointer-events: auto;
 }
 
-/* Both portaled TreeSelect menus share the same upward anchor. Their final
-   gap from the toolbar is set by useMapSelectMenuAnchor. */
+/* Both portaled TreeSelect menus open beneath their controls. Their final
+   gap from the header or settings panel is set by useMapSelectMenuAnchor. */
 .vue3-treeselect__portal-target[data-instance-id='region-selector'] .vue3-treeselect__menu,
 .vue3-treeselect__portal-target[data-instance-id='projection-selector'] .vue3-treeselect__menu {
-  top: auto;
-  bottom: 0;
+  top: 0;
+  bottom: auto;
 }
 
 .map-select-field {
@@ -251,7 +307,7 @@ html[data-input-modality='keyboard'] .settings-button:focus-visible {
   color: #172d38;
 }
 
-html[data-input-modality='keyboard'] .region-control:has(.vue3-treeselect__input:focus-visible),
+html[data-input-modality='keyboard'] .header-region-control:has(.vue3-treeselect__input:focus-visible),
 html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__input:focus-visible) {
   outline: 2px solid rgba(23, 45, 56, 0.35);
   outline-offset: 2px;
@@ -358,10 +414,10 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
 
 @media (max-width: 680px) {
   .app-header {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.5rem;
-    min-height: calc(3.5rem + env(safe-area-inset-top));
-    padding: calc(0.35rem + env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right)) 0.35rem max(0.6rem, env(safe-area-inset-left));
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.4rem;
+    min-height: calc(3rem + env(safe-area-inset-top));
+    padding: calc(0.25rem + env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right)) 0.25rem max(0.6rem, env(safe-area-inset-left));
   }
 
   .app-brand {
@@ -374,17 +430,36 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
     white-space: nowrap;
   }
 
+  .header-navigation { display: contents; }
+
   .mode-selector {
     grid-column: 1;
     grid-row: 1;
     justify-self: start;
     min-width: 0;
+    padding: 0.15rem;
   }
 
-  .header-actions { grid-column: 2; grid-row: 1; gap: 0.3rem; }
+  .header-region-control {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    height: 2.35rem;
+    justify-self: stretch;
+  }
+
+  .header-region-control .map-select-field {
+    width: 100%;
+    padding-inline: 0.3rem 0.45rem;
+  }
+
+  .header-region-icon { margin-left: 0.45rem; }
+
+  .header-region-control .map-select-field .vue3-treeselect { width: 100%; }
+  .header-actions { grid-column: 3; grid-row: 1; gap: 0.3rem; }
   .header-actions > .language-selector { display: none; }
-  .mode-selector button { min-height: 2.75rem; padding-inline: 0.75rem; }
-  .settings-button { width: 2.75rem; height: 2.75rem; }
+  .mode-selector button { min-height: 2.05rem; padding: 0.25rem 0.6rem; }
+  .settings-button { width: 2.35rem; height: 2.35rem; }
   .map-overlay { top: 0.5rem; left: 0.5rem; width: min(390px, calc(100% - 1rem)); }
   .map-overlay__card { border-radius: 15px; }
 }

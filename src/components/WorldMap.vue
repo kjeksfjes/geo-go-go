@@ -6,7 +6,6 @@ import CanvasMap from './CanvasMap.vue'
 import LoadingIndicator from './LoadingIndicator.vue'
 import MarineLabels from './MarineLabels.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
-import RegionSelector from './RegionSelector.vue'
 import SmallCountryMarkers from './SmallCountryMarkers.vue'
 import { useElementSize } from '../composables/useElementSize'
 import {
@@ -23,7 +22,7 @@ import {
 } from '../composables/useMapZoom'
 import type { GeographicUnitFeature } from '../types/country'
 import type { CanvasMapScene } from '../types/mapCanvas'
-import type { MapRegion, MapRegionId } from '../data/regions'
+import type { MapRegion } from '../data/regions'
 import { loadBathymetryBands, type BathymetryBand } from '../data/bathymetry'
 import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
@@ -57,7 +56,6 @@ const props = defineProps<{
   settingsOpen: boolean
   locale: Locale
   activeRegion: MapRegion
-  regionOptions: readonly MapRegion[]
   selectedCountryId: string | null
   selectedGeographicUnitId: string | null
   quizMode: boolean
@@ -73,14 +71,12 @@ const emit = defineEmits<{
   'quiz-next': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'locale-change': [locale: Locale]
-  'region-change': [regionId: MapRegionId]
 }>()
 
 const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
-const controlsOpen = ref(false)
 const usesMobileMapDefaults = window.matchMedia('(hover: none) and (pointer: coarse)').matches
 const bathymetryEnabled = ref(!usesMobileMapDefaults)
 const reliefEnabled = ref(!usesMobileMapDefaults)
@@ -652,13 +648,7 @@ onBeforeUnmount(() => {
   if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
 })
 
-function changeRegion(regionId: MapRegionId) {
-  controlsOpen.value = false
-  emit('region-change', regionId)
-}
-
 async function setProjection(nextId: MapProjectionId) {
-  controlsOpen.value = false
   if (nextId === projectionId.value || interactionLocked.value) return
 
   if (!props.highDetailEnabled || hasCachedPaths(props.geographicUnits, nextId)) {
@@ -699,7 +689,6 @@ async function setProjection(nextId: MapProjectionId) {
   <div
     class="map-stage"
     :class="{ 'map-stage--busy': interactionLocked }"
-    @keydown.esc="controlsOpen = false"
     @contextmenu.prevent
     @selectstart.prevent
   >
@@ -894,24 +883,13 @@ async function setProjection(nextId: MapProjectionId) {
         </g>
       </svg>
 
-      <button
-        class="map-controls-toggle"
-        type="button"
-        :aria-expanded="controlsOpen"
-        aria-controls="map-controls"
-        @click="controlsOpen = !controlsOpen"
-      >{{ t('mapControls') }}</button>
-      <div id="map-controls" class="map-controls" :class="{ 'map-controls--open': controlsOpen }">
-        <div class="region-control">
-          <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3Z" />
-          </svg>
-          <RegionSelector
-            :model-value="activeRegion.id"
-            :options="regionOptions"
-            @update:model-value="changeRegion"
-          />
+      <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel">
+        <div class="map-settings-language">
+          <span>{{ t('language') }}</span>
+          <div class="language-selector" role="group" :aria-label="t('language')">
+            <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="emit('locale-change', 'en')">EN</button>
+            <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="emit('locale-change', 'nb')">NO</button>
+          </div>
         </div>
         <div class="projection-control">
           <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
@@ -944,16 +922,6 @@ async function setProjection(nextId: MapProjectionId) {
           :model-value="marineLabelsEnabled"
           @update:model-value="marineLabelsEnabled = $event"
         />
-      </div>
-
-      <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel">
-        <div class="map-settings-language">
-          <span>{{ t('language') }}</span>
-          <div class="language-selector" role="group" :aria-label="t('language')">
-            <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="emit('locale-change', 'en')">EN</button>
-            <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="emit('locale-change', 'nb')">NO</button>
-          </div>
-        </div>
         <MapDetailToggle
           :loading="detailLoading"
           :disabled="projectionLoading"
@@ -1299,35 +1267,13 @@ async function setProjection(nextId: MapProjectionId) {
   pointer-events: none;
 }
 
-.map-controls {
-  position: absolute;
-  z-index: 3;
-  bottom: 1.4rem;
-  left: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 0.25rem 0.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 999px;
-  background: rgba(250, 252, 252, 0.9);
-  box-shadow: 0 8px 25px rgba(23, 45, 56, 0.13);
-  backdrop-filter: blur(10px);
-}
-
-.map-controls > * + * {
-  border-left: 1px solid rgba(82, 103, 110, 0.18);
-}
-
-.projection-control,
-.region-control {
+.projection-control {
   display: flex;
   align-items: center;
   min-width: 0;
-}
-
-.projection-control {
-  border-right: 1px solid rgba(82, 103, 110, 0.18);
+  border: 1px solid rgba(82, 103, 110, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .control-icon {
@@ -1338,30 +1284,27 @@ async function setProjection(nextId: MapProjectionId) {
   color: #17374b;
 }
 
-.map-controls :deep(.detail-toggle) {
-  min-height: 2.55rem;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-}
-
-.map-controls-toggle {
-  display: none;
-}
-
 .map-settings-panel {
   position: absolute;
   z-index: 4;
   top: 0.85rem;
   right: 1.25rem;
+  display: grid;
+  width: min(18rem, calc(100% - 1.5rem));
+  gap: 0.35rem;
   padding: 0.5rem;
   border: 1px solid rgba(82, 103, 110, 0.18);
   border-radius: 16px;
   background: rgba(250, 252, 252, 0.95);
   box-shadow: 0 12px 30px rgba(23, 45, 56, 0.15);
   backdrop-filter: blur(12px);
+}
+
+.map-settings-panel :deep(.detail-toggle) {
+  width: 100%;
+  min-height: 2.55rem;
+  justify-content: space-between;
+  border-radius: 12px;
 }
 
 .map-settings-language {
@@ -1395,46 +1338,6 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 @media (max-width: 850px) {
-  .map-controls-toggle {
-    position: absolute;
-    z-index: 3;
-    bottom: calc(0.75rem + env(safe-area-inset-bottom));
-    left: 0.75rem;
-    display: block;
-    min-height: 2.75rem;
-    padding: 0.7rem 0.9rem;
-    border: 1px solid rgba(82, 103, 110, 0.16);
-    border-radius: 999px;
-    color: #172d38;
-    background: rgba(250, 252, 252, 0.92);
-    box-shadow: 0 8px 25px rgba(23, 45, 56, 0.13);
-    font-size: 0.8rem;
-    font-weight: 750;
-    cursor: pointer;
-  }
-
-  :global(html[data-input-modality='keyboard'] .map-controls-toggle:focus-visible) {
-    outline: 2px solid #172d38;
-    outline-offset: 2px;
-  }
-
-  .map-controls {
-    bottom: calc(4.25rem + env(safe-area-inset-bottom));
-    left: 0.75rem;
-    display: none;
-    width: min(18rem, calc(100% - 1.5rem));
-    max-height: min(25rem, 65%);
-    flex-direction: column;
-    align-items: stretch;
-    overflow-y: auto;
-    border-radius: 16px;
-    padding: 0.45rem;
-  }
-
-  .map-controls--open { display: flex; }
-  .map-controls > * + * { border-left: 0; border-top: 1px solid rgba(82, 103, 110, 0.18); }
-  .projection-control { border-right: 0; }
-  .map-controls :deep(.detail-toggle) { width: 100%; justify-content: space-between; }
   .map-tools { top: auto; right: 0.75rem; bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
   .map-tools button { max-width: 8rem; text-align: center; }
   .map-settings-panel { top: 0.75rem; right: 0.75rem; }
@@ -1442,7 +1345,8 @@ async function setProjection(nextId: MapProjectionId) {
 
 @media (max-width: 680px) {
   .map-settings-panel {
-    min-width: 11rem;
+    max-height: calc(100% - 1.5rem);
+    overflow-y: auto;
   }
 
   .map-settings-language {
@@ -1459,7 +1363,7 @@ async function setProjection(nextId: MapProjectionId) {
   }
 
   .map-settings-language :deep(.language-selector button) {
-    min-height: 2.75rem;
+    min-height: 2.25rem;
   }
 }
 

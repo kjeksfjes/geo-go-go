@@ -17,7 +17,7 @@ const localizedOptions = computed(() => props.options.map((option) =>
     : option,
 ))
 const { treeSelect, toggleFromControl, closeMenu, startAligning, stopAligning } =
-  useMapTreeSelectControl('projection-selector', '.projection-control', 'projection-selector-label')
+  useMapTreeSelectControl('projection-selector', '.projection-control', 'projection-selector-label', 'bottom')
 
 function selectProjection(value: string | null) {
   if (value !== null) {
@@ -46,7 +46,7 @@ function selectProjection(value: string | null) {
       :close-on-select="true"
       :open-on-focus="false"
       :append-to-body="true"
-      open-direction="top"
+      open-direction="bottom"
       :max-height="320"
       aria-labelledby="projection-selector-label"
       @open="startAligning"

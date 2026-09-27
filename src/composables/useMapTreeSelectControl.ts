@@ -9,9 +9,18 @@ type TreeSelectInstance = ComponentPublicInstance & {
 
 // Shared interaction around the third-party control. The individual fields
 // still own their option data and selection behavior.
-export function useMapTreeSelectControl(instanceId: string, fieldSelector: string, labelId: string) {
+export function useMapTreeSelectControl(
+  instanceId: string,
+  fieldSelector: string,
+  labelId: string,
+  openDirection: 'top' | 'bottom' = 'top',
+) {
   const treeSelect = ref<ComponentPublicInstance | null>(null)
-  const { startAligning, stopAligning } = useMapSelectMenuAnchor(instanceId, fieldSelector)
+  const { startAligning, stopAligning } = useMapSelectMenuAnchor(
+    instanceId,
+    fieldSelector,
+    openDirection,
+  )
 
   function toggleFromControl(event: MouseEvent) {
     event.preventDefault()

@@ -11,7 +11,7 @@ const props = defineProps<{
 
 const model = defineModel<MapRegionId>({ required: true })
 const { treeSelect, toggleFromControl, startAligning, stopAligning } =
-  useMapTreeSelectControl('region-selector', '.region-control', 'region-selector-label')
+  useMapTreeSelectControl('region-selector', '.header-region-control', 'region-selector-label', 'bottom')
 
 interface TreeOption {
   id: MapRegionId
@@ -50,7 +50,7 @@ function selectRegion(value: string | null) {
       :default-expand-level="0"
       :open-on-focus="false"
       :append-to-body="true"
-      open-direction="top"
+      open-direction="bottom"
       :max-height="320"
       aria-labelledby="region-selector-label"
       @open="startAligning"
