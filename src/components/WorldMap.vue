@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { geoArea } from 'd3-geo'
-import { computed, nextTick, ref, toRef, useId, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
 import MarineLabels from './MarineLabels.vue'
@@ -13,13 +13,19 @@ import {
   useMapProjection,
   type MapProjectionId,
 } from '../composables/useMapProjection'
-import { useMapZoom, type MapBounds, type MapPoint, type MapViewConstraint } from '../composables/useMapZoom'
+import {
+  useMapZoom,
+  type MapBounds,
+  type MapHomeView,
+  type MapPoint,
+  type MapViewConstraint,
+} from '../composables/useMapZoom'
 import type { GeographicUnitFeature } from '../types/country'
 import type { CanvasMapScene } from '../types/mapCanvas'
 import type { MapRegion, MapRegionId } from '../data/regions'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
-import { countryName, t } from '../i18n'
+import { countryName, t, type Locale } from '../i18n'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { quizCountryIds } from '../data/quizCountries'
 import {
@@ -46,6 +52,7 @@ const props = defineProps<{
   detailBlurred: boolean
   highDetailEnabled: boolean
   settingsOpen: boolean
+  locale: Locale
   activeRegion: MapRegion
   regionOptions: readonly MapRegion[]
   selectedCountryId: string | null
@@ -62,6 +69,7 @@ const emit = defineEmits<{
   select: [countryId: string | null, geographicUnitId: string | null]
   'quiz-next': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
+  'locale-change': [locale: Locale]
   'region-change': [regionId: MapRegionId]
 }>()
 
@@ -70,8 +78,9 @@ const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
 const controlsOpen = ref(false)
-const bathymetryEnabled = ref(true)
-const reliefEnabled = ref(true)
+const usesMobileMapDefaults = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+const bathymetryEnabled = ref(!usesMobileMapDefaults)
+const reliefEnabled = ref(!usesMobileMapDefaults)
 const marineLabelsEnabled = ref(true)
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
@@ -91,6 +100,8 @@ const interactionState = computed<MapInteractionState>(() => ({
 const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
+let compatibilityClickTimer: number | undefined
+let suppressCompatibilityClick = false
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
 const mapBlurred = computed(() => props.detailBlurred || projectionBlurred.value)
 const { width: measuredWidth, height: measuredHeight } = useElementSize(container)
@@ -160,6 +171,19 @@ const regionViewConstraint = computed<MapViewConstraint | null>(() => {
     ],
   }
 })
+const homeView = computed<MapHomeView | null>(() => {
+  if (projectionId.value === 'regional-equal-area') return null
+
+  const regionalView = props.activeRegion.view
+  const center = regionalView?.center
+    ?? (usesMobileMapDefaults && props.activeRegion.id === 'world' ? [24, 31] as const : null)
+  const point = center && projectPoint(center)
+  if (!point) return null
+  return {
+    point,
+    scale: regionalView?.zoom ?? 3,
+  }
+})
 function geographicUnitClasses(unit: GeographicUnitFeature) {
   return classesForUnit(unit, interactionState.value)
 }
@@ -186,7 +210,15 @@ const {
   zoomFromWheel,
   zoomToBounds,
   zoomToPoint,
-} = useMapZoom(mapWidth, mapHeight, mapContent, horizontalWrap, minimumZoomPoint, regionViewConstraint)
+} = useMapZoom(
+  mapWidth,
+  mapHeight,
+  mapContent,
+  horizontalWrap,
+  minimumZoomPoint,
+  regionViewConstraint,
+  homeView,
+)
 
 // The canvas supplies detailed coastlines. Its SVG interaction layer only
 // needs the lighter 50m hit geometry; active highlights use detailed paths.
@@ -479,15 +511,51 @@ function handlePointerDown(event: PointerEvent) {
 }
 
 function handlePointerEnd(event: PointerEvent) {
-  if (svg.value) endPan(event, svg.value)
+  if (!svg.value) return
+
+  const wasTap = endPan(event, svg.value)
+  if (event.pointerType !== 'touch') return
+  if (event.type !== 'pointerup') {
+    consumeDragClick()
+    return
+  }
+
+  // Preventing touchstart is the only reliable way to suppress Safari's
+  // tap-then-hold loupe. Recreate a normal tap after our pan detector has had
+  // the chance to reject drags and pinches.
+  suppressCompatibilityClick = true
+  if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
+  compatibilityClickTimer = window.setTimeout(() => {
+    suppressCompatibilityClick = false
+    compatibilityClickTimer = undefined
+  }, 700)
+  if (consumeDragClick() || !wasTap || !(event.target instanceof Element)) return
+
+  event.target.dispatchEvent(new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    clientX: event.clientX,
+    clientY: event.clientY,
+    detail: 1,
+    view: window,
+  }))
+}
+
+function handleMapCaptureClick(event: MouseEvent) {
+  if (!event.isTrusted || !suppressCompatibilityClick) return
+  suppressCompatibilityClick = false
+  event.preventDefault()
+  event.stopPropagation()
 }
 
 function clearHoveredUnit(id: string) {
   if (hoveredUnit.value?.id === id) hoveredUnit.value = null
 }
 
-function hoverGeographicUnit(unit: GeographicUnitFeature) {
-  if (!isInteracting.value) {
+function hoverGeographicUnit(unit: GeographicUnitFeature, event: PointerEvent) {
+  // A touch contact emits pointerenter before we can know whether it will be
+  // a tap or a pan. Only hover-capable pointers should preview a country.
+  if (event.pointerType !== 'touch' && !isInteracting.value) {
     hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
   }
 }
@@ -526,6 +594,10 @@ function requestDetailChange(enabled: boolean) {
     enabled && props.detailedGeographicUnits !== null && hasCachedPaths(props.detailedGeographicUnits),
   )
 }
+
+onBeforeUnmount(() => {
+  if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
+})
 
 function changeRegion(regionId: MapRegionId) {
   controlsOpen.value = false
@@ -571,7 +643,13 @@ async function setProjection(nextId: MapProjectionId) {
 </script>
 
 <template>
-  <div class="map-stage" :class="{ 'map-stage--busy': interactionLocked }" @keydown.esc="controlsOpen = false">
+  <div
+    class="map-stage"
+    :class="{ 'map-stage--busy': interactionLocked }"
+    @keydown.esc="controlsOpen = false"
+    @contextmenu.prevent
+    @selectstart.prevent
+  >
     <div
       ref="container"
       class="map-container"
@@ -601,11 +679,13 @@ async function setProjection(nextId: MapProjectionId) {
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         role="group"
         :aria-label="t('interactiveMap')"
+        @touchstart.prevent
         @wheel.prevent="handleWheel"
         @pointerdown="handlePointerDown"
         @pointermove="movePan"
         @pointerup="handlePointerEnd"
         @pointercancel="handlePointerEnd"
+        @click.capture="handleMapCaptureClick"
         @click="handleMapClick"
       >
         <g ref="mapContent" class="map-content">
@@ -689,7 +769,7 @@ async function setProjection(nextId: MapProjectionId) {
                 :aria-disabled="!canActivateGeographicUnit(interactionState)"
                 :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
                 @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
-                @pointerenter="hoverGeographicUnit(unit)"
+                @pointerenter="hoverGeographicUnit(unit, $event)"
                 @pointerleave="clearHoveredUnit(unit.id)"
                 @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
                 @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
@@ -812,6 +892,13 @@ async function setProjection(nextId: MapProjectionId) {
       </div>
 
       <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel">
+        <div class="map-settings-language">
+          <span>{{ t('language') }}</span>
+          <div class="language-selector" role="group" :aria-label="t('language')">
+            <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="emit('locale-change', 'en')">EN</button>
+            <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="emit('locale-change', 'nb')">NO</button>
+          </div>
+        </div>
         <MapDetailToggle
           :loading="interactionLocked"
           :model-value="highDetailEnabled"
@@ -847,6 +934,13 @@ async function setProjection(nextId: MapProjectionId) {
   height: 100%;
 }
 
+.map-stage,
+.map-stage * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .map-container {
   position: relative;
   width: 100%;
@@ -863,7 +957,10 @@ async function setProjection(nextId: MapProjectionId) {
   width: 100%;
   height: 100%;
   cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
   user-select: none;
+  touch-action: none;
 }
 
 .map-highlights {
@@ -989,12 +1086,13 @@ async function setProjection(nextId: MapProjectionId) {
   vector-effect: non-scaling-stroke;
   cursor: pointer;
   outline: none;
+  -webkit-tap-highlight-color: transparent;
   transition: fill 120ms ease;
 }
 
 /* Canvas paints the ordinary borders; SVG remains the accessible hit and
    highlight layer, so selected and hovered borders still render above it. */
-.world-map--canvas .country:not(:hover, :focus-visible, .country--identity-hover, .country--selected, .country--related, .country--quiz-correct, .country--quiz-correct-related, .country--quiz-wrong, .country--quiz-wrong-related) {
+.world-map--canvas .country:not(:focus-visible, .country--identity-hover, .country--selected, .country--related, .country--quiz-correct, .country--quiz-correct-related, .country--quiz-wrong, .country--quiz-wrong-related) {
   stroke: none;
 }
 
@@ -1044,7 +1142,6 @@ async function setProjection(nextId: MapProjectionId) {
   transition: none;
 }
 
-.country:hover,
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
   fill: rgb(239 192 106 / 72%);
 }
@@ -1061,20 +1158,11 @@ async function setProjection(nextId: MapProjectionId) {
   stroke-width: 0.95;
 }
 
-.country--related:hover {
-  fill: rgb(244 195 177 / 76%);
-  stroke: #ba7866;
-}
-
 .country--selected,
 :global(html[data-input-modality='keyboard'] .country--selected:focus-visible) {
   fill: rgb(231 111 81 / 82%);
   stroke: #8f3522;
   stroke-width: 1.2;
-}
-
-.country--selected:hover {
-  fill: rgb(237 134 106 / 84%);
 }
 
 .country--identity-hover:not(.country--selected, .country--related) {
@@ -1088,19 +1176,11 @@ async function setProjection(nextId: MapProjectionId) {
   stroke-width: 1.05;
 }
 
-.country--quiz-correct-related:hover {
-  fill: rgb(188 229 201 / 76%);
-}
-
 .country--quiz-correct,
 :global(html[data-input-modality='keyboard'] .country--quiz-correct:focus-visible) {
   fill: rgb(105 190 137 / 82%);
   stroke: #26774a;
   stroke-width: 1.5;
-}
-
-.country--quiz-correct:hover {
-  fill: rgb(124 204 153 / 84%);
 }
 
 .country--quiz-wrong-related,
@@ -1110,10 +1190,6 @@ async function setProjection(nextId: MapProjectionId) {
   stroke-width: 1.05;
 }
 
-.country--quiz-wrong-related:hover {
-  fill: rgb(245 198 181 / 76%);
-}
-
 .country--quiz-wrong,
 :global(html[data-input-modality='keyboard'] .country--quiz-wrong:focus-visible) {
   fill: rgb(231 111 81 / 82%);
@@ -1121,8 +1197,35 @@ async function setProjection(nextId: MapProjectionId) {
   stroke-width: 1.5;
 }
 
-.country--quiz-wrong:hover {
-  fill: rgb(237 134 106 / 84%);
+@media (hover: hover) and (pointer: fine) {
+  .country:hover {
+    fill: rgb(239 192 106 / 72%);
+  }
+
+  .country--related:hover {
+    fill: rgb(244 195 177 / 76%);
+    stroke: #ba7866;
+  }
+
+  .country--selected:hover {
+    fill: rgb(237 134 106 / 84%);
+  }
+
+  .country--quiz-correct-related:hover {
+    fill: rgb(188 229 201 / 76%);
+  }
+
+  .country--quiz-correct:hover {
+    fill: rgb(124 204 153 / 84%);
+  }
+
+  .country--quiz-wrong-related:hover {
+    fill: rgb(245 198 181 / 76%);
+  }
+
+  .country--quiz-wrong:hover {
+    fill: rgb(237 134 106 / 84%);
+  }
 }
 
 :global(html[data-input-modality='keyboard'] .country--split-fill:focus-visible + .country-outline) {
@@ -1219,6 +1322,10 @@ async function setProjection(nextId: MapProjectionId) {
   backdrop-filter: blur(12px);
 }
 
+.map-settings-language {
+  display: none;
+}
+
 .map-tools span,
 .map-tools button {
   padding: 0.4rem 0.65rem;
@@ -1249,9 +1356,10 @@ async function setProjection(nextId: MapProjectionId) {
   .map-controls-toggle {
     position: absolute;
     z-index: 3;
-    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
     left: 0.75rem;
     display: block;
+    min-height: 2.75rem;
     padding: 0.7rem 0.9rem;
     border: 1px solid rgba(82, 103, 110, 0.16);
     border-radius: 999px;
@@ -1269,7 +1377,7 @@ async function setProjection(nextId: MapProjectionId) {
   }
 
   .map-controls {
-    bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 3rem);
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
     left: 0.75rem;
     display: none;
     width: min(18rem, calc(100% - 1.5rem));
@@ -1285,9 +1393,32 @@ async function setProjection(nextId: MapProjectionId) {
   .map-controls > * + * { border-left: 0; border-top: 1px solid rgba(82, 103, 110, 0.18); }
   .projection-control { border-right: 0; }
   .map-controls :deep(.detail-toggle) { width: 100%; justify-content: space-between; }
-  .map-tools { top: auto; right: 0.75rem; bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+  .map-tools { top: auto; right: 0.75rem; bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
   .map-tools button { max-width: 8rem; text-align: center; }
   .map-settings-panel { top: 0.75rem; right: 0.75rem; }
+}
+
+@media (max-width: 680px) {
+  .map-settings-panel {
+    min-width: 11rem;
+  }
+
+  .map-settings-language {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+    padding: 0.2rem 0.2rem 0.55rem;
+    border-bottom: 1px solid rgba(82, 103, 110, 0.18);
+    color: #52676e;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .map-settings-language :deep(.language-selector button) {
+    min-height: 2.75rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

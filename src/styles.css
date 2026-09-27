@@ -11,9 +11,12 @@
 html,
 body,
 #app {
+  width: 100%;
+  height: 100%;
   min-width: 320px;
-  min-height: 100%;
   margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 button,
@@ -34,11 +37,12 @@ select { font: inherit; }
 }
 
 .app-shell {
+  position: fixed;
+  inset: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
+  width: auto;
+  height: auto;
   overflow: hidden;
 }
 
@@ -49,10 +53,13 @@ select { font: inherit; }
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
-  min-height: 62px;
-  padding: 0.55rem max(1.5rem, env(safe-area-inset-right)) 0.55rem max(1.5rem, env(safe-area-inset-left));
+  min-height: calc(62px + env(safe-area-inset-top));
+  padding: calc(0.55rem + env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) 0.55rem max(1.5rem, env(safe-area-inset-left));
   background: linear-gradient(110deg, #f1f7f7, #e8f3f6 62%, #f5f7f5);
   box-shadow: 0 2px 14px rgba(23, 45, 56, 0.08);
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .app-brand {
@@ -352,12 +359,32 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
 @media (max-width: 680px) {
   .app-header {
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.35rem 0.6rem;
-    padding: 0.55rem max(0.75rem, env(safe-area-inset-right)) 0.55rem max(0.75rem, env(safe-area-inset-left));
+    gap: 0.5rem;
+    min-height: calc(3.5rem + env(safe-area-inset-top));
+    padding: calc(0.35rem + env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right)) 0.35rem max(0.6rem, env(safe-area-inset-left));
   }
 
-  .app-brand h1 { font-size: clamp(1.1rem, 4vw, 1.4rem); }
-  .mode-selector { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
+  .app-brand {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .mode-selector {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    min-width: 0;
+  }
+
   .header-actions { grid-column: 2; grid-row: 1; gap: 0.3rem; }
-  .map-overlay { top: 0.75rem; left: 0.75rem; width: min(390px, calc(100% - 1.5rem)); }
+  .header-actions > .language-selector { display: none; }
+  .mode-selector button { min-height: 2.75rem; padding-inline: 0.75rem; }
+  .settings-button { width: 2.75rem; height: 2.75rem; }
+  .map-overlay { top: 0.5rem; left: 0.5rem; width: min(390px, calc(100% - 1rem)); }
+  .map-overlay__card { border-radius: 15px; }
 }

@@ -58,7 +58,7 @@ watch(() => props.question?.id, async (countryId) => {
 </script>
 
 <template>
-  <section class="quiz-panel" :aria-label="t('quiz')">
+  <section class="quiz-panel" :class="`quiz-panel--${phase}`" :aria-label="t('quiz')">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
         <p class="quiz-panel__eyebrow">{{ t('regionComplete') }}</p>
@@ -291,13 +291,61 @@ watch(() => props.question?.id, async (countryId) => {
 
 @media (max-width: 560px) {
   .quiz-panel {
-    grid-template-columns: 3.7rem minmax(0, 1fr);
-    gap: 0.3rem 0.85rem;
-    padding: 0.85rem;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: 0.25rem 0.65rem;
+    padding: 0.65rem 0.75rem;
   }
 
-  .quiz-panel__flag { font-size: 2.8rem; }
+  .quiz-panel__flag {
+    align-self: start;
+    margin-top: 0.1rem;
+    font-size: 2rem;
+  }
 
-  .quiz-panel__status { min-height: 4rem; }
+  .quiz-panel__eyebrow {
+    margin-bottom: 0.1rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.045em;
+  }
+
+  .quiz-panel h2 {
+    font-size: 1.05rem;
+  }
+
+  .quiz-panel__status {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 0;
+    flex-flow: row wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.45rem;
+  }
+
+  .quiz-panel__hint { display: none; }
+
+  .quiz-panel__feedback,
+  .quiz-panel__answer {
+    font-size: 0.76rem;
+  }
+
+  .quiz-panel__actions {
+    grid-row: 3;
+    gap: 0.25rem;
+    margin-top: 0.2rem;
+    padding-top: 0.4rem;
+  }
+
+  .quiz-panel--question .quiz-panel__actions { display: none; }
+
+  .quiz-panel__button {
+    min-height: 2.75rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.76rem;
+  }
+
+  .quiz-panel__text-button {
+    min-height: 2rem;
+    padding-block: 0.2rem;
+  }
 }
 </style>

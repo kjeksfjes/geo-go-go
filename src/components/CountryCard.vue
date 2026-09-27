@@ -119,16 +119,32 @@ h2 {
 
 @media (max-width: 520px) {
   .country-card {
-    gap: 0.8rem;
-    padding-inline: 0.75rem;
+    min-height: 0;
+    gap: 0.65rem;
+    padding: 0.6rem 0.75rem;
   }
 
   .country-card__flag {
-    font-size: clamp(3rem, 18vw, 4rem);
+    border-radius: 4px;
+    font-size: 2.4rem;
   }
 
   .country-card__flag--component {
-    font-size: 1.7rem;
+    font-size: 1.25rem;
   }
+
+  .country-card__label {
+    margin-bottom: 0.05rem;
+    font-size: 0.62rem;
+  }
+
+  .country-card__component {
+    margin-top: 0.1rem;
+    font-size: 0.78rem;
+  }
+
+  .country-card__code { display: none; }
+
+  h2 { font-size: 1.05rem; }
 }
 </style>

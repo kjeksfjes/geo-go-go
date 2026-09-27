@@ -23,4 +23,14 @@ document.addEventListener('wheel', () => {
   root.dataset.inputModality = 'pointer'
 }, { capture: true, passive: true })
 
+// Safari intentionally ignores viewport scale limits for accessibility. This
+// app provides its own map pinch gesture, so cancel Safari's separate page
+// gesture before it can scale and pan the complete interface.
+function preventPageZoom(event: Event) {
+  event.preventDefault()
+}
+
+document.addEventListener('gesturestart', preventPageZoom, { passive: false })
+document.addEventListener('gesturechange', preventPageZoom, { passive: false })
+
 createApp(App).mount('#app')

@@ -7,6 +7,10 @@ export interface MapViewConstraint {
   minScale: number
   bounds: MapBounds
 }
+export interface MapHomeView {
+  point: MapPoint
+  scale: number
+}
 
 const MIN_ZOOM = 1
 // Allow a little more room to pull the map away from an edge while keeping
@@ -23,9 +27,11 @@ export function useMapZoom(
   horizontalWrap: Ref<HorizontalWrap | null>,
   minimumZoomPoint: Ref<MapPoint | null>,
   viewConstraint: Ref<MapViewConstraint | null>,
+  homeView: Ref<MapHomeView | null>,
 ) {
   const transform = reactive({ x: 0, y: 0, scale: 1 })
   const isDragging = ref(false)
+  const isPinching = ref(false)
   const isWheeling = ref(false)
   const isAnimating = ref(false)
   let animationFrame: number | undefined
@@ -45,15 +51,19 @@ export function useMapZoom(
     moved: boolean
     svg: SVGSVGElement
   } | undefined
+  const touchPointers = new Map<number, MapPoint>()
+  const suppressedTouchTaps = new Set<number>()
+  let pinchState: { distance: number; scale: number; anchor: MapPoint; svg: SVGSVGElement } | undefined
   let suppressNextClick = false
 
-  const isZoomed = computed(() =>
-    transform.scale > MIN_ZOOM + 0.01
-    || Math.abs(transform.x) > 1
-    || Math.abs(transform.y) > 1,
-  )
+  const isZoomed = computed(() => {
+    const home = homeTransform()
+    return Math.abs(transform.scale - home.scale) > 0.01
+      || Math.abs(transform.x - home.x) > 1
+      || Math.abs(transform.y - home.y) > 1
+  })
   const isInteracting = computed(() =>
-    isDragging.value || isWheeling.value || isAnimating.value,
+    isDragging.value || isPinching.value || isWheeling.value || isAnimating.value,
   )
   const wrapActive = computed(() => horizontalWrap.value !== null)
   const wrapNeighborDirection = computed(() => {
@@ -122,7 +132,10 @@ export function useMapZoom(
 
     return {
       x,
-      y: Math.max(minY, Math.min(maxY, y)),
+      // At the fully zoomed-out world view there is no useful vertical area
+      // to reveal. Keep the map centered while still allowing Mercator's
+      // horizontal wrap to move at minimum zoom.
+      y: scale <= MIN_ZOOM ? 0 : Math.max(minY, Math.min(maxY, y)),
       scale,
     }
   }
@@ -138,6 +151,16 @@ export function useMapZoom(
     mapContent.value?.setAttribute(
       'transform',
       `translate(${next.x} ${next.y}) scale(${next.scale})`,
+    )
+  }
+
+  function homeTransform() {
+    const home = homeView.value
+    if (!home) return constrainTransform(0, 0, MIN_ZOOM)
+    return constrainTransform(
+      width.value / 2 - home.scale * home.point[0],
+      height.value / 2 - home.scale * home.point[1],
+      home.scale,
     )
   }
 
@@ -364,26 +387,30 @@ export function useMapZoom(
   }
 
   function resetZoom(animated = true) {
+    const home = homeTransform()
     if (animated) {
-      animateTo(0, 0, MIN_ZOOM, 500, 'zoom-out')
+      animateTo(home.x, home.y, home.scale, 500, 'zoom-out')
     } else {
       stopAnimation()
-      setTransform(0, 0, MIN_ZOOM)
+      setTransform(home.x, home.y, home.scale)
     }
   }
 
-  function startPan(event: PointerEvent, svg: SVGSVGElement) {
-    if (event.button !== 0 || (transform.scale <= MIN_ZOOM && !wrapActive.value && !viewConstraint.value)) return
+  function mapPoint(clientX: number, clientY: number, svg: SVGSVGElement): MapPoint {
+    const rect = svg.getBoundingClientRect()
+    return [
+      (clientX - rect.left) * width.value / rect.width,
+      (clientY - rect.top) * height.value / rect.height,
+    ]
+  }
 
-    stopAnimation()
-    cancelWheelUpdate()
-    cancelPanUpdate()
-    suppressNextClick = false
+  function beginDrag(pointerId: number, clientX: number, clientY: number, svg: SVGSVGElement) {
+    if (transform.scale <= MIN_ZOOM && !wrapActive.value && !viewConstraint.value) return
     const rect = svg.getBoundingClientRect()
     dragState = {
-      pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
+      pointerId,
+      startClientX: clientX,
+      startClientY: clientY,
       startX: transform.x,
       startY: transform.y,
       unitsPerPixelX: width.value / rect.width,
@@ -393,7 +420,61 @@ export function useMapZoom(
     }
   }
 
+  function beginPinch(svg: SVGSVGElement) {
+    flushPendingPan()
+    for (const pointerId of touchPointers.keys()) suppressedTouchTaps.add(pointerId)
+    const [first, second] = [...touchPointers.values()].map(([x, y]) => mapPoint(x, y, svg))
+    const centerX = (first[0] + second[0]) / 2
+    const centerY = (first[1] + second[1]) / 2
+    pinchState = {
+      distance: Math.max(Math.hypot(first[0] - second[0], first[1] - second[1]), 1),
+      scale: transform.scale,
+      anchor: [(centerX - transform.x) / transform.scale, (centerY - transform.y) / transform.scale],
+      svg,
+    }
+    dragState = undefined
+    isDragging.value = false
+    isPinching.value = true
+    suppressNextClick = true
+  }
+
+  function startPan(event: PointerEvent, svg: SVGSVGElement) {
+    if (event.pointerType === 'touch') {
+      suppressedTouchTaps.delete(event.pointerId)
+      touchPointers.set(event.pointerId, [event.clientX, event.clientY])
+      if (touchPointers.size >= 2) {
+        suppressedTouchTaps.add(event.pointerId)
+        stopAnimation()
+        cancelWheelUpdate()
+        if (!pinchState) beginPinch(svg)
+        svg.setPointerCapture(event.pointerId)
+        return
+      }
+    }
+    if (event.button !== 0) return
+
+    stopAnimation()
+    cancelWheelUpdate()
+    cancelPanUpdate()
+    suppressNextClick = false
+    beginDrag(event.pointerId, event.clientX, event.clientY, svg)
+  }
+
   function movePan(event: PointerEvent) {
+    if (event.pointerType === 'touch' && touchPointers.has(event.pointerId)) {
+      touchPointers.set(event.pointerId, [event.clientX, event.clientY])
+      const pinch = pinchState
+      if (pinch) {
+        const [first, second] = [...touchPointers.values()].map(([x, y]) => mapPoint(x, y, pinch.svg))
+        const distance = Math.hypot(first[0] - second[0], first[1] - second[1])
+        const scale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM,
+          Math.min(MAX_ZOOM, pinch.scale * distance / pinch.distance))
+        const centerX = (first[0] + second[0]) / 2
+        const centerY = (first[1] + second[1]) / 2
+        schedulePan(centerX - pinch.anchor[0] * scale, centerY - pinch.anchor[1] * scale, scale)
+        return
+      }
+    }
     if (!dragState || event.pointerId !== dragState.pointerId) return
 
     const deltaX = event.clientX - dragState.startClientX
@@ -417,15 +498,34 @@ export function useMapZoom(
   }
 
   function endPan(event: PointerEvent, svg: SVGSVGElement) {
-    if (!dragState || event.pointerId !== dragState.pointerId) return
+    const touchEnded = event.pointerType === 'touch' && touchPointers.delete(event.pointerId)
+    const suppressTap = event.pointerType === 'touch' && suppressedTouchTaps.delete(event.pointerId)
+    if (touchEnded && pinchState) {
+      flushPendingPan()
+      if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId)
+      if (touchPointers.size >= 2) {
+        beginPinch(svg)
+      } else {
+        pinchState = undefined
+        isPinching.value = false
+        const remaining = touchPointers.entries().next().value
+        if (remaining) beginDrag(remaining[0], remaining[1][0], remaining[1][1], svg)
+      }
+      return false
+    }
+    if (!dragState || event.pointerId !== dragState.pointerId) {
+      return touchEnded && !suppressTap && event.type === 'pointerup'
+    }
 
     flushPendingPan()
-    suppressNextClick = dragState.moved
+    const moved = dragState.moved
+    suppressNextClick ||= moved
     isDragging.value = false
     if (svg.hasPointerCapture(event.pointerId)) {
       svg.releasePointerCapture(event.pointerId)
     }
     dragState = undefined
+    return event.pointerType === 'touch' && !moved && !suppressTap && event.type === 'pointerup'
   }
 
   function consumeDragClick() {
@@ -439,6 +539,8 @@ export function useMapZoom(
     stopAnimation()
     cancelWheelUpdate()
     cancelPanUpdate()
+    touchPointers.clear()
+    suppressedTouchTaps.clear()
     if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
   })
 
