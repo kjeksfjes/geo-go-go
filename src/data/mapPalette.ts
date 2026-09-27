@@ -17,12 +17,12 @@ export const mapPalette = {
   // These elevation polygons are nested. Screen-blend each warm tint over the
   // darker relief land so every additional band increases lightness.
   relief: {
-    500: ['#f1dfad', 0.38],
-    1000: ['#f3d7a0', 0.32],
-    1500: ['#f4d095', 0.28],
-    2250: ['#f5d6a4', 0.25],
-    3000: ['#f8e5c4', 0.22],
-    4000: ['#fbf1dc', 0.2],
+    500: ['#f4e7c5', 0.42],
+    1000: ['#f6e4bc', 0.38],
+    1500: ['#f8e2b8', 0.36],
+    2250: ['#fae8c9', 0.34],
+    3000: ['#fdf3df', 0.34],
+    4000: ['#fffdf8', 0.42],
   } as Record<number, [string, number]>,
 }
 
