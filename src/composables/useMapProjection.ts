@@ -1,12 +1,11 @@
 import {
   geoAzimuthalEqualArea,
-  geoEqualEarth,
   geoMercator,
   geoNaturalEarth1,
   geoPath,
   type GeoProjection,
 } from 'd3-geo'
-import { geoWinkel3 } from 'd3-geo-projection'
+import { geoMiller, geoWinkel3 } from 'd3-geo-projection'
 import { computed, shallowRef, type Ref } from 'vue'
 import type { FeatureCollection, MultiPoint } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
@@ -16,7 +15,12 @@ import type { ReliefBand, ReliefElevation } from '../data/relief'
 import type { MapBounds, MapPoint } from './useMapZoom'
 import { projectedUnitFocus } from '../logic/mapFocus'
 
-export type MapProjectionId = 'mercator' | 'winkel-tripel' | 'equal-earth' | 'natural-earth' | 'regional-equal-area'
+export type MapProjectionId = 'mercator' | 'miller' | 'winkel-tripel' | 'natural-earth' | 'regional-equal-area'
+export interface MapProjectionOption {
+  id: MapProjectionId
+  label: string
+  supportsHorizontalWrap?: boolean
+}
 export interface HorizontalWrap {
   period: number
   centerX: number
@@ -29,18 +33,18 @@ export interface ProjectionDebugState {
   unitCount: number
 }
 
-export const projectionOptions: Array<{ id: MapProjectionId; label: string }> = [
-  { id: 'mercator', label: 'Mercator' },
+export const projectionOptions: MapProjectionOption[] = [
+  { id: 'mercator', label: 'Mercator', supportsHorizontalWrap: true },
+  { id: 'miller', label: 'Miller Cylindrical', supportsHorizontalWrap: true },
   { id: 'winkel-tripel', label: 'Winkel Tripel' },
-  { id: 'equal-earth', label: 'Equal Earth' },
   { id: 'natural-earth', label: 'Natural Earth' },
   { id: 'regional-equal-area', label: 'Regional Equal Area' },
 ]
 
 const projectionFactories: Record<Exclude<MapProjectionId, 'regional-equal-area'>, () => GeoProjection> = {
   mercator: geoMercator,
+  miller: geoMiller,
   'winkel-tripel': geoWinkel3,
-  'equal-earth': geoEqualEarth,
   'natural-earth': geoNaturalEarth1,
 }
 
@@ -387,7 +391,9 @@ export function useMapProjection(
   const horizontalWrap = computed<HorizontalWrap | null>(() => {
     const wrapEnabled = activeRegion.value.id === 'world'
       || activeRegion.value.view?.horizontalWrap === true
-    if (projectionId.value !== 'mercator' || !wrapEnabled) return null
+    const projectionWraps = projectionOptions.find(({ id }) => id === projectionId.value)
+      ?.supportsHorizontalWrap === true
+    if (!projectionWraps || !wrapEnabled) return null
     const projection = pathGenerator.value.projection() as GeoProjection
     return {
       period: 2 * Math.PI * projection.scale(),

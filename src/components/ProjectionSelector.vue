@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import TreeSelect from '@zanmato/vue3-treeselect'
-import type { MapProjectionId } from '../composables/useMapProjection'
+import type { MapProjectionId, MapProjectionOption } from '../composables/useMapProjection'
 import { useMapTreeSelectControl } from '../composables/useMapTreeSelectControl'
 import { t } from '../i18n'
 
 const props = defineProps<{
   disabled?: boolean
-  options: Array<{ id: MapProjectionId; label: string }>
+  options: MapProjectionOption[]
 }>()
 
 const model = defineModel<MapProjectionId>({ required: true })

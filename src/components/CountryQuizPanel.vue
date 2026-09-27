@@ -300,6 +300,7 @@ watch(() => props.question?.id, async (countryId) => {
   .quiz-panel__flag {
     align-self: start;
     margin-top: 0.1rem;
+    box-shadow: 0 2px 6px rgba(23, 45, 56, 0.16);
     font-size: 2rem;
   }
 
@@ -344,9 +345,5 @@ watch(() => props.question?.id, async (countryId) => {
     font-size: 0.76rem;
   }
 
-  .quiz-panel__text-button {
-    min-height: 2rem;
-    padding-block: 0.2rem;
-  }
 }
 </style>

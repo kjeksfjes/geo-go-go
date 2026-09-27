@@ -178,7 +178,7 @@ workerScope.onmessage = (event) => {
     [(-padX - camera.x) / camera.scale, (-padY - camera.y) / camera.scale],
     [(width + padX - camera.x) / camera.scale, (height + padY - camera.y) / camera.scale],
   ]
-  // Only Mercator wraps. Each projected world fits within the map width, so
+  // Every wrapping cylindrical projection fits within the map width, so
   // skip copies that cannot reach this bitmap at the current camera position.
   const visibleOffsets = period === null
     ? offsets

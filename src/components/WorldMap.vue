@@ -1159,7 +1159,7 @@ async function setProjection(nextId: MapProjectionId) {
   fill: var(--map-ocean);
 }
 
-/* Match the repeated sphere where two Mercator copies meet at a pixel edge. */
+/* Match the repeated sphere where two cylindrical copies meet at a pixel edge. */
 .world-map--wrapped {
   background-color: var(--map-ocean);
 }
