@@ -83,7 +83,7 @@ const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>('mercator')
 const usesMobileMapDefaults = window.matchMedia('(hover: none) and (pointer: coarse)').matches
 const bathymetryEnabled = ref(!usesMobileMapDefaults)
-const reliefEnabled = ref(!usesMobileMapDefaults)
+const reliefEnabled = ref(false)
 const bathymetryLoading = ref(false)
 const reliefLoading = ref(false)
 const bathymetryBands = shallowRef<readonly BathymetryBand[]>([])
@@ -910,6 +910,7 @@ async function setProjection(nextId: MapProjectionId) {
             v-for="offset in canvasRendererActive ? [] : copyOffsets"
             :key="`terrain-${offset}`"
             class="terrain"
+            :class="{ 'terrain--relief': reliefEnabled && reliefPaths.length > 0 }"
             :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             aria-hidden="true"
           >
@@ -1205,7 +1206,12 @@ async function setProjection(nextId: MapProjectionId) {
   fill: var(--map-land);
 }
 
+.terrain--relief .terrain__land {
+  fill: var(--map-relief-land);
+}
+
 .relief__band {
+  mix-blend-mode: screen;
   stroke: none;
 }
 
@@ -1232,6 +1238,11 @@ async function setProjection(nextId: MapProjectionId) {
 .relief__band--3000 {
   fill: var(--map-relief-3000);
   fill-opacity: var(--map-relief-3000-opacity);
+}
+
+.relief__band--4000 {
+  fill: var(--map-relief-4000);
+  fill-opacity: var(--map-relief-4000-opacity);
 }
 
 .country {

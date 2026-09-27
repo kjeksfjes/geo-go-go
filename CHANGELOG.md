@@ -4,6 +4,13 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.4.1 — 2026-09-28
+
+### Improvements
+
+- Reworked land relief into six progressively lighter elevation bands, including a new 4,000-metre band with near-white mountain peaks.
+- Disabled relief by default on all devices so its additional map data is loaded only when enabled in settings.
+
 ## 0.4.0 — 2026-09-27
 
 ### Improvements

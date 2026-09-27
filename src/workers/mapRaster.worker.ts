@@ -91,13 +91,14 @@ function drawScene(
     for (const country of contextCountries) {
       if (country.path) context.fill(country.path)
     }
-    context.fillStyle = mapPalette.land
+    context.fillStyle = prepared.relief.length ? mapPalette.reliefLand : mapPalette.land
     for (const country of countries) {
       if (country.path) context.fill(country.path)
     }
     if (countries.length && prepared.reliefClip && prepared.relief.length) {
       context.save()
       context.clip(prepared.reliefClip)
+      context.globalCompositeOperation = 'screen'
       for (const band of prepared.relief) {
         if (!band.path) continue
         const [color, opacity] = mapPalette.relief[band.elevation] ?? mapPalette.relief[3000]
