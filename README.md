@@ -2,6 +2,10 @@
 
 A small interactive world-map geography game built with Vue 3, TypeScript, Vite, Natural Earth Admin-0 Map Units, `d3-geo`, and `flag-icons`.
 
+[**Play Geo Go Go →**](https://kjeksfjes.github.io/geo-go-go/)
+
+[![Latest release](https://img.shields.io/github/v/tag/kjeksfjes/geo-go-go?sort=semver&label=latest%20release)](https://github.com/kjeksfjes/geo-go-go/tags) · [Changelog](CHANGELOG.md)
+
 The map starts with Natural Earth's 1:50m Admin-0 Map Units. A **High detail** toggle lazily loads the corresponding 1:10m units when requested. This keeps the initial download and render light, avoids changing geometry in the middle of a gesture, and makes coastlines and small countries clearer at close range when desired. After each resolution has rendered once, its projected SVG paths are cached so later switches are immediate at the current map size and projection. The **Bathymetry** toggle adds three noninteractive ocean-depth bands (200m, 2,000m, and 6,000m) behind the country layer for relief-style experiments. The adjacent **Relief** toggle adds six similarly simplified elevation bands (500m, 1,000m, 1,500m, 2,250m, 3,000m, and 4,000m) without changing map interaction. The map also shows major ocean names at world scale and introduces names of seas, gulfs, bays, and other smaller waters as you zoom. These labels are noninteractive and follow the active projection and map movement. The **Water names** toggle can hide them; labels also disappear temporarily during map dragging and zooming so they do not distract from motion.
 
 It defaults to a conventional Mercator projection. Mercator preserves local shapes and angles well, while enlarging areas toward the poles in the familiar way. The World view wraps horizontally at every zoom level when panning across the map edge.
