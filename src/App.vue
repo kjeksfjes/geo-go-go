@@ -251,14 +251,6 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         <p class="visually-hidden">{{ t('subtitle') }}</p>
       </div>
       <div class="header-navigation">
-        <div class="mode-selector" role="group" :aria-label="t('gameMode')">
-          <button type="button" :aria-pressed="mode === 'explore'" @click="setMode('explore')">
-            {{ t('explore') }}
-          </button>
-          <button type="button" :aria-pressed="mode === 'find-country'" @click="setMode('find-country')">
-            {{ t('findCountry') }}
-          </button>
-        </div>
         <div class="header-region-control">
           <svg class="header-region-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
@@ -269,6 +261,14 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
             :options="regions"
             @update:model-value="setActiveRegion"
           />
+        </div>
+        <div class="mode-selector" role="group" :aria-label="t('gameMode')">
+          <button type="button" :aria-pressed="mode === 'explore'" @click="setMode('explore')">
+            {{ t('explore') }}
+          </button>
+          <button type="button" :aria-pressed="mode === 'find-country'" @click="setMode('find-country')">
+            {{ t('findCountry') }}
+          </button>
         </div>
       </div>
       <div class="header-actions">

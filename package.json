@@ -1,11 +1,12 @@
 {
   "name": "geo-go-go",
   "private": true,
-  "version": "0.4.1",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "npm run check:marine-labels && vue-tsc -b && vite build",
+    "check:marine-labels": "node scripts/validate-marine-labels.mjs",
     "preview": "vite preview",
     "release:merge": "node scripts/release-merge.mjs"
   },

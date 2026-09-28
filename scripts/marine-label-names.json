@@ -1,0 +1,1429 @@
+{
+  "version": 1,
+  "policy": "Every shipped marine label has an explicit reviewed English and Norwegian Bokmål display name. Established Norwegian exonyms are preferred; otherwise the authoritative international or local form is retained. For politically disputed names, established Western European conventions are used conservatively and the dispute is documented.",
+  "labels": {
+    "ocean:arctic": {
+      "name": "Arctic Ocean",
+      "nameNb": "Nordishavet"
+    },
+    "ocean:atlantic": {
+      "name": "Atlantic Ocean",
+      "nameNb": "Atlanterhavet"
+    },
+    "ocean:indian": {
+      "name": "Indian Ocean",
+      "nameNb": "Indiahavet"
+    },
+    "ocean:pacific": {
+      "name": "Pacific Ocean",
+      "nameNb": "Stillehavet"
+    },
+    "ocean:southern": {
+      "name": "Southern Ocean",
+      "nameNb": "Sørishavet"
+    },
+    "ne:1159115343": {
+      "sourceName": "Arabian Sea",
+      "name": "Arabian Sea",
+      "nameNb": "Arabiahavet"
+    },
+    "ne:1159115483": {
+      "sourceName": "Baffin Bay",
+      "name": "Baffin Bay",
+      "nameNb": "Baffinbukta"
+    },
+    "ne:1159115253": {
+      "sourceName": "Bay of Bengal",
+      "name": "Bay of Bengal",
+      "nameNb": "Bengalbukta"
+    },
+    "ne:1159115359": {
+      "sourceName": "Beaufort Sea",
+      "name": "Beaufort Sea",
+      "nameNb": "Beauforthavet"
+    },
+    "ne:1159115171": {
+      "sourceName": "Black Sea",
+      "name": "Black Sea",
+      "nameNb": "Svartehavet"
+    },
+    "ne:1159115379": {
+      "sourceName": "Caribbean Sea",
+      "name": "Caribbean Sea",
+      "nameNb": "Det karibiske hav"
+    },
+    "ne:1159115461": {
+      "sourceName": "Caspian Sea",
+      "name": "Caspian Sea",
+      "nameNb": "Kaspihavet"
+    },
+    "ne:1159115219": {
+      "sourceName": "Coral Sea",
+      "name": "Coral Sea",
+      "nameNb": "Korallhavet"
+    },
+    "ne:1159115503": {
+      "sourceName": "Gulf of Alaska",
+      "name": "Gulf of Alaska",
+      "nameNb": "Alaskabukta"
+    },
+    "ne:1159115399": {
+      "sourceName": "Gulf of Mexico",
+      "name": "Gulf of Mexico",
+      "nameNb": "Mexicogolfen",
+      "note": "Gulf of Mexico follows prevailing international and Norwegian usage; the United States renamed its federal usage to Gulf of America in 2025."
+    },
+    "ne:1159115441": {
+      "sourceName": "Hudson Bay",
+      "name": "Hudson Bay",
+      "nameNb": "Hudsonbukta"
+    },
+    "ne:1159115419": {
+      "sourceName": "Labrador Sea",
+      "name": "Labrador Sea",
+      "nameNb": "Labradorsjøen"
+    },
+    "ne:1159115321": {
+      "sourceName": "Mediterranean Sea",
+      "name": "Mediterranean Sea",
+      "nameNb": "Middelhavet"
+    },
+    "ne:1159115597": {
+      "sourceName": "Persian Gulf",
+      "name": "Persian Gulf",
+      "nameNb": "Persiabukta",
+      "note": "Persian Gulf follows the UN standard geographical designation; Arabian Gulf is used by some Arab states."
+    },
+    "ne:1159115197": {
+      "sourceName": "Philippine Sea",
+      "name": "Philippine Sea",
+      "nameNb": "Filippinerhavet"
+    },
+    "ne:1159115521": {
+      "sourceName": "Red Sea",
+      "name": "Red Sea",
+      "nameNb": "Rødehavet"
+    },
+    "ne:1159115615": {
+      "sourceName": "Ross Sea",
+      "name": "Ross Sea",
+      "nameNb": "Rosshavet"
+    },
+    "ne:1159115305": {
+      "sourceName": "Sea of Japan",
+      "name": "Sea of Japan",
+      "nameNb": "Japanhavet",
+      "note": "Sea of Japan follows prevailing international and Norwegian usage; South Korea advocates concurrent use of East Sea."
+    },
+    "ne:1159115541": {
+      "sourceName": "Sea of Okhotsk",
+      "name": "Sea of Okhotsk",
+      "nameNb": "Okhotskhavet"
+    },
+    "ne:1159115273": {
+      "sourceName": "South China Sea",
+      "name": "South China Sea",
+      "nameNb": "Sør-Kina-havet"
+    },
+    "ne:1159115233": {
+      "sourceName": "Tasman Sea",
+      "name": "Tasman Sea",
+      "nameNb": "Tasmanhavet"
+    },
+    "ne:1159115579": {
+      "sourceName": "Weddell Sea",
+      "name": "Weddell Sea",
+      "nameNb": "Weddellhavet"
+    },
+    "ne:1159116181": {
+      "sourceName": "Amundsen Sea",
+      "name": "Amundsen Sea",
+      "nameNb": "Amundsenhavet"
+    },
+    "ne:1159115987": {
+      "sourceName": "Andaman Sea",
+      "name": "Andaman Sea",
+      "nameNb": "Andamanhavet"
+    },
+    "ne:1159116081": {
+      "sourceName": "Arafura Sea",
+      "name": "Arafura Sea",
+      "nameNb": "Arafurasjøen"
+    },
+    "ne:1159115831": {
+      "sourceName": "Baltic Sea",
+      "name": "Baltic Sea",
+      "nameNb": "Østersjøen"
+    },
+    "ne:1159115717": {
+      "sourceName": "Banda Sea",
+      "name": "Banda Sea",
+      "nameNb": "Bandasjøen"
+    },
+    "ne:1159115861": {
+      "sourceName": "Barents Sea",
+      "name": "Barents Sea",
+      "nameNb": "Barentshavet"
+    },
+    "ne:1159115749": {
+      "sourceName": "Bay of Biscay",
+      "name": "Bay of Biscay",
+      "nameNb": "Biscayabukta"
+    },
+    "ne:1159116059": {
+      "sourceName": "Bay of Campeche",
+      "name": "Bay of Campeche",
+      "nameNb": "Bay of Campeche"
+    },
+    "ne:1159116169": {
+      "sourceName": "Bellingshausen Sea",
+      "name": "Bellingshausen Sea",
+      "nameNb": "Bellingshausenhavet"
+    },
+    "ne:1159117319": {
+      "sourceName": "Bering Sea",
+      "name": "Bering Sea",
+      "nameNb": "Beringhavet"
+    },
+    "ne:1159115635": {
+      "sourceName": "Celebes Sea",
+      "name": "Celebes Sea",
+      "nameNb": "Celebessjøen"
+    },
+    "ne:1159116037": {
+      "sourceName": "Chukchi Sea",
+      "name": "Chukchi Sea",
+      "nameNb": "Tsjuktsjerhavet"
+    },
+    "ne:1159116205": {
+      "sourceName": "Davis Strait",
+      "name": "Davis Strait",
+      "nameNb": "Davisstredet"
+    },
+    "ne:1159116269": {
+      "sourceName": "Drake Passage",
+      "name": "Drake Passage",
+      "nameNb": "Drakestredet"
+    },
+    "ne:1159116027": {
+      "sourceName": "East China Sea",
+      "name": "East China Sea",
+      "nameNb": "Øst-Kina-havet"
+    },
+    "ne:1159115695": {
+      "sourceName": "Greenland Sea",
+      "name": "Greenland Sea",
+      "nameNb": "Grønlandshavet"
+    },
+    "ne:1159115791": {
+      "sourceName": "Gulf of Guinea",
+      "name": "Gulf of Guinea",
+      "nameNb": "Guineabukta"
+    },
+    "ne:1159116123": {
+      "sourceName": "Gulf of Thailand",
+      "name": "Gulf of Thailand",
+      "nameNb": "Thailandbukta"
+    },
+    "ne:1159115935": {
+      "sourceName": "Irish Sea",
+      "name": "Irish Sea",
+      "nameNb": "Irskesjøen"
+    },
+    "ne:1159115959": {
+      "sourceName": "Java Sea",
+      "name": "Java Sea",
+      "nameNb": "Javasjøen"
+    },
+    "ne:1159116231": {
+      "sourceName": "Kara Sea",
+      "name": "Kara Sea",
+      "nameNb": "Karahavet"
+    },
+    "ne:1159116143": {
+      "sourceName": "Laccadive Sea",
+      "name": "Laccadive Sea",
+      "nameNb": "Lakkadivhavet"
+    },
+    "ne:1159116253": {
+      "sourceName": "Laptev Sea",
+      "name": "Laptev Sea",
+      "nameNb": "Laptevhavet"
+    },
+    "ne:1159115729": {
+      "sourceName": "Luzon Strait",
+      "name": "Luzon Strait",
+      "nameNb": "Luzonstredet"
+    },
+    "ne:1159115771": {
+      "sourceName": "Mozambique Channel",
+      "name": "Mozambique Channel",
+      "nameNb": "Mosambikkanalen"
+    },
+    "ne:1159115879": {
+      "sourceName": "North Sea",
+      "name": "North Sea",
+      "nameNb": "Nordsjøen"
+    },
+    "ne:1159115675": {
+      "sourceName": "Norwegian Sea",
+      "name": "Norwegian Sea",
+      "nameNb": "Norskehavet"
+    },
+    "ne:1159120667": {
+      "sourceName": "Sargasso Sea",
+      "name": "Sargasso Sea",
+      "nameNb": "Sargassohavet"
+    },
+    "ne:1159115811": {
+      "sourceName": "Scotia Sea",
+      "name": "Scotia Sea",
+      "nameNb": "Scotiahavet"
+    },
+    "ne:1159115655": {
+      "sourceName": "Sulu Sea",
+      "name": "Sulu Sea",
+      "nameNb": "Sulusjøen"
+    },
+    "ne:1159116101": {
+      "sourceName": "Timor Sea",
+      "name": "Timor Sea",
+      "nameNb": "Timorsjøen"
+    },
+    "ne:1159115999": {
+      "sourceName": "Yellow Sea",
+      "name": "Yellow Sea",
+      "nameNb": "Gulehavet"
+    },
+    "ne:1159116607": {
+      "sourceName": "Adriatic Sea",
+      "name": "Adriatic Sea",
+      "nameNb": "Adriaterhavet"
+    },
+    "ne:1159116535": {
+      "sourceName": "English Channel",
+      "name": "English Channel",
+      "nameNb": "Den engelske kanal"
+    },
+    "ne:1159116315": {
+      "sourceName": "Great Australian Bight",
+      "name": "Great Australian Bight",
+      "nameNb": "Australbukta"
+    },
+    "ne:1159116333": {
+      "sourceName": "Gulf of Aden",
+      "name": "Gulf of Aden",
+      "nameNb": "Adenbukta"
+    },
+    "ne:1159116589": {
+      "sourceName": "Gulf of Bothnia",
+      "name": "Gulf of Bothnia",
+      "nameNb": "Bottenvika"
+    },
+    "ne:1159116479": {
+      "sourceName": "Gulf of California",
+      "name": "Gulf of California",
+      "nameNb": "Californiabukta"
+    },
+    "ne:1159116451": {
+      "sourceName": "Gulf of Carpentaria",
+      "name": "Gulf of Carpentaria",
+      "nameNb": "Carpentariabukta"
+    },
+    "ne:1159116553": {
+      "sourceName": "Gulf of Honduras",
+      "name": "Gulf of Honduras",
+      "nameNb": "Hondurasbukta"
+    },
+    "ne:1159116359": {
+      "sourceName": "Gulf of Oman",
+      "name": "Gulf of Oman",
+      "nameNb": "Omanbukta"
+    },
+    "ne:1159116501": {
+      "sourceName": "Hudson Strait",
+      "name": "Hudson Strait",
+      "nameNb": "Hudsonsundet"
+    },
+    "ne:1159116431": {
+      "sourceName": "James Bay",
+      "name": "James Bay",
+      "nameNb": "Jamesbukta"
+    },
+    "ne:1159116377": {
+      "sourceName": "Tyrrhenian Sea",
+      "name": "Tyrrhenian Sea",
+      "nameNb": "Tyrrenhavet"
+    },
+    "ne:1159116395": {
+      "sourceName": "White Sea",
+      "name": "White Sea",
+      "nameNb": "Kvitsjøen"
+    },
+    "ne:1159117123": {
+      "sourceName": "Aegean Sea",
+      "name": "Aegean Sea",
+      "nameNb": "Egeerhavet"
+    },
+    "ne:1159117223": {
+      "sourceName": "Amundsen Gulf",
+      "name": "Amundsen Gulf",
+      "nameNb": "Amundsenbukta"
+    },
+    "ne:1159117105": {
+      "sourceName": "Balearic Sea",
+      "name": "Balearic Sea",
+      "nameNb": "Balearic Sea"
+    },
+    "ne:1159116797": {
+      "sourceName": "Bay of Fundy",
+      "name": "Bay of Fundy",
+      "nameNb": "Fundybukta"
+    },
+    "ne:1159116643": {
+      "sourceName": "Bay of Plenty",
+      "name": "Bay of Plenty",
+      "nameNb": "Bay of Plenty"
+    },
+    "ne:1159116735": {
+      "sourceName": "Bismarck Sea",
+      "name": "Bismarck Sea",
+      "nameNb": "Bismarcksjøen"
+    },
+    "ne:1159117171": {
+      "sourceName": "Bohai Sea",
+      "name": "Bohai Sea",
+      "nameNb": "Bohaibukta"
+    },
+    "ne:1159116991": {
+      "sourceName": "Bristol Bay",
+      "name": "Bristol Bay",
+      "nameNb": "Bristol Bay"
+    },
+    "ne:1159115891": {
+      "sourceName": "Bristol Channel",
+      "name": "Bristol Channel",
+      "nameNb": "Bristolkanalen"
+    },
+    "ne:1159116897": {
+      "sourceName": "Ceram Sea",
+      "name": "Seram Sea",
+      "nameNb": "Seram Sea",
+      "note": "Modernized Ceram to Seram in line with current Indonesian usage; no established Norwegian exonym was verified."
+    },
+    "ne:1159117043": {
+      "sourceName": "Chesapeake Bay",
+      "name": "Chesapeake Bay",
+      "nameNb": "Chesapeake Bay"
+    },
+    "ne:1159116625": {
+      "sourceName": "Florida Strait",
+      "name": "Straits of Florida",
+      "nameNb": "Floridasundet",
+      "note": "Uses the NOAA chart form Straits of Florida; Norwegian follows Språkrådet."
+    },
+    "ne:1159116517": {
+      "sourceName": "Gulf of Finland",
+      "name": "Gulf of Finland",
+      "nameNb": "Finskebukta"
+    },
+    "ne:1159117185": {
+      "sourceName": "Gulf of Kutch",
+      "name": "Gulf of Kachchh",
+      "nameNb": "Gulf of Kachchh",
+      "note": "Uses the contemporary Indian government spelling Kachchh rather than Kutch."
+    },
+    "ne:1159116571": {
+      "sourceName": "Gulf of Lion",
+      "name": "Gulf of Lion",
+      "nameNb": "Løvebukta"
+    },
+    "ne:1159117021": {
+      "sourceName": "Gulf of Maine",
+      "name": "Gulf of Maine",
+      "nameNb": "Gulf of Maine"
+    },
+    "ne:1159117135": {
+      "sourceName": "Gulf of Mannar",
+      "name": "Gulf of Mannar",
+      "nameNb": "Mannarbukta"
+    },
+    "ne:1159117203": {
+      "sourceName": "Gulf of Panama",
+      "name": "Gulf of Panama",
+      "nameNb": "Gulf of Panama"
+    },
+    "ne:1159116715": {
+      "sourceName": "Gulf of Saint Lawrence",
+      "name": "Gulf of St. Lawrence",
+      "nameNb": "St. Lawrence-bukta",
+      "note": "Uses the Canadian form St. Lawrence and Språkrådet’s Norwegian exonym."
+    },
+    "ne:1159116787": {
+      "sourceName": "Gulf of Tonkin",
+      "name": "Gulf of Tonkin",
+      "nameNb": "Tonkinbukta"
+    },
+    "ne:1159116697": {
+      "sourceName": "Ionian Sea",
+      "name": "Ionian Sea",
+      "nameNb": "Det joniske hav"
+    },
+    "ne:1159116907": {
+      "sourceName": "Korea Strait",
+      "name": "Korea Strait",
+      "nameNb": "Koreastredet"
+    },
+    "ne:1159116881": {
+      "sourceName": "Makassar Strait",
+      "name": "Makassar Strait",
+      "nameNb": "Makassarstredet"
+    },
+    "ne:1159116999": {
+      "sourceName": "Melville Bay",
+      "name": "Melville Bay",
+      "nameNb": "Melville Bugt"
+    },
+    "ne:1159116731": {
+      "sourceName": "Molucca Sea",
+      "name": "Maluku Sea",
+      "nameNb": "Maluku Sea",
+      "note": "Uses Indonesian Maluku rather than the older English Molucca; no established Norwegian exonym was verified."
+    },
+    "ne:1159116661": {
+      "sourceName": "Northwest Passage",
+      "name": "Northwest Passage",
+      "nameNb": "Nordvestpassasjen"
+    },
+    "ne:1159116815": {
+      "sourceName": "Río de la Plata",
+      "name": "Río de la Plata",
+      "nameNb": "Río de la Plata"
+    },
+    "ne:1159117077": {
+      "sourceName": "San Jorge Gulf",
+      "name": "San Jorge Gulf",
+      "nameNb": "San Jorge Gulf"
+    },
+    "ne:1159115921": {
+      "sourceName": "Sea of the Hebrides",
+      "name": "Sea of the Hebrides",
+      "nameNb": "Sea of the Hebrides"
+    },
+    "ne:1159116927": {
+      "sourceName": "Seto Inland Sea",
+      "name": "Seto Inland Sea",
+      "nameNb": "Innlandshavet"
+    },
+    "ne:1159117159": {
+      "sourceName": "Shelikhov Gulf",
+      "name": "Shelikhov Gulf",
+      "nameNb": "Shelikhov Gulf"
+    },
+    "ne:1159116861": {
+      "sourceName": "Singapore Strait",
+      "name": "Singapore Strait",
+      "nameNb": "Singaporestredet"
+    },
+    "ne:1159116767": {
+      "sourceName": "Solomon Sea",
+      "name": "Solomon Sea",
+      "nameNb": "Salomonsjøen"
+    },
+    "ne:1159117067": {
+      "sourceName": "Strait of Gibraltar",
+      "name": "Strait of Gibraltar",
+      "nameNb": "Gibraltarstredet"
+    },
+    "ne:1159116835": {
+      "sourceName": "Strait of Malacca",
+      "name": "Strait of Malacca",
+      "nameNb": "Malakkastredet"
+    },
+    "ne:1159116947": {
+      "sourceName": "Taiwan Strait",
+      "name": "Taiwan Strait",
+      "nameNb": "Taiwanstredet"
+    },
+    "ne:1159116967": {
+      "sourceName": "Tikahtnu Inlet",
+      "name": "Cook Inlet",
+      "nameNb": "Cook Inlet",
+      "kind": "inlet",
+      "note": "Cook Inlet is the official English name and an inlet; Tikahtnu is a Dena’ina traditional name and the former Natural Earth English label."
+    },
+    "ne:1159117265": {
+      "sourceName": "Ungava Bay",
+      "name": "Ungava Bay",
+      "nameNb": "Ungavabukta"
+    },
+    "ne:1159117247": {
+      "sourceName": "Viscount Melville Sound",
+      "name": "Viscount Melville Sound",
+      "nameNb": "Viscount Melville Sound"
+    },
+    "ne:1159118573": {
+      "sourceName": "Bahía Blanca",
+      "name": "Bahía Blanca",
+      "nameNb": "Bahía Blanca"
+    },
+    "ne:1159118629": {
+      "sourceName": "Bahía Grande",
+      "name": "Bahía Grande",
+      "nameNb": "Bahía Grande"
+    },
+    "ne:1159117373": {
+      "sourceName": "Bass Strait",
+      "name": "Bass Strait",
+      "nameNb": "Bass-sundet"
+    },
+    "ne:1159118475": {
+      "sourceName": "Bight of Benin",
+      "name": "Bight of Benin",
+      "nameNb": "Beninbukta"
+    },
+    "ne:1159118493": {
+      "sourceName": "Bight of Biafra",
+      "name": "Bight of Bonny",
+      "nameNb": "Biafrabukta",
+      "note": "Modern Nigerian English uses Bight of Bonny; Språkrådet and SNL retain the established Norwegian Biafrabukta."
+    },
+    "ne:1159117445": {
+      "sourceName": "Boca Grande",
+      "name": "Boca Grande",
+      "nameNb": "Boca Grande"
+    },
+    "ne:1159118943": {
+      "sourceName": "Boknafjord",
+      "name": "Boknafjord",
+      "nameNb": "Boknafjorden"
+    },
+    "ne:1159118835": {
+      "sourceName": "Bosporus",
+      "name": "Bosporus",
+      "nameNb": "Bosporos"
+    },
+    "ne:1159117561": {
+      "sourceName": "Bransfield Strait",
+      "name": "Bransfield Strait",
+      "nameNb": "Bransfieldstredet"
+    },
+    "ne:1159117615": {
+      "sourceName": "Cumberland Sound",
+      "name": "Cumberland Sound",
+      "nameNb": "Cumberland Sound"
+    },
+    "ne:1159118715": {
+      "sourceName": "Davis Sea",
+      "name": "Davis Sea",
+      "nameNb": "Davis Sea"
+    },
+    "ne:1159117651": {
+      "sourceName": "Disko Bay",
+      "name": "Disko Bay",
+      "nameNb": "Diskobukta"
+    },
+    "ne:1159117409": {
+      "sourceName": "Dixon Entrance",
+      "name": "Dixon Entrance",
+      "nameNb": "Dixon Entrance"
+    },
+    "ne:1159118247": {
+      "sourceName": "East Korea Bay",
+      "name": "East Korea Bay",
+      "nameNb": "East Korea Bay"
+    },
+    "ne:1159117337": {
+      "sourceName": "East Siberian Sea",
+      "name": "East Siberian Sea",
+      "nameNb": "Øst-Sibir-havet"
+    },
+    "ne:1159118111": {
+      "sourceName": "Foxe Basin",
+      "name": "Foxe Basin",
+      "nameNb": "Foxesjøen"
+    },
+    "ne:1159117633": {
+      "sourceName": "Frobisher Bay",
+      "name": "Frobisher Bay",
+      "nameNb": "Frobisher Bay"
+    },
+    "ne:1159118321": {
+      "sourceName": "Geographe Bay",
+      "name": "Geographe Bay",
+      "nameNb": "Geographe Bay"
+    },
+    "ne:1159118871": {
+      "sourceName": "Gulf St Vincent",
+      "name": "Gulf St Vincent",
+      "nameNb": "Gulf St Vincent"
+    },
+    "ne:1159118085": {
+      "sourceName": "Gulf of Boothia",
+      "name": "Gulf of Boothia",
+      "nameNb": "Boothiagulfen"
+    },
+    "ne:1159117489": {
+      "sourceName": "Gulf of Corcovado",
+      "name": "Gulf of Corcovado",
+      "nameNb": "Gulf of Corcovado"
+    },
+    "ne:1159117973": {
+      "sourceName": "Gulf of Gabès",
+      "name": "Gulf of Gabès",
+      "nameNb": "Gabèsbukta"
+    },
+    "ne:1159118151": {
+      "sourceName": "Gulf of Guayaquil",
+      "name": "Gulf of Guayaquil",
+      "nameNb": "Gulf of Guayaquil"
+    },
+    "ne:1159117827": {
+      "sourceName": "Gulf of Khambhat",
+      "name": "Gulf of Khambhat",
+      "nameNb": "Gulf of Khambhat"
+    },
+    "ne:1159118975": {
+      "sourceName": "Gulf of Martaban",
+      "name": "Gulf of Mottama",
+      "nameNb": "Gulf of Mottama",
+      "note": "Myanmar authorities use Gulf of Mottama; Gulf of Martaban is the former English name."
+    },
+    "ne:1159118175": {
+      "sourceName": "Gulf of Masirah",
+      "name": "Gulf of Masirah",
+      "nameNb": "Gulf of Masirah"
+    },
+    "ne:1159118329": {
+      "sourceName": "Gulf of Papua",
+      "name": "Gulf of Papua",
+      "nameNb": "Papuagulfen"
+    },
+    "ne:1159118589": {
+      "sourceName": "Gulf of Penas",
+      "name": "Gulf of Penas",
+      "nameNb": "Golfo de Penas"
+    },
+    "ne:1159118365": {
+      "sourceName": "Gulf of Riga",
+      "name": "Gulf of Riga",
+      "nameNb": "Rigabukta"
+    },
+    "ne:1159118407": {
+      "sourceName": "Gulf of Sidra",
+      "name": "Gulf of Sidra",
+      "nameNb": "Sidrabukta"
+    },
+    "ne:1159118133": {
+      "sourceName": "Gulf of Tehuantepec",
+      "name": "Gulf of Tehuantepec",
+      "nameNb": "Tehuantepecbukta"
+    },
+    "ne:1159118783": {
+      "sourceName": "Hangzhouwan",
+      "name": "Hangzhou Bay",
+      "nameNb": "Hangzhou Bay",
+      "note": "Uses the contemporary English form Hangzhou Bay rather than the joined romanization Hangzhouwan; no established Norwegian exonym was verified."
+    },
+    "ne:1159118959": {
+      "sourceName": "Joseph Bonaparte Gulf",
+      "name": "Joseph Bonaparte Gulf",
+      "nameNb": "Joseph Bonaparte Gulf"
+    },
+    "ne:1159118817": {
+      "sourceName": "Kamchatka Gulf",
+      "name": "Kamchatka Gulf",
+      "nameNb": "Kamchatka Gulf"
+    },
+    "ne:1159118099": {
+      "sourceName": "Kane Basin",
+      "name": "Kane Basin",
+      "nameNb": "Kane Basin"
+    },
+    "ne:1159118803": {
+      "sourceName": "Karaginsky Gulf",
+      "name": "Karaginsky Gulf",
+      "nameNb": "Karaginsky Gulf"
+    },
+    "ne:1159117819": {
+      "sourceName": "Kattegat",
+      "name": "Kattegat",
+      "nameNb": "Kattegat"
+    },
+    "ne:1159118029": {
+      "sourceName": "Kotzebue Sound",
+      "name": "Kotzebue Sound",
+      "nameNb": "Kotzebue Sound",
+      "note": "Kotzebue Sound is the official NOAA and Alaska government form; no established Norwegian exonym was verified."
+    },
+    "ne:1159117867": {
+      "sourceName": "Kronotsky Gulf",
+      "name": "Kronotsky Gulf",
+      "nameNb": "Kronotsky Gulf"
+    },
+    "ne:1159118231": {
+      "sourceName": "La Pérouse Strait",
+      "name": "La Pérouse Strait",
+      "nameNb": "La Pérouse Strait"
+    },
+    "ne:1159118439": {
+      "sourceName": "Ligurian Sea",
+      "name": "Ligurian Sea",
+      "nameNb": "Det liguriske hav"
+    },
+    "ne:1159117355": {
+      "sourceName": "Lincoln Sea",
+      "name": "Lincoln Sea",
+      "nameNb": "Lincoln Sea"
+    },
+    "ne:1159118743": {
+      "sourceName": "Lützow-Holm Bay",
+      "name": "Lützow-Holm Bay",
+      "nameNb": "Lützow-Holm Bay"
+    },
+    "ne:1159117427": {
+      "sourceName": "M'Clure Strait",
+      "name": "M'Clure Strait",
+      "nameNb": "M'Clure Strait"
+    },
+    "ne:1159117989": {
+      "sourceName": "Mackenzie Bay",
+      "name": "Mackenzie Bay",
+      "nameNb": "Mackenzie Bay"
+    },
+    "ne:1159118905": {
+      "sourceName": "Maputo Bay",
+      "name": "Maputo Bay",
+      "nameNb": "Maputo Bay"
+    },
+    "ne:1159118651": {
+      "sourceName": "Marguerite Bay",
+      "name": "Marguerite Bay",
+      "nameNb": "Marguerite Bay"
+    },
+    "ne:1159117579": {
+      "sourceName": "McMurdo Sound",
+      "name": "McMurdo Sound",
+      "nameNb": "McMurdo-sundet"
+    },
+    "ne:1159118005": {
+      "sourceName": "Norton Sound",
+      "name": "Norton Sound",
+      "nameNb": "Norton Sound"
+    },
+    "ne:1159118351": {
+      "sourceName": "Olenyok Gulf",
+      "name": "Olenyok Gulf",
+      "nameNb": "Olenyok Gulf"
+    },
+    "ne:1159118705": {
+      "sourceName": "Porpoise Bay",
+      "name": "Porpoise Bay",
+      "nameNb": "Porpoise Bay"
+    },
+    "ne:1159118669": {
+      "sourceName": "Prydz Bay",
+      "name": "Prydz Bay",
+      "nameNb": "Prydz Bay"
+    },
+    "ne:1159117543": {
+      "sourceName": "Ronne Entrance",
+      "name": "Ronne Entrance",
+      "nameNb": "Ronne Entrance"
+    },
+    "ne:1159118989": {
+      "sourceName": "Sakhalin Gulf",
+      "name": "Sakhalin Gulf",
+      "nameNb": "Sakhalin Gulf"
+    },
+    "ne:1159117475": {
+      "sourceName": "San Matías Gulf",
+      "name": "San Matías Gulf",
+      "nameNb": "San Matías Gulf"
+    },
+    "ne:1159119013": {
+      "sourceName": "Scoresby Sound",
+      "name": "Scoresby Sound",
+      "nameNb": "Scoresbysundet"
+    },
+    "ne:1159116409": {
+      "sourceName": "Sea of Azov",
+      "name": "Sea of Azov",
+      "nameNb": "Azovhavet"
+    },
+    "ne:1159118425": {
+      "sourceName": "Sea of Crete",
+      "name": "Sea of Crete",
+      "nameNb": "Kretahavet"
+    },
+    "ne:1159117955": {
+      "sourceName": "Shark Bay",
+      "name": "Shark Bay",
+      "nameNb": "Shark Bay"
+    },
+    "ne:1159117723": {
+      "sourceName": "Skagerrak",
+      "name": "Skagerrak",
+      "nameNb": "Skagerrak",
+      "kind": "sea",
+      "note": "Classified as a sea area rather than Natural Earth’s erroneous fjord category."
+    },
+    "ne:1159118925": {
+      "sourceName": "St. Helena Bay",
+      "name": "St. Helena Bay",
+      "nameNb": "St. Helena Bay"
+    },
+    "ne:1159117683": {
+      "sourceName": "Storfjorden",
+      "name": "Storfjorden",
+      "nameNb": "Storfjorden"
+    },
+    "ne:1159117531": {
+      "sourceName": "Sulzberger Bay",
+      "name": "Sulzberger Bay",
+      "nameNb": "Sulzberger Bay"
+    },
+    "ne:1159118303": {
+      "sourceName": "Torres Strait",
+      "name": "Torres Strait",
+      "nameNb": "Torressundet"
+    },
+    "ne:1159117901": {
+      "sourceName": "Uchiura Bay",
+      "name": "Uchiura Bay",
+      "nameNb": "Uchiura Bay"
+    },
+    "ne:1159117883": {
+      "sourceName": "Uda Gulf",
+      "name": "Uda Bay",
+      "nameNb": "Uda Bay",
+      "note": "Uses the current English form Uda Bay found in Natural Earth’s primary name and Wikidata identity."
+    },
+    "ne:1159117697": {
+      "sourceName": "Vestfjorden",
+      "name": "Vestfjorden",
+      "nameNb": "Vestfjorden"
+    },
+    "ne:1159117771": {
+      "sourceName": "Vilkitsky Strait",
+      "name": "Vilkitsky Strait",
+      "nameNb": "Vilkitsky Strait"
+    },
+    "ne:1159118683": {
+      "sourceName": "Vincennes Bay",
+      "name": "Vincennes Bay",
+      "nameNb": "Vincennes Bay"
+    },
+    "ne:1159117505": {
+      "sourceName": "Wrigley Gulf",
+      "name": "Wrigley Gulf",
+      "nameNb": "Wrigley Gulf"
+    },
+    "ne:1159118193": {
+      "sourceName": "Yana Bay",
+      "name": "Yana Bay",
+      "nameNb": "Yana Bay",
+      "kind": "bay",
+      "note": "Classified as a bay to match the verified water-body designation."
+    },
+    "ne:1159117301": {
+      "sourceName": "Yucatán Channel",
+      "name": "Yucatán Channel",
+      "nameNb": "Yucatán Channel"
+    },
+    "ne:1159119047": {
+      "sourceName": "Chaunskaya Bay",
+      "name": "Chaunskaya Bay",
+      "nameNb": "Chaunskaya Bay"
+    },
+    "ne:1159119235": {
+      "sourceName": "Denmark Strait",
+      "name": "Denmark Strait",
+      "nameNb": "Danmarkstredet"
+    },
+    "ne:1159119095": {
+      "sourceName": "Garabogazköl",
+      "name": "Garabogazköl",
+      "nameNb": "Garabogazköl"
+    },
+    "ne:1159120779": {
+      "sourceName": "Gulf of Anadyr",
+      "name": "Gulf of Anadyr",
+      "nameNb": "Gulf of Anadyr"
+    },
+    "ne:1159119119": {
+      "sourceName": "Gulf of Ob",
+      "name": "Gulf of Ob",
+      "nameNb": "Obbukta"
+    },
+    "ne:1159119103": {
+      "sourceName": "Gulf of Suez",
+      "name": "Gulf of Suez",
+      "nameNb": "Suezbukta"
+    },
+    "ne:1159119795": {
+      "sourceName": "Jones Sound",
+      "name": "Jones Sound",
+      "nameNb": "Jonessundet"
+    },
+    "ne:1159119075": {
+      "sourceName": "Khatanga Gulf",
+      "name": "Khatanga Gulf",
+      "nameNb": "Khatanga Gulf"
+    },
+    "ne:1159119037": {
+      "sourceName": "Saint Lawrence River",
+      "name": "St. Lawrence River",
+      "nameNb": "St. Lawrence-elva",
+      "note": "Uses the Canadian abbreviation St. and Språkrådet’s St. Lawrence-elva."
+    },
+    "ne:1159120759": {
+      "sourceName": "Salish Sea",
+      "name": "Salish Sea",
+      "nameNb": "Salish Sea"
+    },
+    "ne:1159119181": {
+      "sourceName": "Sea of Marmara",
+      "name": "Sea of Marmara",
+      "nameNb": "Marmarahavet"
+    },
+    "ne:1159118553": {
+      "sourceName": "Strait of Magellan",
+      "name": "Strait of Magellan",
+      "nameNb": "Magellanstredet"
+    },
+    "ne:1159119141": {
+      "sourceName": "Yenisei Gulf",
+      "name": "Yenisei Gulf",
+      "nameNb": "Yenisei Gulf"
+    },
+    "ne:1159119313": {
+      "sourceName": "Albemarle Sound",
+      "name": "Albemarle Sound",
+      "nameNb": "Albemarle Sound"
+    },
+    "ne:1159118457": {
+      "sourceName": "Alboran Sea",
+      "name": "Alboran Sea",
+      "nameNb": "Alboransjøen"
+    },
+    "ne:1159118761": {
+      "sourceName": "Antongil Bay",
+      "name": "Antongil Bay",
+      "nameNb": "Antongil Bay"
+    },
+    "ne:1159118853": {
+      "sourceName": "Bab-el-Mandeb",
+      "name": "Bab-el-Mandeb",
+      "nameNb": "Bab el-Mandeb"
+    },
+    "ne:1159120073": {
+      "sourceName": "Bali Sea",
+      "name": "Bali Sea",
+      "nameNb": "Bali Sea"
+    },
+    "ne:1159120643": {
+      "sourceName": "Bay of Mecklenburg",
+      "name": "Bay of Mecklenburg",
+      "nameNb": "Bay of Mecklenburg"
+    },
+    "ne:1159117597": {
+      "sourceName": "Baía de São Marcos",
+      "name": "Baía de São Marcos",
+      "nameNb": "Baía de São Marcos"
+    },
+    "ne:1159120253": {
+      "sourceName": "Bohol Sea",
+      "name": "Bohol Sea",
+      "nameNb": "Bohol Sea"
+    },
+    "ne:1159120217": {
+      "sourceName": "Buli Bay",
+      "name": "Buli Bay",
+      "nameNb": "Buli Bay",
+      "kind": "bay",
+      "note": "Classified as a bay to match the verified water-body designation."
+    },
+    "ne:1159118281": {
+      "sourceName": "Cook Strait",
+      "name": "Cook Strait",
+      "nameNb": "Cooksundet"
+    },
+    "ne:1159119155": {
+      "sourceName": "Dardanelles",
+      "name": "Dardanelles",
+      "nameNb": "Dardanellene"
+    },
+    "ne:1159119511": {
+      "sourceName": "Darnley Bay",
+      "name": "Darnley Bay",
+      "nameNb": "Darnley Bay"
+    },
+    "ne:1159120091": {
+      "sourceName": "Davao Gulf",
+      "name": "Davao Gulf",
+      "nameNb": "Davaobukta"
+    },
+    "ne:1159119271": {
+      "sourceName": "Delaware Bay",
+      "name": "Delaware Bay",
+      "nameNb": "Delaware Bay"
+    },
+    "ne:1159118213": {
+      "sourceName": "Dmitry Laptev Strait",
+      "name": "Dmitry Laptev Strait",
+      "nameNb": "Dmitry Laptev Strait"
+    },
+    "ne:1159119813": {
+      "sourceName": "Eclipse Sound",
+      "name": "Eclipse Sound",
+      "nameNb": "Eclipse Sound"
+    },
+    "ne:1159120167": {
+      "sourceName": "Flores Sea",
+      "name": "Flores Sea",
+      "nameNb": "Floressjøen"
+    },
+    "ne:1159117391": {
+      "sourceName": "Franklin Bay",
+      "name": "Franklin Bay",
+      "nameNb": "Franklin Bay"
+    },
+    "ne:1159119761": {
+      "sourceName": "Fury and Hecla Strait",
+      "name": "Fury and Hecla Strait",
+      "nameNb": "Fury and Hecla Strait"
+    },
+    "ne:1159119885": {
+      "sourceName": "George VI Sound",
+      "name": "George VI Sound",
+      "nameNb": "George VI Sound"
+    },
+    "ne:1159119199": {
+      "sourceName": "Gulf of Aqaba",
+      "name": "Gulf of Aqaba",
+      "nameNb": "Akababukten"
+    },
+    "ne:1159120147": {
+      "sourceName": "Gulf of Tomini",
+      "name": "Gulf of Tomini",
+      "nameNb": "Tominibukta"
+    },
+    "ne:1159118877": {
+      "sourceName": "Gulf of Urabá",
+      "name": "Gulf of Urabá",
+      "nameNb": "Gulf of Urabá"
+    },
+    "ne:1159119663": {
+      "sourceName": "Hadley Bay",
+      "name": "Hadley Bay",
+      "nameNb": "Hadley Bay"
+    },
+    "ne:1159119831": {
+      "sourceName": "Hall Basin",
+      "name": "Hall Basin",
+      "nameNb": "Hall Basin"
+    },
+    "ne:1159120109": {
+      "sourceName": "Halmahera Sea",
+      "name": "Halmahera Sea",
+      "nameNb": "Halmahera Sea"
+    },
+    "ne:1159117665": {
+      "sourceName": "Hamilton Inlet",
+      "name": "Hamilton Inlet",
+      "nameNb": "Hamilton Inlet",
+      "kind": "inlet",
+      "note": "Classified as an inlet to match the verified water-body designation."
+    },
+    "ne:1159120441": {
+      "sourceName": "Hecate Strait",
+      "name": "Hecate Strait",
+      "nameNb": "Hecate Strait"
+    },
+    "ne:1159117755": {
+      "sourceName": "Kara Strait",
+      "name": "Kara Strait",
+      "nameNb": "Kara Strait"
+    },
+    "ne:1159120519": {
+      "sourceName": "Kennedy Channel",
+      "name": "Kennedy Channel",
+      "nameNb": "Kennedykanalen"
+    },
+    "ne:1159119625": {
+      "sourceName": "Liddon Gulf",
+      "name": "Liddon Gulf",
+      "nameNb": "Liddon Gulf"
+    },
+    "ne:1159119293": {
+      "sourceName": "Long Island Sound",
+      "name": "Long Island Sound",
+      "nameNb": "Long Island Sound"
+    },
+    "ne:1159117463": {
+      "sourceName": "Marajó Bay",
+      "name": "Marajó Bay",
+      "nameNb": "Marajó Bay"
+    },
+    "ne:1159119247": {
+      "sourceName": "Massachusetts Bay",
+      "name": "Massachusetts Bay",
+      "nameNb": "Massachusetts Bay"
+    },
+    "ne:1159120705": {
+      "sourceName": "Monterey Bay",
+      "name": "Monterey Bay",
+      "nameNb": "Monterey Bay"
+    },
+    "ne:1159120493": {
+      "sourceName": "Murchison Sound",
+      "name": "Murchison Sound",
+      "nameNb": "Murchison Sound"
+    },
+    "ne:1159117845": {
+      "sourceName": "Palk Strait",
+      "name": "Palk Strait",
+      "nameNb": "Palkstredet"
+    },
+    "ne:1159119327": {
+      "sourceName": "Pamlico Sound",
+      "name": "Pamlico Sound",
+      "nameNb": "Pamlico Sound"
+    },
+    "ne:1159119867": {
+      "sourceName": "Peacock Sound",
+      "name": "Peacock Sound",
+      "nameNb": "Peacock Sound"
+    },
+    "ne:1159119599": {
+      "sourceName": "Prince Albert Sound",
+      "name": "Prince Albert Sound",
+      "nameNb": "Prince Albert Sound"
+    },
+    "ne:1159118537": {
+      "sourceName": "Prince William Sound",
+      "name": "Prince William Sound",
+      "nameNb": "Prins William-sundet"
+    },
+    "ne:1159119555": {
+      "sourceName": "Prince of Wales Strait",
+      "name": "Prince of Wales Strait",
+      "nameNb": "Prince of Wales Strait"
+    },
+    "ne:1159118261": {
+      "sourceName": "Qiongzhou Strait",
+      "name": "Qiongzhou Strait",
+      "nameNb": "Qiongzhoustredet"
+    },
+    "ne:1159116679": {
+      "sourceName": "Queen Charlotte Sound",
+      "name": "Queen Charlotte Sound",
+      "nameNb": "Queen Charlotte Sound"
+    },
+    "ne:1159120685": {
+      "sourceName": "San Francisco Bay",
+      "name": "San Francisco Bay",
+      "nameNb": "San Francisco-bukta"
+    },
+    "ne:1159120417": {
+      "sourceName": "Savu Sea",
+      "name": "Savu Sea",
+      "nameNb": "Savu Sea"
+    },
+    "ne:1159120183": {
+      "sourceName": "Sibuyan Sea",
+      "name": "Sibuyan Sea",
+      "nameNb": "Sibuyan Sea"
+    },
+    "ne:1159117781": {
+      "sourceName": "Sognefjord",
+      "name": "Sognefjord",
+      "nameNb": "Sognefjorden"
+    },
+    "ne:1159118511": {
+      "sourceName": "Strait of Belle Isle",
+      "name": "Strait of Belle Isle",
+      "nameNb": "Belle Isle-stredet"
+    },
+    "ne:1159117937": {
+      "sourceName": "Strait of Tartary",
+      "name": "Strait of Tartary",
+      "nameNb": "Tatarstredet"
+    },
+    "ne:1159117797": {
+      "sourceName": "Trondheimsfjord",
+      "name": "Trondheimsfjord",
+      "nameNb": "Trondheimsfjorden"
+    },
+    "ne:1159117919": {
+      "sourceName": "Tsugaru Strait",
+      "name": "Tsugaru Strait",
+      "nameNb": "Tsugarusundet"
+    },
+    "ne:1159119849": {
+      "sourceName": "Uummannaq fjord",
+      "name": "Uummannaq Fjord",
+      "nameNb": "Uummannaq Fjord",
+      "note": "Capitalizes the generic feature term in the English and Norwegian display name."
+    },
+    "ne:1159120609": {
+      "sourceName": "Øresund",
+      "name": "Øresund",
+      "nameNb": "Øresund"
+    },
+    "ne:1159119417": {
+      "sourceName": "Baird Inlet",
+      "name": "Baird Inlet",
+      "nameNb": "Baird Inlet"
+    },
+    "ne:1159119669": {
+      "sourceName": "Bathurst Inlet",
+      "name": "Bathurst Inlet",
+      "nameNb": "Bathurst Inlet",
+      "kind": "inlet",
+      "note": "Classified as an inlet to match the verified water-body designation."
+    },
+    "ne:1159120573": {
+      "sourceName": "Canal do Sul",
+      "name": "Canal do Sul",
+      "nameNb": "Canal do Sul"
+    },
+    "ne:1159120451": {
+      "sourceName": "Cordova Bay",
+      "name": "Cordova Bay",
+      "nameNb": "Cordova Bay"
+    },
+    "ne:1159120201": {
+      "sourceName": "Dampier Strait",
+      "name": "Dampier Strait",
+      "nameNb": "Dampier Strait"
+    },
+    "ne:1159119707": {
+      "sourceName": "Goldsmith Channel",
+      "name": "Goldsmith Channel",
+      "nameNb": "Goldsmith Channel"
+    },
+    "ne:1159120055": {
+      "sourceName": "Guba Gusinaya",
+      "name": "Guba Gusinaya",
+      "nameNb": "Guba Gusinaya"
+    },
+    "ne:1159119925": {
+      "sourceName": "Inútil Bay",
+      "name": "Inútil Bay",
+      "nameNb": "Inútil Bay"
+    },
+    "ne:1159120235": {
+      "sourceName": "Kao Bay",
+      "name": "Kao Bay",
+      "nameNb": "Kao Bay",
+      "kind": "bay",
+      "note": "Classified as a bay to match the verified water-body designation."
+    },
+    "ne:1159120015": {
+      "sourceName": "Matochkin Strait",
+      "name": "Matochkin Strait",
+      "nameNb": "Matochkin Strait"
+    },
+    "ne:1159119565": {
+      "sourceName": "Minto Inlet",
+      "name": "Minto Inlet",
+      "nameNb": "Minto Inlet",
+      "kind": "inlet",
+      "note": "Classified as an inlet to match the verified water-body designation."
+    },
+    "ne:1159119407": {
+      "sourceName": "Queen Charlotte Strait",
+      "name": "Queen Charlotte Strait",
+      "nameNb": "Queen Charlotte Strait"
+    },
+    "ne:1159119583": {
+      "sourceName": "Richard Collinson Inlet",
+      "name": "Richard Collinson Inlet",
+      "nameNb": "Richard Collinson Inlet",
+      "kind": "inlet",
+      "note": "Classified as an inlet to match the verified water-body designation."
+    },
+    "ne:1159120501": {
+      "sourceName": "Robeson Channel",
+      "name": "Robeson Channel",
+      "nameNb": "Robeson Channel"
+    },
+    "ne:1159120335": {
+      "sourceName": "Samar Sea",
+      "name": "Samar Sea",
+      "nameNb": "Samarsjøen"
+    },
+    "ne:1159119915": {
+      "sourceName": "Seno Otway",
+      "name": "Seno Otway",
+      "nameNb": "Seno Otway"
+    },
+    "ne:1159119901": {
+      "sourceName": "Seno Skyring",
+      "name": "Seno Skyring",
+      "nameNb": "Seno Skyring"
+    },
+    "ne:1159119727": {
+      "sourceName": "Sherman Basin",
+      "name": "Sherman Basin",
+      "nameNb": "Sherman Basin"
+    },
+    "ne:1159119367": {
+      "sourceName": "Smith Sound",
+      "name": "Smith Sound",
+      "nameNb": "Smith Sound"
+    },
+    "ne:1159120353": {
+      "sourceName": "Tayabas Bay",
+      "name": "Tayabas Bay",
+      "nameNb": "Tayabas Bay"
+    },
+    "ne:1159120401": {
+      "sourceName": "Visayan Sea",
+      "name": "Visayan Sea",
+      "nameNb": "Visayan Sea"
+    },
+    "ne:1159119745": {
+      "sourceName": "Wager Bay",
+      "name": "Wager Bay",
+      "nameNb": "Wager Bay"
+    },
+    "ne:1159119635": {
+      "sourceName": "Wynniatt Bay",
+      "name": "Wynniatt Bay",
+      "nameNb": "Wynniatt Bay"
+    },
+    "ne:1159120135": {
+      "sourceName": "Bali Strait",
+      "name": "Bali Strait",
+      "nameNb": "Bali Strait"
+    },
+    "ne:1159120555": {
+      "sourceName": "Canal Perigoso",
+      "name": "Canal Perigoso",
+      "nameNb": "Canal Perigoso"
+    },
+    "ne:1159120591": {
+      "sourceName": "Canal do Norte",
+      "name": "Canal do Norte",
+      "nameNb": "Canal do Norte"
+    },
+    "ne:1159120375": {
+      "sourceName": "Leyte Gulf",
+      "name": "Leyte Gulf",
+      "nameNb": "Leyte Gulf"
+    },
+    "ne:1159120315": {
+      "sourceName": "Ragay Gulf",
+      "name": "Ragay Gulf",
+      "nameNb": "Ragay Gulf"
+    },
+    "ne:1159120289": {
+      "sourceName": "Surigao Strait",
+      "name": "Surigao Strait",
+      "nameNb": "Surigao Strait"
+    }
+  }
+}

@@ -89,7 +89,7 @@ const reliefLoading = ref(false)
 const bathymetryBands = shallowRef<readonly BathymetryBand[]>([])
 const reliefBands = shallowRef<readonly ReliefBand[]>([])
 const marineLabelsEnabled = ref(true)
-const adaptiveCountryZoomEnabled = ref(false)
+const limitedCountryZoomEnabled = ref(false)
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
 const canvasReady = ref(false)
@@ -325,8 +325,8 @@ function updateDebugMetrics() {
 
   debugMetrics.value = {
     zoom: transform.scale,
-    countryFocus: adaptiveCountryZoomEnabled.value
-      ? `Adaptive · ${PREFERRED_COUNTRY_FOCUS_SCALE.toFixed(2)}× preferred`
+    countryFocus: limitedCountryZoomEnabled.value
+      ? `Limited · ${PREFERRED_COUNTRY_FOCUS_SCALE.toFixed(2)}× preferred`
       : 'Fit to country',
     center,
     regionVerticalFit: verticalFit(regionBounds),
@@ -589,7 +589,7 @@ function selectCountry(
   zoomToBounds(
     target.bounds,
     target.focusPoint,
-    adaptiveCountryZoomEnabled.value
+    limitedCountryZoomEnabled.value
       ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
       : undefined,
   )
@@ -618,7 +618,7 @@ function focusCountry(countryId: string) {
   zoomToBounds(
     target.bounds,
     target.focusPoint,
-    adaptiveCountryZoomEnabled.value
+    limitedCountryZoomEnabled.value
       ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
       : undefined,
   )
@@ -1043,9 +1043,9 @@ async function setProjection(nextId: MapProjectionId) {
           />
         </div>
         <MapDetailToggle
-          :label="t('adaptiveCountryZoom')"
-          :model-value="adaptiveCountryZoomEnabled"
-          @update:model-value="adaptiveCountryZoomEnabled = $event"
+          :label="t('limitAutomaticCountryZoom')"
+          :model-value="limitedCountryZoomEnabled"
+          @update:model-value="limitedCountryZoomEnabled = $event"
         />
         <MapDetailToggle
           :label="t('bathymetry')"
