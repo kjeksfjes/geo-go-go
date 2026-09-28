@@ -2,11 +2,9 @@
 
 An interactive world-map game for exploring countries and testing your geography knowledge.
 
-<p>
-  <a href="https://kjeksfjes.github.io/geo-go-go/"><img alt="Play Geo Go Go" src="https://img.shields.io/badge/Play-Geo%20Go%20Go-238636?style=for-the-badge&amp;logo=githubpages&amp;logoColor=white"></a>
-  <a href="https://github.com/kjeksfjes/geo-go-go/tags"><img alt="Latest release" src="https://img.shields.io/github/v/tag/kjeksfjes/geo-go-go?sort=semver&amp;style=for-the-badge&amp;label=Release&amp;color=1f6feb"></a>
-  <a href="CHANGELOG.md"><img alt="Changelog" src="https://img.shields.io/badge/Read-Changelog-59636e?style=for-the-badge"></a>
-</p>
+[**Play Geo Go Go →**](https://kjeksfjes.github.io/geo-go-go/)
+
+[![Latest release](https://img.shields.io/github/v/tag/kjeksfjes/geo-go-go?sort=semver&label=latest%20release)](https://github.com/kjeksfjes/geo-go-go/tags) [![Changelog](https://img.shields.io/badge/changelog-view-59636e)](CHANGELOG.md)
 
 Built with Vue 3, TypeScript, Vite, Natural Earth Admin-0 Map Units, `d3-geo`, and `flag-icons`.
 
