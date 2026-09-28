@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "npm run check:marine-labels && vue-tsc -b && vite build",
+    "check:marine-labels": "node scripts/validate-marine-labels.mjs",
     "preview": "vite preview",
     "release:merge": "node scripts/release-merge.mjs"
   },

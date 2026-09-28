@@ -7,6 +7,7 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 ### Improvements
 
 - Renamed the optional country-focus limit so its switch describes the reduced automatic zoom behavior instead of implying a fit-to-country mode.
+- Reordered the primary controls to establish the region before choosing Explore or Find the country.
 
 ## 0.4.1 — 2026-09-28
 

@@ -30,13 +30,18 @@ function assignGroup(element: unknown, offset: number) {
 }
 
 function labelLines(name: string, kind: string) {
-  if (kind !== 'ocean') return [name]
-  const norwegianBreaks: Record<string, string[]> = {
+  const deliberateBreaks: Record<string, string[]> = {
     Atlanterhavet: ['Atlanter-', 'havet'],
     Stillehavet: ['Stille-', 'havet'],
     Indiahavet: ['India-', 'havet'],
+    Nordishavet: ['Nordis-', 'havet'],
+    Kaspihavet: ['Kaspi-', 'havet'],
+    Rødehavet: ['Røde-', 'havet'],
+    Irskesjøen: ['Irske-', 'sjøen'],
+    'Kotzebue Sound': ['Kotzebue', 'Sound'],
   }
-  if (name in norwegianBreaks) return norwegianBreaks[name]
+  if (name in deliberateBreaks) return deliberateBreaks[name]
+  if (kind !== 'ocean') return [name]
   if (/^(Atlantic|Pacific|Indian) Ocean$/.test(name)) return name.split(' ')
   return [name]
 }
@@ -44,7 +49,7 @@ function labelLines(name: string, kind: string) {
 const projectedLabels = computed<ProjectedLabel[]>(() => marineLabels.flatMap((label) => {
   const point = props.projectPoint(label.point)
   if (!point || !point.every(Number.isFinite)) return []
-  const displayName = locale.value === 'nb' ? label.nameNb ?? label.name : label.name
+  const displayName = locale.value === 'nb' ? label.nameNb : label.name
   return [{
     ...label,
     x: point[0],
