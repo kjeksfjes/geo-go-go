@@ -4,10 +4,22 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.5.0 — 2026-09-29
+
 ### Improvements
 
 - Renamed the optional country-focus limit so its switch describes the reduced automatic zoom behavior instead of implying a fit-to-country mode.
 - Reordered the primary controls to establish the region before choosing Explore or Find the country.
+- Reviewed all 279 marine labels and supplied an explicit Norwegian Bokmål value for each, using established Norwegian exonyms where available and conservative Western European conventions for disputed names.
+
+### Fixes
+
+- Corrected outdated English marine names, Norwegian spellings, and clearly incorrect water-body classifications.
+- Split several long marine labels over two lines so they interfere less with nearby land.
+
+### Internals
+
+- Added curated marine-name source data, a documented audit trail, and build-time validation that prevents unreviewed names or missing translations from entering the generated label file.
 
 ## 0.4.1 — 2026-09-28
 
