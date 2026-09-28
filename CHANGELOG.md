@@ -4,6 +4,10 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+### Improvements
+
+- Renamed the optional country-focus limit so its switch describes the reduced automatic zoom behavior instead of implying a fit-to-country mode.
+
 ## 0.4.1 — 2026-09-28
 
 ### Improvements
