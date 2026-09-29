@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { geoArea } from 'd3-geo'
+import { geoArea, geoDistance } from 'd3-geo'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
 import LoadingIndicator from './LoadingIndicator.vue'
 import MapDebugPanel from './MapDebugPanel.vue'
 import MarineLabels from './MarineLabels.vue'
+import MapScaleBar from './MapScaleBar.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import SmallCountryMarkers from './SmallCountryMarkers.vue'
 import { useElementSize } from '../composables/useElementSize'
@@ -32,6 +33,7 @@ import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { readStoredBoolean, readStoredValue, writeStoredValue } from '../utils/storage'
 import { countryName, regionName, t, type Locale } from '../i18n'
 import { mapPaletteCssVariables } from '../data/mapPalette'
+import { mapScaleBar, scaleUnitSystems, type ScaleUnitSystem } from '../logic/mapScale'
 import { quizCountryIds } from '../data/quizCountries'
 import {
   backgroundClickAction,
@@ -57,11 +59,18 @@ const mapSettingKeys = {
   bathymetry: 'geo-go-go.map.bathymetry',
   relief: 'geo-go-go.map.relief',
   marineLabels: 'geo-go-go.map.water-names',
+  scaleBar: 'geo-go-go.map.scale-bar',
+  scaleUnits: 'geo-go-go.map.scale-units',
 } as const
 
 function initialProjection(): MapProjectionId {
   const saved = readStoredValue(mapSettingKeys.projection)
   return projectionOptions.some(({ id }) => id === saved) ? saved as MapProjectionId : 'mercator'
+}
+
+function initialScaleUnits(): ScaleUnitSystem {
+  const saved = readStoredValue(mapSettingKeys.scaleUnits)
+  return scaleUnitSystems.find((units) => units === saved) ?? 'metric'
 }
 
 const props = defineProps<{
@@ -103,6 +112,8 @@ const reliefLoading = ref(false)
 const bathymetryBands = shallowRef<readonly BathymetryBand[]>([])
 const reliefBands = shallowRef<readonly ReliefBand[]>([])
 const marineLabelsEnabled = ref(readStoredBoolean(mapSettingKeys.marineLabels, true))
+const scaleBarEnabled = ref(readStoredBoolean(mapSettingKeys.scaleBar, true))
+const scaleUnits = ref<ScaleUnitSystem>(initialScaleUnits())
 const limitedCountryZoomEnabled = ref(readStoredBoolean(mapSettingKeys.limitedCountryZoom, true))
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
@@ -113,6 +124,8 @@ watch(limitedCountryZoomEnabled, (value) => writeStoredValue(mapSettingKeys.limi
 watch(bathymetryEnabled, (value) => writeStoredValue(mapSettingKeys.bathymetry, value))
 watch(reliefEnabled, (value) => writeStoredValue(mapSettingKeys.relief, value))
 watch(marineLabelsEnabled, (value) => writeStoredValue(mapSettingKeys.marineLabels, value))
+watch(scaleBarEnabled, (value) => writeStoredValue(mapSettingKeys.scaleBar, value))
+watch(scaleUnits, (value) => writeStoredValue(mapSettingKeys.scaleUnits, value))
 const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const interactionState = computed<MapInteractionState>(() => ({
@@ -282,6 +295,25 @@ const {
   regionViewConstraint,
   homeView,
 )
+
+const scaleBar = computed(() => {
+  if (!scaleBarEnabled.value) return null
+  // A map projection has a local scale, not one fixed scale across the world.
+  // Sample a short horizontal span around the screen centre for a stable
+  // reference through pan, zoom, projection, and viewport changes.
+  const sampleWidth = Math.min(80, mapWidth.value * 0.2)
+  const y = mapHeight.value / 2
+  const geographicPoints = [-sampleWidth / 2, sampleWidth / 2].map((offset) =>
+    unprojectPoint([
+      (mapWidth.value / 2 + offset - transform.x) / transform.scale,
+      (y - transform.y) / transform.scale,
+    ]),
+  )
+  const [left, right] = geographicPoints
+  if (!left || !right || !left.every(Number.isFinite) || !right.every(Number.isFinite)) return null
+  const kilometresPerPixel = geoDistance(left, right) * 6371.0088 / sampleWidth
+  return mapScaleBar(kilometresPerPixel, mapWidth.value, scaleUnits.value, props.locale)
+})
 
 function updateDebugMetrics() {
   const projectedCenter: MapPoint = [
@@ -836,6 +868,8 @@ function resetMapSettings() {
   setBathymetryEnabled(!usesMobileMapDefaults)
   setReliefEnabled(false)
   marineLabelsEnabled.value = true
+  scaleBarEnabled.value = true
+  scaleUnits.value = 'metric'
   void setProjection('mercator')
   emit('reset-settings')
 }
@@ -1153,6 +1187,19 @@ async function setProjection(nextId: MapProjectionId) {
           @update:model-value="marineLabelsEnabled = $event"
         />
         <MapDetailToggle
+          :label="t('showScaleBar')"
+          :model-value="scaleBarEnabled"
+          @update:model-value="scaleBarEnabled = $event"
+        />
+        <label class="scale-units-control" for="map-scale-units">
+          <span>{{ t('scaleUnits') }}</span>
+          <select id="map-scale-units" v-model="scaleUnits">
+            <option value="metric">{{ t('metricUnits') }}</option>
+            <option value="imperial">{{ t('imperialUnits') }}</option>
+            <option value="nautical">{{ t('nauticalUnits') }}</option>
+          </select>
+        </label>
+        <MapDetailToggle
           :loading="detailLoading"
           :disabled="projectionLoading"
           :model-value="highDetailEnabled"
@@ -1160,7 +1207,7 @@ async function setProjection(nextId: MapProjectionId) {
         />
       </div>
 
-      <div class="map-tools">
+      <div class="map-tools" :class="{ 'map-tools--with-scale': scaleBar }">
         <span>
           {{ quizMode && quizAnswerId !== null ? t('continueHint') : t('mapHint') }}
         </span>
@@ -1168,6 +1215,7 @@ async function setProjection(nextId: MapProjectionId) {
           {{ t('resetView') }}
         </button>
       </div>
+      <MapScaleBar v-if="scaleBar" :scale="scaleBar" />
       <MapDebugPanel
         v-if="debugEnabled && debugMetrics"
         v-bind="debugMetrics"
@@ -1594,6 +1642,32 @@ async function setProjection(nextId: MapProjectionId) {
   display: none;
 }
 
+.scale-units-control {
+  display: flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(82, 103, 110, 0.18);
+  border-radius: 12px;
+  color: #52676e;
+  background: rgba(255, 255, 255, 0.86);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.scale-units-control select {
+  min-width: 0;
+  max-width: 9rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(82, 103, 110, 0.25);
+  border-radius: 6px;
+  color: #17374b;
+  background: #fff;
+  font: inherit;
+}
+
 .map-tools span,
 .map-tools button {
   padding: 0.4rem 0.65rem;
@@ -1617,6 +1691,7 @@ async function setProjection(nextId: MapProjectionId) {
 
 @media (max-width: 1100px) {
   .map-tools { top: 0.8rem; bottom: auto; }
+  .map-tools--with-scale { top: auto; bottom: 1.4rem; }
   .map-tools span { display: none; }
 }
 
