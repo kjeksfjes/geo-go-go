@@ -1,6 +1,6 @@
 import type { Geometry } from 'geojson'
 
-export type BathymetryDepth = 200 | 2000 | 6000
+export type BathymetryDepth = 200 | 2000 | 3000 | 4000 | 5000 | 6000 | 7000
 
 export interface BathymetryBand {
   depth: BathymetryDepth

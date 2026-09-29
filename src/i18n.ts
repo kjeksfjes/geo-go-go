@@ -7,16 +7,20 @@ export type Locale = 'en' | 'nb'
 
 const storageKey = 'geo-go-go.locale'
 
+function browserLocale(): Locale {
+  const browserLanguage = typeof navigator === 'undefined'
+    ? ''
+    : navigator.languages?.[0] ?? navigator.language
+  return /^(nb|nn|no)(-|$)/i.test(browserLanguage) ? 'nb' : 'en'
+}
+
 function initialLocale(): Locale {
   try {
     const saved = localStorage.getItem(storageKey)
     if (saved === 'en' || saved === 'nb') return saved
   } catch { /* Private browsing may deny storage. */ }
 
-  const browserLanguage = typeof navigator === 'undefined'
-    ? ''
-    : navigator.languages?.[0] ?? navigator.language
-  return /^(nb|nn|no)(-|$)/i.test(browserLanguage) ? 'nb' : 'en'
+  return browserLocale()
 }
 
 export const locale = ref<Locale>(initialLocale())
@@ -25,6 +29,10 @@ export function setLocale(next: Locale) {
   locale.value = next
   document.documentElement.lang = next
   try { localStorage.setItem(storageKey, next) } catch { /* Language still changes. */ }
+}
+
+export function resetLocale() {
+  setLocale(browserLocale())
 }
 
 export function applyDocumentLocale() {
@@ -37,6 +45,7 @@ const messages = {
     subtitle: 'Explore the map and pick a country.', gameMode: 'Game mode',
     explore: 'Explore', findCountry: 'Find the country', worldMapGame: 'World map game',
     region: 'Region', projection: 'Projection', regionalEqualArea: 'Regional Equal Area', mapSettings: 'Map settings', mapControls: 'Map controls', highDetail: 'High detail', bathymetry: 'Bathymetry', relief: 'Relief', waterNames: 'Water names', limitAutomaticCountryZoom: 'Limit automatic country zoom',
+    showScaleBar: 'Show scale bar', scaleUnits: 'Scale units', metricUnits: 'Metric', imperialUnits: 'Imperial', nauticalUnits: 'Nautical', scaleAtMapCenter: 'Approximate scale near map center: {distance}',
     interactiveMap: 'Interactive world map', resetView: 'Reset view',
     mapHint: 'Scroll to zoom · Drag to move', continueHint: 'Click map or press Space to continue',
     loadingMap: 'Loading detailed map…', selectedCountry: 'Selected country',
@@ -58,7 +67,8 @@ const messages = {
     language: 'Språk', eyebrow: 'Et lite geografispill', title: 'Hvor i verden?',
     subtitle: 'Utforsk kartet og velg et land.', gameMode: 'Spillmodus',
     explore: 'Utforsk', findCountry: 'Finn landet', worldMapGame: 'Verdenskartspill',
-    region: 'Region', projection: 'Projeksjon', regionalEqualArea: 'Regional arealriktig', mapSettings: 'Kartinnstillinger', mapControls: 'Kartvalg', highDetail: 'Høy detaljgrad', bathymetry: 'Havdybde', relief: 'Terreng', waterNames: 'Havnavn', limitAutomaticCountryZoom: 'Begrens automatisk landzoom',
+    region: 'Region', projection: 'Projeksjon', regionalEqualArea: 'Regional arealriktig', mapSettings: 'Kartinnstillinger', mapControls: 'Kartvalg', highDetail: 'Høy detaljgrad', bathymetry: 'Havdybde', relief: 'Relieff', waterNames: 'Havnavn', limitAutomaticCountryZoom: 'Begrens automatisk landzoom',
+    showScaleBar: 'Vis målestokk', scaleUnits: 'Måleenheter', metricUnits: 'Metrisk', imperialUnits: 'Britiske enheter', nauticalUnits: 'Nautiske mil', scaleAtMapCenter: 'Omtrentlig målestokk nær kartets sentrum: {distance}',
     interactiveMap: 'Interaktivt verdenskart', resetView: 'Tilbakestill visning',
     mapHint: 'Rull for å zoome · Dra for å flytte', continueHint: 'Klikk på kartet eller trykk mellomrom for å fortsette',
     loadingMap: 'Laster detaljert kart…', selectedCountry: 'Valgt land',

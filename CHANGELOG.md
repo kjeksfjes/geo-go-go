@@ -4,6 +4,26 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.6.0 — Depths & Distances — 2026-09-29
+
+### Improvements
+
+- Enabled the automatic country zoom limit by default to avoid overly close country views.
+- Remembered projection, country zoom, visual layers, and map detail settings between browser visits.
+- Added a debug-panel control for immediately resetting all saved settings to their defaults.
+- Used the established Norwegian cartographic term “Relieff” for the relief layer.
+- Preserved finer Natural Earth bathymetry contours around islands, shelves, and ocean basins.
+- Added a simplified darkest bathymetry band for ocean trenches from 7,000 to 10,000 metres.
+- Added 3,000 m, 4,000 m, and 5,000 m ocean contours to reveal ridges and basin structure in the Philippine Sea and elsewhere.
+- Added an optional scale bar with persistent metric, imperial, and nautical unit settings; metric is the default.
+- Refreshed map hover and selection colors with apricot and warm orange, keeping red for incorrect quiz answers.
+
+### Fixes
+
+- Corrected shallow-water coloring so bathymetry darkens consistently with increasing depth around islands and coasts.
+- Kept antimeridian region transitions centered after moving between North America and Oceania.
+- Restored country hover highlighting when zooming or automatic map movement finishes beneath a stationary cursor.
+
 ## 0.5.0 — 2026-09-29
 
 ### Improvements

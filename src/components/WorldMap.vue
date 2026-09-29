@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { geoArea } from 'd3-geo'
+import { geoArea, geoDistance } from 'd3-geo'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
 import LoadingIndicator from './LoadingIndicator.vue'
 import MapDebugPanel from './MapDebugPanel.vue'
 import MarineLabels from './MarineLabels.vue'
+import MapScaleBar from './MapScaleBar.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import SmallCountryMarkers from './SmallCountryMarkers.vue'
 import { useElementSize } from '../composables/useElementSize'
@@ -29,8 +30,10 @@ import { loadBathymetryBands, type BathymetryBand } from '../data/bathymetry'
 import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
+import { readStoredBoolean, readStoredValue, writeStoredValue } from '../utils/storage'
 import { countryName, regionName, t, type Locale } from '../i18n'
 import { mapPaletteCssVariables } from '../data/mapPalette'
+import { mapScaleBar, scaleUnitSystems, type ScaleUnitSystem } from '../logic/mapScale'
 import { quizCountryIds } from '../data/quizCountries'
 import {
   backgroundClickAction,
@@ -50,6 +53,25 @@ import {
 } from '../logic/smallCountryMarkers'
 
 const PREFERRED_COUNTRY_FOCUS_SCALE = 5
+const mapSettingKeys = {
+  projection: 'geo-go-go.map.projection',
+  limitedCountryZoom: 'geo-go-go.map.limit-automatic-country-zoom',
+  bathymetry: 'geo-go-go.map.bathymetry',
+  relief: 'geo-go-go.map.relief',
+  marineLabels: 'geo-go-go.map.water-names',
+  scaleBar: 'geo-go-go.map.scale-bar',
+  scaleUnits: 'geo-go-go.map.scale-units',
+} as const
+
+function initialProjection(): MapProjectionId {
+  const saved = readStoredValue(mapSettingKeys.projection)
+  return projectionOptions.some(({ id }) => id === saved) ? saved as MapProjectionId : 'mercator'
+}
+
+function initialScaleUnits(): ScaleUnitSystem {
+  const saved = readStoredValue(mapSettingKeys.scaleUnits)
+  return scaleUnitSystems.find((units) => units === saved) ?? 'metric'
+}
 
 const props = defineProps<{
   geographicUnits: GeographicUnitFeature[]
@@ -75,25 +97,35 @@ const emit = defineEmits<{
   'quiz-next': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'locale-change': [locale: Locale]
+  'reset-settings': []
 }>()
 
 const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
-const projectionId = ref<MapProjectionId>('mercator')
+const projectionId = ref<MapProjectionId>(initialProjection())
 const usesMobileMapDefaults = window.matchMedia('(hover: none) and (pointer: coarse)').matches
-const bathymetryEnabled = ref(!usesMobileMapDefaults)
-const reliefEnabled = ref(false)
+const bathymetryEnabled = ref(readStoredBoolean(mapSettingKeys.bathymetry, !usesMobileMapDefaults))
+const reliefEnabled = ref(readStoredBoolean(mapSettingKeys.relief, false))
 const bathymetryLoading = ref(false)
 const reliefLoading = ref(false)
 const bathymetryBands = shallowRef<readonly BathymetryBand[]>([])
 const reliefBands = shallowRef<readonly ReliefBand[]>([])
-const marineLabelsEnabled = ref(true)
-const limitedCountryZoomEnabled = ref(false)
+const marineLabelsEnabled = ref(readStoredBoolean(mapSettingKeys.marineLabels, true))
+const scaleBarEnabled = ref(readStoredBoolean(mapSettingKeys.scaleBar, true))
+const scaleUnits = ref<ScaleUnitSystem>(initialScaleUnits())
+const limitedCountryZoomEnabled = ref(readStoredBoolean(mapSettingKeys.limitedCountryZoom, true))
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
 const canvasReady = ref(false)
 const canvasRendererActive = computed(() => canvasRendererEnabled && canvasReady.value)
+watch(projectionId, (value) => writeStoredValue(mapSettingKeys.projection, value))
+watch(limitedCountryZoomEnabled, (value) => writeStoredValue(mapSettingKeys.limitedCountryZoom, value))
+watch(bathymetryEnabled, (value) => writeStoredValue(mapSettingKeys.bathymetry, value))
+watch(reliefEnabled, (value) => writeStoredValue(mapSettingKeys.relief, value))
+watch(marineLabelsEnabled, (value) => writeStoredValue(mapSettingKeys.marineLabels, value))
+watch(scaleBarEnabled, (value) => writeStoredValue(mapSettingKeys.scaleBar, value))
+watch(scaleUnits, (value) => writeStoredValue(mapSettingKeys.scaleUnits, value))
 const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const interactionState = computed<MapInteractionState>(() => ({
@@ -136,6 +168,8 @@ interface MapDebugMetrics {
 const debugMetrics = shallowRef<MapDebugMetrics | null>(null)
 let debugTimer: number | undefined
 let compatibilityClickTimer: number | undefined
+let hoverRestoreFrame: number | undefined
+let lastHoverPointer: { clientX: number; clientY: number } | null = null
 let suppressCompatibilityClick = false
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
 const mapBlurred = computed(() => props.detailBlurred || projectionBlurred.value)
@@ -261,6 +295,25 @@ const {
   regionViewConstraint,
   homeView,
 )
+
+const scaleBar = computed(() => {
+  if (!scaleBarEnabled.value) return null
+  // A map projection has a local scale, not one fixed scale across the world.
+  // Sample a short horizontal span around the screen centre for a stable
+  // reference through pan, zoom, projection, and viewport changes.
+  const sampleWidth = Math.min(80, mapWidth.value * 0.2)
+  const y = mapHeight.value / 2
+  const geographicPoints = [-sampleWidth / 2, sampleWidth / 2].map((offset) =>
+    unprojectPoint([
+      (mapWidth.value / 2 + offset - transform.x) / transform.scale,
+      (y - transform.y) / transform.scale,
+    ]),
+  )
+  const [left, right] = geographicPoints
+  if (!left || !right || !left.every(Number.isFinite) || !right.every(Number.isFinite)) return null
+  const kilometresPerPixel = geoDistance(left, right) * 6371.0088 / sampleWidth
+  return mapScaleBar(kilometresPerPixel, mapWidth.value, scaleUnits.value, props.locale)
+})
 
 function updateDebugMetrics() {
   const projectedCenter: MapPoint = [
@@ -500,16 +553,19 @@ function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
   // This projection is already fitted to the selected region at scale 1.
   if (projectionId.value === 'regional-equal-area') {
     resetZoom(animated)
+    restoreHoverUnderPointer()
     return
   }
   const view = props.activeRegion.view
   if (!view) {
     resetZoom(animated)
+    restoreHoverUnderPointer()
     return
   }
 
   const point = projectPoint(view.center)
   if (point) zoomToPoint(point, view.zoom, animated, zoomOutFirst)
+  restoreHoverUnderPointer()
 }
 
 function resetView() {
@@ -533,6 +589,10 @@ watch([() => props.quizQuestionId, () => props.quizAnswerId], () => {
   hoveredUnit.value = null
 })
 watch(isInteracting, (active) => {
+  if (hoverRestoreFrame !== undefined) {
+    cancelAnimationFrame(hoverRestoreFrame)
+    hoverRestoreFrame = undefined
+  }
   if (active) {
     hoveredUnit.value = null
   } else {
@@ -540,6 +600,7 @@ watch(isInteracting, (active) => {
     // keep scaling that texture after motion stops. Recreate only the painted
     // highlight paths at the final camera scale; hit paths and map stay put.
     highlightRevision.value += 1
+    restoreHoverUnderPointer()
   }
 })
 watch(projectionId, () => focusActiveRegion(false), { flush: 'post' })
@@ -593,6 +654,7 @@ function selectCountry(
       ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
       : undefined,
   )
+  restoreHoverUnderPointer()
 }
 
 function focusCountry(countryId: string) {
@@ -622,6 +684,7 @@ function focusCountry(countryId: string) {
       ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
       : undefined,
   )
+  restoreHoverUnderPointer()
 }
 
 defineExpose({ focusCountry })
@@ -639,13 +702,26 @@ function handleMapClick(event: MouseEvent) {
 }
 
 function handleWheel(event: WheelEvent) {
+  rememberHoverPointer(event)
   if (svg.value) {
     zoomFromWheel(event, svg.value)
   }
 }
 
 function handlePointerDown(event: PointerEvent) {
+  if (event.pointerType !== 'touch') rememberHoverPointer(event)
   if (svg.value) startPan(event, svg.value)
+}
+
+function handlePointerMove(event: PointerEvent) {
+  if (event.pointerType !== 'touch') rememberHoverPointer(event)
+  movePan(event)
+}
+
+function handlePointerLeave(event: PointerEvent) {
+  if (event.pointerType === 'touch') return
+  lastHoverPointer = null
+  hoveredUnit.value = null
 }
 
 function handlePointerEnd(event: PointerEvent) {
@@ -690,12 +766,37 @@ function clearHoveredUnit(id: string) {
   if (hoveredUnit.value?.id === id) hoveredUnit.value = null
 }
 
+function rememberHoverPointer(event: MouseEvent) {
+  lastHoverPointer = { clientX: event.clientX, clientY: event.clientY }
+}
+
+function restoreHoverUnderPointer() {
+  const pointer = lastHoverPointer
+  if (!pointer) return
+  if (hoverRestoreFrame !== undefined) cancelAnimationFrame(hoverRestoreFrame)
+  hoverRestoreFrame = requestAnimationFrame(() => {
+    hoverRestoreFrame = undefined
+    if (isInteracting.value) return
+    const target = document.elementFromPoint(pointer.clientX, pointer.clientY)
+    const hit = target instanceof Element
+      ? target.closest<SVGElement>('[data-country-id][data-geographic-unit-id]')
+      : null
+    if (!hit || !svg.value?.contains(hit)) {
+      hoveredUnit.value = null
+      return
+    }
+    const id = hit.dataset.geographicUnitId
+    const entityId = hit.dataset.countryId
+    hoveredUnit.value = id && entityId ? { id, entityId } : null
+  })
+}
+
 function hoverGeographicUnit(unit: GeographicUnitFeature, event: PointerEvent) {
   // A touch contact emits pointerenter before we can know whether it will be
   // a tap or a pan. Only hover-capable pointers should preview a country.
-  if (event.pointerType !== 'touch' && !isInteracting.value) {
-    hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
-  }
+  if (event.pointerType === 'touch') return
+  rememberHoverPointer(event)
+  if (!isInteracting.value) hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
 }
 
 function hoverSmallCountryMarker(marker: SmallCountryMarker | null) {
@@ -723,6 +824,7 @@ function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEven
     [(marker.x - transform.x) / transform.scale, (marker.y - transform.y) / transform.scale],
     transform.scale * factor,
   )
+  restoreHoverUnderPointer()
 }
 
 async function ensureBathymetryLoaded() {
@@ -761,6 +863,17 @@ function setReliefEnabled(enabled: boolean) {
   if (enabled) void ensureReliefLoaded()
 }
 
+function resetMapSettings() {
+  limitedCountryZoomEnabled.value = true
+  setBathymetryEnabled(!usesMobileMapDefaults)
+  setReliefEnabled(false)
+  marineLabelsEnabled.value = true
+  scaleBarEnabled.value = true
+  scaleUnits.value = 'metric'
+  void setProjection('mercator')
+  emit('reset-settings')
+}
+
 function requestDetailChange(enabled: boolean) {
   emit(
     'detail-change',
@@ -785,6 +898,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (debugTimer !== undefined) window.clearInterval(debugTimer)
   if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
+  if (hoverRestoreFrame !== undefined) cancelAnimationFrame(hoverRestoreFrame)
 })
 
 async function setProjection(nextId: MapProjectionId) {
@@ -856,14 +970,19 @@ async function setProjection(nextId: MapProjectionId) {
       <svg
         ref="svg"
         class="world-map"
-        :class="{ 'world-map--wrapped': wrapActive, 'world-map--canvas': canvasRendererActive }"
+        :class="{
+          'world-map--wrapped': wrapActive,
+          'world-map--canvas': canvasRendererActive,
+          'world-map--bathymetry': bathymetryEnabled && bathymetryPaths.length > 0,
+        }"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         role="group"
         :aria-label="t('interactiveMap')"
         @touchstart.prevent
         @wheel.prevent="handleWheel"
         @pointerdown="handlePointerDown"
-        @pointermove="movePan"
+        @pointermove="handlePointerMove"
+        @pointerleave="handlePointerLeave"
         @pointerup="handlePointerEnd"
         @pointercancel="handlePointerEnd"
         @click.capture="handleMapCaptureClick"
@@ -1068,6 +1187,19 @@ async function setProjection(nextId: MapProjectionId) {
           @update:model-value="marineLabelsEnabled = $event"
         />
         <MapDetailToggle
+          :label="t('showScaleBar')"
+          :model-value="scaleBarEnabled"
+          @update:model-value="scaleBarEnabled = $event"
+        />
+        <label class="scale-units-control" for="map-scale-units">
+          <span>{{ t('scaleUnits') }}</span>
+          <select id="map-scale-units" v-model="scaleUnits">
+            <option value="metric">{{ t('metricUnits') }}</option>
+            <option value="imperial">{{ t('imperialUnits') }}</option>
+            <option value="nautical">{{ t('nauticalUnits') }}</option>
+          </select>
+        </label>
+        <MapDetailToggle
           :loading="detailLoading"
           :disabled="projectionLoading"
           :model-value="highDetailEnabled"
@@ -1075,7 +1207,7 @@ async function setProjection(nextId: MapProjectionId) {
         />
       </div>
 
-      <div class="map-tools">
+      <div class="map-tools" :class="{ 'map-tools--with-scale': scaleBar }">
         <span>
           {{ quizMode && quizAnswerId !== null ? t('continueHint') : t('mapHint') }}
         </span>
@@ -1083,7 +1215,13 @@ async function setProjection(nextId: MapProjectionId) {
           {{ t('resetView') }}
         </button>
       </div>
-      <MapDebugPanel v-if="debugEnabled && debugMetrics" v-bind="debugMetrics" />
+      <MapScaleBar v-if="scaleBar" :scale="scaleBar" />
+      <MapDebugPanel
+        v-if="debugEnabled && debugMetrics"
+        v-bind="debugMetrics"
+        :disabled="interactionLocked"
+        @reset-settings="resetMapSettings"
+      />
     </div>
     <div
       v-if="interactionLocked"
@@ -1160,9 +1298,17 @@ async function setProjection(nextId: MapProjectionId) {
   fill: var(--map-ocean);
 }
 
+.world-map--bathymetry .map-sphere {
+  fill: var(--map-bathymetry-surface);
+}
+
 /* Match the repeated sphere where two cylindrical copies meet at a pixel edge. */
 .world-map--wrapped {
   background-color: var(--map-ocean);
+}
+
+.world-map--wrapped.world-map--bathymetry {
+  background-color: var(--map-bathymetry-surface);
 }
 
 .world-map--canvas.world-map--wrapped {
@@ -1185,8 +1331,24 @@ async function setProjection(nextId: MapProjectionId) {
   fill: var(--map-bathymetry-2000);
 }
 
+.bathymetry__band--3000 {
+  fill: var(--map-bathymetry-3000);
+}
+
+.bathymetry__band--4000 {
+  fill: var(--map-bathymetry-4000);
+}
+
+.bathymetry__band--5000 {
+  fill: var(--map-bathymetry-5000);
+}
+
 .bathymetry__band--6000 {
   fill: var(--map-bathymetry-6000);
+}
+
+.bathymetry__band--7000 {
+  fill: var(--map-bathymetry-7000);
 }
 
 .terrain,
@@ -1286,7 +1448,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .world-map--canvas .country.country--hit-only:focus-visible {
-  fill: rgb(239 192 106 / 72%);
+  fill: rgb(247 192 122 / 82%);
   stroke: #172d38;
 }
 
@@ -1309,7 +1471,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
-  fill: rgb(239 192 106 / 72%);
+  fill: rgb(247 192 122 / 82%);
 }
 
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
@@ -1319,20 +1481,20 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--related,
 :global(html[data-input-modality='keyboard'] .country--related:focus-visible) {
-  fill: rgb(241 182 160 / 70%);
-  stroke: #ba7866;
+  fill: rgb(239 144 72 / 70%);
+  stroke: #bd7842;
   stroke-width: 0.95;
 }
 
 .country--selected,
 :global(html[data-input-modality='keyboard'] .country--selected:focus-visible) {
-  fill: rgb(231 111 81 / 82%);
-  stroke: #8f3522;
+  fill: rgb(239 151 72 / 88%);
+  stroke: #a85d2c;
   stroke-width: 1.2;
 }
 
 .country--identity-hover:not(.country--selected, .country--related) {
-  fill: rgb(239 192 106 / 72%);
+  fill: rgb(247 192 122 / 82%);
 }
 
 .country--quiz-correct-related,
@@ -1365,16 +1527,16 @@ async function setProjection(nextId: MapProjectionId) {
 
 @media (hover: hover) and (pointer: fine) {
   .country:hover {
-    fill: rgb(239 192 106 / 72%);
+    fill: rgb(247 192 122 / 82%);
   }
 
   .country--related:hover {
-    fill: rgb(244 195 177 / 76%);
-    stroke: #ba7866;
+    fill: rgb(247 162 86 / 80%);
+    stroke: #bd7842;
   }
 
   .country--selected:hover {
-    fill: rgb(237 134 106 / 84%);
+    fill: rgb(247 163 84 / 90%);
   }
 
   .country--quiz-correct-related:hover {
@@ -1480,6 +1642,32 @@ async function setProjection(nextId: MapProjectionId) {
   display: none;
 }
 
+.scale-units-control {
+  display: flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(82, 103, 110, 0.18);
+  border-radius: 12px;
+  color: #52676e;
+  background: rgba(255, 255, 255, 0.86);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.scale-units-control select {
+  min-width: 0;
+  max-width: 9rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(82, 103, 110, 0.25);
+  border-radius: 6px;
+  color: #17374b;
+  background: #fff;
+  font: inherit;
+}
+
 .map-tools span,
 .map-tools button {
   padding: 0.4rem 0.65rem;
@@ -1503,6 +1691,7 @@ async function setProjection(nextId: MapProjectionId) {
 
 @media (max-width: 1100px) {
   .map-tools { top: 0.8rem; bottom: auto; }
+  .map-tools--with-scale { top: auto; bottom: 1.4rem; }
   .map-tools span { display: none; }
 }
 

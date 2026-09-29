@@ -10,6 +10,7 @@ interface VerticalFit {
 }
 
 const props = defineProps<{
+  disabled: boolean
   zoom: number
   countryFocus: string
   center: MapPoint | null
@@ -28,8 +29,13 @@ const props = defineProps<{
   gesture: string
   paths: ProjectionDebugState | null
 }>()
+const emit = defineEmits<{
+  'reset-settings': []
+}>()
 const copyState = ref<'idle' | 'copied' | 'failed'>('idle')
+const resetState = ref<'idle' | 'reset'>('idle')
 let copyStateTimer: number | undefined
+let resetStateTimer: number | undefined
 
 function coordinate(value: number, positive: string, negative: string) {
   const direction = value < 0 ? negative : positive
@@ -137,8 +143,19 @@ async function copyDebugData() {
   }
 }
 
+function resetSettings() {
+  emit('reset-settings')
+  resetState.value = 'reset'
+  if (resetStateTimer !== undefined) window.clearTimeout(resetStateTimer)
+  resetStateTimer = window.setTimeout(() => {
+    resetState.value = 'idle'
+    resetStateTimer = undefined
+  }, 1600)
+}
+
 onBeforeUnmount(() => {
   if (copyStateTimer !== undefined) window.clearTimeout(copyStateTimer)
+  if (resetStateTimer !== undefined) window.clearTimeout(resetStateTimer)
 })
 </script>
 
@@ -146,25 +163,37 @@ onBeforeUnmount(() => {
   <aside class="map-debug-panel" aria-label="Map debug information">
     <div class="map-debug-panel__header">
       <strong>Map debug</strong>
-      <button
-        class="map-debug-panel__copy"
-        :class="`map-debug-panel__copy--${copyState}`"
-        type="button"
-        :aria-label="copyState === 'copied' ? 'Map debug data copied' : copyState === 'failed' ? 'Could not copy map debug data' : 'Copy map debug data'"
-        @click="copyDebugData"
-      >
-        <svg v-if="copyState === 'copied'" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m5 12 4 4L19 6" />
-        </svg>
-        <svg v-else-if="copyState === 'failed'" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 7v6m0 4h.01" />
-          <circle cx="12" cy="12" r="9" />
-        </svg>
-        <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M8 7V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
-          <rect x="4" y="7" width="11" height="13" rx="2" />
-        </svg>
-      </button>
+      <div class="map-debug-panel__actions">
+        <button
+          class="map-debug-panel__reset"
+          :class="`map-debug-panel__reset--${resetState}`"
+          type="button"
+          :disabled="disabled"
+          :aria-label="resetState === 'reset' ? 'Settings reset to defaults' : 'Reset settings to defaults'"
+          @click="resetSettings"
+        >
+          {{ resetState === 'reset' ? 'Reset' : 'Reset settings' }}
+        </button>
+        <button
+          class="map-debug-panel__copy"
+          :class="`map-debug-panel__copy--${copyState}`"
+          type="button"
+          :aria-label="copyState === 'copied' ? 'Map debug data copied' : copyState === 'failed' ? 'Could not copy map debug data' : 'Copy map debug data'"
+          @click="copyDebugData"
+        >
+          <svg v-if="copyState === 'copied'" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m5 12 4 4L19 6" />
+          </svg>
+          <svg v-else-if="copyState === 'failed'" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 7v6m0 4h.01" />
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+          <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 7V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+            <rect x="4" y="7" width="11" height="13" rx="2" />
+          </svg>
+        </button>
+      </div>
       <span class="map-debug-panel__copy-status" aria-live="polite">
         {{ copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : '' }}
       </span>
@@ -243,6 +272,12 @@ onBeforeUnmount(() => {
   margin-bottom: 0.25rem;
 }
 
+.map-debug-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 strong {
   display: block;
   margin: 0;
@@ -251,33 +286,52 @@ strong {
   text-transform: uppercase;
 }
 
-.map-debug-panel__copy {
-  display: grid;
-  width: 1.75rem;
+.map-debug-panel__copy,
+.map-debug-panel__reset {
   height: 1.75rem;
   flex: none;
-  padding: 0.25rem;
   border: 0;
   border-radius: 6px;
   color: #edf7f8;
   background: rgba(255, 255, 255, 0.08);
   cursor: pointer;
   pointer-events: auto;
+}
+
+.map-debug-panel__copy {
+  display: grid;
+  width: 1.75rem;
+  padding: 0.25rem;
   place-items: center;
 }
 
 .map-debug-panel__copy:hover,
-.map-debug-panel__copy:focus-visible {
+.map-debug-panel__copy:focus-visible,
+.map-debug-panel__reset:hover:not(:disabled),
+.map-debug-panel__reset:focus-visible {
   background: rgba(255, 255, 255, 0.16);
 }
 
-.map-debug-panel__copy:focus-visible {
+.map-debug-panel__copy:focus-visible,
+.map-debug-panel__reset:focus-visible {
   outline: 2px solid #edf7f8;
   outline-offset: 2px;
 }
 
 .map-debug-panel__copy--copied { color: #91e3b6; }
 .map-debug-panel__copy--failed { color: #ffaaa0; }
+
+.map-debug-panel__reset {
+  padding: 0.25rem 0.45rem;
+  font: inherit;
+}
+
+.map-debug-panel__reset:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.map-debug-panel__reset--reset { color: #91e3b6; }
 
 .map-debug-panel__copy svg {
   width: 1.15rem;

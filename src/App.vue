@@ -21,7 +21,8 @@ import {
   type MapRegionId,
 } from './data/regions'
 import { afterPaint, wait } from './utils/paint'
-import { locale, setLocale, t } from './i18n'
+import { clearStoredValues, readStoredBoolean, writeStoredValue } from './utils/storage'
+import { locale, resetLocale, setLocale, t } from './i18n'
 import { isCountryLevelSelection } from './data/mapSelection'
 
 const selectedCountryId = ref<string | null>(null)
@@ -31,6 +32,8 @@ const mode = ref<'explore' | 'find-country'>('explore')
 const activeRegionId = ref<MapRegionId>('world')
 const renderedGeographicUnits = shallowRef(geographicUnits)
 const highDetailEnabled = ref(false)
+const highDetailPreferenceKey = 'geo-go-go.map.high-detail'
+const highDetailPreferred = readStoredBoolean(highDetailPreferenceKey, false)
 const detailLoading = ref(false)
 const detailBlurred = ref(false)
 const settingsOpen = ref(false)
@@ -45,6 +48,13 @@ function readWrongAnswerPreference() {
 function setAlwaysShowWrongAnswer(value: boolean) {
   alwaysShowWrongAnswer.value = value
   try { localStorage.setItem(wrongAnswerPreferenceKey, String(value)) } catch { /* The setting still works for this session. */ }
+}
+
+function resetSettings() {
+  clearStoredValues('geo-go-go.')
+  resetLocale()
+  setAlwaysShowWrongAnswer(false)
+  void setHighDetail(false, false)
 }
 
 const activeRegion = computed(() => regionById.get(activeRegionId.value) ?? regions[0])
@@ -165,6 +175,7 @@ onMounted(() => {
   document.addEventListener('keydown', handleQuizShortcut)
   document.addEventListener('keydown', handleEscape)
   document.addEventListener('pointerdown', handleSettingsPointerDown)
+  if (highDetailPreferred) void setHighDetail(true, false)
 })
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleQuizShortcut)
@@ -199,12 +210,14 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
   if (!enabled) {
     renderedGeographicUnits.value = geographicUnits
     highDetailEnabled.value = false
+    writeStoredValue(highDetailPreferenceKey, false)
     return
   }
 
   if (detailedGeographicUnits.value && pathsCached) {
     renderedGeographicUnits.value = detailedGeographicUnits.value
     highDetailEnabled.value = true
+    writeStoredValue(highDetailPreferenceKey, true)
     return
   }
 
@@ -226,9 +239,11 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
     // Let the detailed paths render while they are still blurred.
     await nextTick()
     await afterPaint()
+    writeStoredValue(highDetailPreferenceKey, true)
   } catch (error) {
     renderedGeographicUnits.value = geographicUnits
     highDetailEnabled.value = false
+    writeStoredValue(highDetailPreferenceKey, false)
     console.error('Could not load the high-detail map.', error)
   } finally {
     detailBlurred.value = false
@@ -313,6 +328,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :visible-map-unit-ids="visibleMapUnitIds"
         @detail-change="setHighDetail"
         @locale-change="setLocale"
+        @reset-settings="resetSettings"
         @select="handleMapSelection"
         @quiz-next="advanceQuizQuestion"
       />

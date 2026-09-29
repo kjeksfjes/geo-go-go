@@ -84,6 +84,13 @@ try {
   if (!entry || !entry.slice(entry.indexOf('\n') + 1).trim()) {
     throw new Error(`CHANGELOG.md needs a nonempty ${version} entry.`)
   }
+  const heading = entry.split('\n', 1)[0]
+  const releaseName = heading.match(/^\d+\.\d+\.\d+ — (.+) — \d{4}-\d{2}-\d{2}$/)?.[1]?.trim()
+  const [major, minor] = versionParts(version)
+  const [previousMajor, previousMinor] = versionParts(previousVersion)
+  if ((major !== previousMajor || minor !== previousMinor) && !releaseName) {
+    throw new Error(`Major and minor releases need a name in the ${version} changelog heading.`)
+  }
 
   console.log(`Checking ${tag} from ${branch} before merging into main...`)
   run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'build'], true)
@@ -97,7 +104,7 @@ try {
     if (!gitSucceeds(['merge-base', '--is-ancestor', branch, 'HEAD'])) {
       throw new Error('Merged HEAD does not contain the release branch; tag was not created.')
     }
-    run('git', ['tag', '-a', tag, '-m', `Geo Go Go ${version}`], true)
+    run('git', ['tag', '-a', tag, '-m', `Geo Go Go ${version}${releaseName ? ` — ${releaseName}` : ''}`], true)
     console.log(`Merged ${branch} into main and tagged ${tag}.`)
   }
 } catch (error) {
