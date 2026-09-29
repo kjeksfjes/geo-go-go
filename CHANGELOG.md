@@ -4,6 +4,8 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.6.0 — Depths & Distances — 2026-09-29
+
 ### Improvements
 
 - Enabled the automatic country zoom limit by default to avoid overly close country views.
