@@ -4,6 +4,12 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+### Improvements
+
+- Enabled the automatic country zoom limit by default to avoid overly close country views.
+- Remembered projection, country zoom, visual layers, and map detail settings between browser visits.
+- Added a debug-panel control for immediately resetting all saved settings to their defaults.
+
 ### Fixes
 
 - Kept antimeridian region transitions centered after moving between North America and Oceania.

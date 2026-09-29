@@ -7,16 +7,20 @@ export type Locale = 'en' | 'nb'
 
 const storageKey = 'geo-go-go.locale'
 
+function browserLocale(): Locale {
+  const browserLanguage = typeof navigator === 'undefined'
+    ? ''
+    : navigator.languages?.[0] ?? navigator.language
+  return /^(nb|nn|no)(-|$)/i.test(browserLanguage) ? 'nb' : 'en'
+}
+
 function initialLocale(): Locale {
   try {
     const saved = localStorage.getItem(storageKey)
     if (saved === 'en' || saved === 'nb') return saved
   } catch { /* Private browsing may deny storage. */ }
 
-  const browserLanguage = typeof navigator === 'undefined'
-    ? ''
-    : navigator.languages?.[0] ?? navigator.language
-  return /^(nb|nn|no)(-|$)/i.test(browserLanguage) ? 'nb' : 'en'
+  return browserLocale()
 }
 
 export const locale = ref<Locale>(initialLocale())
@@ -25,6 +29,10 @@ export function setLocale(next: Locale) {
   locale.value = next
   document.documentElement.lang = next
   try { localStorage.setItem(storageKey, next) } catch { /* Language still changes. */ }
+}
+
+export function resetLocale() {
+  setLocale(browserLocale())
 }
 
 export function applyDocumentLocale() {

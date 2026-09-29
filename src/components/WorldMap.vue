@@ -29,6 +29,7 @@ import { loadBathymetryBands, type BathymetryBand } from '../data/bathymetry'
 import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
+import { readStoredBoolean, readStoredValue, writeStoredValue } from '../utils/storage'
 import { countryName, regionName, t, type Locale } from '../i18n'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { quizCountryIds } from '../data/quizCountries'
@@ -50,6 +51,18 @@ import {
 } from '../logic/smallCountryMarkers'
 
 const PREFERRED_COUNTRY_FOCUS_SCALE = 5
+const mapSettingKeys = {
+  projection: 'geo-go-go.map.projection',
+  limitedCountryZoom: 'geo-go-go.map.limit-automatic-country-zoom',
+  bathymetry: 'geo-go-go.map.bathymetry',
+  relief: 'geo-go-go.map.relief',
+  marineLabels: 'geo-go-go.map.water-names',
+} as const
+
+function initialProjection(): MapProjectionId {
+  const saved = readStoredValue(mapSettingKeys.projection)
+  return projectionOptions.some(({ id }) => id === saved) ? saved as MapProjectionId : 'mercator'
+}
 
 const props = defineProps<{
   geographicUnits: GeographicUnitFeature[]
@@ -75,25 +88,31 @@ const emit = defineEmits<{
   'quiz-next': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'locale-change': [locale: Locale]
+  'reset-settings': []
 }>()
 
 const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
-const projectionId = ref<MapProjectionId>('mercator')
+const projectionId = ref<MapProjectionId>(initialProjection())
 const usesMobileMapDefaults = window.matchMedia('(hover: none) and (pointer: coarse)').matches
-const bathymetryEnabled = ref(!usesMobileMapDefaults)
-const reliefEnabled = ref(false)
+const bathymetryEnabled = ref(readStoredBoolean(mapSettingKeys.bathymetry, !usesMobileMapDefaults))
+const reliefEnabled = ref(readStoredBoolean(mapSettingKeys.relief, false))
 const bathymetryLoading = ref(false)
 const reliefLoading = ref(false)
 const bathymetryBands = shallowRef<readonly BathymetryBand[]>([])
 const reliefBands = shallowRef<readonly ReliefBand[]>([])
-const marineLabelsEnabled = ref(true)
-const limitedCountryZoomEnabled = ref(false)
+const marineLabelsEnabled = ref(readStoredBoolean(mapSettingKeys.marineLabels, true))
+const limitedCountryZoomEnabled = ref(readStoredBoolean(mapSettingKeys.limitedCountryZoom, true))
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
 const canvasReady = ref(false)
 const canvasRendererActive = computed(() => canvasRendererEnabled && canvasReady.value)
+watch(projectionId, (value) => writeStoredValue(mapSettingKeys.projection, value))
+watch(limitedCountryZoomEnabled, (value) => writeStoredValue(mapSettingKeys.limitedCountryZoom, value))
+watch(bathymetryEnabled, (value) => writeStoredValue(mapSettingKeys.bathymetry, value))
+watch(reliefEnabled, (value) => writeStoredValue(mapSettingKeys.relief, value))
+watch(marineLabelsEnabled, (value) => writeStoredValue(mapSettingKeys.marineLabels, value))
 const reliefClipId = `relief-land-${useId()}`
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const interactionState = computed<MapInteractionState>(() => ({
@@ -761,6 +780,15 @@ function setReliefEnabled(enabled: boolean) {
   if (enabled) void ensureReliefLoaded()
 }
 
+function resetMapSettings() {
+  limitedCountryZoomEnabled.value = true
+  setBathymetryEnabled(!usesMobileMapDefaults)
+  setReliefEnabled(false)
+  marineLabelsEnabled.value = true
+  void setProjection('mercator')
+  emit('reset-settings')
+}
+
 function requestDetailChange(enabled: boolean) {
   emit(
     'detail-change',
@@ -1083,7 +1111,12 @@ async function setProjection(nextId: MapProjectionId) {
           {{ t('resetView') }}
         </button>
       </div>
-      <MapDebugPanel v-if="debugEnabled && debugMetrics" v-bind="debugMetrics" />
+      <MapDebugPanel
+        v-if="debugEnabled && debugMetrics"
+        v-bind="debugMetrics"
+        :disabled="interactionLocked"
+        @reset-settings="resetMapSettings"
+      />
     </div>
     <div
       v-if="interactionLocked"
