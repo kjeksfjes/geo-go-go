@@ -155,6 +155,8 @@ interface MapDebugMetrics {
 const debugMetrics = shallowRef<MapDebugMetrics | null>(null)
 let debugTimer: number | undefined
 let compatibilityClickTimer: number | undefined
+let hoverRestoreFrame: number | undefined
+let lastHoverPointer: { clientX: number; clientY: number } | null = null
 let suppressCompatibilityClick = false
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
 const mapBlurred = computed(() => props.detailBlurred || projectionBlurred.value)
@@ -519,16 +521,19 @@ function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
   // This projection is already fitted to the selected region at scale 1.
   if (projectionId.value === 'regional-equal-area') {
     resetZoom(animated)
+    restoreHoverUnderPointer()
     return
   }
   const view = props.activeRegion.view
   if (!view) {
     resetZoom(animated)
+    restoreHoverUnderPointer()
     return
   }
 
   const point = projectPoint(view.center)
   if (point) zoomToPoint(point, view.zoom, animated, zoomOutFirst)
+  restoreHoverUnderPointer()
 }
 
 function resetView() {
@@ -552,6 +557,10 @@ watch([() => props.quizQuestionId, () => props.quizAnswerId], () => {
   hoveredUnit.value = null
 })
 watch(isInteracting, (active) => {
+  if (hoverRestoreFrame !== undefined) {
+    cancelAnimationFrame(hoverRestoreFrame)
+    hoverRestoreFrame = undefined
+  }
   if (active) {
     hoveredUnit.value = null
   } else {
@@ -559,6 +568,7 @@ watch(isInteracting, (active) => {
     // keep scaling that texture after motion stops. Recreate only the painted
     // highlight paths at the final camera scale; hit paths and map stay put.
     highlightRevision.value += 1
+    restoreHoverUnderPointer()
   }
 })
 watch(projectionId, () => focusActiveRegion(false), { flush: 'post' })
@@ -612,6 +622,7 @@ function selectCountry(
       ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
       : undefined,
   )
+  restoreHoverUnderPointer()
 }
 
 function focusCountry(countryId: string) {
@@ -641,6 +652,7 @@ function focusCountry(countryId: string) {
       ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
       : undefined,
   )
+  restoreHoverUnderPointer()
 }
 
 defineExpose({ focusCountry })
@@ -658,13 +670,26 @@ function handleMapClick(event: MouseEvent) {
 }
 
 function handleWheel(event: WheelEvent) {
+  rememberHoverPointer(event)
   if (svg.value) {
     zoomFromWheel(event, svg.value)
   }
 }
 
 function handlePointerDown(event: PointerEvent) {
+  if (event.pointerType !== 'touch') rememberHoverPointer(event)
   if (svg.value) startPan(event, svg.value)
+}
+
+function handlePointerMove(event: PointerEvent) {
+  if (event.pointerType !== 'touch') rememberHoverPointer(event)
+  movePan(event)
+}
+
+function handlePointerLeave(event: PointerEvent) {
+  if (event.pointerType === 'touch') return
+  lastHoverPointer = null
+  hoveredUnit.value = null
 }
 
 function handlePointerEnd(event: PointerEvent) {
@@ -709,12 +734,37 @@ function clearHoveredUnit(id: string) {
   if (hoveredUnit.value?.id === id) hoveredUnit.value = null
 }
 
+function rememberHoverPointer(event: MouseEvent) {
+  lastHoverPointer = { clientX: event.clientX, clientY: event.clientY }
+}
+
+function restoreHoverUnderPointer() {
+  const pointer = lastHoverPointer
+  if (!pointer) return
+  if (hoverRestoreFrame !== undefined) cancelAnimationFrame(hoverRestoreFrame)
+  hoverRestoreFrame = requestAnimationFrame(() => {
+    hoverRestoreFrame = undefined
+    if (isInteracting.value) return
+    const target = document.elementFromPoint(pointer.clientX, pointer.clientY)
+    const hit = target instanceof Element
+      ? target.closest<SVGElement>('[data-country-id][data-geographic-unit-id]')
+      : null
+    if (!hit || !svg.value?.contains(hit)) {
+      hoveredUnit.value = null
+      return
+    }
+    const id = hit.dataset.geographicUnitId
+    const entityId = hit.dataset.countryId
+    hoveredUnit.value = id && entityId ? { id, entityId } : null
+  })
+}
+
 function hoverGeographicUnit(unit: GeographicUnitFeature, event: PointerEvent) {
   // A touch contact emits pointerenter before we can know whether it will be
   // a tap or a pan. Only hover-capable pointers should preview a country.
-  if (event.pointerType !== 'touch' && !isInteracting.value) {
-    hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
-  }
+  if (event.pointerType === 'touch') return
+  rememberHoverPointer(event)
+  if (!isInteracting.value) hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
 }
 
 function hoverSmallCountryMarker(marker: SmallCountryMarker | null) {
@@ -742,6 +792,7 @@ function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEven
     [(marker.x - transform.x) / transform.scale, (marker.y - transform.y) / transform.scale],
     transform.scale * factor,
   )
+  restoreHoverUnderPointer()
 }
 
 async function ensureBathymetryLoaded() {
@@ -813,6 +864,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (debugTimer !== undefined) window.clearInterval(debugTimer)
   if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
+  if (hoverRestoreFrame !== undefined) cancelAnimationFrame(hoverRestoreFrame)
 })
 
 async function setProjection(nextId: MapProjectionId) {
@@ -891,7 +943,8 @@ async function setProjection(nextId: MapProjectionId) {
         @touchstart.prevent
         @wheel.prevent="handleWheel"
         @pointerdown="handlePointerDown"
-        @pointermove="movePan"
+        @pointermove="handlePointerMove"
+        @pointerleave="handlePointerLeave"
         @pointerup="handlePointerEnd"
         @pointercancel="handlePointerEnd"
         @click.capture="handleMapCaptureClick"

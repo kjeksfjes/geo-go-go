@@ -13,6 +13,7 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 ### Fixes
 
 - Kept antimeridian region transitions centered after moving between North America and Oceania.
+- Restored country hover highlighting when zooming or automatic map movement finishes beneath a stationary cursor.
 
 ## 0.5.0 — 2026-09-29
 

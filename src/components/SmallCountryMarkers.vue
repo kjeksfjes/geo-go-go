@@ -37,6 +37,8 @@ function feedbackLabel(marker: SmallCountryFeedbackMarker) {
       :key="marker.key"
       class="small-country-marker"
       :transform="`translate(${marker.x} ${marker.y})`"
+      :data-country-id="marker.targets.length === 1 ? marker.targets[0].countryId : undefined"
+      :data-geographic-unit-id="marker.targets.length === 1 ? marker.targets[0].unitId : undefined"
       role="button"
       tabindex="0"
       :aria-label="markerLabel(marker)"
