@@ -9,9 +9,14 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 - Enabled the automatic country zoom limit by default to avoid overly close country views.
 - Remembered projection, country zoom, visual layers, and map detail settings between browser visits.
 - Added a debug-panel control for immediately resetting all saved settings to their defaults.
+- Used the established Norwegian cartographic term “Relieff” for the relief layer.
+- Preserved finer Natural Earth bathymetry contours around islands, shelves, and ocean basins.
+- Added a simplified darkest bathymetry band for ocean trenches from 7,000 to 10,000 metres.
+- Added 3,000 m, 4,000 m, and 5,000 m ocean contours to reveal ridges and basin structure in the Philippine Sea and elsewhere.
 
 ### Fixes
 
+- Corrected shallow-water coloring so bathymetry darkens consistently with increasing depth around islands and coasts.
 - Kept antimeridian region transitions centered after moving between North America and Oceania.
 - Restored country hover highlighting when zooming or automatic map movement finishes beneath a stationary cursor.
 

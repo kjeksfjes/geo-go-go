@@ -67,7 +67,9 @@ function drawScene(
     context.save()
     context.translate(offset, 0)
     if (prepared.sphere) {
-      context.fillStyle = mapPalette.ocean
+      context.fillStyle = prepared.bathymetry.length
+        ? mapPalette.bathymetrySurface
+        : mapPalette.ocean
       context.fill(prepared.sphere)
     }
     context.restore()
@@ -78,7 +80,7 @@ function drawScene(
     context.translate(offset, 0)
     for (const band of prepared.bathymetry) {
       if (!band.path) continue
-      context.fillStyle = mapPalette.bathymetry[band.depth] ?? mapPalette.bathymetry[6000]
+      context.fillStyle = mapPalette.bathymetry[band.depth] ?? mapPalette.bathymetry[7000]
       context.fill(band.path)
     }
     context.restore()

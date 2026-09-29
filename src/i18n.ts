@@ -66,7 +66,7 @@ const messages = {
     language: 'Språk', eyebrow: 'Et lite geografispill', title: 'Hvor i verden?',
     subtitle: 'Utforsk kartet og velg et land.', gameMode: 'Spillmodus',
     explore: 'Utforsk', findCountry: 'Finn landet', worldMapGame: 'Verdenskartspill',
-    region: 'Region', projection: 'Projeksjon', regionalEqualArea: 'Regional arealriktig', mapSettings: 'Kartinnstillinger', mapControls: 'Kartvalg', highDetail: 'Høy detaljgrad', bathymetry: 'Havdybde', relief: 'Terreng', waterNames: 'Havnavn', limitAutomaticCountryZoom: 'Begrens automatisk landzoom',
+    region: 'Region', projection: 'Projeksjon', regionalEqualArea: 'Regional arealriktig', mapSettings: 'Kartinnstillinger', mapControls: 'Kartvalg', highDetail: 'Høy detaljgrad', bathymetry: 'Havdybde', relief: 'Relieff', waterNames: 'Havnavn', limitAutomaticCountryZoom: 'Begrens automatisk landzoom',
     interactiveMap: 'Interaktivt verdenskart', resetView: 'Tilbakestill visning',
     mapHint: 'Rull for å zoome · Dra for å flytte', continueHint: 'Klikk på kartet eller trykk mellomrom for å fortsette',
     loadingMap: 'Laster detaljert kart…', selectedCountry: 'Valgt land',

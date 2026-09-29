@@ -936,7 +936,11 @@ async function setProjection(nextId: MapProjectionId) {
       <svg
         ref="svg"
         class="world-map"
-        :class="{ 'world-map--wrapped': wrapActive, 'world-map--canvas': canvasRendererActive }"
+        :class="{
+          'world-map--wrapped': wrapActive,
+          'world-map--canvas': canvasRendererActive,
+          'world-map--bathymetry': bathymetryEnabled && bathymetryPaths.length > 0,
+        }"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         role="group"
         :aria-label="t('interactiveMap')"
@@ -1246,9 +1250,17 @@ async function setProjection(nextId: MapProjectionId) {
   fill: var(--map-ocean);
 }
 
+.world-map--bathymetry .map-sphere {
+  fill: var(--map-bathymetry-surface);
+}
+
 /* Match the repeated sphere where two cylindrical copies meet at a pixel edge. */
 .world-map--wrapped {
   background-color: var(--map-ocean);
+}
+
+.world-map--wrapped.world-map--bathymetry {
+  background-color: var(--map-bathymetry-surface);
 }
 
 .world-map--canvas.world-map--wrapped {
@@ -1271,8 +1283,24 @@ async function setProjection(nextId: MapProjectionId) {
   fill: var(--map-bathymetry-2000);
 }
 
+.bathymetry__band--3000 {
+  fill: var(--map-bathymetry-3000);
+}
+
+.bathymetry__band--4000 {
+  fill: var(--map-bathymetry-4000);
+}
+
+.bathymetry__band--5000 {
+  fill: var(--map-bathymetry-5000);
+}
+
 .bathymetry__band--6000 {
   fill: var(--map-bathymetry-6000);
+}
+
+.bathymetry__band--7000 {
+  fill: var(--map-bathymetry-7000);
 }
 
 .terrain,

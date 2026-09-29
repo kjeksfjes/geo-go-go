@@ -2,6 +2,7 @@
 // shared geographic colors here; interaction feedback colors remain in CSS.
 export const mapPalette = {
   ocean: '#61acd3',
+  bathymetrySurface: '#8ac8e3',
   land: '#fcf8e9',
   reliefLand: '#e3ded2',
   contextLand: '#c2d2cf',
@@ -12,7 +13,11 @@ export const mapPalette = {
   bathymetry: {
     200: '#78bbdc',
     2000: '#63add3',
+    3000: '#5fa9d1',
+    4000: '#5ba5cf',
+    5000: '#55a0cd',
     6000: '#509dcc',
+    7000: '#3f89bc',
   } as Record<number, string>,
   // These elevation polygons are nested. Screen-blend each warm tint over the
   // darker relief land so every additional band increases lightness.
@@ -28,6 +33,7 @@ export const mapPalette = {
 
 export const mapPaletteCssVariables: Record<string, string> = {
   '--map-ocean': mapPalette.ocean,
+  '--map-bathymetry-surface': mapPalette.bathymetrySurface,
   '--map-land': mapPalette.land,
   '--map-relief-land': mapPalette.reliefLand,
   '--map-context-land': mapPalette.contextLand,
