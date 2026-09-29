@@ -1448,7 +1448,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .world-map--canvas .country.country--hit-only:focus-visible {
-  fill: rgb(239 192 106 / 72%);
+  fill: rgb(247 192 122 / 82%);
   stroke: #172d38;
 }
 
@@ -1471,7 +1471,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
-  fill: rgb(239 192 106 / 72%);
+  fill: rgb(247 192 122 / 82%);
 }
 
 :global(html[data-input-modality='keyboard'] .country:focus-visible) {
@@ -1481,20 +1481,20 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--related,
 :global(html[data-input-modality='keyboard'] .country--related:focus-visible) {
-  fill: rgb(241 182 160 / 70%);
-  stroke: #ba7866;
+  fill: rgb(239 144 72 / 70%);
+  stroke: #bd7842;
   stroke-width: 0.95;
 }
 
 .country--selected,
 :global(html[data-input-modality='keyboard'] .country--selected:focus-visible) {
-  fill: rgb(231 111 81 / 82%);
-  stroke: #8f3522;
+  fill: rgb(239 151 72 / 88%);
+  stroke: #a85d2c;
   stroke-width: 1.2;
 }
 
 .country--identity-hover:not(.country--selected, .country--related) {
-  fill: rgb(239 192 106 / 72%);
+  fill: rgb(247 192 122 / 82%);
 }
 
 .country--quiz-correct-related,
@@ -1527,16 +1527,16 @@ async function setProjection(nextId: MapProjectionId) {
 
 @media (hover: hover) and (pointer: fine) {
   .country:hover {
-    fill: rgb(239 192 106 / 72%);
+    fill: rgb(247 192 122 / 82%);
   }
 
   .country--related:hover {
-    fill: rgb(244 195 177 / 76%);
-    stroke: #ba7866;
+    fill: rgb(247 162 86 / 80%);
+    stroke: #bd7842;
   }
 
   .country--selected:hover {
-    fill: rgb(237 134 106 / 84%);
+    fill: rgb(247 163 84 / 90%);
   }
 
   .country--quiz-correct-related:hover {

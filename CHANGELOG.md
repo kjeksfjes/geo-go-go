@@ -14,6 +14,7 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 - Added a simplified darkest bathymetry band for ocean trenches from 7,000 to 10,000 metres.
 - Added 3,000 m, 4,000 m, and 5,000 m ocean contours to reveal ridges and basin structure in the Philippine Sea and elsewhere.
 - Added an optional scale bar with persistent metric, imperial, and nautical unit settings; metric is the default.
+- Refreshed map hover and selection colors with apricot and warm orange, keeping red for incorrect quiz answers.
 
 ### Fixes
 
