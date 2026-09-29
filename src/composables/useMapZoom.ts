@@ -201,7 +201,8 @@ export function useMapZoom(
     cancelWheelUpdate()
 
     const start = { ...transform }
-    const target = constrainTransform(x, y, scale)
+    const canonicalTarget = constrainTransform(x, y, scale)
+    const target = { ...canonicalTarget }
     const wrap = horizontalWrap.value
     if (wrap) {
       // Animate toward the nearest equivalent world copy, then normalize each
@@ -213,7 +214,7 @@ export function useMapZoom(
     }
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setTransform(target.x, target.y, target.scale)
+      setTransform(canonicalTarget.x, canonicalTarget.y, canonicalTarget.scale)
       return
     }
 
@@ -280,7 +281,9 @@ export function useMapZoom(
       if (progress < 1) {
         animationFrame = requestAnimationFrame(frame)
       } else {
-        if (enteringRegionalView) setTransform(target.x, target.y, target.scale)
+        if (enteringRegionalView) {
+          setTransform(canonicalTarget.x, canonicalTarget.y, canonicalTarget.scale)
+        }
         animationFrame = undefined
         isAnimating.value = false
       }
