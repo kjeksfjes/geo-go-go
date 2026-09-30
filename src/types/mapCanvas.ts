@@ -22,7 +22,7 @@ export type CanvasWorkerRequest =
   | { type: 'scene'; version: number; scene: CanvasMapScene }
   | {
       type: 'render'
-      purpose: 'overview' | 'detail'
+      purpose: 'overview' | 'detail' | 'settled'
       version: number
       requestId: number
       width: number
@@ -35,7 +35,7 @@ export type CanvasWorkerRequest =
 
 export interface CanvasWorkerFrame {
   type: 'frame'
-  purpose: 'overview' | 'detail'
+  purpose: 'overview' | 'detail' | 'settled'
   version: number
   requestId: number
   camera: CanvasCamera

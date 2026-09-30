@@ -4,6 +4,10 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+### Improvements
+
+- Sharpened country outlines on large displays by rendering a viewport-sized canvas frame after map movement settles.
+
 ## 0.6.0 — Depths & Distances — 2026-09-29
 
 ### Improvements

@@ -16,20 +16,26 @@ const emit = defineEmits<{ 'ready-change': [ready: boolean] }>()
 const canvasA = ref<HTMLCanvasElement | null>(null)
 const canvasB = ref<HTMLCanvasElement | null>(null)
 const overviewCanvas = ref<HTMLCanvasElement | null>(null)
+const settledCanvas = ref<HTMLCanvasElement | null>(null)
 // Leave enough image outside the viewport for several wheel events while the
 // worker prepares the next frame. The overlap prevents exposed bitmap edges.
 const overscan = 1.8
 // At minimum zoom, the camera can move by 65% of the viewport in either
 // direction. Keep a complete map snapshot available for fast zoom-outs.
 const overviewOverscan = 2.4
+const overviewIndex = 2
+const settledIndex = 3
+const settleDelay = 180
 let worker: Worker | null = null
-let contexts: Array<ImageBitmapRenderingContext | CanvasRenderingContext2D | null> = [null, null, null]
+let contexts: Array<ImageBitmapRenderingContext | CanvasRenderingContext2D | null> = [null, null, null, null]
 let sceneVersion = 0
 let requestId = 0
+let settledRequestId = 0
 let pending = false
 let refreshAfterPending = false
 let forceAfterPending = false
 let swapFrame: number | undefined
+let settleTimer: number | undefined
 let visibleIndex = 0
 let hasShownDetail = false
 let ready = false
@@ -39,10 +45,10 @@ type Snapshot = {
   height: number
   overscan: number
 }
-let snapshots: Array<Snapshot | null> = [null, null, null]
+let snapshots: Array<Snapshot | null> = [null, null, null, null]
 
 function canvases() {
-  return [canvasA.value, canvasB.value, overviewCanvas.value]
+  return [canvasA.value, canvasB.value, overviewCanvas.value, settledCanvas.value]
 }
 
 function currentCamera(): CanvasCamera {
@@ -50,8 +56,17 @@ function currentCamera(): CanvasCamera {
 }
 
 function pixelRatio(imageOverscan = overscan) {
-  // Keep the overscanned backing bitmap within common mobile canvas limits.
-  return Math.max(0.5, Math.min(window.devicePixelRatio || 1, 2, 4096 / (props.width * imageOverscan), 4096 / (props.height * imageOverscan)))
+  // Keep each backing bitmap within common canvas limits on any screen size.
+  return Math.min(window.devicePixelRatio || 1, 2, 4096 / (props.width * imageOverscan), 4096 / (props.height * imageOverscan))
+}
+
+function matchesCurrentCamera(snapshot: Pick<Snapshot, 'camera' | 'width' | 'height'> | null) {
+  return snapshot !== null
+    && snapshot.width === props.width
+    && snapshot.height === props.height
+    && snapshot.camera.x === props.camera.x
+    && snapshot.camera.y === props.camera.y
+    && snapshot.camera.scale === props.camera.scale
 }
 
 function presentation(index: number) {
@@ -98,11 +113,13 @@ function coversViewport(index: number) {
 }
 
 function updateVisibility() {
-  // Never expose the edge of a detail bitmap. The overview is shown instead
-  // of underneath it, so the two camera snapshots cannot form a visible seam.
-  const shownIndex = coversViewport(visibleIndex)
-    ? visibleIndex
-    : hasShownDetail && coversViewport(2) ? 2 : -1
+  // The sharp frame has no overscan, so use it only at its exact resting
+  // camera. During movement, retain the overscanned detail or overview.
+  const shownIndex = !props.interacting && matchesCurrentCamera(snapshots[settledIndex])
+    ? settledIndex
+    : coversViewport(visibleIndex)
+      ? visibleIndex
+      : hasShownDetail && coversViewport(overviewIndex) ? overviewIndex : -1
   for (const [index, element] of canvases().entries()) {
     element?.style.setProperty('opacity', index === shownIndex ? '1' : '0')
   }
@@ -165,6 +182,31 @@ function requestOverview() {
   worker.postMessage(message)
 }
 
+function scheduleSettledFrame() {
+  if (settleTimer !== undefined) window.clearTimeout(settleTimer)
+  settleTimer = undefined
+  // On small viewports the moving frame is already at its target resolution.
+  if (props.interacting || pixelRatio(1) <= pixelRatio() * 1.1) return
+  settleTimer = window.setTimeout(() => {
+    settleTimer = undefined
+    if (!worker || props.interacting || matchesCurrentCamera(snapshots[settledIndex])) return
+    settledRequestId += 1
+    const message: CanvasWorkerRequest = {
+      type: 'render',
+      purpose: 'settled',
+      version: sceneVersion,
+      requestId: settledRequestId,
+      width: props.width,
+      height: props.height,
+      pixelRatio: pixelRatio(1),
+      overscan: 1,
+      camera: currentCamera(),
+      wrapOffset: props.wrapOffset,
+    }
+    worker.postMessage(message)
+  }, settleDelay)
+}
+
 function paintBitmap(index: number, frame: CanvasWorkerFrame) {
   const element = canvases()[index]
   const context = contexts[index]
@@ -190,12 +232,22 @@ function paintBitmap(index: number, frame: CanvasWorkerFrame) {
 }
 
 function receiveFrame(frame: CanvasWorkerFrame) {
-  if (frame.version !== sceneVersion || (frame.purpose === 'detail' && frame.requestId !== requestId)) {
+  if (frame.version !== sceneVersion
+    || (frame.purpose === 'detail' && frame.requestId !== requestId)
+    || (frame.purpose === 'settled' && frame.requestId !== settledRequestId)) {
     frame.bitmap.close()
     return
   }
   if (frame.purpose === 'overview') {
-    paintBitmap(2, frame)
+    paintBitmap(overviewIndex, frame)
+    return
+  }
+  if (frame.purpose === 'settled') {
+    if (props.interacting || !matchesCurrentCamera(frame)) {
+      frame.bitmap.close()
+      return
+    }
+    paintBitmap(settledIndex, frame)
     return
   }
   const backIndex = 1 - visibleIndex
@@ -228,14 +280,16 @@ function receiveFrame(frame: CanvasWorkerFrame) {
 }
 
 function configureScene() {
-  if (!worker || !canvasA.value || !canvasB.value || !overviewCanvas.value) return
+  if (!worker || canvases().some((canvas) => !canvas)) return
   sceneVersion += 1
   if (swapFrame !== undefined) cancelAnimationFrame(swapFrame)
+  if (settleTimer !== undefined) window.clearTimeout(settleTimer)
   swapFrame = undefined
+  settleTimer = undefined
   pending = false
   refreshAfterPending = false
   forceAfterPending = false
-  snapshots = [null, null, null]
+  snapshots = [null, null, null, null]
   visibleIndex = 0
   hasShownDetail = false
   for (const element of canvases()) element?.style.setProperty('opacity', '0')
@@ -245,6 +299,7 @@ function configureScene() {
   worker.postMessage(message)
   requestFrame()
   requestOverview()
+  scheduleSettledFrame()
 }
 
 watch(() => [props.scene, props.width, props.height], configureScene, { flush: 'post' })
@@ -253,18 +308,27 @@ watch(
   () => {
     updatePresentation()
     if (needsRefresh()) requestFrame()
+    scheduleSettledFrame()
   },
   // setTransform writes x, y and scale separately. Batch them so a frame is
   // never requested with a camera assembled from two animation steps.
   { flush: 'post' },
 )
-watch(() => props.wrapOffset, () => requestFrame(true))
+watch(() => props.wrapOffset, () => {
+  snapshots[settledIndex] = null
+  settledRequestId += 1
+  updateVisibility()
+  requestFrame(true)
+  scheduleSettledFrame()
+})
 watch(() => props.interacting, (active) => {
+  updateVisibility()
   if (!active) requestFrame()
+  scheduleSettledFrame()
 })
 
 onMounted(() => {
-  if (!canvasA.value || !canvasB.value || !overviewCanvas.value || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') return
+  if (canvases().some((canvas) => !canvas) || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') return
   contexts = canvases().map((element) => element?.getContext('bitmaprenderer') ?? element?.getContext('2d') ?? null)
   if (contexts.some((context) => !context)) return
   try {
@@ -287,6 +351,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (swapFrame !== undefined) cancelAnimationFrame(swapFrame)
+  if (settleTimer !== undefined) window.clearTimeout(settleTimer)
   worker?.terminate()
   worker = null
 })
@@ -297,6 +362,7 @@ onBeforeUnmount(() => {
     <canvas ref="overviewCanvas" class="canvas-map" />
     <canvas ref="canvasA" class="canvas-map" />
     <canvas ref="canvasB" class="canvas-map" />
+    <canvas ref="settledCanvas" class="canvas-map" />
   </div>
 </template>
 
