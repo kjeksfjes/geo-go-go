@@ -14,6 +14,7 @@ export interface CanvasMapScene {
     path: string
     outlinePath?: string
     divisionPath?: string
+    internalBoundary?: boolean
     bounds: [[number, number], [number, number]]
   }>
 }

@@ -31,7 +31,8 @@ import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { readStoredBoolean, readStoredValue, writeStoredValue } from '../utils/storage'
-import { countryName, regionName, t, type Locale } from '../i18n'
+import { componentName, countryName, regionName, t, type Locale } from '../i18n'
+import { componentInfoById } from '../data/countries'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { mapScaleBar, scaleUnitSystems, type ScaleUnitSystem } from '../logic/mapScale'
 import { quizCountryIds } from '../data/quizCountries'
@@ -406,6 +407,11 @@ const renderedGeographicPaths = computed(() =>
     ? interactionGeographicPaths.value
     : geographicPaths.value,
 )
+function geographicUnitLabel(unit: GeographicUnitFeature) {
+  const component = unit.properties.componentId
+    ? componentInfoById.get(unit.properties.componentId) : undefined
+  return component?.sourceKind === 'leased-area' ? componentName(component) : countryName(unit.properties.entityId)
+}
 const detailedGeographicPathById = computed(() => new Map(
   geographicPaths.value.map((projected) => [projected.unit.id, projected]),
 ))
@@ -447,8 +453,9 @@ const canvasScene = computed<CanvasMapScene>(() => ({
   reliefClipPath: reliefEnabled.value ? reliefClipPath.value : '',
   countries: geographicPaths.value
     .filter(({ unit }) => isGeographicUnitVisible(unit))
-    .map(({ path, outlinePath, divisionPath, displayBounds }) => ({
+    .map(({ unit, path, outlinePath, divisionPath, displayBounds }) => ({
       path, outlinePath, divisionPath, bounds: displayBounds,
+      internalBoundary: !!unit.divisionGeometry,
     })),
 }))
 const canvasWrapOffset = computed(() => horizontalWrap.value?.period ?? null)
@@ -1059,13 +1066,13 @@ async function setProjection(nextId: MapProjectionId) {
               <path
                 :d="path"
                 class="country"
-                :class="[geographicUnitClasses(unit), { 'country--split-fill': !!outlinePath, 'country--hit-only': canvasRendererActive }]"
-                :style="outlinePath ? { stroke: 'none' } : undefined"
+                :class="[geographicUnitClasses(unit), { 'country--split-fill': outlinePath !== undefined, 'country--hit-only': canvasRendererActive }]"
+                :style="outlinePath !== undefined ? { stroke: 'none' } : undefined"
                 :data-country-id="unit.properties.entityId"
                 :data-geographic-unit-id="unit.id"
                 role="button"
                 :tabindex="offset === 0 && isGeographicUnitVisible(unit) && canActivateGeographicUnit(interactionState) ? 0 : -1"
-                :aria-label="countryName(unit.properties.entityId)"
+                :aria-label="geographicUnitLabel(unit)"
                 :aria-hidden="!isGeographicUnitVisible(unit)"
                 :aria-disabled="!canActivateGeographicUnit(interactionState)"
                 :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
@@ -1075,7 +1082,7 @@ async function setProjection(nextId: MapProjectionId) {
                 @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
                 @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
               >
-                <title v-if="canShowCountryTooltip(unit.properties.entityId, props)">{{ countryName(unit.properties.entityId) }}</title>
+                <title v-if="canShowCountryTooltip(unit.properties.entityId, props)">{{ geographicUnitLabel(unit) }}</title>
               </path>
               <!-- Open border linework must not inherit the country's hover fill. -->
               <path
@@ -1089,6 +1096,7 @@ async function setProjection(nextId: MapProjectionId) {
               <path
                 v-if="divisionPath && !canvasRendererActive"
                 class="regional-division"
+                :class="{ 'internal-boundary': !!unit.divisionGeometry }"
                 :d="divisionPath"
                 aria-hidden="true"
               />
@@ -1136,7 +1144,13 @@ async function setProjection(nextId: MapProjectionId) {
               :d="detailedGeographicPathById.get(unit.id)?.path ?? path"
               class="country country--visual"
               :class="geographicUnitClasses(unit)"
-              :style="(detailedGeographicPathById.get(unit.id)?.outlinePath ?? outlinePath) ? { stroke: 'none' } : undefined"
+              :style="(detailedGeographicPathById.get(unit.id)?.outlinePath ?? outlinePath) !== undefined ? { stroke: 'none' } : undefined"
+            />
+            <path
+              v-for="{ unit, divisionPath } in highlightedGeographicPaths.filter(({ unit }) => !!unit.divisionGeometry)"
+              :key="`internal-${unit.id}`"
+              :d="detailedGeographicPathById.get(unit.id)?.divisionPath ?? divisionPath"
+              class="regional-division internal-boundary"
             />
           </g>
         </g>
@@ -1569,6 +1583,12 @@ async function setProjection(nextId: MapProjectionId) {
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
+}
+
+.internal-boundary {
+  stroke: var(--map-internal-boundary);
+  stroke-width: 0.65;
+  stroke-dasharray: var(--map-internal-boundary-dash);
 }
 
 .map-tools {

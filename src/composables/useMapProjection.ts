@@ -219,6 +219,8 @@ export function useMapProjection(
       basePaths = source.map((unit) => ({
         unit,
         path: generator(unit) ?? '',
+        outlinePath: unit.outlineGeometry ? generator(unit.outlineGeometry) ?? '' : undefined,
+        divisionPath: unit.divisionGeometry ? generator(unit.divisionGeometry) ?? '' : undefined,
         ...projectedUnitFocus(generator, unit, width.value),
       }))
       cached.projections.set(baseKey, basePaths)
@@ -262,8 +264,10 @@ export function useMapProjection(
       return {
         unit,
         path: generator(displayUnit) ?? '',
-        outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? '' : undefined,
-        divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? '' : undefined,
+        outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? ''
+          : unit.outlineGeometry ? generator(unit.outlineGeometry) ?? '' : undefined,
+        divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? ''
+          : unit.divisionGeometry ? generator(unit.divisionGeometry) ?? '' : undefined,
         ...focus,
       }
     })

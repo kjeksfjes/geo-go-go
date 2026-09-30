@@ -37,6 +37,16 @@
   "mergeUnlistedSubunitsInto": {
     "ESP": "ESX"
   },
+  "leasedAreas": [
+    {
+      "id": "KAB",
+      "mapUnitId": "KAZ",
+      "point": [63.4, 46],
+      "name": { "en": "Baikonur, Russia", "nb": "Bajkonur, Russland" },
+      "type": { "en": "Space complex leased to Russia", "nb": "Romfartskompleks leid av Russland" },
+      "flagCode": "ru"
+    }
+  ],
   "metadataOverrides": {
     "admin-1:GR-M": {
       "name": { "en": "Crete", "nb": "Kreta" },

@@ -44,7 +44,7 @@ export type MapSubunitFeature = Feature<Geometry, {
 
 export interface GeographicComponentInfo {
   id: string
-  sourceKind: 'map-unit' | 'map-subunit' | 'admin-1'
+  sourceKind: 'map-unit' | 'map-subunit' | 'admin-1' | 'leased-area'
   sourceId: string
   entityId: string
   name: string
@@ -61,6 +61,10 @@ export type GeographicUnitFeature = Feature<Geometry, {
 }> & {
   id: string
   regionalDisplayGeometry?: Readonly<Record<string, RegionalDisplayGeometry>>
+  // Optional linework separates internal boundaries from country borders.
+  // An empty outline intentionally suppresses the ordinary polygon stroke.
+  outlineGeometry?: Geometry
+  divisionGeometry?: Geometry
 }
 
 export interface CountryInfo {

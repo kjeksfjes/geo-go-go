@@ -8,6 +8,7 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 - Sharpened country outlines on large displays by rendering a viewport-sized canvas frame after map movement settles.
 - Reduced accidental mobile panning during pinch zoom and when lifting fingers after a pinch.
+- Displayed Baikonur as land with a subtle internal boundary and a clickable Russian lease identification, without adding a separate quiz country.
 
 ### Fixes
 

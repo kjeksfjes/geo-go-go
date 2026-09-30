@@ -10,7 +10,7 @@ interface PreparedScene {
   contextCountries: Array<{ path: DrawPath; bounds: Bounds }>
   relief: Array<{ elevation: number; path: DrawPath }>
   reliefClip: DrawPath
-  countries: Array<{ path: DrawPath; outline: DrawPath; division: DrawPath; bounds: Bounds }>
+  countries: Array<{ path: DrawPath; outline: DrawPath | undefined; division: DrawPath; internalBoundary?: boolean; bounds: Bounds }>
 }
 
 const workerScope = self as unknown as {
@@ -33,10 +33,11 @@ function prepare(source: CanvasMapScene): PreparedScene {
     contextCountries: source.contextCountries.map(({ path, bounds }) => ({ path: pathFrom(path), bounds })),
     relief: source.relief.map(({ elevation, path }) => ({ elevation, path: pathFrom(path) })),
     reliefClip: pathFrom(source.reliefClipPath),
-    countries: source.countries.map(({ path, outlinePath, divisionPath, bounds }) => ({
+    countries: source.countries.map(({ path, outlinePath, divisionPath, internalBoundary, bounds }) => ({
       path: pathFrom(path),
-      outline: pathFrom(outlinePath),
+      outline: outlinePath === undefined ? undefined : pathFrom(outlinePath),
       division: pathFrom(divisionPath),
+      internalBoundary,
       bounds,
     })),
   }
@@ -130,13 +131,14 @@ function drawScene(
     context.save()
     context.translate(offset, 0)
     for (const country of countries) {
-      const border = country.outline ?? country.path
+      const border = country.outline === undefined ? country.path : country.outline
       if (border) context.stroke(border)
       if (country.division) {
         context.save()
-        context.strokeStyle = mapPalette.regionalDivision
-        context.lineWidth = 1 / cameraScale
-        context.setLineDash(mapPalette.regionalDivisionDash.map((length) => length / cameraScale))
+        context.strokeStyle = country.internalBoundary ? mapPalette.internalBoundary : mapPalette.regionalDivision
+        context.lineWidth = (country.internalBoundary ? 0.65 : 1) / cameraScale
+        context.setLineDash((country.internalBoundary ? mapPalette.internalBoundaryDash : mapPalette.regionalDivisionDash)
+          .map((length) => length / cameraScale))
         context.stroke(country.division)
         context.restore()
       }
