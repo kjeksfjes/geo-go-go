@@ -6,7 +6,7 @@ import {
   type GeoProjection,
 } from 'd3-geo'
 import { geoMiller, geoWinkel3 } from 'd3-geo-projection'
-import { computed, shallowRef, type Ref } from 'vue'
+import { computed, onScopeDispose, shallowRef, watch, type Ref } from 'vue'
 import type { FeatureCollection, MultiPoint } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
@@ -142,10 +142,10 @@ export function useMapProjection(
     return id === 'regional-equal-area' ? `${id}:${activeRegion.value.id}` : id
   }
 
-  function geographicCacheKey(id: MapProjectionId) {
+  function geographicCacheKey(id: MapProjectionId, regionId: string = activeRegion.value.id) {
     const projectionKey = projectionCacheKey(id)
-    return id !== 'regional-equal-area' && regionsWithDisplayGeometry.has(activeRegion.value.id)
-      ? `${projectionKey}:${activeRegion.value.id}`
+    return id !== 'regional-equal-area' && regionsWithDisplayGeometry.has(regionId)
+      ? `${projectionKey}:${regionId}`
       : projectionKey
   }
 
@@ -189,10 +189,10 @@ export function useMapProjection(
     return geoPath(projection)
   })
 
-  function projectedGeographicPaths(source: GeographicUnitFeature[], trackDebug = false) {
+  function projectedGeographicPaths(source: GeographicUnitFeature[], trackDebug = false, regionId: string = activeRegion.value.id) {
     const startedAt = trackDebug ? performance.now() : 0
     const id = projectionId.value
-    const key = geographicCacheKey(id)
+    const key = geographicCacheKey(id, regionId)
     const sizeKey = `${width.value}:${height.value}`
     let cached = pathCache.get(source)
     if (cached?.sizeKey === sizeKey) {
@@ -229,7 +229,7 @@ export function useMapProjection(
     // instead of reprojecting the complete atlas for Europe's Russia split.
     if (basePaths) {
       const paths = basePaths.map((projected) => {
-        const regionalDisplay = projected.unit.regionalDisplayGeometry?.[activeRegion.value.id]
+        const regionalDisplay = projected.unit.regionalDisplayGeometry?.[regionId]
         if (!regionalDisplay) return projected
         const displayUnit = { ...projected.unit, geometry: regionalDisplay.geometry }
         return {
@@ -287,6 +287,35 @@ export function useMapProjection(
   })
   const interactionGeographicPaths = computed(() => projectedGeographicPaths(fittingUnits))
 
+  // Regional display variants share the global coordinate system, but their
+  // first projection can be expensive at 10m. Prepare them after the current
+  // view is ready, without making a region click pay that cold-cache cost.
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    let idleTask: number | undefined
+    const cancelPrewarm = () => {
+      if (idleTask !== undefined) window.cancelIdleCallback(idleTask)
+      idleTask = undefined
+    }
+    watch(geographicPaths, () => {
+      cancelPrewarm()
+      if (projectionId.value === 'regional-equal-area') return
+      const sources = geographicUnits.value === fittingUnits
+        ? [fittingUnits] : [fittingUnits, geographicUnits.value]
+      const pending = sources.flatMap((source) => [...regionsWithDisplayGeometry]
+        .map((regionId) => ({ source, regionId })))
+      const prepareNext = () => {
+        idleTask = window.requestIdleCallback(() => {
+          idleTask = undefined
+          const next = pending.shift()
+          if (next) projectedGeographicPaths(next.source, false, next.regionId)
+          if (pending.length) prepareNext()
+        })
+      }
+      prepareNext()
+    }, { immediate: true, flush: 'post' })
+    onScopeDispose(cancelPrewarm)
+  }
+
   // Context land uses the stable 50m source even when active countries use
   // 10m geometry. Keep only nearby units; they are visual context, not hit
   // targets or quiz members.
@@ -323,10 +352,16 @@ export function useMapProjection(
     // the portion beyond the geographic division then becomes muted context,
     // while hit-testing, quiz identity, fitting, and focus stay regional.
     const generator = pathGenerator.value
+    const basePaths = projectionId.value === 'regional-equal-area'
+      ? undefined
+      : pathCache.get(fittingUnits)?.projections.get(projectionCacheKey(projectionId.value))
     for (const unit of fittingUnits) {
       if (!unit.regionalDisplayGeometry?.[activeRegion.value.id]
         || !unit.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id))) continue
-      candidates.push({ path: generator(unit) ?? '', bounds: generator.bounds(unit) })
+      const base = basePaths?.find((projected) => projected.unit === unit)
+      candidates.push(base
+        ? { path: base.path, bounds: base.displayBounds }
+        : { path: generator(unit) ?? '', bounds: generator.bounds(unit) })
     }
 
     return candidates.filter(({ path, bounds }) => path

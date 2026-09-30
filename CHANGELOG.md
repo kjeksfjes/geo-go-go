@@ -12,6 +12,7 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 ### Fixes
 
 - Kept the chosen manual zoom when limited country focus temporarily pulls back for a larger country.
+- Prepared Europe's regional geometry during browser idle time and reused its context paths to reduce the selection delay.
 
 ## 0.6.0 — Depths & Distances — 2026-09-29
 
