@@ -22,6 +22,8 @@ const MAX_EMPTY_VIEWPORT_FRACTION = 0.65
 // The true 1:10m outlines of microstates are much smaller than their 1:50m
 // counterparts. Keep a finite ceiling, but let them become visible up close.
 const MAX_ZOOM = 16_384
+const TOUCH_DRAG_THRESHOLD = 8
+const PINCH_PAN_THRESHOLD = 10
 
 export function useMapZoom(
   width: Ref<number>,
@@ -37,7 +39,7 @@ export function useMapZoom(
   const isPinching = ref(false)
   const isWheeling = ref(false)
   const isAnimating = ref(false)
-  let manuallyZoomed = false
+  let manualZoomScale: number | undefined
   let animationFrame: number | undefined
   let panFrame: number | undefined
   let wheelFrame: number | undefined
@@ -52,12 +54,21 @@ export function useMapZoom(
     startY: number
     unitsPerPixelX: number
     unitsPerPixelY: number
+    threshold: number
     moved: boolean
     svg: SVGSVGElement
   } | undefined
   const touchPointers = new Map<number, MapPoint>()
   const suppressedTouchTaps = new Set<number>()
-  let pinchState: { distance: number; scale: number; anchor: MapPoint; svg: SVGSVGElement } | undefined
+  let pinchState: {
+    distance: number
+    scale: number
+    center: MapPoint
+    anchor: MapPoint
+    unitsPerPixelX: number
+    unitsPerPixelY: number
+    svg: SVGSVGElement
+  } | undefined
   let suppressNextClick = false
 
   const isZoomed = computed(() => {
@@ -305,18 +316,14 @@ export function useMapZoom(
       minimumScale,
       Math.min(MAX_ZOOM, 0.68 / Math.max(boundsWidth / width.value, boundsHeight / height.value)),
     )
-    const preserveManualScale = preferredScale !== undefined
-      && manuallyZoomed
-      && transform.scale > preferredScale
     const requestedScale = preferredScale === undefined
       ? fitScale
-      : Math.max(minimumScale, preserveManualScale ? transform.scale : preferredScale)
+      : Math.max(minimumScale, preferredScale, manualZoomScale ?? preferredScale)
     const scale = Math.min(fitScale, requestedScale)
 
-    // Programmatic fitting replaces a manual zoom unless the adaptive focus
-    // policy can preserve it. A country that forces us to pull back also ends
-    // that override, so the next ordinary country returns to the preference.
-    manuallyZoomed = preserveManualScale && scale >= transform.scale - 0.01
+    // A larger country can temporarily require a wider view. Keep the manual
+    // preference so selecting a smaller country can restore that zoom level.
+    if (preferredScale === undefined) manualZoomScale = undefined
 
     // When moving from a small target to a larger one, pull back around the
     // current view before traversing the map. The balanced (target-anchored)
@@ -336,7 +343,7 @@ export function useMapZoom(
     animated = true,
     zoomOutFirst = false,
   ) {
-    manuallyZoomed = false
+    manualZoomScale = undefined
     const targetScale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM, Math.min(MAX_ZOOM, scale))
     const x = width.value / 2 - targetScale * point[0]
     const y = height.value / 2 - targetScale * point[1]
@@ -361,7 +368,7 @@ export function useMapZoom(
       minimumScale,
       Math.min(MAX_ZOOM, transform.scale * Math.exp(-delta * 0.0015)),
     )
-    manuallyZoomed = true
+    manualZoomScale = nextScale
     const ratio = nextScale / transform.scale
 
     const wheelX = pointerX - (pointerX - transform.x) * ratio
@@ -412,7 +419,7 @@ export function useMapZoom(
   }
 
   function resetZoom(animated = true) {
-    manuallyZoomed = false
+    manualZoomScale = undefined
     const home = homeTransform()
     if (animated) {
       animateTo(home.x, home.y, home.scale, 500, 'zoom-out')
@@ -430,7 +437,7 @@ export function useMapZoom(
     ]
   }
 
-  function beginDrag(pointerId: number, clientX: number, clientY: number, svg: SVGSVGElement) {
+  function beginDrag(pointerId: number, clientX: number, clientY: number, svg: SVGSVGElement, threshold: number) {
     if (transform.scale <= MIN_ZOOM && !wrapActive.value && !viewConstraint.value) return
     const rect = svg.getBoundingClientRect()
     dragState = {
@@ -441,6 +448,7 @@ export function useMapZoom(
       startY: transform.y,
       unitsPerPixelX: width.value / rect.width,
       unitsPerPixelY: height.value / rect.height,
+      threshold,
       moved: false,
       svg,
     }
@@ -448,14 +456,21 @@ export function useMapZoom(
 
   function beginPinch(svg: SVGSVGElement) {
     flushPendingPan()
-    for (const pointerId of touchPointers.keys()) suppressedTouchTaps.add(pointerId)
+    for (const pointerId of touchPointers.keys()) {
+      suppressedTouchTaps.add(pointerId)
+      svg.setPointerCapture(pointerId)
+    }
+    const rect = svg.getBoundingClientRect()
     const [first, second] = [...touchPointers.values()].map(([x, y]) => mapPoint(x, y, svg))
     const centerX = (first[0] + second[0]) / 2
     const centerY = (first[1] + second[1]) / 2
     pinchState = {
       distance: Math.max(Math.hypot(first[0] - second[0], first[1] - second[1]), 1),
       scale: transform.scale,
+      center: [centerX, centerY],
       anchor: [(centerX - transform.x) / transform.scale, (centerY - transform.y) / transform.scale],
+      unitsPerPixelX: width.value / rect.width,
+      unitsPerPixelY: height.value / rect.height,
       svg,
     }
     dragState = undefined
@@ -483,7 +498,7 @@ export function useMapZoom(
     cancelWheelUpdate()
     cancelPanUpdate()
     suppressNextClick = false
-    beginDrag(event.pointerId, event.clientX, event.clientY, svg)
+    beginDrag(event.pointerId, event.clientX, event.clientY, svg, event.pointerType === 'touch' ? TOUCH_DRAG_THRESHOLD : 3)
   }
 
   function movePan(event: PointerEvent) {
@@ -495,10 +510,20 @@ export function useMapZoom(
         const distance = Math.hypot(first[0] - second[0], first[1] - second[1])
         const scale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM,
           Math.min(MAX_ZOOM, pinch.scale * distance / pinch.distance))
-        manuallyZoomed = true
+        manualZoomScale = scale
         const centerX = (first[0] + second[0]) / 2
         const centerY = (first[1] + second[1]) / 2
-        schedulePan(centerX - pinch.anchor[0] * scale, centerY - pinch.anchor[1] * scale, scale)
+        const deltaX = centerX - pinch.center[0]
+        const deltaY = centerY - pinch.center[1]
+        const drift = Math.hypot(deltaX / pinch.unitsPerPixelX, deltaY / pinch.unitsPerPixelY)
+        // Ignore small midpoint drift, then add only the movement beyond the
+        // threshold so deliberate two-finger panning starts without a jump.
+        const panWeight = drift > PINCH_PAN_THRESHOLD ? 1 - PINCH_PAN_THRESHOLD / drift : 0
+        schedulePan(
+          pinch.center[0] + deltaX * panWeight - pinch.anchor[0] * scale,
+          pinch.center[1] + deltaY * panWeight - pinch.anchor[1] * scale,
+          scale,
+        )
         return
       }
     }
@@ -507,7 +532,7 @@ export function useMapZoom(
     const deltaX = event.clientX - dragState.startClientX
     const deltaY = event.clientY - dragState.startClientY
 
-    if (!dragState.moved && Math.hypot(deltaX, deltaY) > 3) {
+    if (!dragState.moved && Math.hypot(deltaX, deltaY) > dragState.threshold) {
       dragState.moved = true
       isDragging.value = true
       dragState.svg.setPointerCapture(event.pointerId)
@@ -535,12 +560,13 @@ export function useMapZoom(
       } else {
         pinchState = undefined
         isPinching.value = false
-        const remaining = touchPointers.entries().next().value
-        if (remaining) beginDrag(remaining[0], remaining[1][0], remaining[1][1], svg)
+        // The remaining finger belongs to the pinch until it is lifted; do
+        // not turn an uneven release into an accidental one-finger drag.
       }
       return false
     }
     if (!dragState || event.pointerId !== dragState.pointerId) {
+      if (touchEnded && svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId)
       return touchEnded && !suppressTap && event.type === 'pointerup'
     }
 

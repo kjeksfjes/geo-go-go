@@ -7,6 +7,11 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 ### Improvements
 
 - Sharpened country outlines on large displays by rendering a viewport-sized canvas frame after map movement settles.
+- Reduced accidental mobile panning during pinch zoom and when lifting fingers after a pinch.
+
+### Fixes
+
+- Kept the chosen manual zoom when limited country focus temporarily pulls back for a larger country.
 
 ## 0.6.0 — Depths & Distances — 2026-09-29
 
