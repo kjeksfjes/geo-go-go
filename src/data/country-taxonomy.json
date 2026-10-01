@@ -1,3 +1,4 @@
 {
-  "independentDisputedEntityIds": ["KOS"]
+  "independentDisputedEntityIds": ["KOS"],
+  "quizIdentityOverridesByMapUnitId": { "ALD": "FIN" }
 }

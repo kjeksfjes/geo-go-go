@@ -10,6 +10,9 @@ export const mapPalette = {
   border: '#5e7680',
   regionalDivision: '#547987',
   regionalDivisionDash: [7, 6],
+  internalBoundary: '#54798780',
+  internalBoundaryDash: [2, 2],
+  internalBoundaryWidth: 0.65,
   bathymetry: {
     200: '#78bbdc',
     2000: '#63add3',
@@ -41,6 +44,9 @@ export const mapPaletteCssVariables: Record<string, string> = {
   '--map-border': mapPalette.border,
   '--map-regional-division': mapPalette.regionalDivision,
   '--map-regional-division-dash': mapPalette.regionalDivisionDash.join(' '),
+  '--map-internal-boundary': mapPalette.internalBoundary,
+  '--map-internal-boundary-dash': mapPalette.internalBoundaryDash.join(' '),
+  '--map-internal-boundary-width': String(mapPalette.internalBoundaryWidth),
   ...Object.fromEntries(Object.entries(mapPalette.bathymetry)
     .map(([depth, color]) => [`--map-bathymetry-${depth}`, color])),
   ...Object.fromEntries(Object.entries(mapPalette.relief)

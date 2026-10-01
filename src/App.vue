@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import RegionSelector from './components/RegionSelector.vue'
@@ -24,12 +24,19 @@ import { afterPaint, wait } from './utils/paint'
 import { clearStoredValues, readStoredBoolean, writeStoredValue } from './utils/storage'
 import { locale, resetLocale, setLocale, t } from './i18n'
 import { isCountryLevelSelection } from './data/mapSelection'
+import { supplementalAreaInfoById } from './data/supplementalLand'
 
 const selectedCountryId = ref<string | null>(null)
 const selectedGeographicUnitId = ref<string | null>(null)
+const selectedLandAreaId = ref<string | null>(null)
 const worldMap = shallowRef<InstanceType<typeof WorldMap> | null>(null)
 const mode = ref<'explore' | 'find-country'>('explore')
 const activeRegionId = ref<MapRegionId>('world')
+watch([mode, activeRegionId], () => { selectedLandAreaId.value = null })
+const selectedLandArea = computed(() => {
+  const area = selectedLandAreaId.value ? supplementalAreaInfoById.get(selectedLandAreaId.value) : undefined
+  return area ? { name: area.name[locale.value], type: area.type[locale.value] } : null
+})
 const renderedGeographicUnits = shallowRef(geographicUnits)
 const highDetailEnabled = ref(false)
 const highDetailPreferenceKey = 'geo-go-go.map.high-detail'
@@ -111,12 +118,21 @@ function setMode(nextMode: 'explore' | 'find-country') {
 }
 
 function handleMapSelection(countryId: string | null, geographicUnitId: string | null) {
+  selectedLandAreaId.value = null
   selectedGeographicUnitId.value = geographicUnitId
   if (mode.value === 'find-country') {
     if (countryId) answerQuiz(countryId)
   } else {
     selectedCountryId.value = countryId
   }
+}
+
+function handleLandAreaSelection(id: string | null) {
+  if (mode.value !== 'explore') return
+  const area = id ? supplementalAreaInfoById.get(id) : undefined
+  selectedCountryId.value = area?.quizEntityId ?? null
+  selectedGeographicUnitId.value = null
+  selectedLandAreaId.value = id && supplementalAreaInfoById.has(id) ? id : null
 }
 
 function advanceQuizQuestion() {
@@ -320,6 +336,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :active-region="activeRegion"
         :selected-country-id="selectedCountryId"
         :selected-geographic-unit-id="selectedGeographicUnitId"
+        :selected-land-area-id="selectedLandAreaId"
         :quiz-mode="mode === 'find-country'"
         :quiz-complete="mode === 'find-country' && quizPhase === 'complete'"
         :quiz-question-id="quizQuestionId"
@@ -330,6 +347,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         @locale-change="setLocale"
         @reset-settings="resetSettings"
         @select="handleMapSelection"
+        @land-select="handleLandAreaSelection"
         @quiz-next="advanceQuizQuestion"
       />
       <div v-if="mode === 'find-country'" class="map-overlay" :inert="detailLoading">
@@ -350,9 +368,9 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
           />
         </div>
       </div>
-      <div v-else-if="selectedCountry" class="map-overlay" :inert="detailLoading">
+      <div v-else-if="selectedCountry || selectedLandArea" class="map-overlay" :inert="detailLoading">
         <div class="map-overlay__card">
-          <CountryCard :country="selectedCountry" :component="selectedComponent" />
+          <CountryCard :country="selectedCountry" :component="selectedComponent" :area="selectedLandArea" />
         </div>
       </div>
     </section>

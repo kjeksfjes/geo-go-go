@@ -31,7 +31,10 @@ import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
 import { canShowCountryTooltip } from '../utils/countryTooltipVisibility'
 import { readStoredBoolean, readStoredValue, writeStoredValue } from '../utils/storage'
-import { countryName, regionName, t, type Locale } from '../i18n'
+import { componentName, countryName, regionName, t, type Locale } from '../i18n'
+import { componentInfoById } from '../data/countries'
+import { supplementalAreaInfoByDisplayId } from '../data/supplementalLand'
+import { quizMergedSourceIds } from '../data/quizMap'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { mapScaleBar, scaleUnitSystems, type ScaleUnitSystem } from '../logic/mapScale'
 import { quizCountryIds } from '../data/quizCountries'
@@ -84,6 +87,7 @@ const props = defineProps<{
   activeRegion: MapRegion
   selectedCountryId: string | null
   selectedGeographicUnitId: string | null
+  selectedLandAreaId: string | null
   quizMode: boolean
   quizComplete: boolean
   quizQuestionId: string | null
@@ -94,6 +98,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [countryId: string | null, geographicUnitId: string | null]
+  'land-select': [id: string | null]
   'quiz-next': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'locale-change': [locale: Locale]
@@ -141,6 +146,8 @@ const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const debugEnabled = new URLSearchParams(window.location.search).has('debug')
+const highlightRestoredLand = ref(false)
+const reviewedLandId = ref('')
 interface MapDebugVerticalFit {
   span: number
   topGap: number
@@ -189,6 +196,8 @@ const {
   reliefClipPath,
   reliefPaths,
   spherePath,
+  supplementalLandPaths,
+  supplementalExploreLandPaths,
   unprojectPoint,
 } = useMapProjection(
   toRef(props, 'geographicUnits'),
@@ -199,7 +208,25 @@ const {
   toRef(props, 'visibleMapUnitIds'),
   bathymetryBands,
   reliefBands,
+  toRef(props, 'quizMode'),
 )
+const visibleSupplementalLandPaths = computed(() => props.quizMode
+  ? supplementalLandPaths.value.filter((area) => !quizMergedSourceIds.has(area.id))
+  : supplementalExploreLandPaths.value,
+)
+function reviewRestoredLand(id: string) {
+  reviewedLandId.value = id
+  highlightRestoredLand.value = true
+  const area = supplementalLandPaths.value.find((area) => area.id === id)
+  if (!area) return
+  const [[left, top], [right, bottom]] = area.bounds
+  if (![left, top, right, bottom].every(Number.isFinite)) return
+  // Leave room around tiny islands and long buffer zones for geographic context.
+  const scale = Math.min(2048, Math.max(8,
+    Math.min(mapWidth.value / Math.max(right - left, 0.001),
+      mapHeight.value / Math.max(bottom - top, 0.001)) * 0.35))
+  zoomToPoint([(left + right) / 2, (top + bottom) / 2], scale)
+}
 // Global projections keep their world-sized canvas. At minimum zoom, center
 // the filtered region within that canvas instead of returning to world origin.
 const minimumZoomPoint = computed<MapPoint | null>(() => {
@@ -406,6 +433,11 @@ const renderedGeographicPaths = computed(() =>
     ? interactionGeographicPaths.value
     : geographicPaths.value,
 )
+function geographicUnitLabel(unit: GeographicUnitFeature) {
+  const component = unit.properties.componentId
+    ? componentInfoById.get(unit.properties.componentId) : undefined
+  return component?.sourceKind === 'leased-area' ? componentName(component) : countryName(unit.properties.entityId)
+}
 const detailedGeographicPathById = computed(() => new Map(
   geographicPaths.value.map((projected) => [projected.unit.id, projected]),
 ))
@@ -440,6 +472,8 @@ const visibleLandPath = computed(() => renderedGeographicPaths.value
   .map(({ path }) => path)
   .join(' '))
 const canvasScene = computed<CanvasMapScene>(() => ({
+  coordinateKey: projectionId.value === 'regional-equal-area'
+    ? `${projectionId.value}:${props.activeRegion.id}` : projectionId.value,
   spherePath: spherePath.value,
   bathymetry: bathymetryEnabled.value ? bathymetryPaths.value : [],
   contextCountries: contextGeographicPaths.value,
@@ -447,8 +481,9 @@ const canvasScene = computed<CanvasMapScene>(() => ({
   reliefClipPath: reliefEnabled.value ? reliefClipPath.value : '',
   countries: geographicPaths.value
     .filter(({ unit }) => isGeographicUnitVisible(unit))
-    .map(({ path, outlinePath, divisionPath, displayBounds }) => ({
+    .map(({ unit, path, outlinePath, divisionPath, displayBounds }) => ({
       path, outlinePath, divisionPath, bounds: displayBounds,
+      internalBoundary: !!unit.divisionGeometry,
     })),
 }))
 const canvasWrapOffset = computed(() => horizontalWrap.value?.period ?? null)
@@ -691,7 +726,8 @@ defineExpose({ focusCountry })
 
 function handleMapClick(event: MouseEvent) {
   if (!props.quizMode) {
-    if (!consumeDragClick() && backgroundClickAction(event.detail, interactionState.value) === 'clear') {
+    if (!consumeDragClick() && (props.selectedLandAreaId !== null
+      || backgroundClickAction(event.detail, interactionState.value) === 'clear')) {
       emit('select', null, null)
     }
     return
@@ -699,6 +735,28 @@ function handleMapClick(event: MouseEvent) {
   if (props.quizAnswerId === null) return
   if (consumeDragClick()) return
   if (backgroundClickAction(event.detail, interactionState.value) === 'next') emit('quiz-next')
+}
+
+function supplementalAreaName(sourceId: string) {
+  return supplementalAreaInfoByDisplayId.get(sourceId)?.name[props.locale]
+}
+
+function canSelectSupplementalArea(sourceId: string) {
+  return !props.quizMode && supplementalAreaInfoByDisplayId.has(sourceId)
+}
+
+function supplementalCountryClasses(sourceId: string) {
+  const entityId = supplementalAreaInfoByDisplayId.get(sourceId)?.quizEntityId
+  return {
+    'country--selected': !!entityId && !props.quizMode && entityId === props.selectedCountryId,
+  }
+}
+
+function selectSupplementalArea(sourceId: string, event: MouseEvent | KeyboardEvent) {
+  if (interactionLocked.value || !canSelectSupplementalArea(sourceId)) return
+  if (event instanceof MouseEvent && (consumeDragClick() || event.detail > 1)) return
+  const area = supplementalAreaInfoByDisplayId.get(sourceId)
+  if (area) emit('land-select', props.selectedLandAreaId === area.id ? null : area.id)
 }
 
 function handleWheel(event: WheelEvent) {
@@ -864,6 +922,8 @@ function setReliefEnabled(enabled: boolean) {
 }
 
 function resetMapSettings() {
+  highlightRestoredLand.value = false
+  reviewedLandId.value = ''
   limitedCountryZoomEnabled.value = true
   setBathymetryEnabled(!usesMobileMapDefaults)
   setReliefEnabled(false)
@@ -1059,13 +1119,13 @@ async function setProjection(nextId: MapProjectionId) {
               <path
                 :d="path"
                 class="country"
-                :class="[geographicUnitClasses(unit), { 'country--split-fill': !!outlinePath, 'country--hit-only': canvasRendererActive }]"
-                :style="outlinePath ? { stroke: 'none' } : undefined"
+                :class="[geographicUnitClasses(unit), { 'country--split-fill': outlinePath !== undefined, 'country--hit-only': canvasRendererActive }]"
+                :style="outlinePath !== undefined ? { stroke: 'none' } : undefined"
                 :data-country-id="unit.properties.entityId"
                 :data-geographic-unit-id="unit.id"
                 role="button"
                 :tabindex="offset === 0 && isGeographicUnitVisible(unit) && canActivateGeographicUnit(interactionState) ? 0 : -1"
-                :aria-label="countryName(unit.properties.entityId)"
+                :aria-label="geographicUnitLabel(unit)"
                 :aria-hidden="!isGeographicUnitVisible(unit)"
                 :aria-disabled="!canActivateGeographicUnit(interactionState)"
                 :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
@@ -1075,7 +1135,7 @@ async function setProjection(nextId: MapProjectionId) {
                 @keydown.enter.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
                 @keydown.space.prevent="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
               >
-                <title v-if="canShowCountryTooltip(unit.properties.entityId, props)">{{ countryName(unit.properties.entityId) }}</title>
+                <title v-if="canShowCountryTooltip(unit.properties.entityId, props)">{{ geographicUnitLabel(unit) }}</title>
               </path>
               <!-- Open border linework must not inherit the country's hover fill. -->
               <path
@@ -1089,8 +1149,58 @@ async function setProjection(nextId: MapProjectionId) {
               <path
                 v-if="divisionPath && !canvasRendererActive"
                 class="regional-division"
+                :class="{ 'internal-boundary': !!unit.divisionGeometry }"
                 :d="divisionPath"
                 aria-hidden="true"
+              />
+            </g>
+          </g>
+        </g>
+        <!-- Shared neutral-land pass stays above country fills in both renderers.
+             It blocks country clicks underneath until affiliations are curated. -->
+        <g :transform="`translate(${transform.x} ${transform.y}) scale(${transform.scale})`">
+          <g v-for="offset in copyOffsets" :key="`restored-${offset}`" :transform="`translate(${offset} 0)`" :aria-hidden="offset !== 0">
+            <g v-for="area in visibleSupplementalLandPaths" :key="area.id">
+              <path
+                :d="area.path"
+                class="supplemental-land"
+                :class="[supplementalCountryClasses(area.id), {
+                  'supplemental-land--review': debugEnabled && highlightRestoredLand,
+                  'supplemental-land--named': canSelectSupplementalArea(area.id),
+                  'supplemental-land--selected': supplementalAreaInfoByDisplayId.get(area.id)?.id === selectedLandAreaId,
+                }]"
+                :role="supplementalAreaInfoByDisplayId.has(area.id) ? 'button' : undefined"
+                :tabindex="offset === 0 && canSelectSupplementalArea(area.id) ? 0 : -1"
+                :aria-label="quizMode ? t('chooseCountry') : supplementalAreaName(area.id)"
+                :aria-hidden="!supplementalAreaInfoByDisplayId.has(area.id)"
+                :aria-disabled="!canSelectSupplementalArea(area.id)"
+                :aria-pressed="supplementalAreaInfoByDisplayId.get(area.id)?.id === selectedLandAreaId"
+                @click.stop="selectSupplementalArea(area.id, $event)"
+                @keydown.enter.stop.prevent="selectSupplementalArea(area.id, $event)"
+                @keydown.space.stop.prevent="selectSupplementalArea(area.id, $event)"
+                @pointerenter="hoveredUnit = null"
+              >
+                <title v-if="!quizMode && supplementalAreaName(area.id)">{{ supplementalAreaName(area.id) }}</title>
+                <title v-else-if="debugEnabled && highlightRestoredLand">{{ area.name }} (unassigned land)</title>
+              </path>
+              <path
+                v-if="supplementalAreaInfoByDisplayId.has(area.id)"
+                :d="area.path"
+                class="regional-division internal-boundary"
+                aria-hidden="true"
+              />
+              <path
+                v-if="area.divisionPath"
+                :d="area.divisionPath"
+                class="regional-division internal-boundary"
+                aria-hidden="true"
+              />
+              <circle
+                v-if="debugEnabled && highlightRestoredLand && (area.bounds[1][0] - area.bounds[0][0]) * transform.scale < 10 && (area.bounds[1][1] - area.bounds[0][1]) * transform.scale < 10"
+                class="supplemental-land-marker"
+                :cx="(area.bounds[0][0] + area.bounds[1][0]) / 2"
+                :cy="(area.bounds[0][1] + area.bounds[1][1]) / 2"
+                :r="5 / transform.scale"
               />
             </g>
           </g>
@@ -1136,7 +1246,13 @@ async function setProjection(nextId: MapProjectionId) {
               :d="detailedGeographicPathById.get(unit.id)?.path ?? path"
               class="country country--visual"
               :class="geographicUnitClasses(unit)"
-              :style="(detailedGeographicPathById.get(unit.id)?.outlinePath ?? outlinePath) ? { stroke: 'none' } : undefined"
+              :style="(detailedGeographicPathById.get(unit.id)?.outlinePath ?? outlinePath) !== undefined ? { stroke: 'none' } : undefined"
+            />
+            <path
+              v-for="{ unit, divisionPath } in highlightedGeographicPaths.filter(({ unit }) => !!unit.divisionGeometry)"
+              :key="`internal-${unit.id}`"
+              :d="detailedGeographicPathById.get(unit.id)?.divisionPath ?? divisionPath"
+              class="regional-division internal-boundary"
             />
           </g>
         </g>
@@ -1220,6 +1336,12 @@ async function setProjection(nextId: MapProjectionId) {
         v-if="debugEnabled && debugMetrics"
         v-bind="debugMetrics"
         :disabled="interactionLocked"
+        :restored-land="supplementalLandPaths"
+        :highlight-restored-land="highlightRestoredLand"
+        :reviewed-land-id="reviewedLandId"
+        :can-review-land="activeRegion.id === 'world' && projectionId !== 'regional-equal-area'"
+        @toggle-restored-land="highlightRestoredLand = !highlightRestoredLand"
+        @review-land="reviewRestoredLand"
         @reset-settings="resetMapSettings"
       />
     </div>
@@ -1487,6 +1609,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 .country--selected,
+.supplemental-land.country--selected,
 :global(html[data-input-modality='keyboard'] .country--selected:focus-visible) {
   fill: rgb(239 151 72 / 88%);
   stroke: #a85d2c;
@@ -1567,6 +1690,47 @@ async function setProjection(nextId: MapProjectionId) {
   stroke-width: 1;
   stroke-dasharray: var(--map-regional-division-dash);
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.internal-boundary {
+  stroke: var(--map-internal-boundary);
+  stroke-width: var(--map-internal-boundary-width);
+  stroke-dasharray: var(--map-internal-boundary-dash);
+}
+
+.supplemental-land {
+  fill: var(--map-land);
+  stroke: none;
+  pointer-events: visibleFill;
+  vector-effect: non-scaling-stroke;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.supplemental-land--named { cursor: pointer; }
+.supplemental-land--named:hover { fill: #f5edda; }
+.supplemental-land--selected { fill: #efe3c9; }
+/* Affiliated Explore land shares the country fill, not its national border. */
+.supplemental-land.country--selected { stroke: none; }
+:global(html[data-input-modality='keyboard'] .supplemental-land--named:focus-visible) {
+  stroke: #172d38;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.supplemental-land.supplemental-land--review {
+  fill: #e850b4;
+  stroke: #9d126c;
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+.supplemental-land-marker {
+  fill: none;
+  stroke: #9d126c;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }

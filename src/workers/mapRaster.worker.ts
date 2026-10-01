@@ -10,7 +10,7 @@ interface PreparedScene {
   contextCountries: Array<{ path: DrawPath; bounds: Bounds }>
   relief: Array<{ elevation: number; path: DrawPath }>
   reliefClip: DrawPath
-  countries: Array<{ path: DrawPath; outline: DrawPath; division: DrawPath; bounds: Bounds }>
+  countries: Array<{ path: DrawPath; outline: DrawPath | undefined; division: DrawPath; internalBoundary?: boolean; bounds: Bounds }>
 }
 
 const workerScope = self as unknown as {
@@ -22,24 +22,34 @@ let sceneVersion = 0
 let scene: PreparedScene | null = null
 let surface: OffscreenCanvas | null = null
 
-function pathFrom(source?: string): DrawPath {
-  return source ? new Path2D(source) : null
-}
+let pathCache = new Map<string, Path2D>()
 
 function prepare(source: CanvasMapScene): PreparedScene {
-  return {
+  // Retain only the latest scene's paths. Mode/detail changes can reuse
+  // unchanged land and expensive bathymetry without an unbounded cache.
+  const nextPaths = new Map<string, Path2D>()
+  function pathFrom(source?: string): DrawPath {
+    if (!source) return null
+    const path = nextPaths.get(source) ?? pathCache.get(source) ?? new Path2D(source)
+    nextPaths.set(source, path)
+    return path
+  }
+  const prepared = {
     sphere: pathFrom(source.spherePath),
     bathymetry: source.bathymetry.map(({ depth, path }) => ({ depth, path: pathFrom(path) })),
     contextCountries: source.contextCountries.map(({ path, bounds }) => ({ path: pathFrom(path), bounds })),
     relief: source.relief.map(({ elevation, path }) => ({ elevation, path: pathFrom(path) })),
     reliefClip: pathFrom(source.reliefClipPath),
-    countries: source.countries.map(({ path, outlinePath, divisionPath, bounds }) => ({
+    countries: source.countries.map(({ path, outlinePath, divisionPath, internalBoundary, bounds }) => ({
       path: pathFrom(path),
-      outline: pathFrom(outlinePath),
+      outline: outlinePath === undefined ? undefined : pathFrom(outlinePath),
       division: pathFrom(divisionPath),
+      internalBoundary,
       bounds,
     })),
   }
+  pathCache = nextPaths
+  return prepared
 }
 
 function intersectsViewport(bounds: Bounds, offset: number, viewport: Bounds) {
@@ -130,13 +140,15 @@ function drawScene(
     context.save()
     context.translate(offset, 0)
     for (const country of countries) {
-      const border = country.outline ?? country.path
+      const border = country.outline === undefined ? country.path : country.outline
       if (border) context.stroke(border)
       if (country.division) {
         context.save()
-        context.strokeStyle = mapPalette.regionalDivision
-        context.lineWidth = 1 / cameraScale
-        context.setLineDash(mapPalette.regionalDivisionDash.map((length) => length / cameraScale))
+        context.strokeStyle = country.internalBoundary ? mapPalette.internalBoundary : mapPalette.regionalDivision
+        context.lineWidth = (country.internalBoundary ? mapPalette.internalBoundaryWidth : 1) / cameraScale
+        context.lineCap = 'round'
+        context.setLineDash((country.internalBoundary ? mapPalette.internalBoundaryDash : mapPalette.regionalDivisionDash)
+          .map((length) => length / cameraScale))
         context.stroke(country.division)
         context.restore()
       }

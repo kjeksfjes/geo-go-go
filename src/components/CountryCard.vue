@@ -6,6 +6,7 @@ import { componentName, componentType, countryName, t } from '../i18n'
 const props = defineProps<{
   country: CountryInfo | null
   component: GeographicComponentInfo | null
+  area?: { name: string; type: string } | null
 }>()
 
 const componentDetail = computed(() => {
@@ -20,7 +21,14 @@ const componentDetail = computed(() => {
 
 <template>
   <aside class="country-card map-overlay__content" aria-live="polite">
-    <template v-if="country">
+    <template v-if="area">
+      <div>
+        <p class="country-card__label">{{ t('selectedArea') }}</p>
+        <h2>{{ area.name }}</h2>
+        <p class="country-card__component"><em>{{ area.type }}</em></p>
+      </div>
+    </template>
+    <template v-else-if="country">
       <div class="country-card__flags">
         <span
           class="country-card__flag fi"

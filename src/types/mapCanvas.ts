@@ -5,6 +5,7 @@ export interface CanvasCamera {
 }
 
 export interface CanvasMapScene {
+  coordinateKey: string
   spherePath: string
   bathymetry: Array<{ depth: number; path: string }>
   contextCountries: Array<{ path: string; bounds: [[number, number], [number, number]] }>
@@ -14,6 +15,7 @@ export interface CanvasMapScene {
     path: string
     outlinePath?: string
     divisionPath?: string
+    internalBoundary?: boolean
     bounds: [[number, number], [number, number]]
   }>
 }
@@ -22,7 +24,7 @@ export type CanvasWorkerRequest =
   | { type: 'scene'; version: number; scene: CanvasMapScene }
   | {
       type: 'render'
-      purpose: 'overview' | 'detail'
+      purpose: 'overview' | 'detail' | 'settled'
       version: number
       requestId: number
       width: number
@@ -35,7 +37,7 @@ export type CanvasWorkerRequest =
 
 export interface CanvasWorkerFrame {
   type: 'frame'
-  purpose: 'overview' | 'detail'
+  purpose: 'overview' | 'detail' | 'settled'
   version: number
   requestId: number
   camera: CanvasCamera

@@ -28,9 +28,15 @@ const props = defineProps<{
   waterNames: boolean
   gesture: string
   paths: ProjectionDebugState | null
+  restoredLand: readonly { id: string; name: string }[]
+  highlightRestoredLand: boolean
+  reviewedLandId: string
+  canReviewLand: boolean
 }>()
 const emit = defineEmits<{
   'reset-settings': []
+  'toggle-restored-land': []
+  'review-land': [id: string]
 }>()
 const copyState = ref<'idle' | 'copied' | 'failed'>('idle')
 const resetState = ref<'idle' | 'reset'>('idle')
@@ -198,6 +204,28 @@ onBeforeUnmount(() => {
         {{ copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : '' }}
       </span>
     </div>
+    <div class="map-debug-panel__land-review">
+      <button
+        class="map-debug-panel__reset"
+        type="button"
+        :aria-pressed="highlightRestoredLand"
+        :disabled="disabled"
+        @click="emit('toggle-restored-land')"
+      >Highlight restored land ({{ restoredLand.length }})</button>
+      <select
+        aria-label="Visit restored land area"
+        :value="reviewedLandId"
+        :disabled="disabled || !canReviewLand"
+        @change="emit('review-land', ($event.target as HTMLSelectElement).value)"
+      >
+        <option value="" disabled>Visit an area…</option>
+        <option v-for="area in [...restoredLand].sort((a, b) => a.name.localeCompare(b.name))" :key="area.id" :value="area.id">
+          {{ area.name }} ({{ area.id }})
+        </option>
+      </select>
+      <small v-if="!canReviewLand">Use World and a global projection to visit areas.</small>
+      <small v-else>Magenta = restored land; circles locate tiny islands. Names are source labels only.</small>
+    </div>
     <dl>
       <dt>Zoom</dt>
       <dd>{{ zoom.toFixed(2) }}×</dd>
@@ -352,6 +380,23 @@ strong {
   white-space: nowrap;
   clip-path: inset(50%);
 }
+
+.map-debug-panel__land-review {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 20rem;
+  margin-bottom: 0.5rem;
+}
+
+.map-debug-panel__land-review select {
+  min-width: 0;
+  width: 100%;
+  font: inherit;
+  pointer-events: auto;
+}
+
+.map-debug-panel__land-review small { color: #9fc0ca; }
+.map-debug-panel__land-review [aria-pressed='true'] { color: #ff9ddd; }
 
 dl {
   display: grid;

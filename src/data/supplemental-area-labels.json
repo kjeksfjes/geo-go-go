@@ -1,0 +1,33 @@
+[
+  {
+    "id": "korean-dmz",
+    "sourceIds": ["KNX", "KNZ"],
+    "name": { "en": "Korean Demilitarized Zone", "nb": "Den koreanske demilitariserte sonen" },
+    "type": { "en": "Buffer zone", "nb": "Buffersone" }
+  },
+  {
+    "id": "undof-buffer-zone",
+    "sourceIds": ["SYU"],
+    "name": { "en": "UNDOF buffer zone", "nb": "UNDOF-buffersonen" },
+    "type": { "en": "Buffer zone", "nb": "Buffersone" }
+  },
+  {
+    "id": "guantanamo-bay",
+    "sourceIds": ["USG"],
+    "quizEntityId": "CUB",
+    "name": { "en": "Guantánamo Bay Naval Base", "nb": "Guantánamo Bay marinebase" },
+    "type": { "en": "US-administered leased area", "nb": "Amerikansk-administrert leieområde" }
+  },
+  {
+    "id": "akrotiri",
+    "sourceIds": ["WSB"],
+    "name": { "en": "Akrotiri", "nb": "Akrotiri" },
+    "type": { "en": "British Sovereign Base Area", "nb": "Britisk suverent baseområde" }
+  },
+  {
+    "id": "dhekelia",
+    "sourceIds": ["ESB"],
+    "name": { "en": "Dhekelia", "nb": "Dhekelia" },
+    "type": { "en": "British Sovereign Base Area", "nb": "Britisk suverent baseområde" }
+  }
+]

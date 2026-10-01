@@ -1,10 +1,12 @@
 import flagCountries from 'flag-icons/country.json'
-import { geoArea } from 'd3-geo'
+import { geoArea, geoContains } from 'd3-geo'
 import baseMapUnits from './ne-map-units-50m.json'
 import baseRegionalGeometry from './regional-display-50m.json'
 import baseCombinedGeometry from './combined-geographic-units-50m.json'
+import baseQuizGeometry from './quiz-merged-geometries-50m.json'
 import baseMeaningfulSubunits from './meaningful-subunits-50m.json'
 import semanticMapUnits from './meaningful-map-units.json'
+import leasedAreaGeometries from './leased-area-geometries.json'
 import quizIdentityByMapUnitId from './ne-quiz-identity-by-map-unit.json'
 import type { Geometry } from 'geojson'
 import type {
@@ -188,6 +190,71 @@ for (const id of Object.keys(metadataOverrides)) {
   if (!componentInfoById.has(id)) throw new Error(`Unknown component metadata override: ${id}`)
 }
 
+for (const area of semanticMapUnits.leasedAreas) {
+  const parent = mapUnitById.get(area.mapUnitId)
+  if (!parent) throw new Error(`Missing leased-area parent: ${area.mapUnitId}`)
+  componentInfoById.set(`leased-area:${area.id}`, {
+    id: `leased-area:${area.id}`,
+    sourceKind: 'leased-area',
+    sourceId: area.id,
+    entityId: parent.quizEntityId,
+    name: area.name.en,
+    sourceType: 'Lease',
+    nameOverrides: area.name,
+    typeOverrides: area.type,
+    flagCode: componentFlagCode(area.flagCode, parent.quizEntityId),
+  })
+}
+
+function includeLeasedAreas(units: GeographicUnitFeature[]): GeographicUnitFeature[] {
+  const result = [...units]
+  for (const area of semanticMapUnits.leasedAreas) {
+    const geometry = (leasedAreaGeometries as Record<string, Geometry>)[area.id]
+    if (!geometry || geometry.type !== 'Polygon' || geometry.coordinates.length !== 1) {
+      throw new Error(`Invalid leased-area geometry: ${area.id}`)
+    }
+    const parentIndex = result.findIndex((unit) => unit.properties.mapUnitIds.includes(area.mapUnitId))
+    const parent = result[parentIndex]
+    if (!parent || !['Polygon', 'MultiPolygon'].includes(parent.geometry.type)) {
+      throw new Error(`Invalid leased-area parent geometry: ${area.id}`)
+    }
+    const source = parent.geometry
+    if (source.type !== 'Polygon' && source.type !== 'MultiPolygon') continue
+    const hole = [...geometry.coordinates[0]!].reverse()
+    const holeKey = JSON.stringify(hole)
+    const polygons = source.type === 'Polygon' ? [source.coordinates] : source.coordinates
+    let found = false
+    const coordinates = polygons.map((polygon) => {
+      if (!geoContains({ type: 'Polygon', coordinates: [polygon[0]!] }, [area.point[0]!, area.point[1]!])) return polygon
+      found = true
+      // At 10m the hole already exists; at 50m cut it from the surrounding
+      // land so fill, highlighting, and pointer hits never overlap the lease.
+      return polygon.some((ring) => JSON.stringify(ring) === holeKey)
+        ? polygon : [...polygon, hole]
+    })
+    if (!found) throw new Error(`Leased area outside parent: ${area.id}`)
+    result[parentIndex] = {
+      ...parent,
+      geometry: source.type === 'Polygon'
+        ? { type: 'Polygon', coordinates: coordinates[0]! }
+        : { type: 'MultiPolygon', coordinates },
+      outlineGeometry: {
+        type: 'MultiLineString',
+        coordinates: coordinates.flatMap((polygon) => polygon.filter((ring) => JSON.stringify(ring) !== holeKey)),
+      },
+    }
+    result.push({
+      type: 'Feature',
+      id: `leased-area:${area.id}`,
+      properties: { ...parent.properties, componentId: `leased-area:${area.id}` },
+      geometry,
+      outlineGeometry: { type: 'GeometryCollection', geometries: [] },
+      divisionGeometry: { type: 'LineString', coordinates: geometry.coordinates[0]! },
+    })
+  }
+  return result
+}
+
 type CombinedGeometryIndex = Record<string, Geometry>
 const baseCombinedIndex = baseCombinedGeometry as CombinedGeometryIndex
 
@@ -196,6 +263,7 @@ function buildGeographicUnits(
   combinedGeometry: CombinedGeometryIndex,
   subunits: MapSubunitFeature[],
   fallbackGeometry = baseCombinedIndex,
+  quizGeometry = baseQuizGeometry as CombinedGeometryIndex,
 ): GeographicUnitFeature[] {
   const partsByGeographicId = new Map<string, MapUnitFeature[]>()
   const selectedSubunitById = new Map(subunits.map((unit) => [unit.id, unit]))
@@ -259,11 +327,12 @@ function buildGeographicUnits(
 
   for (const [id, parts] of partsByGeographicId) {
     const entityId = parts[0].quizEntityId
-    const geometry = parts.length === 1
-      ? parts[0].geometry
-      : (parts.some((part) => mapUnitById.get(part.id) === part)
-          ? fallbackGeometry[entityId]
-          : combinedGeometry[entityId])
+    // A single canonical map unit can still need extra 10m source pieces.
+    // Prefer its dissolved geometry when available, not only for multi-part
+    // identities; otherwise finer-scale splits disappear (e.g. Kurdistan).
+    const geometry = (parts.some((part) => mapUnitById.get(part.id) === part)
+      ? fallbackGeometry[entityId] : combinedGeometry[entityId])
+      ?? (parts.length === 1 ? parts[0].geometry : undefined)
     if (!geometry) throw new Error(`Missing combined geometry for ${entityId}`)
     geographicUnits.push({
       type: 'Feature',
@@ -280,7 +349,11 @@ function buildGeographicUnits(
     })
   }
 
-  return geographicUnits
+  return includeLeasedAreas(geographicUnits).map((unit) =>
+    quizGeometry[unit.id]
+      ? { ...unit, quizGeometry: quizGeometry[unit.id] }
+      : unit,
+  )
 }
 
 export const geographicUnits = buildGeographicUnits(mapUnits, baseCombinedIndex, mapSubunits)
@@ -294,12 +367,14 @@ export function loadDetailedGeographicUnits() {
     import('./regional-display-10m.json'),
     import('./combined-geographic-units-10m.json'),
     import('./meaningful-subunits-10m.json'),
+    import('./quiz-merged-geometries-10m.json'),
   ])
     .then(([
       { default: detailed },
       { default: detailedRegionalGeometry },
       { default: detailedCombinedGeometry },
       { default: detailedSubunits },
+      { default: detailedQuizGeometry },
     ]) => {
       const detailedById = new Map(detailed.features.map((feature) => [feature.id, feature]))
       const units = mapUnits.map((base) => {
@@ -335,6 +410,8 @@ export function loadDetailedGeographicUnits() {
         units,
         detailedCombinedGeometry as CombinedGeometryIndex,
         subunits,
+        baseCombinedIndex,
+        detailedQuizGeometry as CombinedGeometryIndex,
       )
     })
     .catch((error: unknown) => {
