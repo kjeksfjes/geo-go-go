@@ -2,6 +2,20 @@
 
 Lightweight backlog for deferred work. Keep stable task IDs and update each task's status as work progresses; recording a task does not authorize starting it automatically. No task-management dependency is required for now.
 
+## TASK-005 — Profile and optimize high-detail map initialization
+
+Status: Backlog. Priority: High. Added: 2026-10-02.
+
+Prioritize the existing cost of initializing the high-detail world map, especially on phones, before adding more geometry or caching machinery. A focused local Node benchmark at a 1200 × 800 viewport with Natural Earth projection measured cold 10m projection at roughly 3.1 seconds before the land-coverage changes and 3.2 seconds afterward. This is a diagnostic baseline, not a browser or iPhone performance measurement. The same comparison found about 27 kB compressed growth in the main game bundle and 103 kB in high-detail data; the added supplemental projection and cached quiz switching were much smaller processing costs.
+
+### Completion criteria
+
+- [ ] Profile cold startup and first high-detail activation in a browser, including a representative phone where available; separate download, module parsing/evaluation, country/path projection, focus calculations, worker preparation, and first visible frame.
+- [ ] Record reproducible baseline timings and identify the dominant main-thread work before choosing an optimization; agree practical responsiveness targets from those measurements.
+- [ ] Apply the smallest justified improvement using existing tools, preserving land coverage, source/component/quiz distinctions, projection fitting, and sharp settled rendering; avoid speculative dependencies, abstractions, or additional caches.
+- [ ] Compare before/after cold and warm timings, compressed bundle sizes, and memory behavior; ensure Explore/quiz switching, region changes, and both 50m/10m detail levels remain consistent across canvas and SVG.
+- [ ] Run the build and proportionate focused checks, then ask Joakim to verify responsiveness and visual quality on his devices.
+
 ## TASK-001 — Improve Coral Sea Islands and Clipperton geometry
 
 Status: Deferred. Added: 2026-10-01.
