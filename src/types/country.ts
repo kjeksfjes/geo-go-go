@@ -65,6 +65,8 @@ export type GeographicUnitFeature = Feature<Geometry, {
   // An empty outline intentionally suppresses the ordinary polygon stroke.
   outlineGeometry?: Geometry
   divisionGeometry?: Geometry
+  // Explicitly curated quiz-only union, not a source/sovereignty change.
+  quizGeometry?: Geometry
 }
 
 export interface CountryInfo {

@@ -1,0 +1,8 @@
+[
+  { "entityId": "CYP", "geographicUnitId": "entity:CYP", "sourceIds": ["WSB", "ESB"], "leasedAreaIds": [] },
+  { "entityId": "CUB", "geographicUnitId": "entity:CUB", "sourceIds": ["USG"], "leasedAreaIds": [] },
+  { "entityId": "KAZ", "geographicUnitId": "entity:KAZ", "sourceIds": [], "leasedAreaIds": ["KAB"] },
+  { "entityId": "SYR", "geographicUnitId": "entity:SYR", "sourceIds": ["SYU"], "leasedAreaIds": [] },
+  { "entityId": "KOR", "geographicUnitId": "subunit:KOR", "sourceIds": ["KNX"], "excludeSourceIds": ["KNZ"], "leasedAreaIds": [] },
+  { "entityId": "PRK", "geographicUnitId": "entity:PRK", "sourceIds": ["KNZ"], "excludeSourceIds": ["KNX"], "leasedAreaIds": [] }
+]

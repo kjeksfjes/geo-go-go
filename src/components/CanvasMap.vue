@@ -39,6 +39,7 @@ let settleTimer: number | undefined
 let visibleIndex = 0
 let hasShownDetail = false
 let ready = false
+let configuredCoordinates: { key: string; width: number; height: number } | null = null
 type Snapshot = {
   camera: CanvasCamera
   width: number
@@ -281,6 +282,9 @@ function receiveFrame(frame: CanvasWorkerFrame) {
 
 function configureScene() {
   if (!worker || canvases().some((canvas) => !canvas)) return
+  const keepFrontFrame = ready && coversViewport(visibleIndex) && configuredCoordinates?.key === props.scene.coordinateKey
+    && configuredCoordinates.width === props.width && configuredCoordinates.height === props.height
+  configuredCoordinates = { key: props.scene.coordinateKey, width: props.width, height: props.height }
   sceneVersion += 1
   if (swapFrame !== undefined) cancelAnimationFrame(swapFrame)
   if (settleTimer !== undefined) window.clearTimeout(settleTimer)
@@ -289,12 +293,19 @@ function configureScene() {
   pending = false
   refreshAfterPending = false
   forceAfterPending = false
-  snapshots = [null, null, null, null]
-  visibleIndex = 0
-  hasShownDetail = false
-  for (const element of canvases()) element?.style.setProperty('opacity', '0')
-  ready = false
-  emit('ready-change', false)
+  if (keepFrontFrame) {
+    // Keep the front buffer while an updated scene renders in the back.
+    // Projection/viewport changes still discard incompatible coordinates.
+    snapshots = snapshots.map((snapshot, index) => index === visibleIndex ? snapshot : null)
+    updatePresentation()
+  } else {
+    snapshots = [null, null, null, null]
+    visibleIndex = 0
+    hasShownDetail = false
+    for (const element of canvases()) element?.style.setProperty('opacity', '0')
+    ready = false
+    emit('ready-change', false)
+  }
   const message: CanvasWorkerRequest = { type: 'scene', version: sceneVersion, scene: props.scene }
   worker.postMessage(message)
   requestFrame()

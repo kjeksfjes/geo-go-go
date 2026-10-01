@@ -5,6 +5,7 @@ export interface CanvasCamera {
 }
 
 export interface CanvasMapScene {
+  coordinateKey: string
   spherePath: string
   bathymetry: Array<{ depth: number; path: string }>
   contextCountries: Array<{ path: string; bounds: [[number, number], [number, number]] }>

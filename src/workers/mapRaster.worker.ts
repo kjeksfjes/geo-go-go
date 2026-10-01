@@ -22,12 +22,19 @@ let sceneVersion = 0
 let scene: PreparedScene | null = null
 let surface: OffscreenCanvas | null = null
 
-function pathFrom(source?: string): DrawPath {
-  return source ? new Path2D(source) : null
-}
+let pathCache = new Map<string, Path2D>()
 
 function prepare(source: CanvasMapScene): PreparedScene {
-  return {
+  // Retain only the latest scene's paths. Mode/detail changes can reuse
+  // unchanged land and expensive bathymetry without an unbounded cache.
+  const nextPaths = new Map<string, Path2D>()
+  function pathFrom(source?: string): DrawPath {
+    if (!source) return null
+    const path = nextPaths.get(source) ?? pathCache.get(source) ?? new Path2D(source)
+    nextPaths.set(source, path)
+    return path
+  }
+  const prepared = {
     sphere: pathFrom(source.spherePath),
     bathymetry: source.bathymetry.map(({ depth, path }) => ({ depth, path: pathFrom(path) })),
     contextCountries: source.contextCountries.map(({ path, bounds }) => ({ path: pathFrom(path), bounds })),
@@ -41,6 +48,8 @@ function prepare(source: CanvasMapScene): PreparedScene {
       bounds,
     })),
   }
+  pathCache = nextPaths
+  return prepared
 }
 
 function intersectsViewport(bounds: Bounds, offset: number, viewport: Bounds) {
@@ -136,7 +145,8 @@ function drawScene(
       if (country.division) {
         context.save()
         context.strokeStyle = country.internalBoundary ? mapPalette.internalBoundary : mapPalette.regionalDivision
-        context.lineWidth = (country.internalBoundary ? 0.65 : 1) / cameraScale
+        context.lineWidth = (country.internalBoundary ? mapPalette.internalBoundaryWidth : 1) / cameraScale
+        context.lineCap = 'round'
         context.setLineDash((country.internalBoundary ? mapPalette.internalBoundaryDash : mapPalette.regionalDivisionDash)
           .map((length) => length / cameraScale))
         context.stroke(country.division)

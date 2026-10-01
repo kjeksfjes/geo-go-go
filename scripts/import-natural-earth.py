@@ -88,12 +88,28 @@ def main():
                 raise ValueError(f"No canonical entity for {data['GU_A3']}: {canonical_id}")
             quiz_identity_by_unit[data["GU_A3"]] = canonical_id
 
+    for unit_id, entity_id in taxonomy.get("quizIdentityOverridesByMapUnitId", {}).items():
+        if unit_id not in ids_by_key.values() or entity_id not in known_entity_ids:
+            raise ValueError(f"Invalid curated quiz identity: {unit_id}: {entity_id}")
+        quiz_identity_by_unit[unit_id] = entity_id
+
     detailed = {}
     canonical_fill_geometries = {}
+    supplemental_land = []
+    leased_ids = {area["id"] for area in json.loads(
+        (destination / "meaningful-map-units.json").read_text(encoding="utf-8")
+    ).get("leasedAreas", [])}
     for data, geometry in rows(source_10m):
         unit_id = ids_by_key.get((data["ADM0_A3"], data["GEOUNIT"]))
         if unit_id:
             detailed[unit_id] = {"type": "Feature", "id": unit_id, "geometry": geometry}
+        elif (data["TYPE"] == "Geo unit"
+              and data["ADM0_A3"] == data["ADM0_ISO"]
+              and data["ADM0_A3"] in known_entity_ids):
+            # Some 50m units split further at 10m (e.g. Brcko and Iraqi
+            # Kurdistan). Retain those parts in their existing country rather
+            # than leaving ocean-shaped gaps or inventing new quiz identities.
+            canonical_fill_geometries.setdefault(data["ADM0_A3"], []).append(geometry)
         elif (data["TYPE"] == "Indeterminate"
               and data["FCLASS_ISO"] == "Unrecognized"
               and data["ADM0_ISO"] in known_entity_ids
@@ -102,12 +118,22 @@ def main():
             # canonical country's displayed geometry without becoming a new
             # quiz or interaction identity.
             canonical_fill_geometries.setdefault(data["ADM0_ISO"], []).append(geometry)
+        elif data["GU_A3"] not in leased_ids:
+            # Retain otherwise omitted land without guessing a quiz identity,
+            # sovereignty, or click affiliation. Use the detailed boundary at
+            # both resolutions; these small areas are absent from the 50m list.
+            supplemental_land.append({
+                "type": "Feature", "id": data["GU_A3"],
+                "properties": {"sourceName": data["GEOUNIT"], "sourceType": data["TYPE"]},
+                "geometry": geometry,
+            })
 
     write_json(destination / "ne-map-units-50m.json", base_features)
     write_json(destination / "ne-map-units-10m.json",
                [detailed[feature["id"]] for feature in base_features if feature["id"] in detailed])
+    write_json(destination / "supplemental-land.json", supplemental_land)
     (destination / "ne-quiz-identity-by-map-unit.json").write_text(
-        json.dumps(quiz_identity_by_unit, sort_keys=True, separators=(",", ":")),
+        json.dumps(quiz_identity_by_unit, sort_keys=True, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
     (destination / "ne-10m-canonical-fill-geometries.json").write_text(

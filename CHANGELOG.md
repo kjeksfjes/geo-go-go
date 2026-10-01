@@ -8,10 +8,19 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 - Sharpened country outlines on large displays by rendering a viewport-sized canvas frame after map movement settles.
 - Reduced accidental mobile panning during pinch zoom and when lifting fingers after a pinch.
+- Restored omitted buffer zones, leases, territories, and islands as neutral, non-quiz land, with debug highlights and a location selector for review.
+- Added English and Norwegian click labels for the Korean DMZ and UNDOF buffer zone, using the same subtle internal-boundary style as Baikonur without assigning country affiliations.
+- Unified the Korean DMZ into one Explore hover, click, and keyboard-focus area, retaining its central dividing line as separate subtle dashed linework.
+- Added bilingual Explore area cards for Akrotiri, Dhekelia, and the Guantánamo Bay Naval Base, with distinct labels and subtle shared boundaries.
+- Simplified military base and lease areas in Find the country: Akrotiri and Dhekelia form part of the Cyprus quiz shape, Guantánamo of Cuba, and Baikonur of Kazakhstan, without changing their detailed Explore presentation.
+- Included the restored UNDOF buffer strip in Syria's quiz shape, while retaining its separate Explore label and boundary and leaving the wider Golan boundary unchanged.
+- Included each Korean DMZ half in its respective Korea quiz shape, hiding the outer buffer boundaries while retaining the North/South dividing line and the shared Explore area label.
 - Displayed Baikonur as land with a subtle internal boundary and a clickable Russian lease identification, without adding a separate quiz country.
 
 ### Fixes
 
+- Avoided a full map reprojection when entering Find the country; unchanged country and canvas drawing paths are reused, and compatible canvas updates keep the front frame visible.
+- Restored missing detailed land around Brčko District and Iraqi Kurdistan by retaining finer-scale source parts within their existing countries.
 - Kept the chosen manual zoom when limited country focus temporarily pulls back for a larger country.
 - Prepared Europe's regional geometry during browser idle time and reused its context paths to reduce the selection delay.
 

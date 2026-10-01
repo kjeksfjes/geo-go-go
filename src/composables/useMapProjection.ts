@@ -14,6 +14,8 @@ import type { BathymetryBand, BathymetryDepth } from '../data/bathymetry'
 import type { ReliefBand, ReliefElevation } from '../data/relief'
 import type { MapBounds, MapPoint } from './useMapZoom'
 import { projectedUnitFocus } from '../logic/mapFocus'
+import { supplementalLand, supplementalExploreLand, type SupplementalExploreFeature } from '../data/supplementalLand'
+import { quizGeographicUnits } from '../data/quizMap'
 
 export type MapProjectionId = 'mercator' | 'miller' | 'winkel-tripel' | 'natural-earth' | 'regional-equal-area'
 export interface MapProjectionOption {
@@ -28,7 +30,7 @@ export interface HorizontalWrap {
 
 export interface ProjectionDebugState {
   key: string
-  result: 'cache hit' | 'full projection' | 'regional override'
+  result: 'cache hit' | 'full projection' | 'regional override' | 'quiz override'
   durationMs: number
   unitCount: number
 }
@@ -105,6 +107,7 @@ export function useMapProjection(
   visibleMapUnitIds: Ref<ReadonlySet<string>>,
   bathymetryBands: Ref<readonly BathymetryBand[]>,
   reliefBands: Ref<readonly ReliefBand[]>,
+  quizMode?: Ref<boolean>,
 ) {
   // Keep fitting tied to the initial 50m geographic units. A resolution swap may change
   // coastline extents by a fraction, but it must not move the coordinate
@@ -129,6 +132,10 @@ export function useMapProjection(
   }>()
   const reliefClipPathCache = new Map<string, { sizeKey: string; path: string }>()
   const projectionDebug = shallowRef<ProjectionDebugState | null>(null)
+  const supplementalPathCache = new Map<string, {
+    sizeKey: string
+    paths: Array<{ id: string; name: string; path: string; divisionPath?: string; bounds: MapBounds }>
+  }>()
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
   )
@@ -142,11 +149,12 @@ export function useMapProjection(
     return id === 'regional-equal-area' ? `${id}:${activeRegion.value.id}` : id
   }
 
-  function geographicCacheKey(id: MapProjectionId, regionId: string = activeRegion.value.id) {
+  function geographicCacheKey(id: MapProjectionId, regionId: string = activeRegion.value.id, quizVariant = quizMode?.value ?? false) {
     const projectionKey = projectionCacheKey(id)
-    return id !== 'regional-equal-area' && regionsWithDisplayGeometry.has(regionId)
+    const key = id !== 'regional-equal-area' && regionsWithDisplayGeometry.has(regionId)
       ? `${projectionKey}:${regionId}`
       : projectionKey
+    return quizVariant ? `${key}:quiz` : key
   }
 
   function hasCachedPaths(source: GeographicUnitFeature[], id = projectionId.value): boolean {
@@ -189,10 +197,10 @@ export function useMapProjection(
     return geoPath(projection)
   })
 
-  function projectedGeographicPaths(source: GeographicUnitFeature[], trackDebug = false, regionId: string = activeRegion.value.id) {
+  function projectedGeographicPaths(source: GeographicUnitFeature[], trackDebug = false, regionId: string = activeRegion.value.id, quizVariant = quizMode?.value ?? false): ProjectedGeographicUnit[] {
     const startedAt = trackDebug ? performance.now() : 0
     const id = projectionId.value
-    const key = geographicCacheKey(id, regionId)
+    const key = geographicCacheKey(id, regionId, quizVariant)
     const sizeKey = `${width.value}:${height.value}`
     let cached = pathCache.get(source)
     if (cached?.sizeKey === sizeKey) {
@@ -212,11 +220,40 @@ export function useMapProjection(
     }
 
     const generator = pathGenerator.value
+    if (quizVariant) {
+      // Only curated country shapes differ. Reuse the active Explore paths,
+      // including regional overrides, rather than reprojecting the atlas.
+      const originalPaths = projectedGeographicPaths(source, false, regionId, false)
+      const originalById = new Map(originalPaths.map((path) => [path.unit.id, path]))
+      const paths = quizGeographicUnits(source).flatMap((unit) => {
+        const original = originalById.get(unit.id)
+        if (!original) return []
+        if (original.unit === unit) return [original]
+        const regionalDisplay = unit.regionalDisplayGeometry?.[regionId]
+        const displayUnit = regionalDisplay ? { ...unit, geometry: regionalDisplay.geometry } : unit
+        return [{
+          unit,
+          path: generator(displayUnit) ?? '',
+          outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? '' : undefined,
+          divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? '' : undefined,
+          ...projectedUnitFocus(generator, displayUnit, width.value),
+        }]
+      })
+      cached.projections.set(key, paths)
+      if (trackDebug) projectionDebug.value = {
+        key,
+        result: 'quiz override',
+        durationMs: performance.now() - startedAt,
+        unitCount: paths.length,
+      }
+      return paths
+    }
     const baseKey = projectionCacheKey(id)
+    const displaySource = source
     let basePaths = cached.projections.get(baseKey)
     const reusedBasePaths = basePaths !== undefined
     if (!basePaths && key !== baseKey) {
-      basePaths = source.map((unit) => ({
+      basePaths = displaySource.map((unit) => ({
         unit,
         path: generator(unit) ?? '',
         outlinePath: unit.outlineGeometry ? generator(unit.outlineGeometry) ?? '' : undefined,
@@ -254,8 +291,8 @@ export function useMapProjection(
 
     // A regional view never needs paths for geographic units hidden by its filter.
     const renderUnits = id === 'regional-equal-area'
-      ? source.filter((unit) => unit.properties.mapUnitIds.some((mapUnitId) => visibleMapUnitIds.value.has(mapUnitId)))
-      : source
+      ? displaySource.filter((unit) => unit.properties.mapUnitIds.some((mapUnitId) => visibleMapUnitIds.value.has(mapUnitId)))
+      : displaySource
     const paths: ProjectedGeographicUnit[] = renderUnits.map((unit) => {
       const regionalDisplay = unit.regionalDisplayGeometry?.[activeRegion.value.id]
       const displayUnit = displayFeature(unit)
@@ -377,6 +414,27 @@ export function useMapProjection(
 
   const spherePath = computed(() => pathGenerator.value({ type: 'Sphere' }) ?? '')
 
+  // Supplemental land is visual context, not a region member or interaction
+  // identity. Both renderers and both detail levels use this same small layer.
+  function projectSupplementalLand(source: readonly SupplementalExploreFeature[], variant: string) {
+    const key = `${projectionCacheKey(projectionId.value)}:${variant}`
+    const sizeKey = `${width.value}:${height.value}`
+    const cached = supplementalPathCache.get(key)
+    if (cached?.sizeKey === sizeKey) return cached.paths
+    const generator = pathGenerator.value
+    const paths = source.map((unit) => ({
+      id: unit.id,
+      name: unit.properties.sourceName,
+      path: generator(unit) ?? '',
+      divisionPath: unit.divisionGeometry ? generator(unit.divisionGeometry) ?? '' : undefined,
+      bounds: generator.bounds(unit),
+    })).filter(({ path, bounds }) => path && bounds.flat().every(Number.isFinite))
+    supplementalPathCache.set(key, { sizeKey, paths })
+    return paths
+  }
+  const supplementalLandPaths = computed(() => projectSupplementalLand(supplementalLand, 'source'))
+  const supplementalExploreLandPaths = computed(() => projectSupplementalLand(supplementalExploreLand, 'explore'))
+
   const bathymetryPaths = computed(() => {
     const key = projectionCacheKey(projectionId.value)
     const sizeKey = `${width.value}:${height.value}`
@@ -472,6 +530,8 @@ export function useMapProjection(
     reliefClipPath,
     reliefPaths,
     spherePath,
+    supplementalLandPaths,
+    supplementalExploreLandPaths,
     unprojectPoint,
   }
 }
