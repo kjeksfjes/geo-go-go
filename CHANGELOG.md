@@ -2,7 +2,7 @@
 
 Concise, user-facing notes for local releases. Add upcoming changes under **Unreleased**, then move them into a versioned entry when preparing a release.
 
-## Unreleased
+## 0.7.0 — Borders & Bearings — 2026-10-02
 
 ### Improvements
 
