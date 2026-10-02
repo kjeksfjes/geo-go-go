@@ -1860,6 +1860,7 @@ async function setProjection(nextId: MapProjectionId) {
   color: #172d38;
   cursor: pointer;
   pointer-events: auto;
+  white-space: nowrap;
 }
 
 .map-tools button:hover,
@@ -1875,7 +1876,6 @@ async function setProjection(nextId: MapProjectionId) {
 
 @media (max-width: 850px) {
   .map-tools { top: auto; right: 0.75rem; bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
-  .map-tools button { max-width: 8rem; text-align: center; }
   .map-settings-panel { top: 0.75rem; right: 0.75rem; }
 }
 
