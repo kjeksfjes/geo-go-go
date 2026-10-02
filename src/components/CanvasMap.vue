@@ -26,6 +26,7 @@ const overviewOverscan = 2.4
 const overviewIndex = 2
 const settledIndex = 3
 const settleDelay = 180
+const maximumFrameScale = 2
 let worker: Worker | null = null
 let contexts: Array<ImageBitmapRenderingContext | CanvasRenderingContext2D | null> = [null, null, null, null]
 let sceneVersion = 0
@@ -114,13 +115,21 @@ function coversViewport(index: number) {
 }
 
 function updateVisibility() {
-  // The sharp frame has no overscan, so use it only at its exact resting
-  // camera. During movement, retain the overscanned detail or overview.
+  // The sharp frame has no overscan, so prefer it at its exact resting
+  // camera. It can also bridge a small zoom-in if it still covers the view.
+  // A close-up must not magnify that overview's pixels and border widths;
+  // fall back to the existing SVG renderer while awaiting a usable bitmap.
+  const overview = presentation(overviewIndex)
+  const settled = presentation(settledIndex)
+  const detail = presentation(visibleIndex)
   const shownIndex = !props.interacting && matchesCurrentCamera(snapshots[settledIndex])
     ? settledIndex
-    : coversViewport(visibleIndex)
+    : detail && detail.ratio <= maximumFrameScale && coversViewport(visibleIndex)
       ? visibleIndex
-      : hasShownDetail && coversViewport(overviewIndex) ? overviewIndex : -1
+      : settled && settled.ratio <= 1.35 && coversViewport(settledIndex)
+        ? settledIndex
+        : hasShownDetail && overview && overview.ratio <= maximumFrameScale && coversViewport(overviewIndex)
+          ? overviewIndex : -1
   for (const [index, element] of canvases().entries()) {
     element?.style.setProperty('opacity', index === shownIndex ? '1' : '0')
   }
@@ -267,6 +276,15 @@ function receiveFrame(frame: CanvasWorkerFrame) {
   swapFrame = requestAnimationFrame(() => {
     swapFrame = undefined
     if (frame.version !== sceneVersion || !canvases()[backIndex]) return
+    // Another gesture event can move the camera between receiving a frame
+    // and this paint. Recheck before replacing the current front buffer.
+    if (!coversViewport(backIndex)) {
+      pending = false
+      refreshAfterPending = false
+      forceAfterPending = false
+      requestFrame(true)
+      return
+    }
     visibleIndex = backIndex
     hasShownDetail = true
     updatePresentation()

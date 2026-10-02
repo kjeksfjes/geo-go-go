@@ -2,6 +2,14 @@
 
 Concise, user-facing notes for local releases. Add upcoming changes under **Unreleased**, then move them into a versioned entry when preparing a release.
 
+## Unreleased
+
+### Fixes
+
+- Prevented the whole-world canvas overview from being enlarged into a heavily pixelated close-up during map gestures; reuse recent detail frames or the SVG fallback while a replacement bitmap is prepared, and recheck coverage at frame swap time.
+- Reduced the one-finger touch-pan dead zone and applied its first confirmed movement immediately, retaining frame-batched dragging and existing pinch safeguards.
+- Made the browser's active touch list authoritative for mobile gestures, allowing a second finger to take over a one-finger pan without depending on individual pointer events; preserved country and area taps, mouse/pen controls, and uneven pinch-release safeguards.
+
 ## 0.7.0 — Borders & Bearings — 2026-10-02
 
 ### Improvements
