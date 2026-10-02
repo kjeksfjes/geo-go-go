@@ -308,6 +308,7 @@ const {
   movePan,
   resetZoom,
   startPan,
+  updateTouches,
   wrapActive,
   wrapNeighborDirection,
   zoomFromWheel,
@@ -767,12 +768,14 @@ function handleWheel(event: WheelEvent) {
 }
 
 function handlePointerDown(event: PointerEvent) {
-  if (event.pointerType !== 'touch') rememberHoverPointer(event)
+  if (event.pointerType === 'touch') return
+  rememberHoverPointer(event)
   if (svg.value) startPan(event, svg.value)
 }
 
 function handlePointerMove(event: PointerEvent) {
-  if (event.pointerType !== 'touch') rememberHoverPointer(event)
+  if (event.pointerType === 'touch') return
+  rememberHoverPointer(event)
   movePan(event)
 }
 
@@ -783,14 +786,19 @@ function handlePointerLeave(event: PointerEvent) {
 }
 
 function handlePointerEnd(event: PointerEvent) {
+  if (event.pointerType === 'touch') return
   if (!svg.value) return
+  endPan(event, svg.value)
+}
 
-  const wasTap = endPan(event, svg.value)
-  if (event.pointerType !== 'touch') return
-  if (event.type !== 'pointerup') {
+function handleTouch(event: TouchEvent) {
+  if (!svg.value) return
+  const tap = updateTouches(event, svg.value)
+  if (event.type === 'touchcancel') {
     consumeDragClick()
     return
   }
+  if (event.type !== 'touchend') return
 
   // Preventing touchstart is the only reliable way to suppress Safari's
   // tap-then-hold loupe. Recreate a normal tap after our pan detector has had
@@ -801,13 +809,14 @@ function handlePointerEnd(event: PointerEvent) {
     suppressCompatibilityClick = false
     compatibilityClickTimer = undefined
   }, 700)
-  if (consumeDragClick() || !wasTap || !(event.target instanceof Element)) return
+  const tapTarget = tap?.target
+  if (consumeDragClick() || !tap || !(tapTarget instanceof Element) || !tapTarget.isConnected) return
 
-  event.target.dispatchEvent(new MouseEvent('click', {
+  tapTarget.dispatchEvent(new MouseEvent('click', {
     bubbles: true,
     cancelable: true,
-    clientX: event.clientX,
-    clientY: event.clientY,
+    clientX: tap.clientX,
+    clientY: tap.clientY,
     detail: 1,
     view: window,
   }))
@@ -1038,7 +1047,10 @@ async function setProjection(nextId: MapProjectionId) {
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         role="group"
         :aria-label="t('interactiveMap')"
-        @touchstart.prevent
+        @touchstart.prevent="handleTouch"
+        @touchmove.prevent="handleTouch"
+        @touchend="handleTouch"
+        @touchcancel="handleTouch"
         @wheel.prevent="handleWheel"
         @pointerdown="handlePointerDown"
         @pointermove="handlePointerMove"
@@ -1418,6 +1430,8 @@ async function setProjection(nextId: MapProjectionId) {
 
 .map-sphere {
   fill: var(--map-ocean);
+  /* Ocean gestures target the persistent SVG, not this fallback-only path. */
+  pointer-events: none;
 }
 
 .world-map--bathymetry .map-sphere {
@@ -1846,6 +1860,7 @@ async function setProjection(nextId: MapProjectionId) {
   color: #172d38;
   cursor: pointer;
   pointer-events: auto;
+  white-space: nowrap;
 }
 
 .map-tools button:hover,
@@ -1861,7 +1876,6 @@ async function setProjection(nextId: MapProjectionId) {
 
 @media (max-width: 850px) {
   .map-tools { top: auto; right: 0.75rem; bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
-  .map-tools button { max-width: 8rem; text-align: center; }
   .map-settings-panel { top: 0.75rem; right: 0.75rem; }
 }
 

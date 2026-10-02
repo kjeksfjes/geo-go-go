@@ -61,7 +61,7 @@ defineProps<{ scale: ScaleBar }>()
 
 @media (max-width: 850px) {
   .map-scale-bar {
-    bottom: calc(3.75rem + env(safe-area-inset-bottom));
+    bottom: calc(3.25rem + env(safe-area-inset-bottom));
   }
 }
 </style>

@@ -22,7 +22,8 @@ const MAX_EMPTY_VIEWPORT_FRACTION = 0.65
 // The true 1:10m outlines of microstates are much smaller than their 1:50m
 // counterparts. Keep a finite ceiling, but let them become visible up close.
 const MAX_ZOOM = 16_384
-const TOUCH_DRAG_THRESHOLD = 8
+// Keep enough tolerance for tap jitter without a noticeable drag dead zone.
+const TOUCH_DRAG_THRESHOLD = 4
 const PINCH_PAN_THRESHOLD = 10
 
 export function useMapZoom(
@@ -58,9 +59,10 @@ export function useMapZoom(
     moved: boolean
     svg: SVGSVGElement
   } | undefined
-  const touchPointers = new Map<number, MapPoint>()
+  const activeTouches = new Map<number, Touch>()
   const suppressedTouchTaps = new Set<number>()
   let pinchState: {
+    identifiers: [number, number]
     distance: number
     scale: number
     center: MapPoint
@@ -456,15 +458,14 @@ export function useMapZoom(
 
   function beginPinch(svg: SVGSVGElement) {
     flushPendingPan()
-    for (const pointerId of touchPointers.keys()) {
-      suppressedTouchTaps.add(pointerId)
-      svg.setPointerCapture(pointerId)
-    }
     const rect = svg.getBoundingClientRect()
-    const [first, second] = [...touchPointers.values()].map(([x, y]) => mapPoint(x, y, svg))
+    const [firstTouch, secondTouch] = [...activeTouches.values()]
+    const first = mapPoint(firstTouch.clientX, firstTouch.clientY, svg)
+    const second = mapPoint(secondTouch.clientX, secondTouch.clientY, svg)
     const centerX = (first[0] + second[0]) / 2
     const centerY = (first[1] + second[1]) / 2
     pinchState = {
+      identifiers: [firstTouch.identifier, secondTouch.identifier],
       distance: Math.max(Math.hypot(first[0] - second[0], first[1] - second[1]), 1),
       scale: transform.scale,
       center: [centerX, centerY],
@@ -480,95 +481,74 @@ export function useMapZoom(
   }
 
   function startPan(event: PointerEvent, svg: SVGSVGElement) {
-    if (event.pointerType === 'touch') {
-      suppressedTouchTaps.delete(event.pointerId)
-      touchPointers.set(event.pointerId, [event.clientX, event.clientY])
-      if (touchPointers.size >= 2) {
-        suppressedTouchTaps.add(event.pointerId)
-        stopAnimation()
-        cancelWheelUpdate()
-        if (!pinchState) beginPinch(svg)
-        svg.setPointerCapture(event.pointerId)
-        return
-      }
-    }
-    if (event.button !== 0) return
+    if (event.pointerType === 'touch' || activeTouches.size > 0 || event.button !== 0) return
 
     stopAnimation()
     cancelWheelUpdate()
     cancelPanUpdate()
     suppressNextClick = false
-    beginDrag(event.pointerId, event.clientX, event.clientY, svg, event.pointerType === 'touch' ? TOUCH_DRAG_THRESHOLD : 3)
+    beginDrag(event.pointerId, event.clientX, event.clientY, svg, 3)
   }
 
   function movePan(event: PointerEvent) {
-    if (event.pointerType === 'touch' && touchPointers.has(event.pointerId)) {
-      touchPointers.set(event.pointerId, [event.clientX, event.clientY])
-      const pinch = pinchState
-      if (pinch) {
-        const [first, second] = [...touchPointers.values()].map(([x, y]) => mapPoint(x, y, pinch.svg))
-        const distance = Math.hypot(first[0] - second[0], first[1] - second[1])
-        const scale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM,
-          Math.min(MAX_ZOOM, pinch.scale * distance / pinch.distance))
-        manualZoomScale = scale
-        const centerX = (first[0] + second[0]) / 2
-        const centerY = (first[1] + second[1]) / 2
-        const deltaX = centerX - pinch.center[0]
-        const deltaY = centerY - pinch.center[1]
-        const drift = Math.hypot(deltaX / pinch.unitsPerPixelX, deltaY / pinch.unitsPerPixelY)
-        // Ignore small midpoint drift, then add only the movement beyond the
-        // threshold so deliberate two-finger panning starts without a jump.
-        const panWeight = drift > PINCH_PAN_THRESHOLD ? 1 - PINCH_PAN_THRESHOLD / drift : 0
-        schedulePan(
-          pinch.center[0] + deltaX * panWeight - pinch.anchor[0] * scale,
-          pinch.center[1] + deltaY * panWeight - pinch.anchor[1] * scale,
-          scale,
-        )
-        return
-      }
-    }
-    if (!dragState || event.pointerId !== dragState.pointerId) return
+    if (event.pointerType === 'touch' || activeTouches.size > 0) return
+    moveDrag(event.pointerId, event.clientX, event.clientY, false)
+  }
 
-    const deltaX = event.clientX - dragState.startClientX
-    const deltaY = event.clientY - dragState.startClientY
+  function movePinch() {
+    const pinch = pinchState
+    if (!pinch) return
+    const [firstTouch, secondTouch] = pinch.identifiers.map((id) => activeTouches.get(id)!)
+    const first = mapPoint(firstTouch.clientX, firstTouch.clientY, pinch.svg)
+    const second = mapPoint(secondTouch.clientX, secondTouch.clientY, pinch.svg)
+    const distance = Math.hypot(first[0] - second[0], first[1] - second[1])
+    const scale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM,
+      Math.min(MAX_ZOOM, pinch.scale * distance / pinch.distance))
+    manualZoomScale = scale
+    const centerX = (first[0] + second[0]) / 2
+    const centerY = (first[1] + second[1]) / 2
+    const deltaX = centerX - pinch.center[0]
+    const deltaY = centerY - pinch.center[1]
+    const drift = Math.hypot(deltaX / pinch.unitsPerPixelX, deltaY / pinch.unitsPerPixelY)
+    // Ignore small midpoint drift, then add only the movement beyond the
+    // threshold so deliberate two-finger panning starts without a jump.
+    const panWeight = drift > PINCH_PAN_THRESHOLD ? 1 - PINCH_PAN_THRESHOLD / drift : 0
+    schedulePan(
+      pinch.center[0] + deltaX * panWeight - pinch.anchor[0] * scale,
+      pinch.center[1] + deltaY * panWeight - pinch.anchor[1] * scale,
+      scale,
+    )
+  }
 
-    if (!dragState.moved && Math.hypot(deltaX, deltaY) > dragState.threshold) {
+  function moveDrag(identifier: number, clientX: number, clientY: number, touch: boolean) {
+    if (!dragState || identifier !== dragState.pointerId) return
+
+    const deltaX = clientX - dragState.startClientX
+    const deltaY = clientY - dragState.startClientY
+    const nextX = dragState.startX + deltaX * dragState.unitsPerPixelX
+    const nextY = dragState.startY + deltaY * dragState.unitsPerPixelY
+
+    if (!dragState.moved) {
+      if (Math.hypot(deltaX, deltaY) <= dragState.threshold) return
       dragState.moved = true
       isDragging.value = true
-      dragState.svg.setPointerCapture(event.pointerId)
+      if (touch) {
+        // Start following the finger on this event instead of making the
+        // first visible movement wait for another animation-frame callback.
+        setTransform(nextX, nextY, transform.scale)
+        return
+      }
+      dragState.svg.setPointerCapture(identifier)
     }
 
-    if (dragState.moved) {
-      // Pointer events can arrive faster than the browser can paint. Keep only
-      // the latest position and update the expensive SVG scene once per frame.
-      schedulePan(
-        dragState.startX + deltaX * dragState.unitsPerPixelX,
-        dragState.startY + deltaY * dragState.unitsPerPixelY,
-        transform.scale,
-      )
-    }
+    // Pointer events can arrive faster than the browser can paint. Keep only
+    // the latest position and update the expensive SVG scene once per frame.
+    schedulePan(nextX, nextY, transform.scale)
   }
 
   function endPan(event: PointerEvent, svg: SVGSVGElement) {
-    const touchEnded = event.pointerType === 'touch' && touchPointers.delete(event.pointerId)
-    const suppressTap = event.pointerType === 'touch' && suppressedTouchTaps.delete(event.pointerId)
-    if (touchEnded && pinchState) {
-      flushPendingPan()
-      if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId)
-      if (touchPointers.size >= 2) {
-        beginPinch(svg)
-      } else {
-        pinchState = undefined
-        isPinching.value = false
-        // The remaining finger belongs to the pinch until it is lifted; do
-        // not turn an uneven release into an accidental one-finger drag.
-      }
-      return false
-    }
-    if (!dragState || event.pointerId !== dragState.pointerId) {
-      if (touchEnded && svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId)
-      return touchEnded && !suppressTap && event.type === 'pointerup'
-    }
+    if (event.pointerType === 'touch' || activeTouches.size > 0
+      || !dragState || event.pointerId !== dragState.pointerId) return
 
     flushPendingPan()
     const moved = dragState.moved
@@ -578,7 +558,65 @@ export function useMapZoom(
       svg.releasePointerCapture(event.pointerId)
     }
     dragState = undefined
-    return event.pointerType === 'touch' && !moved && !suppressTap && event.type === 'pointerup'
+  }
+
+  function updateTouches(event: TouchEvent, svg: SVGSVGElement): Touch | undefined {
+    // Use the complete browser snapshot, not incremental pointer-down/up
+    // bookkeeping. Include contacts on different SVG descendants, but not
+    // fingers that began on controls outside the map.
+    const touches = Array.from(event.touches)
+      .filter((touch) => activeTouches.has(touch.identifier)
+        || (touch.target instanceof Node && svg.contains(touch.target)))
+      .sort((a, b) => a.identifier - b.identifier)
+    const previousIds = [...activeTouches.keys()]
+    const remainingIds = new Set(touches.map((touch) => touch.identifier))
+    const ended = Array.from(event.changedTouches).find((touch) =>
+      activeTouches.has(touch.identifier) && !remainingIds.has(touch.identifier),
+    )
+    const tap = event.type === 'touchend' && previousIds.length === 1 && ended
+      && !suppressedTouchTaps.has(ended.identifier) && !dragState?.moved
+      ? ended : undefined
+    const contactsChanged = previousIds.length !== touches.length
+      || previousIds.some((id) => !remainingIds.has(id))
+    if (contactsChanged) flushPendingPan()
+    activeTouches.clear()
+    for (const touch of touches) activeTouches.set(touch.identifier, touch)
+    for (const id of suppressedTouchTaps) {
+      if (!remainingIds.has(id)) suppressedTouchTaps.delete(id)
+    }
+
+    if (touches.length >= 2) {
+      stopAnimation()
+      cancelWheelUpdate()
+      for (const touch of touches) suppressedTouchTaps.add(touch.identifier)
+      if (!pinchState || pinchState.identifiers.some((id) => !remainingIds.has(id))) {
+        beginPinch(svg)
+      } else {
+        movePinch()
+      }
+    } else {
+      pinchState = undefined
+      isPinching.value = false
+      if (dragState && !remainingIds.has(dragState.pointerId)) {
+        suppressNextClick ||= dragState.moved
+        dragState = undefined
+        isDragging.value = false
+      }
+      const touch = touches[0]
+      // An uneven pinch release must not become a new one-finger drag.
+      if (touch && !suppressedTouchTaps.has(touch.identifier)) {
+        if (!dragState) {
+          stopAnimation()
+          cancelWheelUpdate()
+          cancelPanUpdate()
+          suppressNextClick = false
+          beginDrag(touch.identifier, touch.clientX, touch.clientY, svg, TOUCH_DRAG_THRESHOLD)
+        } else {
+          moveDrag(touch.identifier, touch.clientX, touch.clientY, true)
+        }
+      }
+    }
+    return tap
   }
 
   function consumeDragClick() {
@@ -592,7 +630,7 @@ export function useMapZoom(
     stopAnimation()
     cancelWheelUpdate()
     cancelPanUpdate()
-    touchPointers.clear()
+    activeTouches.clear()
     suppressedTouchTaps.clear()
     if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
   })
@@ -612,6 +650,7 @@ export function useMapZoom(
     movePan,
     resetZoom,
     startPan,
+    updateTouches,
     zoomFromWheel,
     zoomToBounds,
     zoomToPoint,
