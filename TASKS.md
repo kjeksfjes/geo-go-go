@@ -4,18 +4,23 @@ Lightweight backlog for deferred work. Keep stable task IDs and update each task
 
 ## TASK-005 — Profile and optimize high-detail map initialization
 
-Status: Backlog. Priority: High. Added: 2026-10-02.
+Status: First optimization implemented and measured; awaiting device acceptance. Priority: High. Added: 2026-10-02. Updated: 2026-10-05.
 
 Prioritize the existing cost of initializing the high-detail world map, especially on phones, before adding more geometry or caching machinery. A focused local Node benchmark at a 1200 × 800 viewport with Natural Earth projection measured cold 10m projection at roughly 3.1 seconds before the land-coverage changes and 3.2 seconds afterward. This is a diagnostic baseline, not a browser or iPhone performance measurement. The same comparison found about 27 kB compressed growth in the main game bundle and 103 kB in high-detail data; the added supplemental projection and cached quiz switching were much smaller processing costs.
 
+The 0.8.0 baseline and approved first optimization are documented in [the performance audit](docs/performance-audit.md), with reproducible scripts and per-run comparisons. Calculating each polygon area once cuts Node high-detail Mercator preparation by 65% with identical output checksums; 5,710 additional focus combinations match exactly. First high-detail activation improves by 52–65% across desktop/mobile-proxy canvas/SVG profiles. Main-page retained heap and geometry payloads remain essentially unchanged. Primary warm mobile canvas switching was slower, while seven controlled repeated switches matched baseline performance; the initial-switch difference remains unexplained and needs device acceptance. Actual iPhone/Safari measurements and visual acceptance remain with Joakim. Additional optimization proposals are deferred until separately authorized.
+
+Joakim reports a clearly noticeable desktop improvement, but little noticeable gain on his iPhone. Treat the mobile Chromium proxy gains as diagnostic evidence only; they have not translated into a confirmed phone improvement. Pan/zoom performance is the next separately authorized audit.
+
 ### Completion criteria
 
-- [ ] Measure browser interaction costs of the SVG hit layer at both detail levels, including pan/zoom and pointer detection. Hit targets now reuse the active drawing paths so visible country land remains clickable; any future simplification must preserve island coverage and coastline accuracy.
+- [x] Measure browser interaction costs of the SVG hit layer at both detail levels, including pan/zoom and pointer detection. Hit targets now reuse the active drawing paths so visible country land remains clickable; any future simplification must preserve island coverage and coastline accuracy.
 - [ ] Profile cold startup and first high-detail activation in a browser, including a representative phone where available; separate download, module parsing/evaluation, country/path projection, focus calculations, worker preparation, and first visible frame.
-- [ ] Record reproducible baseline timings and identify the dominant main-thread work before choosing an optimization; agree practical responsiveness targets from those measurements.
-- [ ] Apply the smallest justified improvement using existing tools, preserving land coverage, source/component/quiz distinctions, projection fitting, and sharp settled rendering; avoid speculative dependencies, abstractions, or additional caches.
-- [ ] Compare before/after cold and warm timings, compressed bundle sizes, and memory behavior; ensure Explore/quiz switching, region changes, and both 50m/10m detail levels remain consistent across canvas and SVG.
-- [ ] Run the build and proportionate focused checks, then ask Joakim to verify responsiveness and visual quality on his devices.
+- [x] Record reproducible baseline timings and identify the dominant main-thread work before choosing an optimization; agree practical responsiveness targets from those measurements.
+- [x] Apply the smallest justified improvement using existing tools, preserving land coverage, source/component/quiz distinctions, projection fitting, and sharp settled rendering; avoid speculative dependencies, abstractions, or additional caches.
+- [x] Compare before/after cold and warm timings, compressed bundle sizes, and memory behavior; ensure Explore/quiz switching, region changes, and both 50m/10m detail levels remain consistent across canvas and SVG.
+- [x] Run the build and proportionate focused checks, then ask Joakim to verify responsiveness and visual quality on his devices.
+- [ ] Complete real-device and visual acceptance, including first warm detail return and region switching. The browser proxy does not establish actual iPhone latency or first visible paint.
 
 ## TASK-001 — Improve Coral Sea Islands and Clipperton geometry
 

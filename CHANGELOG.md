@@ -4,6 +4,10 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+### Improvements
+
+- Reduced map initialization and first high-detail loading time by calculating each landmass area once when choosing country focus, preserving existing geometry and click targets.
+
 ## 0.8.0 — Every Island Counts — 2026-10-05
 
 ### Fixes
