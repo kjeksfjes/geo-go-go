@@ -8,16 +8,17 @@ other units sharing a quiz identity form one geographic interaction unit.
 
 import json
 from collections import defaultdict
+from copy import deepcopy
 from pathlib import Path
 
-from shapely import line_merge, orient_polygons, union_all
+from shapely import STRtree, line_merge, orient_polygons, union_all
 from shapely.geometry import mapping, shape
 
 
 DATA = Path(__file__).resolve().parents[1] / "src" / "data"
-INDEPENDENT_BY_ENTITY = json.loads(
-    (DATA / "meaningful-map-units.json").read_text(encoding="utf-8")
-)["independentMapUnitIdsByEntity"]
+CONFIG = json.loads((DATA / "meaningful-map-units.json").read_text(encoding="utf-8"))
+CORRECTIONS = json.loads(Path(__file__).with_name("map-geometry-corrections.json").read_text(encoding="utf-8"))
+INDEPENDENT_BY_ENTITY = CONFIG["independentMapUnitIdsByEntity"]
 MEANINGFUL = {unit_id for unit_ids in INDEPENDENT_BY_ENTITY.values() for unit_id in unit_ids}
 QUIZ_IDENTITY_BY_UNIT = json.loads(
     (DATA / "ne-quiz-identity-by-map-unit.json").read_text(encoding="utf-8")
@@ -31,6 +32,8 @@ SUPPLEMENTAL_BY_ID = {
     for feature in json.loads((DATA / "supplemental-land.json").read_text(encoding="utf-8"))["features"]
 }
 LEASE_GEOMETRIES = json.loads((DATA / "leased-area-geometries.json").read_text(encoding="utf-8"))
+SUPPLEMENTAL_SHAPES = [shape(geometry) for geometry in SUPPLEMENTAL_BY_ID.values()]
+SUPPLEMENTAL_TREE = STRtree(SUPPLEMENTAL_SHAPES)
 SUBUNIT_ENTITY_BY_ID = {
     feature["id"]: feature["properties"]["entityId"]
     for feature in json.loads((DATA / "meaningful-subunits-50m.json").read_text(encoding="utf-8"))["features"]
@@ -43,6 +46,49 @@ def rounded(value):
             return [round(number, 5) for number in value]
         return [rounded(item) for item in value]
     return value
+
+
+def corrected_source(feature, resolution):
+    """Exact, reviewed source repairs; fail if a new atlas no longer matches."""
+    correction = CORRECTIONS.get(resolution, {}).get(feature["id"])
+    if not correction:
+        return feature
+    feature = deepcopy(feature)
+    geometry = feature["geometry"]
+    polygons = [geometry["coordinates"]] if geometry["type"] == "Polygon" else geometry["coordinates"]
+    for ring in correction.get("removeInteriorRings", []):
+        matches = [polygon for polygon in polygons if ring in polygon[1:]]
+        if len(matches) != 1:
+            raise ValueError(f"Source repair ring changed: {feature['id']} at {resolution}")
+        matches[0].remove(ring)
+    loop = correction.get("removeExteriorLoop")
+    if loop:
+        matches = [(polygon, index) for polygon in polygons
+                   for index in range(len(polygon[0]) - len(loop) + 1)
+                   if polygon[0][index:index + len(loop)] == loop]
+        if len(matches) != 1:
+            raise ValueError(f"Source repair loop changed: {feature['id']} at {resolution}")
+        polygon, index = matches[0]
+        polygon[0][index:index + len(loop)] = [loop[0]]
+    if not shape(geometry).is_valid:
+        raise ValueError(f"Invalid source repair: {feature['id']} at {resolution}")
+    return feature
+
+
+def exclude_supplemental(geometry):
+    """Separate restored land from country fill/hit geometry at either scale."""
+    country = shape(geometry)
+    candidates = SUPPLEMENTAL_TREE.query(country, predicate="intersects")
+    overlaps = [SUPPLEMENTAL_SHAPES[index] for index in candidates
+                if country.intersection(SUPPLEMENTAL_SHAPES[index]).area > 1e-10]
+    if not overlaps:
+        return geometry
+    corrected = country.difference(union_all(overlaps))
+    if not corrected.is_valid or corrected.geom_type not in ("Polygon", "MultiPolygon"):
+        raise ValueError("Invalid supplemental land exclusion")
+    result = mapping(orient_polygons(corrected, exterior_cw=True))
+    result["coordinates"] = rounded(result["coordinates"])
+    return result
 
 
 def build_supplemental_areas():
@@ -75,6 +121,10 @@ def build_supplemental_areas():
 
 def build(resolution):
     source = json.loads((DATA / f"ne-map-units-{resolution}.json").read_text(encoding="utf-8"))
+    originals = {feature["id"]: feature for feature in source["features"]}
+    if CORRECTIONS.get(resolution, {}).keys() - originals.keys():
+        raise ValueError(f"Missing source unit for geometry correction at {resolution}")
+    source["features"] = [corrected_source(feature, resolution) for feature in source["features"]]
     grouped = defaultdict(list)
     for feature in source["features"]:
         if feature["id"] in MEANINGFUL:
@@ -121,6 +171,32 @@ def build(resolution):
         feature["id"]: feature["geometry"]
         for feature in json.loads((DATA / f"meaningful-subunits-{resolution}.json").read_text(encoding="utf-8"))["features"]
     }
+    # Match the runtime geographic-unit IDs, including selected components
+    # and remainders. Source assets remain untouched. Only changed geometry
+    # is shipped, and the same override supplies Explore and quiz generation.
+    display_overrides = {}
+    corrected_by_id = {}
+    split_ids = set(CONFIG["independentMapSubunitIdsByMapUnit"]) | set(CONFIG.get("independentAdmin1RegionsByMapUnit", {}))
+    for feature in source["features"]:
+        source_id = feature["id"]
+        if source_id in split_ids:
+            continue
+        entity_id = ENTITY_BY_UNIT[source_id]
+        unit_id = f"unit:{source_id}" if source_id in MEANINGFUL else f"entity:{entity_id}"
+        geometry = feature["geometry"] if source_id in MEANINGFUL else dissolved.get(entity_id, feature["geometry"])
+        corrected = exclude_supplemental(geometry)
+        corrected_by_id[unit_id] = corrected
+        if corrected != geometry or feature["geometry"] != originals[source_id]["geometry"]:
+            display_overrides[unit_id] = corrected
+    for subunit_id, geometry in subunits.items():
+        unit_id = subunit_id if subunit_id.startswith("remainder:") else f"subunit:{subunit_id}"
+        corrected = exclude_supplemental(geometry)
+        corrected_by_id[unit_id] = corrected
+        if corrected != geometry:
+            display_overrides[unit_id] = corrected
+    (DATA / f"supplemental-country-geometries-{resolution}.json").write_text(
+        json.dumps(display_overrides, separators=(",", ":")), encoding="utf-8",
+    )
     for policy in QUIZ_MERGES:
         entity_id = policy["entityId"]
         unit_id = policy["geographicUnitId"]
@@ -130,10 +206,9 @@ def build(resolution):
             subunit_id = unit_id.removeprefix("subunit:")
             if SUBUNIT_ENTITY_BY_ID.get(subunit_id) != entity_id:
                 raise ValueError(f"Quiz subunit does not belong to {entity_id}: {unit_id}")
-            parts = [shape(subunits[subunit_id])]
+            parts = [shape(corrected_by_id[unit_id])]
         elif unit_id == f"entity:{entity_id}" and entity_id in grouped and entity_id not in INDEPENDENT_BY_ENTITY:
-            country = dissolved.get(entity_id)
-            parts = [shape(country)] if country else [shape(part["geometry"]) for part in grouped[entity_id]]
+            parts = [shape(corrected_by_id[unit_id])]
         else:
             raise ValueError(f"Unsupported quiz merge target: {unit_id}")
         parts.extend(shape(SUPPLEMENTAL_BY_ID[source_id]) for source_id in policy["sourceIds"])

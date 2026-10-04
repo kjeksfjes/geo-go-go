@@ -4,6 +4,7 @@ import baseMapUnits from './ne-map-units-50m.json'
 import baseRegionalGeometry from './regional-display-50m.json'
 import baseCombinedGeometry from './combined-geographic-units-50m.json'
 import baseQuizGeometry from './quiz-merged-geometries-50m.json'
+import baseSupplementalCountryGeometry from './supplemental-country-geometries-50m.json'
 import baseMeaningfulSubunits from './meaningful-subunits-50m.json'
 import semanticMapUnits from './meaningful-map-units.json'
 import leasedAreaGeometries from './leased-area-geometries.json'
@@ -264,6 +265,7 @@ function buildGeographicUnits(
   subunits: MapSubunitFeature[],
   fallbackGeometry = baseCombinedIndex,
   quizGeometry = baseQuizGeometry as CombinedGeometryIndex,
+  supplementalCountryGeometry = baseSupplementalCountryGeometry as CombinedGeometryIndex,
 ): GeographicUnitFeature[] {
   const partsByGeographicId = new Map<string, MapUnitFeature[]>()
   const selectedSubunitById = new Map(subunits.map((unit) => [unit.id, unit]))
@@ -349,11 +351,13 @@ function buildGeographicUnits(
     })
   }
 
-  return includeLeasedAreas(geographicUnits).map((unit) =>
-    quizGeometry[unit.id]
-      ? { ...unit, quizGeometry: quizGeometry[unit.id] }
-      : unit,
-  )
+  return includeLeasedAreas(geographicUnits).map((unit) => ({
+    ...unit,
+    // Shared geometry drives fill, outlines, hit-testing and focus in both
+    // renderers. Separate source areas never imply a new quiz identity.
+    geometry: supplementalCountryGeometry[unit.id] ?? unit.geometry,
+    ...(quizGeometry[unit.id] ? { quizGeometry: quizGeometry[unit.id] } : {}),
+  }))
 }
 
 export const geographicUnits = buildGeographicUnits(mapUnits, baseCombinedIndex, mapSubunits)
@@ -368,6 +372,7 @@ export function loadDetailedGeographicUnits() {
     import('./combined-geographic-units-10m.json'),
     import('./meaningful-subunits-10m.json'),
     import('./quiz-merged-geometries-10m.json'),
+    import('./supplemental-country-geometries-10m.json'),
   ])
     .then(([
       { default: detailed },
@@ -375,6 +380,7 @@ export function loadDetailedGeographicUnits() {
       { default: detailedCombinedGeometry },
       { default: detailedSubunits },
       { default: detailedQuizGeometry },
+      { default: detailedSupplementalCountryGeometry },
     ]) => {
       const detailedById = new Map(detailed.features.map((feature) => [feature.id, feature]))
       const units = mapUnits.map((base) => {
@@ -412,6 +418,7 @@ export function loadDetailedGeographicUnits() {
         subunits,
         baseCombinedIndex,
         detailedQuizGeometry as CombinedGeometryIndex,
+        detailedSupplementalCountryGeometry as CombinedGeometryIndex,
       )
     })
     .catch((error: unknown) => {

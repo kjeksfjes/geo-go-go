@@ -186,6 +186,7 @@ const mapHeight = computed(() => Math.max(measuredHeight.value, 280))
 const {
   bathymetryPaths,
   contextGeographicPaths,
+  disputedBoundaryPaths,
   geographicPaths,
   hasCachedPaths,
   horizontalWrap,
@@ -1270,6 +1271,26 @@ async function setProjection(nextId: MapProjectionId) {
         </g>
       </svg>
 
+      <!-- Shared overlay keeps claim lines visible above canvas/SVG fills and
+           highlights without changing country hit targets or quiz answers. -->
+      <svg
+        v-if="disputedBoundaryPaths.length"
+        class="map-highlights"
+        :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
+        aria-hidden="true"
+      >
+        <g :transform="`translate(${transform.x} ${transform.y}) scale(${transform.scale})`">
+          <g v-for="offset in copyOffsets" :key="offset" :transform="`translate(${offset} 0)`">
+            <path
+              v-for="boundary in disputedBoundaryPaths"
+              :key="boundary.id"
+              :d="boundary.path"
+              class="disputed-boundary"
+            />
+          </g>
+        </g>
+      </svg>
+
       <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel">
         <div class="map-settings-language">
           <span>{{ t('language') }}</span>
@@ -1712,6 +1733,16 @@ async function setProjection(nextId: MapProjectionId) {
   stroke: var(--map-internal-boundary);
   stroke-width: var(--map-internal-boundary-width);
   stroke-dasharray: var(--map-internal-boundary-dash);
+}
+
+.disputed-boundary {
+  fill: none;
+  stroke: var(--map-border);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 .supplemental-land {

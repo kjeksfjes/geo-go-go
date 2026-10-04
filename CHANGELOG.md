@@ -2,6 +2,19 @@
 
 Concise, user-facing notes for local releases. Add upcoming changes under **Unreleased**, then move them into a versioned entry when preparing a release.
 
+## Unreleased
+
+### Fixes
+
+- Removed malformed high-detail geometry that produced stray diagonal outlines near the Egypt–Sudan border.
+- Excluded restored buffer zones, bases and other supplemental areas from overlapping low-detail country shapes, keeping country highlighting and interaction consistent with high detail and preserving existing quiz associations.
+
+### Improvements
+
+- Added a dashed Hala’ib disputed-boundary line in Explore mode, shared by canvas/SVG and both map detail levels.
+- Included Bir Tawil in Sudan’s quiz shape and hid the Hala’ib claim line during the quiz, while retaining the unclaimed-area presentation in Explore.
+- Added an English and Norwegian Explore label for Bir Tawil explaining that neither Egypt nor Sudan claims it, without adding a quiz country.
+
 ## 0.7.1 — 2026-10-02
 
 ### Fixes

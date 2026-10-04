@@ -80,13 +80,13 @@ These are the 17 remaining island-related source pieces in `src/data/supplementa
 
 Status: Deferred. Added: 2026-10-01.
 
-Joakim has deferred the rest of the land-coverage audit while the Korean DMZ's quiz treatment is settled. Keep the existing restored neutral land for these three source pieces unchanged until the review is resumed.
+Joakim has deferred the rest of the land-coverage audit while the Korean DMZ's quiz treatment is settled. Bir Tawil’s geometry and label were resolved with TASK-004 on 2026-10-04; Gibraltar and the Southern Patagonian Ice Field remain deferred. Their existing source land and affiliations are retained; the shared geometry correction removes low-detail country overlaps without deciding their public names or status.
 
 | Source ID | Current source name |
 | --- | --- |
 | GIB | Gibraltar |
 | SPI | Southern Patagonian Ice Field |
-| BRT | Bir Tawil |
+| BRT | Bir Tawil — resolved with TASK-004; unclaimed Explore area; Sudan geometry in quiz only |
 
 ### Completion criteria
 
@@ -97,17 +97,18 @@ Joakim has deferred the rest of the land-coverage audit while the Korean DMZ's q
 
 ## TASK-004 — Review Egypt–Sudan border geometry and presentation
 
-Status: Deferred. Added: 2026-10-02.
+Status: Implemented; awaiting Joakim’s visual acceptance. Added: 2026-10-02. Updated: 2026-10-04.
 
 Joakim's screenshot shows disconnected diagonal border segments near the Red Sea and a small outlined area south of the straight Egypt–Sudan boundary. Investigate the source geometry and rendered outlines before deciding whether these are data defects, intended disputed-area boundaries, or presentation issues. TASK-003 already covers the restored Bir Tawil (`BRT`) source piece's labels and affiliations; this task separately tracks the wider border's geometry and visual treatment. Do not assume that every outlined area is neutral or assign country affiliations from its appearance.
 
 ### Completion criteria
 
-- [ ] Identify the polygons and linework responsible for the screenshot, comparing the 50m/10m source geometry with the generated assets and rendered paths.
-- [ ] Verify relevant boundary/status distinctions against reliable sources and agree Explore and quiz presentation with Joakim, coordinating any Bir Tawil affiliation decision with TASK-003.
-- [ ] Fix confirmed geometry or drawing defects through shared data/configuration, preserving land coverage and avoiding country-specific rendering branches.
-- [ ] Verify canvas/SVG and both detail levels with proportionate build and geometry checks, then ask Joakim for visual acceptance.
+- [x] Identify the polygons and linework responsible for the screenshot, comparing the 50m/10m source geometry with the generated assets and rendered paths.
+- [x] Verify boundary/status distinctions against Natural Earth and the UK geographic factfile; Joakim authorized the recommended presentation. Bir Tawil has a bilingual unclaimed-area label in Explore and merges into Sudan only for quiz interaction; Hala’ib retains the source’s Egypt treatment, with its Sudanese claim boundary rendered separately as a continuous dashed line in Explore, hidden in quiz mode.
+- [x] Fix confirmed geometry defects through exact source-repair configuration and shared supplemental exclusions for countries/components at both resolutions, preserving land coverage and existing quiz policies.
+- [x] Run the build and focused runtime/geometry checks at both detail levels and all five projections; both renderers consume the shared corrected paths.
+- [ ] Joakim to visually verify both detail levels and renderer presentation.
 
 ## Audit status
 
-The Korean DMZ's quiz treatment is implemented: its southern half counts as South Korea and its northern half as North Korea, retaining the dividing line while hiding outer DMZ boundaries. Explore presents one dissolved hover, click, and keyboard-focus area with a shared label, subtle outer boundaries, and a separate noninteractive dashed center line. Automated checks cover both detail levels and all projections; visual acceptance remains with Joakim. All other outstanding audit decisions are deferred under TASK-001, TASK-002, and TASK-003; restoring land coverage is complete for the audited source data. The Egypt–Sudan border's geometry and presentation are separately deferred under TASK-004.
+The Korean DMZ's quiz treatment is implemented: its southern half counts as South Korea and its northern half as North Korea, retaining the dividing line while hiding outer DMZ boundaries. Explore presents one dissolved hover, click, and keyboard-focus area with a shared label, subtle outer boundaries, and a separate noninteractive dashed center line. Automated checks cover both detail levels and all projections; visual acceptance remains with Joakim. All other outstanding audit decisions are deferred under TASK-001, TASK-002, and TASK-003; restoring land coverage is complete for the audited source data. The Egypt–Sudan correction and shared low-detail supplemental exclusions are implemented under TASK-004, awaiting visual acceptance; Bir Tawil’s label and quiz policy are resolved.
