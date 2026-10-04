@@ -100,7 +100,7 @@
     "nb": "Bosnia-Hercegovina"
   },
   "BLM": {
-    "en": "Saint Barthelemy",
+    "en": "Saint Barthélemy",
     "nb": "Saint-Barthélemy"
   },
   "BLR": {
@@ -169,7 +169,7 @@
   },
   "COD": {
     "en": "Democratic Republic of the Congo",
-    "nb": "Den demokratiske republikken Kongo"
+    "nb": "Den demokratiske republikk Kongo"
   },
   "COG": {
     "en": "Republic of the Congo",
@@ -312,7 +312,7 @@
     "nb": "Guinea"
   },
   "GMB": {
-    "en": "Gambia",
+    "en": "The Gambia",
     "nb": "Gambia"
   },
   "GNB": {
@@ -644,7 +644,7 @@
     "nb": "Nepal"
   },
   "NRU": {
-    "en": "Nauru",
+    "en": "Naoero",
     "nb": "Nauru"
   },
   "NZL": {
@@ -756,8 +756,8 @@
     "nb": "Sør-Georgia og Sør-Sandwichøyene"
   },
   "SHN": {
-    "en": "Saint Helena",
-    "nb": "Saint Helena"
+    "en": "Saint Helena, Ascension and Tristan da Cunha",
+    "nb": "Sankt Helena, Ascension og Tristan da Cunha"
   },
   "SLB": {
     "en": "Solomon Islands",
@@ -784,11 +784,11 @@
     "nb": "Saint-Pierre-et-Miquelon"
   },
   "SRB": {
-    "en": "Republic of Serbia",
+    "en": "Serbia",
     "nb": "Serbia"
   },
   "STP": {
-    "en": "São Tomé and Principe",
+    "en": "São Tomé and Príncipe",
     "nb": "São Tomé og Príncipe"
   },
   "SUR": {
@@ -808,7 +808,7 @@
     "nb": "Sverige"
   },
   "SWZ": {
-    "en": "eSwatini",
+    "en": "Eswatini",
     "nb": "Eswatini"
   },
   "SXM": {
@@ -876,7 +876,7 @@
     "nb": "Taiwan"
   },
   "TZA": {
-    "en": "United Republic of Tanzania",
+    "en": "Tanzania",
     "nb": "Tanzania"
   },
   "UGA": {
@@ -913,11 +913,11 @@
   },
   "VGB": {
     "en": "British Virgin Islands",
-    "nb": "De britiske jomfruøyene"
+    "nb": "De britiske Jomfruøyene"
   },
   "VIR": {
     "en": "United States Virgin Islands",
-    "nb": "De amerikanske jomfruøyene"
+    "nb": "De amerikanske Jomfruøyene"
   },
   "VNM": {
     "en": "Vietnam",

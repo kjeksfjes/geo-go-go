@@ -6,6 +6,8 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ### Fixes
 
+- Audited all 238 country and territory names in English and Norwegian; corrected spelling, capitalization, short names and grouped-territory labels, with documented naming sources and deliberate language variants.
+
 - Supplied explicit English and Norwegian names for every country identity, making names such as Elfenbenskysten consistent across browsers and checking translation coverage during builds.
 - Matched canvas hover and click targets to the active map detail, restoring interaction with detailed islands and coastlines omitted from the low-detail map.
 - Aligned neighboring low-detail country borders and coastlines with detailed supplemental areas, removing coastal gaps, triangular border spurs around UNDOF, and coarse coastline wedges at both Korean DMZ ends while retaining existing quiz policies.
