@@ -1,5 +1,11 @@
 [
   {
+    "id": "bir-tawil",
+    "sourceIds": ["BRT"],
+    "name": { "en": "Bir Tawil", "nb": "Bir Tawil" },
+    "type": { "en": "Claimed by neither Egypt nor Sudan", "nb": "Verken Egypt eller Sudan gjør krav på området" }
+  },
+  {
     "id": "korean-dmz",
     "sourceIds": ["KNX", "KNZ"],
     "name": { "en": "Korean Demilitarized Zone", "nb": "Den koreanske demilitariserte sonen" },

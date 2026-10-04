@@ -7,7 +7,7 @@ import {
 } from 'd3-geo'
 import { geoMiller, geoWinkel3 } from 'd3-geo-projection'
 import { computed, onScopeDispose, shallowRef, watch, type Ref } from 'vue'
-import type { FeatureCollection, MultiPoint } from 'geojson'
+import type { FeatureCollection, LineString, MultiPoint } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
 import type { BathymetryBand, BathymetryDepth } from '../data/bathymetry'
@@ -16,6 +16,7 @@ import type { MapBounds, MapPoint } from './useMapZoom'
 import { projectedUnitFocus } from '../logic/mapFocus'
 import { supplementalLand, supplementalExploreLand, type SupplementalExploreFeature } from '../data/supplementalLand'
 import { quizGeographicUnits } from '../data/quizMap'
+import disputedBoundaries from '../data/disputed-boundaries.json'
 
 export type MapProjectionId = 'mercator' | 'miller' | 'winkel-tripel' | 'natural-earth' | 'regional-equal-area'
 export interface MapProjectionOption {
@@ -435,6 +436,15 @@ export function useMapProjection(
   const supplementalLandPaths = computed(() => projectSupplementalLand(supplementalLand, 'source'))
   const supplementalExploreLandPaths = computed(() => projectSupplementalLand(supplementalExploreLand, 'explore'))
 
+  // Claim boundaries are linework, not land or quiz identities. Keep one
+  // small SVG overlay above both renderer variants and country highlights.
+  const disputedBoundaryPaths = computed(() => quizMode?.value ? [] : disputedBoundaries.features
+    .filter((feature) => feature.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id)))
+    .map((feature) => ({
+      id: feature.id,
+      path: pathGenerator.value(feature.geometry as LineString) ?? '',
+    })).filter(({ path }) => path))
+
   const bathymetryPaths = computed(() => {
     const key = projectionCacheKey(projectionId.value)
     const sizeKey = `${width.value}:${height.value}`
@@ -520,6 +530,7 @@ export function useMapProjection(
   return {
     bathymetryPaths,
     contextGeographicPaths,
+    disputedBoundaryPaths,
     geographicPaths,
     hasCachedPaths,
     horizontalWrap,

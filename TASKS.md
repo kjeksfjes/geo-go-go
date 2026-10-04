@@ -10,6 +10,7 @@ Prioritize the existing cost of initializing the high-detail world map, especial
 
 ### Completion criteria
 
+- [ ] Measure browser interaction costs of the SVG hit layer at both detail levels, including pan/zoom and pointer detection. Hit targets now reuse the active drawing paths so visible country land remains clickable; any future simplification must preserve island coverage and coastline accuracy.
 - [ ] Profile cold startup and first high-detail activation in a browser, including a representative phone where available; separate download, module parsing/evaluation, country/path projection, focus calculations, worker preparation, and first visible frame.
 - [ ] Record reproducible baseline timings and identify the dominant main-thread work before choosing an optimization; agree practical responsiveness targets from those measurements.
 - [ ] Apply the smallest justified improvement using existing tools, preserving land coverage, source/component/quiz distinctions, projection fitting, and sharp settled rendering; avoid speculative dependencies, abstractions, or additional caches.
@@ -80,13 +81,13 @@ These are the 17 remaining island-related source pieces in `src/data/supplementa
 
 Status: Deferred. Added: 2026-10-01.
 
-Joakim has deferred the rest of the land-coverage audit while the Korean DMZ's quiz treatment is settled. Keep the existing restored neutral land for these three source pieces unchanged until the review is resumed.
+Joakim has deferred the rest of the land-coverage audit while the Korean DMZ's quiz treatment is settled. Bir Tawil’s geometry and label were resolved with TASK-004 on 2026-10-04; Gibraltar and the Southern Patagonian Ice Field remain deferred. Their existing source land and affiliations are retained; the shared geometry correction removes low-detail country overlaps without deciding their public names or status.
 
 | Source ID | Current source name |
 | --- | --- |
 | GIB | Gibraltar |
 | SPI | Southern Patagonian Ice Field |
-| BRT | Bir Tawil |
+| BRT | Bir Tawil — resolved with TASK-004; unclaimed Explore area; Sudan geometry in quiz only |
 
 ### Completion criteria
 
@@ -97,17 +98,34 @@ Joakim has deferred the rest of the land-coverage audit while the Korean DMZ's q
 
 ## TASK-004 — Review Egypt–Sudan border geometry and presentation
 
-Status: Deferred. Added: 2026-10-02.
+Status: Implemented; awaiting Joakim’s visual acceptance. Added: 2026-10-02. Updated: 2026-10-04.
 
 Joakim's screenshot shows disconnected diagonal border segments near the Red Sea and a small outlined area south of the straight Egypt–Sudan boundary. Investigate the source geometry and rendered outlines before deciding whether these are data defects, intended disputed-area boundaries, or presentation issues. TASK-003 already covers the restored Bir Tawil (`BRT`) source piece's labels and affiliations; this task separately tracks the wider border's geometry and visual treatment. Do not assume that every outlined area is neutral or assign country affiliations from its appearance.
 
 ### Completion criteria
 
-- [ ] Identify the polygons and linework responsible for the screenshot, comparing the 50m/10m source geometry with the generated assets and rendered paths.
-- [ ] Verify relevant boundary/status distinctions against reliable sources and agree Explore and quiz presentation with Joakim, coordinating any Bir Tawil affiliation decision with TASK-003.
-- [ ] Fix confirmed geometry or drawing defects through shared data/configuration, preserving land coverage and avoiding country-specific rendering branches.
-- [ ] Verify canvas/SVG and both detail levels with proportionate build and geometry checks, then ask Joakim for visual acceptance.
+- [x] Identify the polygons and linework responsible for the screenshot, comparing the 50m/10m source geometry with the generated assets and rendered paths.
+- [x] Verify boundary/status distinctions against Natural Earth and the UK geographic factfile; Joakim authorized the recommended presentation. Bir Tawil has a bilingual unclaimed-area label in Explore and merges into Sudan only for quiz interaction; Hala’ib retains the source’s Egypt treatment, with its Sudanese claim boundary rendered separately as a continuous dashed line in Explore, hidden in quiz mode.
+- [x] Fix confirmed geometry defects through exact source-repair configuration and shared supplemental exclusions for countries/components at both resolutions, preserving land coverage and existing quiz policies. Aligned adjoining low-detail borders and coastlines using a common source-derived repair footprint; generation checks shared-edge coverage and rejects newly overlapping countries.
+- [x] Run the build and focused runtime/geometry checks at both detail levels and all five projections; both renderers consume the shared corrected paths.
+- [ ] Joakim to visually verify both detail levels and renderer presentation.
+
+## TASK-006 — Audit coastline quality at close Explore zoom
+
+Status: Deferred. Added: 2026-10-04.
+
+Joakim raised a map-wide coastline-quality concern after comparing St Lawrence Island with Google Maps. The original Natural Earth 10m map-unit source contains the island's main polygon plus six thin coastal polygons, some with only three distinct vertices; these produce angular slivers at close zoom. Geometry checks confirmed that the pending Diomede component and click-target changes leave St Lawrence unchanged at both resolutions. Real coastal lagoons do not establish that these particular source polygons represent them accurately. No coastline correction has been made; Joakim explicitly deferred further investigation.
+
+Natural Earth's 10m and 50m labels mean 1:10 million and 1:50 million map scales, not metre resolution. Generalization and geometric validity must be distinguished from geographic accuracy. See [Natural Earth's coastline documentation](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-coastline/) for source limitations. This task assesses the general map and appropriate Explore zoom range; TASK-001 remains the separate Coral Sea Islands/Clipperton investigation, and TASK-002 retains deferred naming and affiliation decisions.
+
+### Completion criteria
+
+- [ ] Compare a representative selection of coastlines, including St Lawrence, narrow coastal barriers/lagoons, fjords, and small islands, with reliable reference data at the app's close zoom levels; distinguish source limitations, import defects, and rendering defects without assuming the entire map is accurate or broken.
+- [ ] Compare the current administrative geometry with Natural Earth's physical land/coastline layers; determine whether confirmed discrepancies justify local corrections, a finer licensed source, or a change to the supported zoom range.
+- [ ] Present findings and tradeoffs to Joakim before implementing replacements, including download size, processing cost, licensing, and maintenance. Preserve real coastal land and water rather than deleting thin polygons solely because they look unusual.
+- [ ] For any subsequently authorized changes, preserve country/component/quiz identities and regional membership; keep drawing, highlighting, and hit targets consistent across canvas/SVG and 50m/10m, and coordinate performance checks with TASK-005.
+- [ ] Run proportionate build and geometry checks for authorized implementation; leave visual acceptance to Joakim unless he requests otherwise.
 
 ## Audit status
 
-The Korean DMZ's quiz treatment is implemented: its southern half counts as South Korea and its northern half as North Korea, retaining the dividing line while hiding outer DMZ boundaries. Explore presents one dissolved hover, click, and keyboard-focus area with a shared label, subtle outer boundaries, and a separate noninteractive dashed center line. Automated checks cover both detail levels and all projections; visual acceptance remains with Joakim. All other outstanding audit decisions are deferred under TASK-001, TASK-002, and TASK-003; restoring land coverage is complete for the audited source data. The Egypt–Sudan border's geometry and presentation are separately deferred under TASK-004.
+The Korean DMZ's quiz treatment is implemented: its southern half counts as South Korea and its northern half as North Korea, retaining the dividing line while hiding outer DMZ boundaries. Explore presents one dissolved hover, click, and keyboard-focus area with a shared label, subtle outer boundaries, and a separate noninteractive dashed center line. Automated checks cover both detail levels and all projections; visual acceptance remains with Joakim. All other outstanding audit decisions are deferred under TASK-001, TASK-002, and TASK-003; restoring land coverage is complete for the audited source data. The Egypt–Sudan correction and shared low-detail supplemental exclusions are implemented under TASK-004, awaiting visual acceptance; Bir Tawil’s label and quiz policy are resolved.

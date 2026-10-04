@@ -186,6 +186,7 @@ const mapHeight = computed(() => Math.max(measuredHeight.value, 280))
 const {
   bathymetryPaths,
   contextGeographicPaths,
+  disputedBoundaryPaths,
   geographicPaths,
   hasCachedPaths,
   horizontalWrap,
@@ -293,6 +294,8 @@ function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature) {
 }
 
 function isGeographicUnitVisible(unit: GeographicUnitFeature) {
+  const regional = unit.regionalDisplayGeometry?.[props.activeRegion.id]?.geometry
+  if (regional?.type === 'GeometryCollection' && regional.geometries.length === 0) return false
   return unit.properties.mapUnitIds.some((id) => props.visibleMapUnitIds.has(id))
 }
 const {
@@ -427,17 +430,15 @@ function updateDebugMetrics() {
   }
 }
 
-// The canvas supplies detailed coastlines. Its SVG interaction layer only
-// needs the lighter 50m hit geometry; active highlights use detailed paths.
-const renderedGeographicPaths = computed(() =>
-  canvasRendererActive.value
-    ? interactionGeographicPaths.value
-    : geographicPaths.value,
-)
+// Reuse the active drawing paths for SVG hit targets in both renderers.
+// Coarser hit geometry omits visible islands and disagrees with coastlines.
 function geographicUnitLabel(unit: GeographicUnitFeature) {
   const component = unit.properties.componentId
     ? componentInfoById.get(unit.properties.componentId) : undefined
-  return component?.sourceKind === 'leased-area' ? componentName(component) : countryName(unit.properties.entityId)
+  const country = countryName(unit.properties.entityId)
+  if (!component || props.quizMode) return country
+  return component.sourceKind === 'leased-area'
+    ? componentName(component) : `${componentName(component)} — ${country}`
 }
 const detailedGeographicPathById = computed(() => new Map(
   geographicPaths.value.map((projected) => [projected.unit.id, projected]),
@@ -446,7 +447,7 @@ const detailedGeographicPathById = computed(() => new Map(
 // SVG paths paint in DOM order. Put related geographic units above ordinary
 // countries, the clicked unit above its siblings, and correct above wrong.
 const paintedGeographicPaths = computed(() => {
-  const paths = renderedGeographicPaths.value
+  const paths = geographicPaths.value
   const foregroundIds = props.quizMode
     ? (props.quizAnswerId === null ? [] : [props.quizAnswerId, props.quizQuestionId])
     : [props.selectedCountryId]
@@ -468,7 +469,7 @@ const paintedGeographicPaths = computed(() => {
 const highlightedGeographicPaths = computed(() => paintedGeographicPaths.value
   .filter(({ unit }) => isGeographicUnitVisible(unit) && hasVisualHighlight(unit, interactionState.value)))
 
-const visibleLandPath = computed(() => renderedGeographicPaths.value
+const visibleLandPath = computed(() => geographicPaths.value
   .filter(({ unit }) => isGeographicUnitVisible(unit))
   .map(({ path }) => path)
   .join(' '))
@@ -1270,6 +1271,26 @@ async function setProjection(nextId: MapProjectionId) {
         </g>
       </svg>
 
+      <!-- Shared overlay keeps claim lines visible above canvas/SVG fills and
+           highlights without changing country hit targets or quiz answers. -->
+      <svg
+        v-if="disputedBoundaryPaths.length"
+        class="map-highlights"
+        :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
+        aria-hidden="true"
+      >
+        <g :transform="`translate(${transform.x} ${transform.y}) scale(${transform.scale})`">
+          <g v-for="offset in copyOffsets" :key="offset" :transform="`translate(${offset} 0)`">
+            <path
+              v-for="boundary in disputedBoundaryPaths"
+              :key="boundary.id"
+              :d="boundary.path"
+              class="disputed-boundary"
+            />
+          </g>
+        </g>
+      </svg>
+
       <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel">
         <div class="map-settings-language">
           <span>{{ t('language') }}</span>
@@ -1712,6 +1733,16 @@ async function setProjection(nextId: MapProjectionId) {
   stroke: var(--map-internal-boundary);
   stroke-width: var(--map-internal-boundary-width);
   stroke-dasharray: var(--map-internal-boundary-dash);
+}
+
+.disputed-boundary {
+  fill: none;
+  stroke: var(--map-border);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 .supplemental-land {

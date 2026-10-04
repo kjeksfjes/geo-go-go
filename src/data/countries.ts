@@ -1,9 +1,11 @@
 import flagCountries from 'flag-icons/country.json'
+import displayNames from './country-names.json'
 import { geoArea, geoContains } from 'd3-geo'
 import baseMapUnits from './ne-map-units-50m.json'
 import baseRegionalGeometry from './regional-display-50m.json'
 import baseCombinedGeometry from './combined-geographic-units-50m.json'
 import baseQuizGeometry from './quiz-merged-geometries-50m.json'
+import baseSupplementalCountryGeometry from './supplemental-country-geometries-50m.json'
 import baseMeaningfulSubunits from './meaningful-subunits-50m.json'
 import semanticMapUnits from './meaningful-map-units.json'
 import leasedAreaGeometries from './leased-area-geometries.json'
@@ -26,11 +28,7 @@ interface FlagCountry {
 
 // Display/flag labels are presentation details. Geographic classification and
 // sovereignty come from the Natural Earth map-unit records, not these aliases.
-const entityOverrides: Record<string, { name?: string; flagCode?: string }> = {
-  VAT: { name: 'Vatican City' },
-  CZE: { name: 'Czechia' },
-  TUR: { name: 'Türkiye' },
-  SGS: { name: 'South Georgia and the South Sandwich Islands' },
+const entityOverrides: Record<string, { flagCode?: string }> = {
   PSX: { flagCode: 'ps' },
 }
 
@@ -97,10 +95,15 @@ for (const [id, units] of unitsByEntityId) {
 }
 
 export const countryInfoById = new Map<string, CountryInfo>()
+const countryDisplayNames = displayNames as Record<string, { en: string; nb: string }>
 for (const [id, units] of unitsByEntityId) {
   const primary = primaryMapUnitByEntityId.get(id)!
   const { adminName, sovereignId, sovereignName } = primary.properties
   const override = entityOverrides[id]
+  const names = countryDisplayNames[id]
+  if (!names?.en?.trim() || !names.nb?.trim()) {
+    throw new Error(`Missing explicit country names for ${id}`)
+  }
   const isoCode = primary.properties.isoA2.toLowerCase()
   const flagCode = override?.flagCode
     ?? flagCodeByName.get(adminName)
@@ -112,7 +115,7 @@ for (const [id, units] of unitsByEntityId) {
 
   countryInfoById.set(id, {
     id,
-    name: override?.name ?? adminName,
+    name: names.en,
     flagCode,
     sovereignId,
     ...(isDependent ? { parentSovereignId: sovereignId } : {}),
@@ -128,6 +131,11 @@ const subunitIdsByMapUnit: Record<string, string[]> = {
 }
 for (const [mapUnitId, regionIds] of Object.entries(semanticMapUnits.independentAdmin1RegionsByMapUnit)) {
   subunitIdsByMapUnit[mapUnitId] = [...(subunitIdsByMapUnit[mapUnitId] ?? []), ...regionIds]
+}
+for (const component of semanticMapUnits.independentCoastlineComponents) {
+  subunitIdsByMapUnit[component.mapUnitId] = [
+    ...(subunitIdsByMapUnit[component.mapUnitId] ?? []), component.id,
+  ]
 }
 const mapSubunits = baseMeaningfulSubunits.features as unknown as MapSubunitFeature[]
 
@@ -264,6 +272,7 @@ function buildGeographicUnits(
   subunits: MapSubunitFeature[],
   fallbackGeometry = baseCombinedIndex,
   quizGeometry = baseQuizGeometry as CombinedGeometryIndex,
+  supplementalCountryGeometry = baseSupplementalCountryGeometry as CombinedGeometryIndex,
 ): GeographicUnitFeature[] {
   const partsByGeographicId = new Map<string, MapUnitFeature[]>()
   const selectedSubunitById = new Map(subunits.map((unit) => [unit.id, unit]))
@@ -289,6 +298,8 @@ function buildGeographicUnits(
             componentId: `${subunit.properties.sourceKind ?? 'map-subunit'}:${subunitId}`,
           },
           geometry: subunit.geometry,
+          ...(subunit.regionalDisplayGeometry
+            ? { regionalDisplayGeometry: subunit.regionalDisplayGeometry } : {}),
         })
       }
       const remainder = selectedSubunitById.get(`remainder:${unit.id}`)
@@ -349,11 +360,13 @@ function buildGeographicUnits(
     })
   }
 
-  return includeLeasedAreas(geographicUnits).map((unit) =>
-    quizGeometry[unit.id]
-      ? { ...unit, quizGeometry: quizGeometry[unit.id] }
-      : unit,
-  )
+  return includeLeasedAreas(geographicUnits).map((unit) => ({
+    ...unit,
+    // Shared geometry drives fill, outlines, hit-testing and focus in both
+    // renderers. Separate source areas never imply a new quiz identity.
+    geometry: supplementalCountryGeometry[unit.id] ?? unit.geometry,
+    ...(quizGeometry[unit.id] ? { quizGeometry: quizGeometry[unit.id] } : {}),
+  }))
 }
 
 export const geographicUnits = buildGeographicUnits(mapUnits, baseCombinedIndex, mapSubunits)
@@ -368,6 +381,7 @@ export function loadDetailedGeographicUnits() {
     import('./combined-geographic-units-10m.json'),
     import('./meaningful-subunits-10m.json'),
     import('./quiz-merged-geometries-10m.json'),
+    import('./supplemental-country-geometries-10m.json'),
   ])
     .then(([
       { default: detailed },
@@ -375,6 +389,7 @@ export function loadDetailedGeographicUnits() {
       { default: detailedCombinedGeometry },
       { default: detailedSubunits },
       { default: detailedQuizGeometry },
+      { default: detailedSupplementalCountryGeometry },
     ]) => {
       const detailedById = new Map(detailed.features.map((feature) => [feature.id, feature]))
       const units = mapUnits.map((base) => {
@@ -412,6 +427,7 @@ export function loadDetailedGeographicUnits() {
         subunits,
         baseCombinedIndex,
         detailedQuizGeometry as CombinedGeometryIndex,
+        detailedSupplementalCountryGeometry as CombinedGeometryIndex,
       )
     })
     .catch((error: unknown) => {

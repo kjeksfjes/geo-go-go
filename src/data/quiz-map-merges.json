@@ -1,4 +1,5 @@
 [
+  { "entityId": "SDN", "geographicUnitId": "entity:SDN", "sourceIds": ["BRT"], "leasedAreaIds": [] },
   { "entityId": "CYP", "geographicUnitId": "entity:CYP", "sourceIds": ["WSB", "ESB"], "leasedAreaIds": [] },
   { "entityId": "CUB", "geographicUnitId": "entity:CUB", "sourceIds": ["USG"], "leasedAreaIds": [] },
   { "entityId": "KAZ", "geographicUnitId": "entity:KAZ", "sourceIds": [], "leasedAreaIds": ["KAB"] },
