@@ -6,6 +6,7 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ### Fixes
 
+- Aligned neighboring low-detail country borders and coastlines with detailed supplemental areas, removing coastal gaps, triangular border spurs around UNDOF, and coarse coastline wedges at both Korean DMZ ends while retaining existing quiz policies.
 - Removed malformed high-detail geometry that produced stray diagonal outlines near the Egypt–Sudan border.
 - Excluded restored buffer zones, bases and other supplemental areas from overlapping low-detail country shapes, keeping country highlighting and interaction consistent with high detail and preserving existing quiz associations.
 

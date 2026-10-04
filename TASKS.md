@@ -105,7 +105,7 @@ Joakim's screenshot shows disconnected diagonal border segments near the Red Sea
 
 - [x] Identify the polygons and linework responsible for the screenshot, comparing the 50m/10m source geometry with the generated assets and rendered paths.
 - [x] Verify boundary/status distinctions against Natural Earth and the UK geographic factfile; Joakim authorized the recommended presentation. Bir Tawil has a bilingual unclaimed-area label in Explore and merges into Sudan only for quiz interaction; Hala’ib retains the source’s Egypt treatment, with its Sudanese claim boundary rendered separately as a continuous dashed line in Explore, hidden in quiz mode.
-- [x] Fix confirmed geometry defects through exact source-repair configuration and shared supplemental exclusions for countries/components at both resolutions, preserving land coverage and existing quiz policies.
+- [x] Fix confirmed geometry defects through exact source-repair configuration and shared supplemental exclusions for countries/components at both resolutions, preserving land coverage and existing quiz policies. Aligned adjoining low-detail borders and coastlines using a common source-derived repair footprint; generation checks shared-edge coverage and rejects newly overlapping countries.
 - [x] Run the build and focused runtime/geometry checks at both detail levels and all five projections; both renderers consume the shared corrected paths.
 - [ ] Joakim to visually verify both detail levels and renderer presentation.
 

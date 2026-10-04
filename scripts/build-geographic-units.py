@@ -9,9 +9,10 @@ other units sharing a quiz identity form one geographic interaction unit.
 import json
 from collections import defaultdict
 from copy import deepcopy
+from functools import cache
 from pathlib import Path
 
-from shapely import STRtree, line_merge, orient_polygons, union_all
+from shapely import STRtree, line_merge, orient_polygons, set_precision, union_all
 from shapely.geometry import mapping, shape
 
 
@@ -89,6 +90,111 @@ def exclude_supplemental(geometry):
     result = mapping(orient_polygons(corrected, exterior_cw=True))
     result["coordinates"] = rounded(result["coordinates"])
     return result
+
+
+@cache
+def detailed_geometry(unit_id):
+    kind, source_id = unit_id.split(":", 1)
+    if kind == "entity":
+        parts = DETAILED_BY_ENTITY.get(source_id, [])
+    elif kind == "unit":
+        parts = [DETAILED_BY_UNIT[source_id]] if source_id in DETAILED_BY_UNIT else []
+    else:
+        subunit_id = unit_id if kind == "remainder" else source_id
+        parts = [DETAILED_SUBUNITS[subunit_id]] if subunit_id in DETAILED_SUBUNITS else []
+    if not parts:
+        return None
+    return union_all([shape(part) for part in parts]) if len(parts) > 1 else shape(parts[0])
+
+
+def shared_boundary_replacements(geometry, unit_id):
+    """Complete coarse/detailed difference pieces adjoining supplemental land."""
+    detailed = detailed_geometry(unit_id)
+    if detailed is None:
+        return []
+    candidates = SUPPLEMENTAL_TREE.query(detailed, predicate="intersects")
+    if not len(candidates):
+        return []
+    area_boundary = union_all([
+        SUPPLEMENTAL_SHAPES[index].boundary for index in candidates
+    ])
+    shared = detailed.boundary.intersection(area_boundary)
+    if shared.length < 1e-8:
+        return []
+    difference = detailed.symmetric_difference(shape(geometry))
+    components = list(difference.geoms) if hasattr(difference, "geoms") else [difference]
+    # Sub-atlas tolerance detects floating-point contact; it never crops land.
+    return [component for component in components
+            if component.geom_type == "Polygon" and component.area > 1e-10
+            # Include the area's seaward edge, not only its country-shared
+            # edge: coarse land can cover source water beside a coastal cap.
+            # Point contacts include continuations at either shoreline end.
+            and component.distance(area_boundary) <= 1e-8]
+
+
+def align_shared_boundaries(geometries):
+    # One common replacement footprint is essential: repairing countries
+    # independently can leave their opposite border edges overlapping.
+    mask = union_all([component for unit_id, geometry in geometries.items()
+                      for component in shared_boundary_replacements(geometry, unit_id)])
+    aligned = {}
+    for unit_id, geometry in geometries.items():
+        coarse = shape(geometry)
+        if not coarse.intersects(mask):
+            aligned[unit_id] = geometry
+            continue
+        detailed = detailed_geometry(unit_id)
+        if detailed is None:
+            raise ValueError(f"Missing detailed geometry for boundary join: {unit_id}")
+        restored = set_precision(coarse.difference(mask).union(detailed.intersection(mask)), 0.00001)
+        # Source polygons can touch a replacement only along a line. Those
+        # zero-area remnants must not become land or polygon outlines.
+        if restored.geom_type == "GeometryCollection":
+            restored = union_all([part for part in restored.geoms
+                                  if part.geom_type in ("Polygon", "MultiPolygon")])
+        if not restored.is_valid or restored.geom_type not in ("Polygon", "MultiPolygon"):
+            raise ValueError(f"Invalid supplemental boundary join: {unit_id}")
+        result = mapping(orient_polygons(restored, exterior_cw=True))
+        result["coordinates"] = rounded(result["coordinates"])
+        aligned[unit_id] = result
+    validate_shared_boundaries(geometries, aligned)
+    return aligned
+
+
+def validate_shared_boundaries(originals, aligned):
+    """Guard both sides of shared edges, not just missing-land coverage."""
+    ids = list(aligned)
+    polygons = [shape(aligned[unit_id]) for unit_id in ids]
+    tree = STRtree(polygons)
+    for index, unit_id in enumerate(ids):
+        country = polygons[index]
+        detailed = detailed_geometry(unit_id)
+        if detailed is not None:
+            candidates = SUPPLEMENTAL_TREE.query(detailed, predicate="intersects")
+            area_boundary = union_all([
+                SUPPLEMENTAL_SHAPES[item].boundary for item in candidates
+            ])
+            shared = detailed.boundary.intersection(area_boundary)
+            # Two atlas grid cells allow serialized intersection rounding.
+            if shared.difference(country.boundary.buffer(0.00002)).length > 1e-7:
+                raise ValueError(f"Unmatched supplemental shared border: {unit_id}")
+            if len(candidates):
+                remaining = country.symmetric_difference(detailed)
+                # Test contact locally: a sub-meter rounding bridge can join
+                # an otherwise distant, legitimately generalized coastline.
+                if remaining.intersection(area_boundary.buffer(0.00002)).area > 1e-6:
+                    raise ValueError(f"Unmatched supplemental coastal contact: {unit_id}")
+        if aligned[unit_id] == originals[unit_id]:
+            continue
+        for neighbor in tree.query(country, predicate="intersects"):
+            other_id = ids[neighbor]
+            if other_id == unit_id:
+                continue
+            overlap = country.intersection(polygons[neighbor]).area
+            if overlap > 2e-6:
+                previous = shape(originals[unit_id]).intersection(shape(originals[other_id])).area
+                if overlap > previous + 2e-6:
+                    raise ValueError(f"Boundary join introduced country overlap: {unit_id}, {other_id}")
 
 
 def build_supplemental_areas():
@@ -194,6 +300,12 @@ def build(resolution):
         corrected_by_id[unit_id] = corrected
         if corrected != geometry:
             display_overrides[unit_id] = corrected
+    if resolution == "50m":
+        aligned = align_shared_boundaries(corrected_by_id)
+        for unit_id, geometry in aligned.items():
+            if geometry != corrected_by_id[unit_id]:
+                display_overrides[unit_id] = geometry
+        corrected_by_id = aligned
     (DATA / f"supplemental-country-geometries-{resolution}.json").write_text(
         json.dumps(display_overrides, separators=(",", ":")), encoding="utf-8",
     )
@@ -237,6 +349,20 @@ base = json.loads((DATA / "ne-map-units-50m.json").read_text(encoding="utf-8"))
 ENTITY_BY_UNIT = {
     feature["id"]: QUIZ_IDENTITY_BY_UNIT.get(feature["id"], feature["properties"]["entityId"])
     for feature in base["features"]
+}
+DETAILED_BY_UNIT = {
+    feature["id"]: corrected_source(feature, "10m")["geometry"]
+    for feature in json.loads((DATA / "ne-map-units-10m.json").read_text(encoding="utf-8"))["features"]
+}
+DETAILED_BY_ENTITY = defaultdict(list)
+for source_id, geometry in DETAILED_BY_UNIT.items():
+    if source_id not in MEANINGFUL:
+        DETAILED_BY_ENTITY[ENTITY_BY_UNIT[source_id]].append(geometry)
+for entity_id, geometries in DETAIL_FILL_GEOMETRIES.items():
+    DETAILED_BY_ENTITY[entity_id].extend(geometries)
+DETAILED_SUBUNITS = {
+    feature["id"]: feature["geometry"]
+    for feature in json.loads((DATA / "meaningful-subunits-10m.json").read_text(encoding="utf-8"))["features"]
 }
 for entity_id, unit_ids in INDEPENDENT_BY_ENTITY.items():
     for unit_id in unit_ids:
