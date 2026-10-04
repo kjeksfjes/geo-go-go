@@ -10,6 +10,7 @@ Prioritize the existing cost of initializing the high-detail world map, especial
 
 ### Completion criteria
 
+- [ ] Measure browser interaction costs of the SVG hit layer at both detail levels, including pan/zoom and pointer detection. Hit targets now reuse the active drawing paths so visible country land remains clickable; any future simplification must preserve island coverage and coastline accuracy.
 - [ ] Profile cold startup and first high-detail activation in a browser, including a representative phone where available; separate download, module parsing/evaluation, country/path projection, focus calculations, worker preparation, and first visible frame.
 - [ ] Record reproducible baseline timings and identify the dominant main-thread work before choosing an optimization; agree practical responsiveness targets from those measurements.
 - [ ] Apply the smallest justified improvement using existing tools, preserving land coverage, source/component/quiz distinctions, projection fitting, and sharp settled rendering; avoid speculative dependencies, abstractions, or additional caches.
@@ -108,6 +109,22 @@ Joakim's screenshot shows disconnected diagonal border segments near the Red Sea
 - [x] Fix confirmed geometry defects through exact source-repair configuration and shared supplemental exclusions for countries/components at both resolutions, preserving land coverage and existing quiz policies. Aligned adjoining low-detail borders and coastlines using a common source-derived repair footprint; generation checks shared-edge coverage and rejects newly overlapping countries.
 - [x] Run the build and focused runtime/geometry checks at both detail levels and all five projections; both renderers consume the shared corrected paths.
 - [ ] Joakim to visually verify both detail levels and renderer presentation.
+
+## TASK-006 — Audit coastline quality at close Explore zoom
+
+Status: Deferred. Added: 2026-10-04.
+
+Joakim raised a map-wide coastline-quality concern after comparing St Lawrence Island with Google Maps. The original Natural Earth 10m map-unit source contains the island's main polygon plus six thin coastal polygons, some with only three distinct vertices; these produce angular slivers at close zoom. Geometry checks confirmed that the pending Diomede component and click-target changes leave St Lawrence unchanged at both resolutions. Real coastal lagoons do not establish that these particular source polygons represent them accurately. No coastline correction has been made; Joakim explicitly deferred further investigation.
+
+Natural Earth's 10m and 50m labels mean 1:10 million and 1:50 million map scales, not metre resolution. Generalization and geometric validity must be distinguished from geographic accuracy. See [Natural Earth's coastline documentation](https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-coastline/) for source limitations. This task assesses the general map and appropriate Explore zoom range; TASK-001 remains the separate Coral Sea Islands/Clipperton investigation, and TASK-002 retains deferred naming and affiliation decisions.
+
+### Completion criteria
+
+- [ ] Compare a representative selection of coastlines, including St Lawrence, narrow coastal barriers/lagoons, fjords, and small islands, with reliable reference data at the app's close zoom levels; distinguish source limitations, import defects, and rendering defects without assuming the entire map is accurate or broken.
+- [ ] Compare the current administrative geometry with Natural Earth's physical land/coastline layers; determine whether confirmed discrepancies justify local corrections, a finer licensed source, or a change to the supported zoom range.
+- [ ] Present findings and tradeoffs to Joakim before implementing replacements, including download size, processing cost, licensing, and maintenance. Preserve real coastal land and water rather than deleting thin polygons solely because they look unusual.
+- [ ] For any subsequently authorized changes, preserve country/component/quiz identities and regional membership; keep drawing, highlighting, and hit targets consistent across canvas/SVG and 50m/10m, and coordinate performance checks with TASK-005.
+- [ ] Run proportionate build and geometry checks for authorized implementation; leave visual acceptance to Joakim unless he requests otherwise.
 
 ## Audit status
 

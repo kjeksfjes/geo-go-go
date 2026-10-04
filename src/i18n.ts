@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { countryInfoById } from './data/countries'
+import displayNames from './data/country-names.json'
 import type { GeographicComponentInfo } from './types/country'
 import type { MapRegion } from './data/regions'
 
@@ -107,50 +108,13 @@ export function regionName(region: MapRegion) {
   return locale.value === 'nb' ? norwegianRegions[region.id] : region.label
 }
 
-const norwegianCountryOverrides: Record<string, string> = {
-  Palestine: 'Palestina',
-  'Democratic Republic of the Congo': 'Den demokratiske republikken Kongo',
-  'Northern Cyprus': 'Nord-Kypros',
-  Somaliland: 'Somaliland',
-  'Australian Indian Ocean Territories': 'Australske territorier i Indiahavet',
-  'Ashmore and Cartier Islands': 'Ashmore- og Cartierøyene',
-  'Siachen Glacier': 'Siachenbreen',
-}
-
-function makeNorwegianDisplayNames() {
-  try {
-    return typeof Intl.DisplayNames === 'undefined'
-      ? null
-      : new Intl.DisplayNames(['nb'], { type: 'region', fallback: 'none' })
-  } catch {
-    return null
-  }
-}
-
-const norwegianCountryNames = makeNorwegianDisplayNames()
-const norwegianNameCache = new Map<string, string>()
-
-function localizedRegionCode(code: string) {
-  try {
-    return norwegianCountryNames?.of(code.toUpperCase())
-  } catch {
-    // Some atlas entries have non-ISO flag codes. DisplayNames can throw
-    // instead of returning undefined for these, depending on the browser.
-    return undefined
-  }
-}
+// Every country identity has app-owned names, independent of browser locale
+// databases, source-data labels, and flag codes. The build checks coverage.
+const countryDisplayNames = displayNames as Record<string, Record<Locale, string>>
 
 export function countryName(id: string) {
-  const country = countryInfoById.get(id)
-  if (!country) return id
-  if (locale.value === 'en') return country.name
-  const cached = norwegianNameCache.get(id)
-  if (cached) return cached
-  const name = norwegianCountryOverrides[country.name]
-    ?? localizedRegionCode(country.flagCode)
-    ?? country.name
-  norwegianNameCache.set(id, name)
-  return name
+  if (!countryInfoById.has(id)) return id
+  return countryDisplayNames[id]![locale.value]
 }
 
 const sourceComponentTypes: Record<string, Record<Locale, string>> = {

@@ -6,12 +6,15 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ### Fixes
 
+- Supplied explicit English and Norwegian names for every country identity, making names such as Elfenbenskysten consistent across browsers and checking translation coverage during builds.
+- Matched canvas hover and click targets to the active map detail, restoring interaction with detailed islands and coastlines omitted from the low-detail map.
 - Aligned neighboring low-detail country borders and coastlines with detailed supplemental areas, removing coastal gaps, triangular border spurs around UNDOF, and coarse coastline wedges at both Korean DMZ ends while retaining existing quiz policies.
 - Removed malformed high-detail geometry that produced stray diagonal outlines near the Egypt–Sudan border.
 - Excluded restored buffer zones, bases and other supplemental areas from overlapping low-detail country shapes, keeping country highlighting and interaction consistent with high detail and preserving existing quiz associations.
 
 ### Improvements
 
+- Added Big and Little Diomede as named Explore islands at both detail levels, including the Diomede / Inalik community context, while retaining Russia and USA quiz answers.
 - Added a dashed Hala’ib disputed-boundary line in Explore mode, shared by canvas/SVG and both map detail levels.
 - Included Bir Tawil in Sudan’s quiz shape and hid the Hala’ib claim line during the quiz, while retaining the unclaimed-area presentation in Explore.
 - Added an English and Norwegian Explore label for Bir Tawil explaining that neither Egypt nor Sudan claims it, without adding a quiz country.

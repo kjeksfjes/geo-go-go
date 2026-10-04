@@ -1,4 +1,5 @@
 import flagCountries from 'flag-icons/country.json'
+import displayNames from './country-names.json'
 import { geoArea, geoContains } from 'd3-geo'
 import baseMapUnits from './ne-map-units-50m.json'
 import baseRegionalGeometry from './regional-display-50m.json'
@@ -27,11 +28,7 @@ interface FlagCountry {
 
 // Display/flag labels are presentation details. Geographic classification and
 // sovereignty come from the Natural Earth map-unit records, not these aliases.
-const entityOverrides: Record<string, { name?: string; flagCode?: string }> = {
-  VAT: { name: 'Vatican City' },
-  CZE: { name: 'Czechia' },
-  TUR: { name: 'Türkiye' },
-  SGS: { name: 'South Georgia and the South Sandwich Islands' },
+const entityOverrides: Record<string, { flagCode?: string }> = {
   PSX: { flagCode: 'ps' },
 }
 
@@ -98,10 +95,15 @@ for (const [id, units] of unitsByEntityId) {
 }
 
 export const countryInfoById = new Map<string, CountryInfo>()
+const countryDisplayNames = displayNames as Record<string, { en: string; nb: string }>
 for (const [id, units] of unitsByEntityId) {
   const primary = primaryMapUnitByEntityId.get(id)!
   const { adminName, sovereignId, sovereignName } = primary.properties
   const override = entityOverrides[id]
+  const names = countryDisplayNames[id]
+  if (!names?.en?.trim() || !names.nb?.trim()) {
+    throw new Error(`Missing explicit country names for ${id}`)
+  }
   const isoCode = primary.properties.isoA2.toLowerCase()
   const flagCode = override?.flagCode
     ?? flagCodeByName.get(adminName)
@@ -113,7 +115,7 @@ for (const [id, units] of unitsByEntityId) {
 
   countryInfoById.set(id, {
     id,
-    name: override?.name ?? adminName,
+    name: names.en,
     flagCode,
     sovereignId,
     ...(isDependent ? { parentSovereignId: sovereignId } : {}),
@@ -129,6 +131,11 @@ const subunitIdsByMapUnit: Record<string, string[]> = {
 }
 for (const [mapUnitId, regionIds] of Object.entries(semanticMapUnits.independentAdmin1RegionsByMapUnit)) {
   subunitIdsByMapUnit[mapUnitId] = [...(subunitIdsByMapUnit[mapUnitId] ?? []), ...regionIds]
+}
+for (const component of semanticMapUnits.independentCoastlineComponents) {
+  subunitIdsByMapUnit[component.mapUnitId] = [
+    ...(subunitIdsByMapUnit[component.mapUnitId] ?? []), component.id,
+  ]
 }
 const mapSubunits = baseMeaningfulSubunits.features as unknown as MapSubunitFeature[]
 
@@ -291,6 +298,8 @@ function buildGeographicUnits(
             componentId: `${subunit.properties.sourceKind ?? 'map-subunit'}:${subunitId}`,
           },
           geometry: subunit.geometry,
+          ...(subunit.regionalDisplayGeometry
+            ? { regionalDisplayGeometry: subunit.regionalDisplayGeometry } : {}),
         })
       }
       const remainder = selectedSubunitById.get(`remainder:${unit.id}`)

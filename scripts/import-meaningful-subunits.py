@@ -8,6 +8,10 @@ Its boundary identifies whole coastline polygons from each resolution's
 Admin-0 source, keeping the displayed country and component edges identical.
 All unselected geometry becomes one interactive remainder. None of these
 features creates a new quiz identity.
+
+Curated coastline components use seed points to select whole island polygons
+from the checked-in 10m map-unit atlas. Their detailed polygon is also retained
+at 50m when the coarser source omits it.
 """
 
 import json
@@ -16,7 +20,7 @@ from pathlib import Path
 
 import shapefile
 from shapely import difference, intersection, make_valid, orient_polygons
-from shapely.geometry import MultiLineString, mapping, shape
+from shapely.geometry import MultiLineString, Point, mapping, shape
 from shapely.ops import unary_union
 
 
@@ -109,6 +113,79 @@ def polygons(geometry):
     if geometry.geom_type == "Polygon":
         return [geometry]
     return list(geometry.geoms)
+
+
+def include_coastline_components(features, include_metadata):
+    """Split explicitly named whole islands; retain detailed coverage at 50m."""
+    detailed = {
+        feature["id"]: shape(feature["geometry"])
+        for feature in json.loads((DATA / "ne-map-units-10m.json").read_text())["features"]
+    }
+    parents_by_id = {
+        feature["id"]: feature["properties"]
+        for feature in json.loads((DATA / "ne-map-units-50m.json").read_text())["features"]
+    }
+    for component in CONFIG.get("independentCoastlineComponents", []):
+        map_unit_id = component["mapUnitId"]
+        point = Point(component["point"])
+        matched = [part for part in polygons(detailed[map_unit_id]) if part.covers(point)]
+        if len(matched) != 1:
+            raise ValueError(f"Expected one coastline polygon for {component['id']}")
+        island = matched[0]
+        parents = []
+        regional = {}
+        for feature in features:
+            # Only split the parent unit's selected source parts or remainder.
+            source_id = feature["id"]
+            belongs = (source_id in SELECTION.get(map_unit_id, [])
+                       or source_id in ADMIN1_SELECTION.get(map_unit_id, [])
+                       or source_id == f"remainder:{map_unit_id}")
+            if not belongs:
+                continue
+            original = shape(feature["geometry"])
+            if original.intersection(island).area <= 1e-10:
+                continue
+            parents.append(source_id)
+            remaining = original.difference(island)
+            if remaining.is_empty:
+                raise ValueError(f"Coastline component replaces entire parent {source_id}")
+            feature["geometry"] = polygon_geometry(remaining)
+            # Preserve regional clipping while removing the named island from
+            # any regional variant that contains it.
+            for display in feature.get("regionalDisplayGeometry", {}).values():
+                if shape(display["geometry"]).intersection(island).area <= 1e-10:
+                    continue
+                display["geometry"] = polygon_geometry(shape(display["geometry"]).difference(island))
+                for field in ("outline", "division"):
+                    display[field] = line_geometry(shape(display[field]).difference(island))
+        resolution = "50m" if include_metadata else "10m"
+        regional_index = json.loads((DATA / f"regional-display-{resolution}.json").read_text())
+        for region_id, entries in regional_index.items():
+            if map_unit_id not in entries:
+                continue
+            visible = island.intersection(shape(entries[map_unit_id]["geometry"]))
+            # Empty regional variants keep remote islands out of regional
+            # fitting and interaction without changing country membership.
+            empty = {"type": "GeometryCollection", "geometries": []}
+            regional[region_id] = {
+                "geometry": polygon_geometry(visible) if not visible.is_empty else empty,
+                "outline": line_geometry(visible.boundary) if not visible.is_empty else empty,
+                "division": empty,
+            }
+        if len(parents) > 1 or (not include_metadata and len(parents) != 1):
+            raise ValueError(f"Unexpected coastline component parents: {component['id']}: {parents}")
+        feature = {"type": "Feature", "id": component["id"],
+                   "geometry": polygon_geometry(island)}
+        if regional:
+            feature["regionalDisplayGeometry"] = regional
+        if include_metadata:
+            feature["properties"] = {
+                "name": component["name"], "mapUnitId": map_unit_id,
+                "entityId": parents_by_id[map_unit_id]["entityId"], "featureType": "Island",
+                "sourceKind": "coastline",
+            }
+        features.append(feature)
+    return features
 
 
 def selected_features(path, resolution, include_metadata, admin1):
@@ -225,7 +302,9 @@ def main():
         ("50m", source_50m, True),
         ("10m", source_10m, False),
     ):
-        features = selected_features(path, resolution, metadata, admin1)
+        features = include_coastline_components(
+            selected_features(path, resolution, metadata, admin1), metadata
+        )
         destination = DATA / f"meaningful-subunits-{resolution}.json"
         destination.write_text(
             json.dumps({"type": "FeatureCollection", "features": features},

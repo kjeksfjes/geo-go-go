@@ -30,6 +30,20 @@
     "GRC": ["GR-M"],
     "NLY": ["NL-BQ1", "NL-BQ2", "NL-BQ3"]
   },
+  "independentCoastlineComponents": [
+    {
+      "id": "RUS-DIOMEDE",
+      "mapUnitId": "RUS",
+      "point": [-169.05, 65.78],
+      "name": "Big Diomede"
+    },
+    {
+      "id": "USA-DIOMEDE",
+      "mapUnitId": "USA",
+      "point": [-168.92, 65.76],
+      "name": "Little Diomede"
+    }
+  ],
   "sourceSubunitIdsAt10m": {
     "AUS": ["AUZ"],
     "KOR": ["KOX", "KXI"]
@@ -48,6 +62,14 @@
     }
   ],
   "metadataOverrides": {
+    "coastline:RUS-DIOMEDE": {
+      "name": { "nb": "Store Diomedes" },
+      "type": { "en": "Island", "nb": "Øy" }
+    },
+    "coastline:USA-DIOMEDE": {
+      "name": { "nb": "Lille Diomedes" },
+      "type": { "en": "Island · home to Diomede / Inalik", "nb": "Øy · hjemsted for Diomede / Inalik" }
+    },
     "admin-1:GR-M": {
       "name": { "en": "Crete", "nb": "Kreta" },
       "type": { "en": "Island", "nb": "Øy" }
