@@ -1,0 +1,3196 @@
+{
+  "date": "2026-10-05",
+  "viewport": {
+    "width": 1600,
+    "height": 900,
+    "dpr": 2
+  },
+  "method": "Native mouse starts over Canada, Algeria and ocean, both detail levels; first DOM camera mutation/next RAF, not visible paint. Three repetitions each.",
+  "results": {
+    "wide-off": {
+      "bathymetry": false,
+      "renderer": "canvas",
+      "url": "http://127.0.0.1:4173/",
+      "runs": [
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 3159,
+              "x": 520,
+              "handlerEnd": 3161.100000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 3176.300000011921,
+              "x": 528,
+              "handlerEnd": 3181.199999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 3198.400000035763,
+              "x": 536,
+              "handlerEnd": 3198.400000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 3189.800000011921,
+          "nextRAF": 3190.800000011921,
+          "downHandlerMs": 2.100000023841858,
+          "moveHandlerMs": 4.899999976158142,
+          "moveToTransformMs": 13.5,
+          "moveToNextRAFMs": 14.5
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 4170.600000023842,
+              "x": 520,
+              "handlerEnd": 4170.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 4176.199999988079,
+              "x": 528,
+              "handlerEnd": 4179.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 4199,
+              "x": 536,
+              "handlerEnd": 4199
+            }
+          ],
+          "rendererStates": [],
+          "transform": 4186.900000035763,
+          "nextRAF": 4191.100000023842,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.700000047683716,
+          "moveToTransformMs": 10.700000047683716,
+          "moveToNextRAFMs": 14.900000035762787
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5160,
+              "x": 520,
+              "handlerEnd": 5160.100000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 5167.900000035763,
+              "x": 528,
+              "handlerEnd": 5171.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 5189.400000035763,
+              "x": 536,
+              "handlerEnd": 5189.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5178.699999988079,
+          "nextRAF": 5182.5,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.5,
+          "moveToTransformMs": 10.799999952316284,
+          "moveToNextRAFMs": 14.599999964237213
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6306,
+              "x": 805,
+              "handlerEnd": 6306.199999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 6309.400000035763,
+              "x": 813,
+              "handlerEnd": 6312.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 6331.199999988079,
+              "x": 821,
+              "handlerEnd": 6331.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6319.400000035763,
+          "nextRAF": 6323.199999988079,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 3.5,
+          "moveToTransformMs": 10,
+          "moveToNextRAFMs": 13.799999952316284
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 7443.100000023842,
+              "x": 805,
+              "handlerEnd": 7443.199999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 7451.199999988079,
+              "x": 813,
+              "handlerEnd": 7455.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 7468.600000023842,
+              "x": 821,
+              "handlerEnd": 7468.600000023842
+            }
+          ],
+          "rendererStates": [],
+          "transform": 7464.400000035763,
+          "nextRAF": 7466.900000035763,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 4.600000023841858,
+          "moveToTransformMs": 13.200000047683716,
+          "moveToNextRAFMs": 15.700000047683716
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 8601.400000035763,
+              "x": 805,
+              "handlerEnd": 8601.5
+            },
+            {
+              "type": "pointermove",
+              "start": 8609.5,
+              "x": 813,
+              "handlerEnd": 8613
+            },
+            {
+              "type": "pointermove",
+              "start": 8630.100000023842,
+              "x": 821,
+              "handlerEnd": 8630.100000023842
+            }
+          ],
+          "rendererStates": [],
+          "transform": 8620.300000011921,
+          "nextRAF": 8622.900000035763,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.5,
+          "moveToTransformMs": 10.800000011920929,
+          "moveToNextRAFMs": 13.400000035762787
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 9578.5,
+              "x": 40,
+              "handlerEnd": 9578.5
+            },
+            {
+              "type": "pointermove",
+              "start": 9579.900000035763,
+              "x": 48,
+              "handlerEnd": 9583
+            },
+            {
+              "type": "pointermove",
+              "start": 9599.400000035763,
+              "x": 56,
+              "handlerEnd": 9599.400000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 9589.5,
+          "nextRAF": 9592,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.099999964237213,
+          "moveToTransformMs": 9.599999964237213,
+          "moveToNextRAFMs": 12.099999964237213
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10538.900000035763,
+              "x": 40,
+              "handlerEnd": 10539
+            },
+            {
+              "type": "pointermove",
+              "start": 10540.5,
+              "x": 48,
+              "handlerEnd": 10544.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 10565.300000011921,
+              "x": 56,
+              "handlerEnd": 10565.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10552.600000023842,
+          "nextRAF": 10556.699999988079,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.800000011920929,
+          "moveToTransformMs": 12.100000023841858,
+          "moveToNextRAFMs": 16.19999998807907
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 11511.5,
+              "x": 40,
+              "handlerEnd": 11511.600000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 11512.900000035763,
+              "x": 48,
+              "handlerEnd": 11515.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 11534.5,
+              "x": 56,
+              "handlerEnd": 11534.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 11524.800000011921,
+          "nextRAF": 11526.300000011921,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 2.899999976158142,
+          "moveToTransformMs": 11.899999976158142,
+          "moveToNextRAFMs": 13.399999976158142
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5058.700000047684,
+              "x": 520,
+              "handlerEnd": 5058.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 5064,
+              "x": 528,
+              "handlerEnd": 5068.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 5087.5,
+              "x": 536,
+              "handlerEnd": 5087.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5077.800000011921,
+          "nextRAF": 5078.700000047684,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 4.700000047683716,
+          "moveToTransformMs": 13.800000011920929,
+          "moveToNextRAFMs": 14.700000047683716
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6054.900000035763,
+              "x": 520,
+              "handlerEnd": 6054.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 6064.100000023842,
+              "x": 528,
+              "handlerEnd": 6069.200000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 6093.600000023842,
+              "x": 536,
+              "handlerEnd": 6093.700000047684
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6078.100000023842,
+          "nextRAF": 6083.800000011921,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 5.100000023841858,
+          "moveToTransformMs": 14,
+          "moveToNextRAFMs": 19.69999998807907
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 7053.700000047684,
+              "x": 520,
+              "handlerEnd": 7053.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 7055.800000011921,
+              "x": 528,
+              "handlerEnd": 7059.5
+            },
+            {
+              "type": "pointermove",
+              "start": 7080.400000035763,
+              "x": 536,
+              "handlerEnd": 7080.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 7066.800000011921,
+          "nextRAF": 7071.400000035763,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.699999988079071,
+          "moveToTransformMs": 11,
+          "moveToNextRAFMs": 15.600000023841858
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 8447,
+              "x": 805,
+              "handlerEnd": 8447
+            },
+            {
+              "type": "pointermove",
+              "start": 8455.600000023842,
+              "x": 813,
+              "handlerEnd": 8459.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 8472.600000023842,
+              "x": 821,
+              "handlerEnd": 8472.600000023842
+            }
+          ],
+          "rendererStates": [],
+          "transform": 8466.600000023842,
+          "nextRAF": 8471.100000023842,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.800000011920929,
+          "moveToTransformMs": 11,
+          "moveToNextRAFMs": 15.5
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 9839.300000011921,
+              "x": 805,
+              "handlerEnd": 9839.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 9847.200000047684,
+              "x": 813,
+              "handlerEnd": 9850.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 9868.900000035763,
+              "x": 821,
+              "handlerEnd": 9869
+            }
+          ],
+          "rendererStates": [],
+          "transform": 9858,
+          "nextRAF": 9861.900000035763,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.699999988079071,
+          "moveToTransformMs": 10.799999952316284,
+          "moveToNextRAFMs": 14.699999988079071
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 11228.400000035763,
+              "x": 805,
+              "handlerEnd": 11228.5
+            },
+            {
+              "type": "pointermove",
+              "start": 11230.400000035763,
+              "x": 813,
+              "handlerEnd": 11233.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 11250,
+              "x": 821,
+              "handlerEnd": 11250
+            }
+          ],
+          "rendererStates": [],
+          "transform": 11240.200000047684,
+          "nextRAF": 11243.100000023842,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.300000011920929,
+          "moveToTransformMs": 9.800000011920929,
+          "moveToNextRAFMs": 12.699999988079071
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 12199.300000011921,
+              "x": 40,
+              "handlerEnd": 12199.5
+            },
+            {
+              "type": "pointermove",
+              "start": 12200.900000035763,
+              "x": 48,
+              "handlerEnd": 12205.100000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 12227.300000011921,
+              "x": 56,
+              "handlerEnd": 12227.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 12214.300000011921,
+          "nextRAF": 12219,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 4.199999988079071,
+          "moveToTransformMs": 13.399999976158142,
+          "moveToNextRAFMs": 18.099999964237213
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 13168.900000035763,
+              "x": 40,
+              "handlerEnd": 13168.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 13170.100000023842,
+              "x": 48,
+              "handlerEnd": 13173.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 13189.700000047684,
+              "x": 56,
+              "handlerEnd": 13189.700000047684
+            }
+          ],
+          "rendererStates": [],
+          "transform": 13179.600000023842,
+          "nextRAF": 13182.600000023842,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.300000011920929,
+          "moveToTransformMs": 9.5,
+          "moveToNextRAFMs": 12.5
+        },
+        {
+          "bathymetry": false,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 14128.200000047684,
+              "x": 40,
+              "handlerEnd": 14128.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 14129.800000011921,
+              "x": 48,
+              "handlerEnd": 14133.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 14151.800000011921,
+              "x": 56,
+              "handlerEnd": 14151.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 14141.600000023842,
+          "nextRAF": 14144,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 4,
+          "moveToTransformMs": 11.800000011920929,
+          "moveToNextRAFMs": 14.199999988079071
+        }
+      ]
+    },
+    "wide-on": {
+      "bathymetry": true,
+      "renderer": "canvas",
+      "url": "http://127.0.0.1:4173/",
+      "runs": [
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 3177.800000011921,
+              "x": 520,
+              "handlerEnd": 3179.600000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 3188.600000023842,
+              "x": 528,
+              "handlerEnd": 3194.2000000476837
+            },
+            {
+              "type": "pointermove",
+              "start": 3212.7000000476837,
+              "x": 536,
+              "handlerEnd": 3212.7000000476837
+            }
+          ],
+          "rendererStates": [],
+          "transform": 3203.400000035763,
+          "nextRAF": 3204.100000023842,
+          "downHandlerMs": 1.800000011920929,
+          "moveHandlerMs": 5.600000023841858,
+          "moveToTransformMs": 14.800000011920929,
+          "moveToNextRAFMs": 15.5
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 4182.5,
+              "x": 520,
+              "handlerEnd": 4182.600000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 4190.600000023842,
+              "x": 528,
+              "handlerEnd": 4194.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 4208.700000047684,
+              "x": 536,
+              "handlerEnd": 4208.700000047684
+            }
+          ],
+          "rendererStates": [],
+          "transform": 4201.200000047684,
+          "nextRAF": 4201.700000047684,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.800000011920929,
+          "moveToTransformMs": 10.600000023841858,
+          "moveToNextRAFMs": 11.100000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5159.700000047684,
+              "x": 520,
+              "handlerEnd": 5159.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 5165.5,
+              "x": 528,
+              "handlerEnd": 5168.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 5183.200000047684,
+              "x": 536,
+              "handlerEnd": 5183.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5175.5,
+          "nextRAF": 5176.100000023842,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.400000035762787,
+          "moveToTransformMs": 10,
+          "moveToNextRAFMs": 10.600000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6313.300000011921,
+              "x": 805,
+              "handlerEnd": 6313.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 6315.400000035763,
+              "x": 813,
+              "handlerEnd": 6318.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 6336.100000023842,
+              "x": 821,
+              "handlerEnd": 6336.200000047684
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6325.900000035763,
+          "nextRAF": 6329.100000023842,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.5,
+          "moveToTransformMs": 10.5,
+          "moveToNextRAFMs": 13.699999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 7463.400000035763,
+              "x": 805,
+              "handlerEnd": 7463.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 7465.300000011921,
+              "x": 813,
+              "handlerEnd": 7468.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 7483.700000047684,
+              "x": 821,
+              "handlerEnd": 7483.700000047684
+            }
+          ],
+          "rendererStates": [],
+          "transform": 7475.400000035763,
+          "nextRAF": 7476.900000035763,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.400000035762787,
+          "moveToTransformMs": 10.100000023841858,
+          "moveToNextRAFMs": 11.600000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 8613.5,
+              "x": 805,
+              "handlerEnd": 8613.600000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 8615.600000023842,
+              "x": 813,
+              "handlerEnd": 8619
+            },
+            {
+              "type": "pointermove",
+              "start": 8634.400000035763,
+              "x": 821,
+              "handlerEnd": 8634.400000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 8625.800000011921,
+          "nextRAF": 8627.600000023842,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.399999976158142,
+          "moveToTransformMs": 10.199999988079071,
+          "moveToNextRAFMs": 12
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 9587.400000035763,
+              "x": 40,
+              "handlerEnd": 9587.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 9588.700000047684,
+              "x": 48,
+              "handlerEnd": 9591.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 9607.100000023842,
+              "x": 56,
+              "handlerEnd": 9607.200000047684
+            }
+          ],
+          "rendererStates": [],
+          "transform": 9598.200000047684,
+          "nextRAF": 9599,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.199999988079071,
+          "moveToTransformMs": 9.5,
+          "moveToNextRAFMs": 10.299999952316284
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10545.800000011921,
+              "x": 40,
+              "handlerEnd": 10545.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 10547,
+              "x": 48,
+              "handlerEnd": 10550.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 10565.400000035763,
+              "x": 56,
+              "handlerEnd": 10565.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10557.100000023842,
+          "nextRAF": 10557.800000011921,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.400000035762787,
+          "moveToTransformMs": 10.100000023841858,
+          "moveToNextRAFMs": 10.800000011920929
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 11504.300000011921,
+              "x": 40,
+              "handlerEnd": 11504.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 11505.5,
+              "x": 48,
+              "handlerEnd": 11508.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 11523.700000047684,
+              "x": 56,
+              "handlerEnd": 11523.700000047684
+            }
+          ],
+          "rendererStates": [],
+          "transform": 11514.900000035763,
+          "nextRAF": 11515.600000023842,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.200000047683716,
+          "moveToTransformMs": 9.400000035762787,
+          "moveToNextRAFMs": 10.100000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5468.200000047684,
+              "x": 520,
+              "handlerEnd": 5468.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 5476.300000011921,
+              "x": 528,
+              "handlerEnd": 5483.200000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 5504.800000011921,
+              "x": 536,
+              "handlerEnd": 5504.900000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5494.700000047684,
+          "nextRAF": 5495.600000023842,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 6.900000035762787,
+          "moveToTransformMs": 18.400000035762787,
+          "moveToNextRAFMs": 19.30000001192093
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6470.100000023842,
+              "x": 520,
+              "handlerEnd": 6470.200000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 6476.200000047684,
+              "x": 528,
+              "handlerEnd": 6479.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 6494.800000011921,
+              "x": 536,
+              "handlerEnd": 6494.900000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6487.300000011921,
+          "nextRAF": 6488,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.5,
+          "moveToTransformMs": 11.099999964237213,
+          "moveToNextRAFMs": 11.799999952316284
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 7450.100000023842,
+              "x": 520,
+              "handlerEnd": 7450.100000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 7451.700000047684,
+              "x": 528,
+              "handlerEnd": 7455.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 7471.800000011921,
+              "x": 536,
+              "handlerEnd": 7471.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 7463.200000047684,
+          "nextRAF": 7463.700000047684,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 4,
+          "moveToTransformMs": 11.5,
+          "moveToNextRAFMs": 12
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 8865.5,
+              "x": 805,
+              "handlerEnd": 8865.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 8867.600000023842,
+              "x": 813,
+              "handlerEnd": 8871
+            },
+            {
+              "type": "pointermove",
+              "start": 8888.800000011921,
+              "x": 821,
+              "handlerEnd": 8888.900000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 8878.300000011921,
+          "nextRAF": 8881.800000011921,
+          "downHandlerMs": 0.20000004768371582,
+          "moveHandlerMs": 3.399999976158142,
+          "moveToTransformMs": 10.699999988079071,
+          "moveToNextRAFMs": 14.199999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10257.800000011921,
+              "x": 805,
+              "handlerEnd": 10257.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 10259.400000035763,
+              "x": 813,
+              "handlerEnd": 10264.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 10285.5,
+              "x": 821,
+              "handlerEnd": 10285.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10273.800000011921,
+          "nextRAF": 10277.800000011921,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 4.899999976158142,
+          "moveToTransformMs": 14.399999976158142,
+          "moveToNextRAFMs": 18.399999976158142
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 11657,
+              "x": 805,
+              "handlerEnd": 11657.100000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 11659.200000047684,
+              "x": 813,
+              "handlerEnd": 11662.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 11679.5,
+              "x": 821,
+              "handlerEnd": 11679.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 11669,
+          "nextRAF": 11672.900000035763,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.199999988079071,
+          "moveToTransformMs": 9.799999952316284,
+          "moveToNextRAFMs": 13.699999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 12628.100000023842,
+              "x": 40,
+              "handlerEnd": 12628.100000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 12629.400000035763,
+              "x": 48,
+              "handlerEnd": 12632.700000047684
+            },
+            {
+              "type": "pointermove",
+              "start": 12647.400000035763,
+              "x": 56,
+              "handlerEnd": 12647.400000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 12639.800000011921,
+          "nextRAF": 12640.700000047684,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.300000011920929,
+          "moveToTransformMs": 10.399999976158142,
+          "moveToNextRAFMs": 11.300000011920929
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 13588.700000047684,
+              "x": 40,
+              "handlerEnd": 13588.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 13590,
+              "x": 48,
+              "handlerEnd": 13593.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 13609.200000047684,
+              "x": 56,
+              "handlerEnd": 13609.200000047684
+            }
+          ],
+          "rendererStates": [],
+          "transform": 13600.100000023842,
+          "nextRAF": 13600.700000047684,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 3.300000011920929,
+          "moveToTransformMs": 10.100000023841858,
+          "moveToNextRAFMs": 10.700000047683716
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 14548.600000023842,
+              "x": 40,
+              "handlerEnd": 14548.600000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 14550,
+              "x": 48,
+              "handlerEnd": 14553.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 14568.300000011921,
+              "x": 56,
+              "handlerEnd": 14568.400000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 14560.200000047684,
+          "nextRAF": 14560.800000011921,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.300000011920929,
+          "moveToTransformMs": 10.200000047683716,
+          "moveToNextRAFMs": 10.800000011920929
+        }
+      ]
+    },
+    "svg-bathymetry": {
+      "bathymetry": true,
+      "renderer": "svg",
+      "url": "http://127.0.0.1:4173/",
+      "runs": [
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 3055,
+              "x": 505,
+              "handlerEnd": 3056.5
+            },
+            {
+              "type": "pointermove",
+              "start": 3074.300000011921,
+              "x": 513,
+              "handlerEnd": 3079.199999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 3117.099999964237,
+              "x": 521,
+              "handlerEnd": 3117.099999964237
+            }
+          ],
+          "rendererStates": [],
+          "transform": 3114,
+          "nextRAF": 3115.399999976158,
+          "downHandlerMs": 1.5,
+          "moveHandlerMs": 4.899999976158142,
+          "moveToTransformMs": 39.69999998807907,
+          "moveToNextRAFMs": 41.09999996423721
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 4121.399999976158,
+              "x": 505,
+              "handlerEnd": 4121.5
+            },
+            {
+              "type": "pointermove",
+              "start": 4124.399999976158,
+              "x": 513,
+              "handlerEnd": 4128.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 4140.899999976158,
+              "x": 521,
+              "handlerEnd": 4140.899999976158
+            }
+          ],
+          "rendererStates": [],
+          "transform": 4135.300000011921,
+          "nextRAF": 4141,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 4.199999988079071,
+          "moveToTransformMs": 10.900000035762787,
+          "moveToNextRAFMs": 16.600000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5189.899999976158,
+              "x": 505,
+              "handlerEnd": 5190.099999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 5199.599999964237,
+              "x": 513,
+              "handlerEnd": 5202.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 5224.199999988079,
+              "x": 521,
+              "handlerEnd": 5224.199999988079
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5209.099999964237,
+          "nextRAF": 5215.899999976158,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 3.300000011920929,
+          "moveToTransformMs": 9.5,
+          "moveToNextRAFMs": 16.30000001192093
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6620.199999988079,
+              "x": 805,
+              "handlerEnd": 6620.199999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 6624,
+              "x": 813,
+              "handlerEnd": 6627.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 6640.800000011921,
+              "x": 821,
+              "handlerEnd": 6640.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6633.399999976158,
+          "nextRAF": 6634.199999988079,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.399999976158142,
+          "moveToTransformMs": 9.399999976158142,
+          "moveToNextRAFMs": 10.199999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 8035.099999964237,
+              "x": 805,
+              "handlerEnd": 8035.099999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 8040,
+              "x": 813,
+              "handlerEnd": 8043.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 8057.5,
+              "x": 821,
+              "handlerEnd": 8057.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 8050.300000011921,
+          "nextRAF": 8051.300000011921,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.399999976158142,
+          "moveToTransformMs": 10.300000011920929,
+          "moveToNextRAFMs": 11.300000011920929
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 9504.800000011921,
+              "x": 805,
+              "handlerEnd": 9504.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 9507.399999976158,
+              "x": 813,
+              "handlerEnd": 9511.199999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 9527.300000011921,
+              "x": 821,
+              "handlerEnd": 9527.399999976158
+            }
+          ],
+          "rendererStates": [],
+          "transform": 9518,
+          "nextRAF": 9518.899999976158,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.800000011920929,
+          "moveToTransformMs": 10.600000023841858,
+          "moveToNextRAFMs": 11.5
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10536.800000011921,
+              "x": 40,
+              "handlerEnd": 10536.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 10538.399999976158,
+              "x": 48,
+              "handlerEnd": 10541.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 10557.399999976158,
+              "x": 56,
+              "handlerEnd": 10557.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10548.599999964237,
+          "nextRAF": 10549.800000011921,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.5,
+          "moveToTransformMs": 10.199999988079071,
+          "moveToNextRAFMs": 11.400000035762787
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 11543.5,
+              "x": 40,
+              "handlerEnd": 11543.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 11547.399999976158,
+              "x": 48,
+              "handlerEnd": 11550.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 11565.899999976158,
+              "x": 56,
+              "handlerEnd": 11566
+            }
+          ],
+          "rendererStates": [],
+          "transform": 11557,
+          "nextRAF": 11558,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.400000035762787,
+          "moveToTransformMs": 9.600000023841858,
+          "moveToNextRAFMs": 10.600000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 12579,
+              "x": 40,
+              "handlerEnd": 12579
+            },
+            {
+              "type": "pointermove",
+              "start": 12583,
+              "x": 48,
+              "handlerEnd": 12586.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 12599.099999964237,
+              "x": 56,
+              "handlerEnd": 12599.099999964237
+            }
+          ],
+          "rendererStates": [],
+          "transform": 12593.199999988079,
+          "nextRAF": 12594.199999988079,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.599999964237213,
+          "moveToTransformMs": 10.199999988079071,
+          "moveToNextRAFMs": 11.199999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5162.599999964237,
+              "x": 505,
+              "handlerEnd": 5162.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 5204,
+              "x": 513,
+              "handlerEnd": 5208.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 5244.699999988079,
+              "x": 521,
+              "handlerEnd": 5244.699999988079
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5216.599999964237,
+          "nextRAF": 5220,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 4.699999988079071,
+          "moveToTransformMs": 12.599999964237213,
+          "moveToNextRAFMs": 16
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6442.699999988079,
+              "x": 505,
+              "handlerEnd": 6442.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 6445.899999976158,
+              "x": 513,
+              "handlerEnd": 6449.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 6486.599999964237,
+              "x": 521,
+              "handlerEnd": 6486.699999988079
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6456.599999964237,
+          "nextRAF": 6479.300000011921,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.800000011920929,
+          "moveToTransformMs": 10.699999988079071,
+          "moveToNextRAFMs": 33.40000003576279
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 7678.800000011921,
+              "x": 505,
+              "handlerEnd": 7678.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 7720.800000011921,
+              "x": 513,
+              "handlerEnd": 7724.199999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 7736.399999976158,
+              "x": 521,
+              "handlerEnd": 7736.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 7730.899999976158,
+          "nextRAF": 7731.800000011921,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.399999976158142,
+          "moveToTransformMs": 10.099999964237213,
+          "moveToNextRAFMs": 11
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10562.699999988079,
+              "x": 805,
+              "handlerEnd": 10562.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 10569.800000011921,
+              "x": 813,
+              "handlerEnd": 10573.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 10586.399999976158,
+              "x": 821,
+              "handlerEnd": 10586.399999976158
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10581.099999964237,
+          "nextRAF": 10586.599999964237,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.799999952316284,
+          "moveToTransformMs": 11.299999952316284,
+          "moveToNextRAFMs": 16.799999952316284
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 13485.800000011921,
+              "x": 805,
+              "handlerEnd": 13486
+            },
+            {
+              "type": "pointermove",
+              "start": 13490.599999964237,
+              "x": 813,
+              "handlerEnd": 13494.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 13507.300000011921,
+              "x": 821,
+              "handlerEnd": 13507.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 13501.699999988079,
+          "nextRAF": 13507.399999976158,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 4,
+          "moveToTransformMs": 11.100000023841858,
+          "moveToNextRAFMs": 16.80000001192093
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 16290.300000011921,
+              "x": 805,
+              "handlerEnd": 16290.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 16295,
+              "x": 813,
+              "handlerEnd": 16298.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 16311.099999964237,
+              "x": 821,
+              "handlerEnd": 16311.199999988079
+            }
+          ],
+          "rendererStates": [],
+          "transform": 16305.800000011921,
+          "nextRAF": 16311.199999988079,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.399999976158142,
+          "moveToTransformMs": 10.800000011920929,
+          "moveToNextRAFMs": 16.19999998807907
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 17498.19999998808,
+              "x": 40,
+              "handlerEnd": 17498.30000001192
+            },
+            {
+              "type": "pointermove",
+              "start": 17503.599999964237,
+              "x": 48,
+              "handlerEnd": 17506.80000001192
+            },
+            {
+              "type": "pointermove",
+              "start": 17521.69999998808,
+              "x": 56,
+              "handlerEnd": 17521.80000001192
+            }
+          ],
+          "rendererStates": [],
+          "transform": 17513.5,
+          "nextRAF": 17514.5,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.200000047683716,
+          "moveToTransformMs": 9.900000035762787,
+          "moveToNextRAFMs": 10.900000035762787
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 18694.399999976158,
+              "x": 40,
+              "handlerEnd": 18694.5
+            },
+            {
+              "type": "pointermove",
+              "start": 18696.899999976158,
+              "x": 48,
+              "handlerEnd": 18700.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 18711.399999976158,
+              "x": 56,
+              "handlerEnd": 18711.399999976158
+            }
+          ],
+          "rendererStates": [],
+          "transform": 18708.599999964237,
+          "nextRAF": 18709.69999998808,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 4,
+          "moveToTransformMs": 11.699999988079071,
+          "moveToNextRAFMs": 12.800000011920929
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 19860.899999976158,
+              "x": 40,
+              "handlerEnd": 19861
+            },
+            {
+              "type": "pointermove",
+              "start": 19863.19999998808,
+              "x": 48,
+              "handlerEnd": 19866.80000001192
+            },
+            {
+              "type": "pointermove",
+              "start": 19878.099999964237,
+              "x": 56,
+              "handlerEnd": 19878.099999964237
+            }
+          ],
+          "rendererStates": [],
+          "transform": 19873.5,
+          "nextRAF": 19874.5,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.600000023841858,
+          "moveToTransformMs": 10.300000011920929,
+          "moveToNextRAFMs": 11.300000011920929
+        }
+      ]
+    },
+    "immediate-canvas": {
+      "bathymetry": true,
+      "renderer": "canvas",
+      "url": "http://127.0.0.1:4173/",
+      "runs": [
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 3679.5,
+              "x": 520,
+              "handlerEnd": 3681.5
+            },
+            {
+              "type": "pointermove",
+              "start": 3689.399999976158,
+              "x": 528,
+              "handlerEnd": 3698.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 3702.5,
+              "x": 536,
+              "handlerEnd": 3702.599999964237
+            }
+          ],
+          "rendererStates": [],
+          "transform": 3698.699999988079,
+          "nextRAF": 3700.300000011921,
+          "downHandlerMs": 2,
+          "moveHandlerMs": 9.300000011920929,
+          "moveToTransformMs": 9.300000011920929,
+          "moveToNextRAFMs": 10.900000035762787
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 4671,
+              "x": 520,
+              "handlerEnd": 4671.099999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 4677.5,
+              "x": 528,
+              "handlerEnd": 4685
+            },
+            {
+              "type": "pointermove",
+              "start": 4694.099999964237,
+              "x": 536,
+              "handlerEnd": 4694.199999988079
+            }
+          ],
+          "rendererStates": [],
+          "transform": 4684.899999976158,
+          "nextRAF": 4685.599999964237,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 7.5,
+          "moveToTransformMs": 7.399999976158142,
+          "moveToNextRAFMs": 8.099999964237213
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5654.800000011921,
+              "x": 520,
+              "handlerEnd": 5654.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 5662.199999988079,
+              "x": 528,
+              "handlerEnd": 5670.099999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 5678.599999964237,
+              "x": 536,
+              "handlerEnd": 5678.599999964237
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5670.099999964237,
+          "nextRAF": 5670.599999964237,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 7.899999976158142,
+          "moveToTransformMs": 7.899999976158142,
+          "moveToNextRAFMs": 8.399999976158142
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6808.199999988079,
+              "x": 805,
+              "handlerEnd": 6808.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 6810.800000011921,
+              "x": 813,
+              "handlerEnd": 6819.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 6830.300000011921,
+              "x": 821,
+              "handlerEnd": 6830.399999976158
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6819.300000011921,
+          "nextRAF": 6820.099999964237,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 8.599999964237213,
+          "moveToTransformMs": 8.5,
+          "moveToNextRAFMs": 9.299999952316284
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 7957.800000011921,
+              "x": 805,
+              "handlerEnd": 7957.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 7960.800000011921,
+              "x": 813,
+              "handlerEnd": 7970.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 7981.599999964237,
+              "x": 821,
+              "handlerEnd": 7981.699999988079
+            }
+          ],
+          "rendererStates": [],
+          "transform": 7970.300000011921,
+          "nextRAF": 7971.300000011921,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 9.599999964237213,
+          "moveToTransformMs": 9.5,
+          "moveToNextRAFMs": 10.5
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 9125.199999988079,
+              "x": 805,
+              "handlerEnd": 9125.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 9126.800000011921,
+              "x": 813,
+              "handlerEnd": 9134.5
+            },
+            {
+              "type": "pointermove",
+              "start": 9144.699999988079,
+              "x": 821,
+              "handlerEnd": 9144.699999988079
+            }
+          ],
+          "rendererStates": [],
+          "transform": 9134.399999976158,
+          "nextRAF": 9135.099999964237,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 7.699999988079071,
+          "moveToTransformMs": 7.599999964237213,
+          "moveToNextRAFMs": 8.299999952316284
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10100.599999964237,
+              "x": 40,
+              "handlerEnd": 10100.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 10101.800000011921,
+              "x": 48,
+              "handlerEnd": 10109.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 10119.099999964237,
+              "x": 56,
+              "handlerEnd": 10119.099999964237
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10109.199999988079,
+          "nextRAF": 10109.800000011921,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 7.5,
+          "moveToTransformMs": 7.399999976158142,
+          "moveToNextRAFMs": 8
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 11057.399999976158,
+              "x": 40,
+              "handlerEnd": 11057.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 11058.599999964237,
+              "x": 48,
+              "handlerEnd": 11065.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 11073.699999988079,
+              "x": 56,
+              "handlerEnd": 11073.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 11065.300000011921,
+          "nextRAF": 11065.899999976158,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 6.800000011920929,
+          "moveToTransformMs": 6.700000047683716,
+          "moveToNextRAFMs": 7.300000011920929
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 12003.599999964237,
+              "x": 40,
+              "handlerEnd": 12003.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 12004.800000011921,
+              "x": 48,
+              "handlerEnd": 12011.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 12020.099999964237,
+              "x": 56,
+              "handlerEnd": 12020.099999964237
+            }
+          ],
+          "rendererStates": [],
+          "transform": 12011.800000011921,
+          "nextRAF": 12012.5,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 7.099999964237213,
+          "moveToTransformMs": 7,
+          "moveToNextRAFMs": 7.699999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5569.300000011921,
+              "x": 520,
+              "handlerEnd": 5569.5
+            },
+            {
+              "type": "pointermove",
+              "start": 5571.599999964237,
+              "x": 528,
+              "handlerEnd": 5582.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 5590.800000011921,
+              "x": 536,
+              "handlerEnd": 5590.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5582.399999976158,
+          "nextRAF": 5583.199999988079,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 10.800000011920929,
+          "moveToTransformMs": 10.800000011920929,
+          "moveToNextRAFMs": 11.600000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6546.800000011921,
+              "x": 520,
+              "handlerEnd": 6546.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 6555.099999964237,
+              "x": 528,
+              "handlerEnd": 6563
+            },
+            {
+              "type": "pointermove",
+              "start": 6571.5,
+              "x": 536,
+              "handlerEnd": 6571.599999964237
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6563,
+          "nextRAF": 6563.599999964237,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 7.900000035762787,
+          "moveToTransformMs": 7.900000035762787,
+          "moveToNextRAFMs": 8.5
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 7528.199999988079,
+              "x": 520,
+              "handlerEnd": 7528.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 7530.099999964237,
+              "x": 528,
+              "handlerEnd": 7537.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 7554.699999988079,
+              "x": 536,
+              "handlerEnd": 7554.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 7537.399999976158,
+          "nextRAF": 7538,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 7.300000011920929,
+          "moveToTransformMs": 7.300000011920929,
+          "moveToNextRAFMs": 7.900000035762787
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 8919.599999964237,
+              "x": 805,
+              "handlerEnd": 8919.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 8921.399999976158,
+              "x": 813,
+              "handlerEnd": 8929.199999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 8941.800000011921,
+              "x": 821,
+              "handlerEnd": 8941.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 8929.199999988079,
+          "nextRAF": 8929.800000011921,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 7.800000011920929,
+          "moveToTransformMs": 7.800000011920929,
+          "moveToNextRAFMs": 8.400000035762787
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10327.5,
+              "x": 805,
+              "handlerEnd": 10327.5
+            },
+            {
+              "type": "pointermove",
+              "start": 10329.800000011921,
+              "x": 813,
+              "handlerEnd": 10338.099999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 10350.800000011921,
+              "x": 821,
+              "handlerEnd": 10350.899999976158
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10338.099999964237,
+          "nextRAF": 10338.800000011921,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 8.299999952316284,
+          "moveToTransformMs": 8.299999952316284,
+          "moveToNextRAFMs": 9
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 11710.800000011921,
+              "x": 805,
+              "handlerEnd": 11710.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 11714.599999964237,
+              "x": 813,
+              "handlerEnd": 11721.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 11734.899999976158,
+              "x": 821,
+              "handlerEnd": 11735
+            }
+          ],
+          "rendererStates": [],
+          "transform": 11721.800000011921,
+          "nextRAF": 11722.300000011921,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 7.200000047683716,
+          "moveToTransformMs": 7.200000047683716,
+          "moveToNextRAFMs": 7.700000047683716
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 12676.699999988079,
+              "x": 40,
+              "handlerEnd": 12676.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 12678,
+              "x": 48,
+              "handlerEnd": 12685.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 12694,
+              "x": 56,
+              "handlerEnd": 12694
+            }
+          ],
+          "rendererStates": [],
+          "transform": 12685.599999964237,
+          "nextRAF": 12686.399999976158,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 7.599999964237213,
+          "moveToTransformMs": 7.599999964237213,
+          "moveToNextRAFMs": 8.399999976158142
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 13618.899999976158,
+              "x": 40,
+              "handlerEnd": 13618.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 13620.199999988079,
+              "x": 48,
+              "handlerEnd": 13627.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 13630.300000011921,
+              "x": 56,
+              "handlerEnd": 13630.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 13627.699999988079,
+          "nextRAF": 13628.300000011921,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 7.5,
+          "moveToTransformMs": 7.5,
+          "moveToNextRAFMs": 8.100000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "canvas",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 14568.399999976158,
+              "x": 40,
+              "handlerEnd": 14568.5
+            },
+            {
+              "type": "pointermove",
+              "start": 14569.599999964237,
+              "x": 48,
+              "handlerEnd": 14577.599999964237
+            },
+            {
+              "type": "pointermove",
+              "start": 14585.899999976158,
+              "x": 56,
+              "handlerEnd": 14586
+            }
+          ],
+          "rendererStates": [],
+          "transform": 14577.599999964237,
+          "nextRAF": 14578.199999988079,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 8,
+          "moveToTransformMs": 8,
+          "moveToNextRAFMs": 8.600000023841858
+        }
+      ]
+    },
+    "immediate-svg": {
+      "bathymetry": true,
+      "renderer": "svg",
+      "url": "http://127.0.0.1:4173/",
+      "runs": [
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 3072.300000011921,
+              "x": 505,
+              "handlerEnd": 3073.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 3088,
+              "x": 513,
+              "handlerEnd": 3093.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 3129.300000011921,
+              "x": 521,
+              "handlerEnd": 3129.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 3093.300000011921,
+          "nextRAF": 3126.199999988079,
+          "downHandlerMs": 1.5,
+          "moveHandlerMs": 5.300000011920929,
+          "moveToTransformMs": 5.300000011920929,
+          "moveToNextRAFMs": 38.19999998807907
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 4142.600000023842,
+              "x": 505,
+              "handlerEnd": 4142.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 4146.300000011921,
+              "x": 513,
+              "handlerEnd": 4149.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 4162.899999976158,
+              "x": 521,
+              "handlerEnd": 4162.899999976158
+            }
+          ],
+          "rendererStates": [],
+          "transform": 4149.699999988079,
+          "nextRAF": 4153.399999976158,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.5,
+          "moveToTransformMs": 3.399999976158142,
+          "moveToNextRAFMs": 7.099999964237213
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5225.699999988079,
+              "x": 505,
+              "handlerEnd": 5225.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 5229.899999976158,
+              "x": 513,
+              "handlerEnd": 5233.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 5245.300000011921,
+              "x": 521,
+              "handlerEnd": 5245.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5233.800000011921,
+          "nextRAF": 5238,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.900000035762787,
+          "moveToTransformMs": 3.900000035762787,
+          "moveToNextRAFMs": 8.100000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6646.600000023842,
+              "x": 805,
+              "handlerEnd": 6646.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 6654.5,
+              "x": 813,
+              "handlerEnd": 6658.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 6671,
+              "x": 821,
+              "handlerEnd": 6671.100000023842
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6658.399999976158,
+          "nextRAF": 6662.699999988079,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.899999976158142,
+          "moveToTransformMs": 3.899999976158142,
+          "moveToNextRAFMs": 8.199999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 8054.300000011921,
+              "x": 805,
+              "handlerEnd": 8054.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 8062.800000011921,
+              "x": 813,
+              "handlerEnd": 8066.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 8079.399999976158,
+              "x": 821,
+              "handlerEnd": 8079.399999976158
+            }
+          ],
+          "rendererStates": [],
+          "transform": 8066.899999976158,
+          "nextRAF": 8070.699999988079,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 4.099999964237213,
+          "moveToTransformMs": 4.099999964237213,
+          "moveToNextRAFMs": 7.899999976158142
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 9480,
+              "x": 805,
+              "handlerEnd": 9480
+            },
+            {
+              "type": "pointermove",
+              "start": 9487.899999976158,
+              "x": 813,
+              "handlerEnd": 9491.5
+            },
+            {
+              "type": "pointermove",
+              "start": 9505.300000011921,
+              "x": 821,
+              "handlerEnd": 9505.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 9491.5,
+          "nextRAF": 9495.800000011921,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.600000023841858,
+          "moveToTransformMs": 3.600000023841858,
+          "moveToNextRAFMs": 7.900000035762787
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10490,
+              "x": 40,
+              "handlerEnd": 10490.100000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 10491.699999988079,
+              "x": 48,
+              "handlerEnd": 10497.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 10504.300000011921,
+              "x": 56,
+              "handlerEnd": 10504.300000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10497.300000011921,
+          "nextRAF": 10502.800000011921,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 5.600000023841858,
+          "moveToTransformMs": 5.600000023841858,
+          "moveToNextRAFMs": 11.100000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 11497.800000011921,
+              "x": 40,
+              "handlerEnd": 11497.899999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 11499.600000023842,
+              "x": 48,
+              "handlerEnd": 11503
+            },
+            {
+              "type": "pointermove",
+              "start": 11512.699999988079,
+              "x": 56,
+              "handlerEnd": 11512.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 11503,
+          "nextRAF": 11506.5,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.399999976158142,
+          "moveToTransformMs": 3.399999976158142,
+          "moveToNextRAFMs": 6.899999976158142
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "50m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 12469.199999988079,
+              "x": 40,
+              "handlerEnd": 12469.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 12470.699999988079,
+              "x": 48,
+              "handlerEnd": 12474.399999976158
+            },
+            {
+              "type": "pointermove",
+              "start": 12487.699999988079,
+              "x": 56,
+              "handlerEnd": 12487.800000011921
+            }
+          ],
+          "rendererStates": [],
+          "transform": 12474.300000011921,
+          "nextRAF": 12478.300000011921,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.699999988079071,
+          "moveToTransformMs": 3.600000023841858,
+          "moveToNextRAFMs": 7.600000023841858
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 5009.600000023842,
+              "x": 505,
+              "handlerEnd": 5009.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 5015.400000035763,
+              "x": 513,
+              "handlerEnd": 5020.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 5048.800000011921,
+              "x": 521,
+              "handlerEnd": 5049
+            }
+          ],
+          "rendererStates": [],
+          "transform": 5020.199999988079,
+          "nextRAF": 5025.699999988079,
+          "downHandlerMs": 0.19999998807907104,
+          "moveHandlerMs": 4.899999976158142,
+          "moveToTransformMs": 4.799999952316284,
+          "moveToNextRAFMs": 10.299999952316284
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 6239.100000023842,
+              "x": 505,
+              "handlerEnd": 6239.100000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 6282.5,
+              "x": 513,
+              "handlerEnd": 6286.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 6298,
+              "x": 521,
+              "handlerEnd": 6298
+            }
+          ],
+          "rendererStates": [],
+          "transform": 6286.400000035763,
+          "nextRAF": 6290.699999988079,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.900000035762787,
+          "moveToTransformMs": 3.900000035762787,
+          "moveToNextRAFMs": 8.199999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "CAN",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 7507.199999988079,
+              "x": 505,
+              "handlerEnd": 7507.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 7548.600000023842,
+              "x": 513,
+              "handlerEnd": 7552.699999988079
+            },
+            {
+              "type": "pointermove",
+              "start": 7565.5,
+              "x": 521,
+              "handlerEnd": 7565.5
+            }
+          ],
+          "rendererStates": [],
+          "transform": 7552.699999988079,
+          "nextRAF": 7557.300000011921,
+          "downHandlerMs": 0.20000004768371582,
+          "moveHandlerMs": 4.099999964237213,
+          "moveToTransformMs": 4.099999964237213,
+          "moveToNextRAFMs": 8.699999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 10346.900000035763,
+              "x": 805,
+              "handlerEnd": 10347
+            },
+            {
+              "type": "pointermove",
+              "start": 10356.400000035763,
+              "x": 813,
+              "handlerEnd": 10359.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 10373.100000023842,
+              "x": 821,
+              "handlerEnd": 10373.100000023842
+            }
+          ],
+          "rendererStates": [],
+          "transform": 10359.800000011921,
+          "nextRAF": 10363.699999988079,
+          "downHandlerMs": 0.09999996423721313,
+          "moveHandlerMs": 3.399999976158142,
+          "moveToTransformMs": 3.399999976158142,
+          "moveToNextRAFMs": 7.299999952316284
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 13180.699999988079,
+              "x": 805,
+              "handlerEnd": 13180.800000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 13189.800000011921,
+              "x": 813,
+              "handlerEnd": 13193.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 13206.400000035763,
+              "x": 821,
+              "handlerEnd": 13206.400000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 13193.300000011921,
+          "nextRAF": 13197.699999988079,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.5,
+          "moveToTransformMs": 3.5,
+          "moveToNextRAFMs": 7.899999976158142
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "DZA",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 15965.300000011921,
+              "x": 805,
+              "handlerEnd": 15965.300000011921
+            },
+            {
+              "type": "pointermove",
+              "start": 15973.199999988079,
+              "x": 813,
+              "handlerEnd": 15977.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 15989.699999988079,
+              "x": 821,
+              "handlerEnd": 15989.699999988079
+            }
+          ],
+          "rendererStates": [],
+          "transform": 15977.300000011921,
+          "nextRAF": 15982.100000023842,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 4.200000047683716,
+          "moveToTransformMs": 4.100000023841858,
+          "moveToNextRAFMs": 8.900000035762787
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 0,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 17135.900000035763,
+              "x": 40,
+              "handlerEnd": 17135.900000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 17137.900000035763,
+              "x": 48,
+              "handlerEnd": 17141.600000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 17147.900000035763,
+              "x": 56,
+              "handlerEnd": 17147.900000035763
+            }
+          ],
+          "rendererStates": [],
+          "transform": 17141.600000023842,
+          "nextRAF": 17145.400000035763,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.699999988079071,
+          "moveToTransformMs": 3.699999988079071,
+          "moveToNextRAFMs": 7.5
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 1,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 18248.80000001192,
+              "x": 40,
+              "handlerEnd": 18248.80000001192
+            },
+            {
+              "type": "pointermove",
+              "start": 18250.900000035763,
+              "x": 48,
+              "handlerEnd": 18254.600000023842
+            },
+            {
+              "type": "pointermove",
+              "start": 18264.600000023842,
+              "x": 56,
+              "handlerEnd": 18264.69999998808
+            }
+          ],
+          "rendererStates": [],
+          "transform": 18254.600000023842,
+          "nextRAF": 18258.600000023842,
+          "downHandlerMs": 0,
+          "moveHandlerMs": 3.699999988079071,
+          "moveToTransformMs": 3.699999988079071,
+          "moveToNextRAFMs": 7.699999988079071
+        },
+        {
+          "bathymetry": true,
+          "renderer": "svg",
+          "detail": "10m",
+          "style": "candidate",
+          "target": "ocean",
+          "trial": 2,
+          "events": [
+            {
+              "type": "pointerdown",
+              "start": 19400.30000001192,
+              "x": 40,
+              "handlerEnd": 19400.400000035763
+            },
+            {
+              "type": "pointermove",
+              "start": 19403.19999998808,
+              "x": 48,
+              "handlerEnd": 19406.5
+            },
+            {
+              "type": "pointermove",
+              "start": 19416.5,
+              "x": 56,
+              "handlerEnd": 19416.600000023842
+            }
+          ],
+          "rendererStates": [],
+          "transform": 19406.5,
+          "nextRAF": 19410.100000023842,
+          "downHandlerMs": 0.10000002384185791,
+          "moveHandlerMs": 3.300000011920929,
+          "moveToTransformMs": 3.300000011920929,
+          "moveToNextRAFMs": 6.900000035762787
+        }
+      ]
+    }
+  }
+}

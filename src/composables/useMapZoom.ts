@@ -532,13 +532,11 @@ export function useMapZoom(
       if (Math.hypot(deltaX, deltaY) <= dragState.threshold) return
       dragState.moved = true
       isDragging.value = true
-      if (touch) {
-        // Start following the finger on this event instead of making the
-        // first visible movement wait for another animation-frame callback.
-        setTransform(nextX, nextY, transform.scale)
-        return
-      }
-      dragState.svg.setPointerCapture(identifier)
+      if (!touch) dragState.svg.setPointerCapture(identifier)
+      // Start following either input on this event. Subsequent movements
+      // stay batched, but the initial drag need not wait another frame.
+      setTransform(nextX, nextY, transform.scale)
+      return
     }
 
     // Pointer events can arrive faster than the browser can paint. Keep only

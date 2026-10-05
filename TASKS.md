@@ -22,6 +22,16 @@ Joakim reports a clearly noticeable desktop improvement, but little noticeable g
 - [x] Run the build and proportionate focused checks, then ask Joakim to verify responsiveness and visual quality on his devices.
 - [ ] Complete real-device and visual acceptance, including first warm detail return and region switching. The browser proxy does not establish actual iPhone latency or first visible paint.
 
+## TASK-007 — Reduce pan and zoom rendering cost
+
+Status: Completed; Joakim accepts the small perceived gain. Added: 2026-10-05. Completed: 2026-10-05.
+
+The [pan/zoom audit](docs/pan-zoom-performance-audit.md) records desktop and mobile Chromium proxy measurements at both detail levels and with both renderers. The implemented canvas hit-path styling removes unnecessary non-scaling stroke calculations while retaining full click geometry and keyboard focus outlines. Mouse dragging now updates immediately after crossing its existing threshold, matching touch behavior; subsequent movements remain RAF-batched. The build and focused automated checks pass. Joakim notices a slight gain in production preview and considers the current behavior acceptable. No further performance investigation is pending for this task.
+
+- [x] Record reproducible movement baselines and compare causal experiments without reducing land coverage.
+- [x] Apply the measured styling and immediate first-drag update, preserving both renderers and detail levels.
+- [x] Run the build and focused automated checks; complete Joakim's acceptance of the small improvement.
+
 ## TASK-001 — Improve Coral Sea Islands and Clipperton geometry
 
 Status: Deferred. Added: 2026-10-01.

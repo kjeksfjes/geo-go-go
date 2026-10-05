@@ -1,0 +1,4988 @@
+{
+  "date": "2026-10-05",
+  "baselineCommit": "f316114",
+  "method": "Disposable local Chromium diagnostics; no visual acceptance. Three-run baseline and causal mobile experiments; single targeted trace/stress/layer/desktop-style samples.",
+  "sets": {
+    "baseline": {
+      "url": "http://127.0.0.1:4178/",
+      "focusReference": "working tree",
+      "commit": "f316114ca96d3f097765d5edbe91988429f47352",
+      "focusSourceSha256": "7a772d3a81bf35549bd52b203775f12325b3fc3aa29351576c4c8bc1d389fcc0",
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": false,
+        "disableHitDuringGesture": false,
+        "touch": true
+      },
+      "network": "Unthrottled loopback; response encodings recorded per run",
+      "runs": [
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": false
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 3671.7000000476837,
+              "end": 4388.5,
+              "elapsedMs": 716.7999999523163,
+              "scriptMs": 6.191999999999975,
+              "taskMs": 399.12599999999986,
+              "layoutMs": 212.74,
+              "styleMs": 7.1480000000000015,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.800000000000182,
+              "maxFrameMs": 16.59999999999991
+            },
+            "highPan": {
+              "start": 4389.900000035763,
+              "end": 5496.900000035763,
+              "elapsedMs": 1107,
+              "scriptMs": 6.3109999999999555,
+              "taskMs": 177.84200000000004,
+              "layoutMs": 3.566999999999987,
+              "styleMs": 10.494999999999997,
+              "presentations": 132,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.199999999999818,
+              "maxFrameMs": 16.699999999999818
+            },
+            "lowZoom": {
+              "start": 6302.400000035763,
+              "end": 6996.800000011921,
+              "elapsedMs": 694.3999999761581,
+              "scriptMs": 4.894999999999983,
+              "taskMs": 240.72899999999998,
+              "layoutMs": 57.49799999999994,
+              "styleMs": 6.474000000000007,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9,
+              "maxFrameMs": 9.299999999999272
+            },
+            "lowPan": {
+              "start": 6998,
+              "end": 8098.5,
+              "elapsedMs": 1100.5,
+              "scriptMs": 5.013999999999963,
+              "taskMs": 170.81999999999996,
+              "layoutMs": 2.0290000000000585,
+              "styleMs": 9.590000000000002,
+              "presentations": 132,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.099999999999454,
+              "maxFrameMs": 9.300000000000182
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 42.80000001192093,
+              "landHits": 114
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 21.099999964237213,
+              "landHits": 98
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": false
+          },
+          "renderer": "canvas",
+          "repeat": 1,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 2921.699999988079,
+              "end": 3632.399999976158,
+              "elapsedMs": 710.6999999880791,
+              "scriptMs": 5.55300000000003,
+              "taskMs": 380.0959999999998,
+              "layoutMs": 204.99800000000002,
+              "styleMs": 6.450999999999999,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.099999999999909,
+              "maxFrameMs": 16.800000000000182
+            },
+            "highPan": {
+              "start": 3634.099999964237,
+              "end": 4740.5,
+              "elapsedMs": 1106.4000000357628,
+              "scriptMs": 7.299999999999973,
+              "taskMs": 177.05700000000002,
+              "layoutMs": 3.337000000000007,
+              "styleMs": 10.620999999999999,
+              "presentations": 133,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.800000000000182,
+              "maxFrameMs": 9.200000000000273
+            },
+            "lowZoom": {
+              "start": 5479.699999988079,
+              "end": 6173.699999988079,
+              "elapsedMs": 694,
+              "scriptMs": 4.8360000000000625,
+              "taskMs": 223.23199999999989,
+              "layoutMs": 57.495999999999995,
+              "styleMs": 6.314,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9,
+              "maxFrameMs": 9.200000000000728
+            },
+            "lowPan": {
+              "start": 6175,
+              "end": 7274.599999964237,
+              "elapsedMs": 1099.5999999642372,
+              "scriptMs": 5.772999999999917,
+              "taskMs": 164.253,
+              "layoutMs": 1.7939999999999623,
+              "styleMs": 8.952000000000002,
+              "presentations": 132,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.899999999999636,
+              "maxFrameMs": 9.300000000000182
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 41,
+              "landHits": 114
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 20.899999976158142,
+              "landHits": 98
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": false
+          },
+          "renderer": "canvas",
+          "repeat": 2,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7020902,
+          "phases": {
+            "highZoom": {
+              "start": 2908.599999964237,
+              "end": 3612.399999976158,
+              "elapsedMs": 703.8000000119209,
+              "scriptMs": 5.338999999999983,
+              "taskMs": 364.76100000000014,
+              "layoutMs": 198.933,
+              "styleMs": 6.278000000000002,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.600000000000364,
+              "maxFrameMs": 16.700000000000273
+            },
+            "highPan": {
+              "start": 3613.599999964237,
+              "end": 4704.199999988079,
+              "elapsedMs": 1090.6000000238419,
+              "scriptMs": 6.365000000000009,
+              "taskMs": 181.49900000000008,
+              "layoutMs": 3.356999999999999,
+              "styleMs": 10.366,
+              "presentations": 131,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.799999999999727,
+              "maxFrameMs": 9.300000000000182
+            },
+            "lowZoom": {
+              "start": 5444.800000011921,
+              "end": 6146.099999964237,
+              "elapsedMs": 701.2999999523163,
+              "scriptMs": 4.510999999999987,
+              "taskMs": 217.90500000000003,
+              "layoutMs": 56.28200000000005,
+              "styleMs": 6.228999999999998,
+              "presentations": 85,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.300000000000182,
+              "maxFrameMs": 9.400000000000546
+            },
+            "lowPan": {
+              "start": 6148.300000011921,
+              "end": 7271.699999988079,
+              "elapsedMs": 1123.3999999761581,
+              "scriptMs": 5.790000000000017,
+              "taskMs": 176.5859999999999,
+              "layoutMs": 1.9639999999999658,
+              "styleMs": 11.137999999999995,
+              "presentations": 134,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.300000000000182,
+              "maxFrameMs": 15.800000000000182
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 40,
+              "landHits": 114
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 20.80000001192093,
+              "landHits": 97
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": false
+          },
+          "renderer": "svg",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 3046.199999988079,
+              "end": 4942.899999976158,
+              "elapsedMs": 1896.699999988079,
+              "scriptMs": 14.649999999999997,
+              "taskMs": 1617.1039999999998,
+              "layoutMs": 228.369,
+              "styleMs": 7.923999999999997,
+              "presentations": 73,
+              "svgFallbackFrames": 73,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 42.29999999999973,
+              "maxFrameMs": 50.100000000000364
+            },
+            "highPan": {
+              "start": 4944.5,
+              "end": 6676.399999976158,
+              "elapsedMs": 1731.8999999761581,
+              "scriptMs": 14.27299999999998,
+              "taskMs": 997.157,
+              "layoutMs": 3.255000000000008,
+              "styleMs": 10.329000000000004,
+              "presentations": 169,
+              "svgFallbackFrames": 169,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 16.800000000000182,
+              "maxFrameMs": 25.400000000000546
+            },
+            "lowZoom": {
+              "start": 7981.399999976158,
+              "end": 8669.099999964237,
+              "elapsedMs": 687.6999999880791,
+              "scriptMs": 9.680000000000021,
+              "taskMs": 259.48300000000035,
+              "layoutMs": 61.693,
+              "styleMs": 6.229000000000005,
+              "presentations": 83,
+              "svgFallbackFrames": 83,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.199999999998909,
+              "maxFrameMs": 9.300000000000182
+            },
+            "lowPan": {
+              "start": 8670.399999976158,
+              "end": 9777,
+              "elapsedMs": 1106.6000000238419,
+              "scriptMs": 12.485999999999997,
+              "taskMs": 193.73700000000048,
+              "layoutMs": 1.8780000000000463,
+              "styleMs": 10.529999999999998,
+              "presentations": 133,
+              "svgFallbackFrames": 133,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 9.399999999999636
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 172.19999998807907,
+              "landHits": 121
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 40.19999998807907,
+              "landHits": 101
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": false
+          },
+          "renderer": "svg",
+          "repeat": 1,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 2983.900000035763,
+              "end": 4861.900000035763,
+              "elapsedMs": 1878,
+              "scriptMs": 14.78299999999999,
+              "taskMs": 1518.5529999999999,
+              "layoutMs": 226.584,
+              "styleMs": 6.534000000000002,
+              "presentations": 76,
+              "svgFallbackFrames": 76,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 41.70000000000027,
+              "maxFrameMs": 50
+            },
+            "highPan": {
+              "start": 4863.100000023842,
+              "end": 6587,
+              "elapsedMs": 1723.8999999761581,
+              "scriptMs": 14.999999999999957,
+              "taskMs": 988.0329999999997,
+              "layoutMs": 3.25700000000001,
+              "styleMs": 10.052999999999999,
+              "presentations": 171,
+              "svgFallbackFrames": 171,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.100000000000364,
+              "maxFrameMs": 33.29999999999927
+            },
+            "lowZoom": {
+              "start": 7842.100000023842,
+              "end": 8538.199999988079,
+              "elapsedMs": 696.0999999642372,
+              "scriptMs": 9.207999999999995,
+              "taskMs": 258.8400000000002,
+              "layoutMs": 61.76899999999996,
+              "styleMs": 6.133000000000006,
+              "presentations": 83,
+              "svgFallbackFrames": 83,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.100000000000364,
+              "maxFrameMs": 16.800000000000182
+            },
+            "lowPan": {
+              "start": 8539.400000035763,
+              "end": 9646.600000023842,
+              "elapsedMs": 1107.199999988079,
+              "scriptMs": 11.175000000000047,
+              "taskMs": 190.9269999999994,
+              "layoutMs": 1.8620000000000303,
+              "styleMs": 9.704999999999991,
+              "presentations": 132,
+              "svgFallbackFrames": 132,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 16.80000000000109
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 172.80000001192093,
+              "landHits": 121
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 42.60000002384186,
+              "landHits": 101
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": false
+          },
+          "renderer": "svg",
+          "repeat": 2,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 3001.699999988079,
+              "end": 4888,
+              "elapsedMs": 1886.300000011921,
+              "scriptMs": 14.868999999999966,
+              "taskMs": 1569.7649999999999,
+              "layoutMs": 231.08800000000002,
+              "styleMs": 6.745999999999999,
+              "presentations": 76,
+              "svgFallbackFrames": 76,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 49.70000000000027,
+              "maxFrameMs": 50.5
+            },
+            "highPan": {
+              "start": 4889.600000023842,
+              "end": 6605.300000011921,
+              "elapsedMs": 1715.699999988079,
+              "scriptMs": 13.792000000000026,
+              "taskMs": 1025.344,
+              "layoutMs": 3.108999999999973,
+              "styleMs": 10.203000000000003,
+              "presentations": 168,
+              "svgFallbackFrames": 168,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 16.800000000000182,
+              "maxFrameMs": 33.19999999999982
+            },
+            "lowZoom": {
+              "start": 7860.300000011921,
+              "end": 8555,
+              "elapsedMs": 694.6999999880791,
+              "scriptMs": 10.390000000000011,
+              "taskMs": 261.66400000000056,
+              "layoutMs": 63.50899999999993,
+              "styleMs": 7.246999999999996,
+              "presentations": 83,
+              "svgFallbackFrames": 83,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.700000000000728,
+              "maxFrameMs": 16.699999999999818
+            },
+            "lowPan": {
+              "start": 8557.400000035763,
+              "end": 9673.900000035763,
+              "elapsedMs": 1116.5,
+              "scriptMs": 11.458999999999996,
+              "taskMs": 192.88400000000027,
+              "layoutMs": 2.063000000000037,
+              "styleMs": 11.519000000000002,
+              "presentations": 133,
+              "svgFallbackFrames": 133,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.5,
+              "maxFrameMs": 16.600000000000364
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 163.89999997615814,
+              "landHits": 121
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 41.60000002384186,
+              "landHits": 101
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8641.299999952316,
+              "end": 10381.399999976158,
+              "elapsedMs": 1740.1000000238419,
+              "scriptMs": 27.468000000000046,
+              "taskMs": 1514.0950000000003,
+              "layoutMs": 791.4499999999999,
+              "styleMs": 35.872,
+              "presentations": 77,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 34.30000000000109,
+              "maxFrameMs": 49.100000000000364
+            },
+            "highPan": {
+              "start": 10383.899999976158,
+              "end": 12003,
+              "elapsedMs": 1619.1000000238419,
+              "scriptMs": 21.596999999999866,
+              "taskMs": 569.4569999999999,
+              "layoutMs": 7.78599999999996,
+              "styleMs": 33.12699999999999,
+              "presentations": 191,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 33.20000000000073
+            },
+            "highPinch": {
+              "start": 12005.899999976158,
+              "end": 13713.899999976158,
+              "elapsedMs": 1708,
+              "scriptMs": 21.35700000000007,
+              "taskMs": 985.7230000000002,
+              "layoutMs": 501.91500000000013,
+              "styleMs": 24.272000000000016,
+              "presentations": 144,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.5,
+              "maxFrameMs": 33.29999999999927
+            },
+            "lowZoom": {
+              "start": 15248.099999964237,
+              "end": 16396,
+              "elapsedMs": 1147.9000000357628,
+              "scriptMs": 21.185999999999705,
+              "taskMs": 886.9600000000002,
+              "layoutMs": 215.06800000000004,
+              "styleMs": 28.28300000000003,
+              "presentations": 81,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.19999999999891,
+              "maxFrameMs": 25.799999999999272
+            },
+            "lowPan": {
+              "start": 16399,
+              "end": 18028.5,
+              "elapsedMs": 1629.5,
+              "scriptMs": 15.258000000000216,
+              "taskMs": 563.3560000000007,
+              "layoutMs": 5.006000000000066,
+              "styleMs": 32.22699999999995,
+              "presentations": 192,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.19999999999709,
+              "maxFrameMs": 33.29999999999927
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 131.80000001192093,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 46.80000001192093,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 1,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8437.400000035763,
+              "end": 10123.100000023842,
+              "elapsedMs": 1685.699999988079,
+              "scriptMs": 23.19199999999988,
+              "taskMs": 1450.4499999999991,
+              "layoutMs": 760.8059999999999,
+              "styleMs": 29.894000000000005,
+              "presentations": 80,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 34.19999999999891,
+              "maxFrameMs": 40.79999999999927
+            },
+            "highPan": {
+              "start": 10125.900000035763,
+              "end": 11732.800000011921,
+              "elapsedMs": 1606.8999999761581,
+              "scriptMs": 24.495000000000154,
+              "taskMs": 593.7680000000007,
+              "layoutMs": 6.5950000000000175,
+              "styleMs": 39.086999999999996,
+              "presentations": 188,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 33.399999999999636
+            },
+            "highPinch": {
+              "start": 11736.300000011921,
+              "end": 13464.800000011921,
+              "elapsedMs": 1728.5,
+              "scriptMs": 19.28099999999988,
+              "taskMs": 973.7639999999992,
+              "layoutMs": 489.2150000000001,
+              "styleMs": 22.460000000000008,
+              "presentations": 147,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.399999999999636,
+              "maxFrameMs": 33.30000000000109
+            },
+            "lowZoom": {
+              "start": 14990.200000047684,
+              "end": 16122.300000011921,
+              "elapsedMs": 1132.0999999642372,
+              "scriptMs": 16.058999999999823,
+              "taskMs": 871.4270000000006,
+              "layoutMs": 212.51,
+              "styleMs": 28.356999999999964,
+              "presentations": 82,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 24.600000000000364,
+              "maxFrameMs": 33.80000000000109
+            },
+            "lowPan": {
+              "start": 16125.700000047684,
+              "end": 17739.80000001192,
+              "elapsedMs": 1614.0999999642372,
+              "scriptMs": 14.238000000000195,
+              "taskMs": 558.7420000000005,
+              "layoutMs": 7.536999999999905,
+              "styleMs": 32.416,
+              "presentations": 191,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 24.200000000000728
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 128.79999995231628,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 45.700000047683716,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 2,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8534.600000023842,
+              "end": 10222.600000023842,
+              "elapsedMs": 1688,
+              "scriptMs": 26.16200000000002,
+              "taskMs": 1447.7140000000004,
+              "layoutMs": 780.5690000000001,
+              "styleMs": 30.569,
+              "presentations": 80,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 34.100000000000364,
+              "maxFrameMs": 34.400000000001455
+            },
+            "highPan": {
+              "start": 10226.199999988079,
+              "end": 11836.5,
+              "elapsedMs": 1610.300000011921,
+              "scriptMs": 23.97799999999983,
+              "taskMs": 591.2100000000003,
+              "layoutMs": 8.454999999999991,
+              "styleMs": 34.63799999999999,
+              "presentations": 190,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 25.799999999999272
+            },
+            "highPinch": {
+              "start": 11839.199999988079,
+              "end": 13612,
+              "elapsedMs": 1772.800000011921,
+              "scriptMs": 24.994000000000185,
+              "taskMs": 1021.0319999999999,
+              "layoutMs": 513.271,
+              "styleMs": 24.355000000000015,
+              "presentations": 148,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.69999999999891,
+              "maxFrameMs": 34.099999999998545
+            },
+            "lowZoom": {
+              "start": 15155.899999976158,
+              "end": 16253.699999988079,
+              "elapsedMs": 1097.800000011921,
+              "scriptMs": 15.503999999999962,
+              "taskMs": 839.2699999999991,
+              "layoutMs": 210.63300000000007,
+              "styleMs": 24.098999999999982,
+              "presentations": 80,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.19999999999891,
+              "maxFrameMs": 33.5
+            },
+            "lowPan": {
+              "start": 16257,
+              "end": 17829.899999976158,
+              "elapsedMs": 1572.8999999761581,
+              "scriptMs": 18.9379999999999,
+              "taskMs": 552.525000000001,
+              "layoutMs": 4.1799999999998505,
+              "styleMs": 27.924000000000003,
+              "presentations": 185,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 25.899999999997817
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 120.80000001192093,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 52.19999998807907,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "svg",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8725,
+              "end": 10554.400000035763,
+              "elapsedMs": 1829.4000000357628,
+              "scriptMs": 41.696999999999875,
+              "taskMs": 1622.0850000000003,
+              "layoutMs": 845.4630000000001,
+              "styleMs": 23.592000000000002,
+              "presentations": 78,
+              "svgFallbackFrames": 78,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 41.100000000000364,
+              "maxFrameMs": 41.70000000000073
+            },
+            "highPan": {
+              "start": 10556.5,
+              "end": 12246.699999988079,
+              "elapsedMs": 1690.199999988079,
+              "scriptMs": 48.660000000000146,
+              "taskMs": 638.7389999999992,
+              "layoutMs": 5.944999999999978,
+              "styleMs": 30.471999999999984,
+              "presentations": 198,
+              "svgFallbackFrames": 198,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.300000000001091,
+              "maxFrameMs": 33.399999999999636
+            },
+            "highPinch": {
+              "start": 12249.800000011921,
+              "end": 14055.400000035763,
+              "elapsedMs": 1805.6000000238419,
+              "scriptMs": 35.74599999999983,
+              "taskMs": 1048.5869999999995,
+              "layoutMs": 526.664,
+              "styleMs": 18.93700000000001,
+              "presentations": 155,
+              "svgFallbackFrames": 155,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.600000000000364,
+              "maxFrameMs": 33.5
+            },
+            "lowZoom": {
+              "start": 15531.600000023842,
+              "end": 16655.19999998808,
+              "elapsedMs": 1123.5999999642372,
+              "scriptMs": 28.62000000000009,
+              "taskMs": 876.8589999999996,
+              "layoutMs": 238.15600000000003,
+              "styleMs": 22.08199999999999,
+              "presentations": 82,
+              "svgFallbackFrames": 82,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 24.80000000000109,
+              "maxFrameMs": 33.399999999999636
+            },
+            "lowPan": {
+              "start": 16658.19999998808,
+              "end": 18272.80000001192,
+              "elapsedMs": 1614.6000000238419,
+              "scriptMs": 31.15900000000016,
+              "taskMs": 585.4780000000002,
+              "layoutMs": 3.4570000000000434,
+              "styleMs": 35.59799999999999,
+              "presentations": 190,
+              "svgFallbackFrames": 190,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 34.29999999999927
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 496.2000000476837,
+              "landHits": 122
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 72.89999997615814,
+              "landHits": 39
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "svg",
+          "repeat": 1,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8721.400000035763,
+              "end": 10507.900000035763,
+              "elapsedMs": 1786.5,
+              "scriptMs": 44.91299999999998,
+              "taskMs": 1598.8250000000014,
+              "layoutMs": 827.1650000000001,
+              "styleMs": 25.805000000000007,
+              "presentations": 77,
+              "svgFallbackFrames": 77,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 34.29999999999927,
+              "maxFrameMs": 41.70000000000073
+            },
+            "highPan": {
+              "start": 10510.5,
+              "end": 12165.600000023842,
+              "elapsedMs": 1655.1000000238419,
+              "scriptMs": 51.01900000000015,
+              "taskMs": 640.4680000000003,
+              "layoutMs": 6.097000000000019,
+              "styleMs": 30.258000000000006,
+              "presentations": 193,
+              "svgFallbackFrames": 193,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.299999999999272,
+              "maxFrameMs": 33.20000000000073
+            },
+            "highPinch": {
+              "start": 12168.300000011921,
+              "end": 13991.600000023842,
+              "elapsedMs": 1823.300000011921,
+              "scriptMs": 38.283000000000065,
+              "taskMs": 1076.2520000000002,
+              "layoutMs": 529.673,
+              "styleMs": 17.868999999999996,
+              "presentations": 157,
+              "svgFallbackFrames": 157,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.399999999999636,
+              "maxFrameMs": 33.29999999999927
+            },
+            "lowZoom": {
+              "start": 15409.699999988079,
+              "end": 16532.900000035763,
+              "elapsedMs": 1123.2000000476837,
+              "scriptMs": 28.066000000000145,
+              "taskMs": 878.5849999999992,
+              "layoutMs": 239.12399999999988,
+              "styleMs": 20.279000000000018,
+              "presentations": 81,
+              "svgFallbackFrames": 81,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 24.899999999999636,
+              "maxFrameMs": 25.100000000000364
+            },
+            "lowPan": {
+              "start": 16535.400000035763,
+              "end": 18133.400000035763,
+              "elapsedMs": 1598,
+              "scriptMs": 34.52599999999961,
+              "taskMs": 576.1040000000008,
+              "layoutMs": 4.118000000000066,
+              "styleMs": 37.92300000000001,
+              "presentations": 187,
+              "svgFallbackFrames": 187,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 33.29999999999927
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 482.69999998807907,
+              "landHits": 122
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 77.69999998807907,
+              "landHits": 39
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "svg",
+          "repeat": 2,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8877,
+              "end": 10711.599999964237,
+              "elapsedMs": 1834.5999999642372,
+              "scriptMs": 45.64500000000016,
+              "taskMs": 1626.2369999999996,
+              "layoutMs": 851.6170000000001,
+              "styleMs": 24.47200000000001,
+              "presentations": 78,
+              "svgFallbackFrames": 78,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 41.600000000000364,
+              "maxFrameMs": 42.70000000000073
+            },
+            "highPan": {
+              "start": 10714.099999964237,
+              "end": 12370.699999988079,
+              "elapsedMs": 1656.6000000238419,
+              "scriptMs": 47.537999999999855,
+              "taskMs": 618.2929999999996,
+              "layoutMs": 5.906999999999996,
+              "styleMs": 31.745999999999995,
+              "presentations": 194,
+              "svgFallbackFrames": 194,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 33
+            },
+            "highPinch": {
+              "start": 12373.300000011921,
+              "end": 14220.599999964237,
+              "elapsedMs": 1847.2999999523163,
+              "scriptMs": 39.09099999999999,
+              "taskMs": 1071.6129999999994,
+              "layoutMs": 529.5600000000001,
+              "styleMs": 21.13699999999999,
+              "presentations": 160,
+              "svgFallbackFrames": 160,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.19999999999891,
+              "maxFrameMs": 33.69999999999891
+            },
+            "lowZoom": {
+              "start": 15662.300000011921,
+              "end": 16754.30000001192,
+              "elapsedMs": 1092,
+              "scriptMs": 27.873000000000037,
+              "taskMs": 842.181,
+              "layoutMs": 225.87,
+              "styleMs": 18.143999999999995,
+              "presentations": 82,
+              "svgFallbackFrames": 82,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 24.899999999999636,
+              "maxFrameMs": 25.30000000000109
+            },
+            "lowPan": {
+              "start": 16757.30000001192,
+              "end": 18371.599999964237,
+              "elapsedMs": 1614.2999999523163,
+              "scriptMs": 34.32699999999977,
+              "taskMs": 604.4809999999998,
+              "layoutMs": 8.413000000000004,
+              "styleMs": 34.64300000000001,
+              "presentations": 188,
+              "svgFallbackFrames": 188,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.299999999999272,
+              "maxFrameMs": 32.5
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 501.19999998807907,
+              "landHits": 122
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 74.80000001192093,
+              "landHits": 39
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        }
+      ]
+    },
+    "trace": {
+      "url": "http://127.0.0.1:4178/",
+      "focusReference": "working tree",
+      "commit": "f316114ca96d3f097765d5edbe91988429f47352",
+      "focusSourceSha256": "7a772d3a81bf35549bd52b203775f12325b3fc3aa29351576c4c8bc1d389fcc0",
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": true,
+        "disableHitDuringGesture": false,
+        "freezeHitTransform": false,
+        "stressZoom": false,
+        "lowPinch": true,
+        "touch": true
+      },
+      "network": "Unthrottled loopback; response encodings recorded per run",
+      "runs": [
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": false
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 2951.699999988079,
+              "end": 3703.899999976158,
+              "elapsedMs": 752.1999999880791,
+              "scriptMs": 6.235999999999963,
+              "taskMs": 391.56499999999994,
+              "layoutMs": 207.545,
+              "styleMs": 7.037999999999996,
+              "presentations": 88,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.099999999999909,
+              "maxFrameMs": 16.700000000000273,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 8.93899999999999,
+                  "maxMs": 1.561,
+                  "count": 279
+                },
+                "EventDispatch": {
+                  "totalMs": 2.9219999999999993,
+                  "maxMs": 0.171,
+                  "count": 45
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 7.16899999999999,
+                  "maxMs": 1.658,
+                  "count": 187
+                },
+                "Layout": {
+                  "totalMs": 207.08299999999988,
+                  "maxMs": 7.004,
+                  "count": 48
+                },
+                "PrePaint": {
+                  "totalMs": 9.556000000000008,
+                  "maxMs": 0.367,
+                  "count": 132
+                },
+                "Paint": {
+                  "totalMs": 21.38800000000001,
+                  "maxMs": 0.449,
+                  "count": 325
+                },
+                "HitTest": {
+                  "totalMs": 1.6089999999999998,
+                  "maxMs": 0.158,
+                  "count": 50
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highPan": {
+              "start": 3761.300000011921,
+              "end": 4878.5,
+              "elapsedMs": 1117.199999988079,
+              "scriptMs": 6.755000000000011,
+              "taskMs": 186.21100000000013,
+              "layoutMs": 4.636000000000001,
+              "styleMs": 10.567,
+              "presentations": 134,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.799999999999272,
+              "maxFrameMs": 9.300000000000182,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 8.692999999999973,
+                  "maxMs": 0.218,
+                  "count": 477
+                },
+                "PrePaint": {
+                  "totalMs": 2.8719999999999954,
+                  "maxMs": 0.201,
+                  "count": 147
+                },
+                "HitTest": {
+                  "totalMs": 1.565,
+                  "maxMs": 0.213,
+                  "count": 12
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 10.675999999999998,
+                  "maxMs": 2.573,
+                  "count": 179
+                },
+                "EventDispatch": {
+                  "totalMs": 15.96,
+                  "maxMs": 4.095,
+                  "count": 120
+                },
+                "Paint": {
+                  "totalMs": 2.8079999999999914,
+                  "maxMs": 0.205,
+                  "count": 183
+                },
+                "Layout": {
+                  "totalMs": 4.179,
+                  "maxMs": 1.928,
+                  "count": 46
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "lowZoom": {
+              "start": 5775.300000011921,
+              "end": 6468.800000011921,
+              "elapsedMs": 693.5,
+              "scriptMs": 5.094000000000043,
+              "taskMs": 226.12200000000016,
+              "layoutMs": 57.19799999999997,
+              "styleMs": 6.413000000000002,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9,
+              "maxFrameMs": 9.300000000000182,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 9.309999999999981,
+                  "maxMs": 1.728,
+                  "count": 287
+                },
+                "EventDispatch": {
+                  "totalMs": 2.397,
+                  "maxMs": 0.147,
+                  "count": 45
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 6.54599999999999,
+                  "maxMs": 1.515,
+                  "count": 187
+                },
+                "Layout": {
+                  "totalMs": 56.87300000000002,
+                  "maxMs": 1.881,
+                  "count": 48
+                },
+                "PrePaint": {
+                  "totalMs": 8.760000000000002,
+                  "maxMs": 0.286,
+                  "count": 131
+                },
+                "Paint": {
+                  "totalMs": 18.099000000000004,
+                  "maxMs": 0.278,
+                  "count": 324
+                },
+                "HitTest": {
+                  "totalMs": 1.416,
+                  "maxMs": 0.081,
+                  "count": 48
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "lowPan": {
+              "start": 6530.399999976158,
+              "end": 7627.399999976158,
+              "elapsedMs": 1097,
+              "scriptMs": 5.368000000000039,
+              "taskMs": 172.69999999999985,
+              "layoutMs": 3.255000000000008,
+              "styleMs": 9.382000000000001,
+              "presentations": 132,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.899999999999636,
+              "maxFrameMs": 9.200000000000728,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 6.780999999999977,
+                  "maxMs": 0.136,
+                  "count": 475
+                },
+                "PrePaint": {
+                  "totalMs": 2.899999999999996,
+                  "maxMs": 0.17,
+                  "count": 145
+                },
+                "HitTest": {
+                  "totalMs": 0.8940000000000002,
+                  "maxMs": 0.168,
+                  "count": 12
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 9.539999999999997,
+                  "maxMs": 2.312,
+                  "count": 179
+                },
+                "EventDispatch": {
+                  "totalMs": 13.564999999999996,
+                  "maxMs": 3.756,
+                  "count": 121
+                },
+                "Paint": {
+                  "totalMs": 2.667999999999991,
+                  "maxMs": 0.189,
+                  "count": 183
+                },
+                "Layout": {
+                  "totalMs": 2.8309999999999995,
+                  "maxMs": 0.621,
+                  "count": 46
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 41.5,
+              "landHits": 114
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 21.799999952316284,
+              "landHits": 98
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": [
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 1,
+              "ms": 6.400000035762787
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 1,
+              "ms": 36.60000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 1,
+              "ms": 17.899999976158142
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 2,
+              "ms": 4.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 2,
+              "ms": 26.400000035762787
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 2,
+              "ms": 35.09999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 3,
+              "ms": 19.399999976158142
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 72.10000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 3,
+              "ms": 96.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 56.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 51.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 48.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 4,
+              "ms": 3.199999988079071
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 4,
+              "ms": 50.59999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 4,
+              "ms": 98.40000003576279
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 4,
+              "ms": 53.200000047683716
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 5,
+              "ms": 2.399999976158142
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 5,
+              "ms": 58.39999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 5,
+              "ms": 98.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 5,
+              "ms": 67.19999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 5,
+              "ms": 78.59999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 6,
+              "ms": 3.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 25.30000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 6,
+              "ms": 36.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 20.299999952316284
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 19.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 19.100000023841858
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 7,
+              "ms": 18
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 7,
+              "ms": 52.30000001192093
+            }
+          ]
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8469.300000011921,
+              "end": 10216.300000011921,
+              "elapsedMs": 1747,
+              "scriptMs": 30.550000000000075,
+              "taskMs": 1510.707,
+              "layoutMs": 778.878,
+              "styleMs": 38.81999999999998,
+              "presentations": 79,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 34.19999999999891,
+              "maxFrameMs": 42.399999999999636,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 41.816000000000024,
+                  "maxMs": 8.032,
+                  "count": 274
+                },
+                "EventDispatch": {
+                  "totalMs": 15.024999999999999,
+                  "maxMs": 0.926,
+                  "count": 45
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 39.27300000000002,
+                  "maxMs": 6.447,
+                  "count": 187
+                },
+                "Layout": {
+                  "totalMs": 776.6840000000004,
+                  "maxMs": 19.339,
+                  "count": 48
+                },
+                "PrePaint": {
+                  "totalMs": 43.679000000000045,
+                  "maxMs": 1.465,
+                  "count": 127
+                },
+                "Paint": {
+                  "totalMs": 97.32400000000005,
+                  "maxMs": 1.91,
+                  "count": 324
+                },
+                "HitTest": {
+                  "totalMs": 7.063999999999998,
+                  "maxMs": 1.011,
+                  "count": 52
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highPan": {
+              "start": 10272,
+              "end": 11848.899999976158,
+              "elapsedMs": 1576.8999999761581,
+              "scriptMs": 24.6090000000001,
+              "taskMs": 596.3180000000001,
+              "layoutMs": 11.780999999999931,
+              "styleMs": 35.14200000000001,
+              "presentations": 186,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.299999999999272,
+              "maxFrameMs": 24.899999999999636,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 39.16300000000002,
+                  "maxMs": 10.773,
+                  "count": 384
+                },
+                "PrePaint": {
+                  "totalMs": 11.22400000000001,
+                  "maxMs": 1.01,
+                  "count": 232
+                },
+                "HitTest": {
+                  "totalMs": 7.952000000000002,
+                  "maxMs": 0.827,
+                  "count": 49
+                },
+                "EventDispatch": {
+                  "totalMs": 53.97300000000001,
+                  "maxMs": 22.648,
+                  "count": 99
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 36.498999999999974,
+                  "maxMs": 10.363,
+                  "count": 172
+                },
+                "Layout": {
+                  "totalMs": 11.355999999999998,
+                  "maxMs": 1.026,
+                  "count": 45
+                },
+                "Paint": {
+                  "totalMs": 14.124,
+                  "maxMs": 0.969,
+                  "count": 160
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highPinch": {
+              "start": 11920.300000011921,
+              "end": 13665.5,
+              "elapsedMs": 1745.199999988079,
+              "scriptMs": 22.468000000000153,
+              "taskMs": 1045.4430000000007,
+              "layoutMs": 513.901,
+              "styleMs": 29.840000000000007,
+              "presentations": 147,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.600000000000364,
+              "maxFrameMs": 33.30000000000109,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 35.22200000000004,
+                  "maxMs": 10.03,
+                  "count": 370
+                },
+                "PrePaint": {
+                  "totalMs": 28.97399999999998,
+                  "maxMs": 1.352,
+                  "count": 181
+                },
+                "HitTest": {
+                  "totalMs": 5.078999999999998,
+                  "maxMs": 0.789,
+                  "count": 39
+                },
+                "EventDispatch": {
+                  "totalMs": 41.44400000000002,
+                  "maxMs": 18.658,
+                  "count": 137
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 29.91100000000001,
+                  "maxMs": 4.296,
+                  "count": 123
+                },
+                "Layout": {
+                  "totalMs": 512.6809999999999,
+                  "maxMs": 18.632,
+                  "count": 32
+                },
+                "Paint": {
+                  "totalMs": 63.978,
+                  "maxMs": 1.759,
+                  "count": 214
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "lowZoom": {
+              "start": 15273.599999964237,
+              "end": 16433.099999964237,
+              "elapsedMs": 1159.5,
+              "scriptMs": 20.289,
+              "taskMs": 902.685,
+              "layoutMs": 218.553,
+              "styleMs": 26.675000000000004,
+              "presentations": 81,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.100000000000364,
+              "maxFrameMs": 33.30000000000109,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 31.968000000000004,
+                  "maxMs": 6.61,
+                  "count": 295
+                },
+                "EventDispatch": {
+                  "totalMs": 9.938,
+                  "maxMs": 0.814,
+                  "count": 45
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 27.706999999999976,
+                  "maxMs": 5.103,
+                  "count": 175
+                },
+                "Layout": {
+                  "totalMs": 217.35500000000002,
+                  "maxMs": 5.541,
+                  "count": 48
+                },
+                "PrePaint": {
+                  "totalMs": 34.666000000000025,
+                  "maxMs": 1.254,
+                  "count": 129
+                },
+                "Paint": {
+                  "totalMs": 76.88100000000007,
+                  "maxMs": 1.447,
+                  "count": 230
+                },
+                "HitTest": {
+                  "totalMs": 6.162000000000001,
+                  "maxMs": 0.764,
+                  "count": 50
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "lowPan": {
+              "start": 16487.80000001192,
+              "end": 18166.30000001192,
+              "elapsedMs": 1678.5,
+              "scriptMs": 24.5289999999998,
+              "taskMs": 635.5459999999997,
+              "layoutMs": 11.703000000000019,
+              "styleMs": 42.90300000000003,
+              "presentations": 197,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.200000000000728,
+              "maxFrameMs": 33.60000000000218,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 36.929,
+                  "maxMs": 10.823,
+                  "count": 395
+                },
+                "PrePaint": {
+                  "totalMs": 12.516000000000005,
+                  "maxMs": 0.95,
+                  "count": 243
+                },
+                "HitTest": {
+                  "totalMs": 6.787999999999998,
+                  "maxMs": 1.37,
+                  "count": 51
+                },
+                "EventDispatch": {
+                  "totalMs": 56.015999999999984,
+                  "maxMs": 24.102,
+                  "count": 99
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 43.62899999999999,
+                  "maxMs": 9.544,
+                  "count": 172
+                },
+                "Layout": {
+                  "totalMs": 9.288000000000002,
+                  "maxMs": 1.003,
+                  "count": 45
+                },
+                "Paint": {
+                  "totalMs": 6.774000000000002,
+                  "maxMs": 0.719,
+                  "count": 60
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "lowPinch": {
+              "start": 18235.30000001192,
+              "end": 19649.69999998808,
+              "elapsedMs": 1414.3999999761581,
+              "scriptMs": 17.60699999999993,
+              "taskMs": 628.3339999999988,
+              "layoutMs": 146.73500000000007,
+              "styleMs": 22.040000000000003,
+              "presentations": 144,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.19999999999709,
+              "maxFrameMs": 24.900000000001455,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 26.383000000000003,
+                  "maxMs": 6.226,
+                  "count": 367
+                },
+                "PrePaint": {
+                  "totalMs": 23.732000000000006,
+                  "maxMs": 1.681,
+                  "count": 179
+                },
+                "HitTest": {
+                  "totalMs": 7.9929999999999986,
+                  "maxMs": 1.699,
+                  "count": 37
+                },
+                "EventDispatch": {
+                  "totalMs": 36.91500000000002,
+                  "maxMs": 16.401,
+                  "count": 138
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 22.563999999999993,
+                  "maxMs": 4.352,
+                  "count": 123
+                },
+                "Layout": {
+                  "totalMs": 145.3,
+                  "maxMs": 5.792,
+                  "count": 32
+                },
+                "Paint": {
+                  "totalMs": 49.821,
+                  "maxMs": 1.556,
+                  "count": 156
+                }
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 125.39999997615814,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 48.60000002384186,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": [
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 1,
+              "ms": 4.900000035762787
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 1,
+              "ms": 101.59999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 1,
+              "ms": 16.700000047683716
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 2,
+              "ms": 4
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 2,
+              "ms": 65.29999995231628
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 2,
+              "ms": 18.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 3,
+              "ms": 18.900000035762787
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 271.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 3,
+              "ms": 69.10000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 203.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 150.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 181.30000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 131.89999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 125.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 4,
+              "ms": 2.600000023841858
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 4,
+              "ms": 125.19999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 4,
+              "ms": 70
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 4,
+              "ms": 213.10000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 4,
+              "ms": 273.19999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 5,
+              "ms": 1.600000023841858
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 5,
+              "ms": 270.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 5,
+              "ms": 69.59999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 6,
+              "ms": 4
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 62.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 6,
+              "ms": 18.099999964237213
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 50.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 42
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 45.60000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 34.89999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 33.19999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 7,
+              "ms": 16.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 7,
+              "ms": 123.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 7,
+              "ms": 69.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 7,
+              "ms": 124
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 8,
+              "ms": 4.699999988079071
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 8,
+              "ms": 78.10000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 8,
+              "ms": 11.300000011920929
+            }
+          ]
+        }
+      ]
+    },
+    "freeze-hit": {
+      "url": "http://127.0.0.1:4178/",
+      "focusReference": "working tree",
+      "commit": "f316114ca96d3f097765d5edbe91988429f47352",
+      "focusSourceSha256": "7a772d3a81bf35549bd52b203775f12325b3fc3aa29351576c4c8bc1d389fcc0",
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": false,
+        "disableHitDuringGesture": false,
+        "freezeHitTransform": true,
+        "stressZoom": false,
+        "lowPinch": false,
+        "touch": true
+      },
+      "network": "Unthrottled loopback; response encodings recorded per run",
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8464.699999988079,
+              "end": 9347.899999976158,
+              "elapsedMs": 883.1999999880791,
+              "scriptMs": 23.151000000000145,
+              "taskMs": 632.5329999999996,
+              "layoutMs": 28.782000000000004,
+              "styleMs": 26.855000000000004,
+              "presentations": 81,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.899999999999636,
+              "maxFrameMs": 26.599999999998545
+            },
+            "highPan": {
+              "start": 9351.300000011921,
+              "end": 10990.600000023842,
+              "elapsedMs": 1639.300000011921,
+              "scriptMs": 17.715999999999845,
+              "taskMs": 577.3130000000002,
+              "layoutMs": 24.518999999999984,
+              "styleMs": 34.08899999999999,
+              "presentations": 191,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.200000000000728,
+              "maxFrameMs": 33.5
+            },
+            "highPinch": {
+              "start": 10994.600000023842,
+              "end": 12173,
+              "elapsedMs": 1178.3999999761581,
+              "scriptMs": 18.618000000000023,
+              "taskMs": 475.0040000000002,
+              "layoutMs": 21.853000000000012,
+              "styleMs": 28.04000000000001,
+              "presentations": 137,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.299999999999272,
+              "maxFrameMs": 32.399999999999636
+            },
+            "lowZoom": {
+              "start": 13742.899999976158,
+              "end": 14631.699999988079,
+              "elapsedMs": 888.8000000119209,
+              "scriptMs": 10.336000000000123,
+              "taskMs": 605.7250000000014,
+              "layoutMs": 22.72399999999997,
+              "styleMs": 21.471000000000018,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.299999999999272,
+              "maxFrameMs": 31.799999999999272
+            },
+            "lowPan": {
+              "start": 14635.800000011921,
+              "end": 16231.199999988079,
+              "elapsedMs": 1595.3999999761581,
+              "scriptMs": 11.179999999999968,
+              "taskMs": 556.7059999999983,
+              "layoutMs": 8.223000000000091,
+              "styleMs": 31.162999999999997,
+              "presentations": 188,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.200000000000728,
+              "maxFrameMs": 26.19999999999891
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 129.60000002384186,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 47.40000003576279,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 1,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8500.800000011921,
+              "end": 9373.399999976158,
+              "elapsedMs": 872.5999999642372,
+              "scriptMs": 20.44200000000007,
+              "taskMs": 605.5469999999996,
+              "layoutMs": 25.428000000000004,
+              "styleMs": 23.105999999999987,
+              "presentations": 83,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.899999999999636,
+              "maxFrameMs": 24.600000000000364
+            },
+            "highPan": {
+              "start": 9377.699999988079,
+              "end": 11057.100000023842,
+              "elapsedMs": 1679.4000000357628,
+              "scriptMs": 20.194000000000045,
+              "taskMs": 590.5219999999999,
+              "layoutMs": 27.340999999999976,
+              "styleMs": 36.26900000000001,
+              "presentations": 194,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.200000000000728,
+              "maxFrameMs": 42.69999999999891
+            },
+            "highPinch": {
+              "start": 11061.300000011921,
+              "end": 12271.899999976158,
+              "elapsedMs": 1210.5999999642372,
+              "scriptMs": 15.776000000000012,
+              "taskMs": 459.1189999999994,
+              "layoutMs": 24.218000000000018,
+              "styleMs": 22.095000000000002,
+              "presentations": 142,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 34.20000000000073
+            },
+            "lowZoom": {
+              "start": 13842.199999988079,
+              "end": 14731.300000011921,
+              "elapsedMs": 889.1000000238419,
+              "scriptMs": 14.709000000000305,
+              "taskMs": 621.2619999999997,
+              "layoutMs": 29.787000000000063,
+              "styleMs": 27.88099999999999,
+              "presentations": 82,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 18.19999999999891,
+              "maxFrameMs": 33.29999999999927
+            },
+            "lowPan": {
+              "start": 14736.300000011921,
+              "end": 16305.300000011921,
+              "elapsedMs": 1569,
+              "scriptMs": 17.93599999999973,
+              "taskMs": 557.5199999999985,
+              "layoutMs": 8.594999999999908,
+              "styleMs": 39.324999999999996,
+              "presentations": 185,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 25.19999999999891
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 133,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 50.09999996423721,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 2,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8547.899999976158,
+              "end": 9494,
+              "elapsedMs": 946.1000000238419,
+              "scriptMs": 22.46300000000012,
+              "taskMs": 689.9510000000007,
+              "layoutMs": 30.49200000000002,
+              "styleMs": 30.612000000000002,
+              "presentations": 82,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 18.200000000000728,
+              "maxFrameMs": 33.5
+            },
+            "highPan": {
+              "start": 9497.899999976158,
+              "end": 11134.899999976158,
+              "elapsedMs": 1637,
+              "scriptMs": 17.083999999999875,
+              "taskMs": 576.39,
+              "layoutMs": 23.93899999999999,
+              "styleMs": 33.95900000000002,
+              "presentations": 190,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 32.70000000000073
+            },
+            "highPinch": {
+              "start": 11139.600000023842,
+              "end": 12338.300000011921,
+              "elapsedMs": 1198.699999988079,
+              "scriptMs": 16.116999999999937,
+              "taskMs": 454.9849999999989,
+              "layoutMs": 22.013000000000005,
+              "styleMs": 19.553999999999988,
+              "presentations": 141,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.200000000000728,
+              "maxFrameMs": 32.100000000000364
+            },
+            "lowZoom": {
+              "start": 13895.199999988079,
+              "end": 14794.300000011921,
+              "elapsedMs": 899.1000000238419,
+              "scriptMs": 17.00400000000002,
+              "taskMs": 628.893999999999,
+              "layoutMs": 25.016999999999957,
+              "styleMs": 24.881000000000014,
+              "presentations": 82,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.899999999999636,
+              "maxFrameMs": 25.399999999999636
+            },
+            "lowPan": {
+              "start": 14798.300000011921,
+              "end": 16378.100000023842,
+              "elapsedMs": 1579.800000011921,
+              "scriptMs": 15.188999999999897,
+              "taskMs": 529.1910000000008,
+              "layoutMs": 10.700000000000042,
+              "styleMs": 32.465000000000025,
+              "presentations": 186,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.200000000000728,
+              "maxFrameMs": 25.900000000001455
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 130.30000001192093,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 48,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        }
+      ]
+    },
+    "scaling-stroke": {
+      "url": "http://127.0.0.1:4178/",
+      "focusReference": "working tree",
+      "commit": "f316114ca96d3f097765d5edbe91988429f47352",
+      "focusSourceSha256": "7a772d3a81bf35549bd52b203775f12325b3fc3aa29351576c4c8bc1d389fcc0",
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": false,
+        "disableHitDuringGesture": false,
+        "freezeHitTransform": false,
+        "stressZoom": false,
+        "lowPinch": false,
+        "hitScalingStroke": true,
+        "touch": true
+      },
+      "network": "Unthrottled loopback; response encodings recorded per run",
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7023385,
+          "phases": {
+            "highZoom": {
+              "start": 8400.299999952316,
+              "end": 9288.399999976158,
+              "elapsedMs": 888.1000000238419,
+              "scriptMs": 23.17799999999992,
+              "taskMs": 634.5049999999999,
+              "layoutMs": 41.475,
+              "styleMs": 25.051999999999992,
+              "presentations": 82,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 18.30000000000109,
+              "maxFrameMs": 32.29999999999927
+            },
+            "highPan": {
+              "start": 9291.699999988079,
+              "end": 10904.899999976158,
+              "elapsedMs": 1613.199999988079,
+              "scriptMs": 20.624000000000198,
+              "taskMs": 579.4509999999989,
+              "layoutMs": 5.823999999999996,
+              "styleMs": 35.70099999999999,
+              "presentations": 187,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 51.100000000000364
+            },
+            "highPinch": {
+              "start": 10907.599999964237,
+              "end": 12096.699999988079,
+              "elapsedMs": 1189.1000000238419,
+              "scriptMs": 18.038999999999916,
+              "taskMs": 466.5469999999985,
+              "layoutMs": 31.45400000000001,
+              "styleMs": 16.599000000000004,
+              "presentations": 140,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 24.799999999999272
+            },
+            "lowZoom": {
+              "start": 13587.299999952316,
+              "end": 14504.399999976158,
+              "elapsedMs": 917.1000000238419,
+              "scriptMs": 20.233000000000168,
+              "taskMs": 651.7389999999991,
+              "layoutMs": 34.77899999999995,
+              "styleMs": 25.005,
+              "presentations": 82,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 18.200000000000728,
+              "maxFrameMs": 35.399999999999636
+            },
+            "lowPan": {
+              "start": 14507.599999964237,
+              "end": 16145.099999964237,
+              "elapsedMs": 1637.5,
+              "scriptMs": 16.893999999999743,
+              "taskMs": 548.8699999999991,
+              "layoutMs": 3.513000000000044,
+              "styleMs": 37.926000000000016,
+              "presentations": 193,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.199999999998909,
+              "maxFrameMs": 25.100000000000364
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 132.30000001192093,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 47.80000001192093,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 1,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8400.299999952316,
+              "end": 9284.099999964237,
+              "elapsedMs": 883.8000000119209,
+              "scriptMs": 17.238000000000085,
+              "taskMs": 631.0700000000003,
+              "layoutMs": 39.126000000000005,
+              "styleMs": 23.531999999999996,
+              "presentations": 81,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.700000000000728,
+              "maxFrameMs": 33.5
+            },
+            "highPan": {
+              "start": 9286.899999976158,
+              "end": 10868.199999988079,
+              "elapsedMs": 1581.300000011921,
+              "scriptMs": 22.76099999999981,
+              "taskMs": 542.3290000000005,
+              "layoutMs": 6.103999999999998,
+              "styleMs": 33.28800000000001,
+              "presentations": 185,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 33.899999999999636
+            },
+            "highPinch": {
+              "start": 10871.899999976158,
+              "end": 12132,
+              "elapsedMs": 1260.1000000238419,
+              "scriptMs": 22.726000000000024,
+              "taskMs": 523.7359999999995,
+              "layoutMs": 33.06000000000001,
+              "styleMs": 23.512999999999977,
+              "presentations": 146,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.299999999999272,
+              "maxFrameMs": 32.900000000001455
+            },
+            "lowZoom": {
+              "start": 13557.599999964237,
+              "end": 14440.5,
+              "elapsedMs": 882.9000000357628,
+              "scriptMs": 13.92099999999985,
+              "taskMs": 604.2149999999999,
+              "layoutMs": 36.20899999999999,
+              "styleMs": 21.16800000000002,
+              "presentations": 83,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.19999999999891,
+              "maxFrameMs": 25.30000000000109
+            },
+            "lowPan": {
+              "start": 14444.099999964237,
+              "end": 15991.699999988079,
+              "elapsedMs": 1547.6000000238419,
+              "scriptMs": 20.783000000000218,
+              "taskMs": 526.5500000000003,
+              "layoutMs": 9.273000000000032,
+              "styleMs": 29.916999999999998,
+              "presentations": 183,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10,
+              "maxFrameMs": 25.5
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 127.30000001192093,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 48,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 2,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8450.300000011921,
+              "end": 9373.100000023842,
+              "elapsedMs": 922.8000000119209,
+              "scriptMs": 23.141000000000076,
+              "taskMs": 655.6120000000005,
+              "layoutMs": 38.90400000000001,
+              "styleMs": 24.535,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 18.5,
+              "maxFrameMs": 23.600000000000364
+            },
+            "highPan": {
+              "start": 9376.200000047684,
+              "end": 10973.600000023842,
+              "elapsedMs": 1597.3999999761581,
+              "scriptMs": 21.856000000000098,
+              "taskMs": 573.0719999999998,
+              "layoutMs": 7.877999999999997,
+              "styleMs": 37.744,
+              "presentations": 187,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.200000000000728,
+              "maxFrameMs": 25.80000000000109
+            },
+            "highPinch": {
+              "start": 10976.5,
+              "end": 12213.800000011921,
+              "elapsedMs": 1237.300000011921,
+              "scriptMs": 24.972999999999914,
+              "taskMs": 505.34900000000073,
+              "layoutMs": 33.56199999999998,
+              "styleMs": 21.430000000000003,
+              "presentations": 145,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.199999999998909,
+              "maxFrameMs": 33.600000000000364
+            },
+            "lowZoom": {
+              "start": 13722,
+              "end": 14638.300000011921,
+              "elapsedMs": 916.3000000119209,
+              "scriptMs": 15.120999999999718,
+              "taskMs": 691.8690000000005,
+              "layoutMs": 38.921999999999954,
+              "styleMs": 25.991999999999987,
+              "presentations": 82,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.899999999999636,
+              "maxFrameMs": 24.200000000000728
+            },
+            "lowPan": {
+              "start": 14641.900000035763,
+              "end": 16180.100000023842,
+              "elapsedMs": 1538.199999988079,
+              "scriptMs": 19.19100000000018,
+              "taskMs": 578.3629999999995,
+              "layoutMs": 6.852999999999998,
+              "styleMs": 31.090000000000007,
+              "presentations": 182,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 23.299999999999272
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 129,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 44.60000002384186,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        }
+      ]
+    },
+    "scaling-stroke-desktop": {
+      "url": "http://127.0.0.1:4178/",
+      "focusReference": "working tree",
+      "commit": "f316114ca96d3f097765d5edbe91988429f47352",
+      "focusSourceSha256": "7a772d3a81bf35549bd52b203775f12325b3fc3aa29351576c4c8bc1d389fcc0",
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": false,
+        "freezeHitTransform": false,
+        "stressZoom": false,
+        "lowPinch": false,
+        "layerGestures": false,
+        "hitScalingStroke": true,
+        "touch": false
+      },
+      "network": "Unthrottled loopback; response encodings recorded per run",
+      "runs": [
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": false
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 2943.300000011921,
+              "end": 3634.399999976158,
+              "elapsedMs": 691.0999999642372,
+              "scriptMs": 6.052000000000001,
+              "taskMs": 178.14200000000002,
+              "layoutMs": 10.378000000000002,
+              "styleMs": 6.453,
+              "presentations": 83,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.299999999999727,
+              "maxFrameMs": 10.200000000000273
+            },
+            "highPan": {
+              "start": 3635.899999976158,
+              "end": 4734.599999964237,
+              "elapsedMs": 1098.699999988079,
+              "scriptMs": 6.227000000000038,
+              "taskMs": 172.77000000000032,
+              "layoutMs": 1.4829999999999983,
+              "styleMs": 10.409000000000002,
+              "presentations": 132,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.299999999999727,
+              "maxFrameMs": 10.399999999999636
+            },
+            "lowZoom": {
+              "start": 5124.5,
+              "end": 5809.099999964237,
+              "elapsedMs": 684.5999999642372,
+              "scriptMs": 4.637000000000002,
+              "taskMs": 181.689,
+              "layoutMs": 9.838,
+              "styleMs": 4.7029999999999985,
+              "presentations": 83,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9,
+              "maxFrameMs": 9.900000000000546
+            },
+            "lowPan": {
+              "start": 5810.399999976158,
+              "end": 6910.199999988079,
+              "elapsedMs": 1099.800000011921,
+              "scriptMs": 5.581000000000058,
+              "taskMs": 171.81000000000023,
+              "layoutMs": 1.5979999999999952,
+              "styleMs": 9.621999999999998,
+              "presentations": 132,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.699999999999818,
+              "maxFrameMs": 10.299999999999272
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 41.200000047683716,
+              "landHits": 114
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 17.799999952316284,
+              "landHits": 114
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        }
+      ]
+    },
+    "stress": {
+      "url": "http://127.0.0.1:4178/",
+      "focusReference": "working tree",
+      "commit": "f316114ca96d3f097765d5edbe91988429f47352",
+      "focusSourceSha256": "7a772d3a81bf35549bd52b203775f12325b3fc3aa29351576c4c8bc1d389fcc0",
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": true,
+        "disableHitDuringGesture": false,
+        "freezeHitTransform": false,
+        "stressZoom": true,
+        "lowPinch": false,
+        "layerGestures": false,
+        "hitScalingStroke": false,
+        "touch": true
+      },
+      "network": "Unthrottled loopback; response encodings recorded per run",
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8474.599999964237,
+              "end": 12550.899999976158,
+              "elapsedMs": 4076.300000011921,
+              "scriptMs": 63.88900000000008,
+              "taskMs": 3811.406,
+              "layoutMs": 2052.338,
+              "styleMs": 74.52099999999999,
+              "presentations": 157,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 10,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 35.099999999998545,
+              "maxFrameMs": 42,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 79.64200000000008,
+                  "maxMs": 5.463,
+                  "count": 689
+                },
+                "EventDispatch": {
+                  "totalMs": 34.486000000000004,
+                  "maxMs": 1.089,
+                  "count": 120
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 75.43900000000009,
+                  "maxMs": 5.205,
+                  "count": 503
+                },
+                "Layout": {
+                  "totalMs": 2048.936,
+                  "maxMs": 19.224,
+                  "count": 123
+                },
+                "PrePaint": {
+                  "totalMs": 118.84599999999993,
+                  "maxMs": 1.839,
+                  "count": 277
+                },
+                "Paint": {
+                  "totalMs": 257.61400000000043,
+                  "maxMs": 2.088,
+                  "count": 826
+                },
+                "HitTest": {
+                  "totalMs": 14.70599999999999,
+                  "maxMs": 0.968,
+                  "count": 131
+                }
+              },
+              "layoutStacks": {
+                "(no JavaScript stack)": 2048.936
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highPan": {
+              "start": 12668.099999964237,
+              "end": 14292.399999976158,
+              "elapsedMs": 1624.300000011921,
+              "scriptMs": 29.042000000000012,
+              "taskMs": 616.7280000000002,
+              "layoutMs": 7.724000000000064,
+              "styleMs": 41.08600000000001,
+              "presentations": 190,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 33.400000000001455,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 44.22799999999999,
+                  "maxMs": 9.687,
+                  "count": 389
+                },
+                "PrePaint": {
+                  "totalMs": 11.426000000000005,
+                  "maxMs": 0.896,
+                  "count": 236
+                },
+                "HitTest": {
+                  "totalMs": 6.312,
+                  "maxMs": 0.871,
+                  "count": 51
+                },
+                "EventDispatch": {
+                  "totalMs": 58.602999999999994,
+                  "maxMs": 25.331,
+                  "count": 99
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 39.97499999999997,
+                  "maxMs": 11.054,
+                  "count": 172
+                },
+                "Layout": {
+                  "totalMs": 6.4479999999999995,
+                  "maxMs": 0.76,
+                  "count": 45
+                },
+                "Paint": {
+                  "totalMs": 10.863999999999992,
+                  "maxMs": 1.102,
+                  "count": 137
+                }
+              },
+              "layoutStacks": {
+                "(no JavaScript stack)": 6.4479999999999995
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highZoomOut": {
+              "start": 14363.599999964237,
+              "end": 18326.299999952316,
+              "elapsedMs": 3962.699999988079,
+              "scriptMs": 57.97600000000003,
+              "taskMs": 3714.466,
+              "layoutMs": 2024.4339999999997,
+              "styleMs": 65.60499999999998,
+              "presentations": 156,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 12,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 35.19999999999709,
+              "maxFrameMs": 41.600000000000364,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 76.15600000000015,
+                  "maxMs": 5.781,
+                  "count": 702
+                },
+                "EventDispatch": {
+                  "totalMs": 32.34600000000001,
+                  "maxMs": 1.146,
+                  "count": 120
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 69.49800000000005,
+                  "maxMs": 4.13,
+                  "count": 507
+                },
+                "Layout": {
+                  "totalMs": 2020.0529999999999,
+                  "maxMs": 19.224,
+                  "count": 123
+                },
+                "PrePaint": {
+                  "totalMs": 105.5619999999999,
+                  "maxMs": 1.739,
+                  "count": 279
+                },
+                "Paint": {
+                  "totalMs": 231.7490000000004,
+                  "maxMs": 1.797,
+                  "count": 775
+                },
+                "HitTest": {
+                  "totalMs": 15.529999999999994,
+                  "maxMs": 0.988,
+                  "count": 131
+                }
+              },
+              "layoutStacks": {
+                "(no JavaScript stack)": 2020.0529999999999
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highPinch": {
+              "start": 18441.19999998808,
+              "end": 20258.899999976158,
+              "elapsedMs": 1817.699999988079,
+              "scriptMs": 23.360999999999965,
+              "taskMs": 1025.1849999999986,
+              "layoutMs": 506.13099999999986,
+              "styleMs": 27.01300000000001,
+              "presentations": 151,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 26,
+              "maxFrameMs": 33.599999999998545,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 30.26399999999999,
+                  "maxMs": 6.63,
+                  "count": 372
+                },
+                "PrePaint": {
+                  "totalMs": 30.222000000000005,
+                  "maxMs": 1.644,
+                  "count": 185
+                },
+                "HitTest": {
+                  "totalMs": 5.624999999999999,
+                  "maxMs": 1.083,
+                  "count": 39
+                },
+                "EventDispatch": {
+                  "totalMs": 37.475000000000016,
+                  "maxMs": 17.629,
+                  "count": 138
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 26.519000000000005,
+                  "maxMs": 3.907,
+                  "count": 123
+                },
+                "Layout": {
+                  "totalMs": 503.69500000000005,
+                  "maxMs": 18.632,
+                  "count": 32
+                },
+                "Paint": {
+                  "totalMs": 68.63600000000002,
+                  "maxMs": 1.976,
+                  "count": 157
+                }
+              },
+              "layoutStacks": {
+                "(no JavaScript stack)": 503.69500000000005
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "lowZoom": {
+              "start": 21870,
+              "end": 24283.899999976158,
+              "elapsedMs": 2413.899999976158,
+              "scriptMs": 53.06500000000014,
+              "taskMs": 2163.737000000001,
+              "layoutMs": 569.6300000000001,
+              "styleMs": 67.587,
+              "presentations": 155,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 10,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.30000000000291,
+              "maxFrameMs": 32.39999999999782,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 73.179,
+                  "maxMs": 5.984,
+                  "count": 709
+                },
+                "EventDispatch": {
+                  "totalMs": 31.022000000000002,
+                  "maxMs": 1.106,
+                  "count": 120
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 68.50900000000003,
+                  "maxMs": 6.097,
+                  "count": 487
+                },
+                "Layout": {
+                  "totalMs": 565.9030000000002,
+                  "maxMs": 5.605,
+                  "count": 123
+                },
+                "PrePaint": {
+                  "totalMs": 100.22599999999991,
+                  "maxMs": 1.541,
+                  "count": 278
+                },
+                "Paint": {
+                  "totalMs": 206.96100000000024,
+                  "maxMs": 1.746,
+                  "count": 596
+                },
+                "HitTest": {
+                  "totalMs": 12.92999999999999,
+                  "maxMs": 1.092,
+                  "count": 129
+                }
+              },
+              "layoutStacks": {
+                "(no JavaScript stack)": 565.9030000000002
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "lowPan": {
+              "start": 24390.19999998808,
+              "end": 25992.299999952316,
+              "elapsedMs": 1602.0999999642372,
+              "scriptMs": 21.78699999999978,
+              "taskMs": 613.6020000000002,
+              "layoutMs": 11.376999999999526,
+              "styleMs": 40.59799999999997,
+              "presentations": 189,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.200000000000728,
+              "maxFrameMs": 32,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 35.25400000000001,
+                  "maxMs": 11.478,
+                  "count": 387
+                },
+                "PrePaint": {
+                  "totalMs": 13.733000000000013,
+                  "maxMs": 1.02,
+                  "count": 235
+                },
+                "HitTest": {
+                  "totalMs": 9.645,
+                  "maxMs": 1.094,
+                  "count": 49
+                },
+                "EventDispatch": {
+                  "totalMs": 46.62099999999999,
+                  "maxMs": 19.013,
+                  "count": 99
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 39.05799999999999,
+                  "maxMs": 10.14,
+                  "count": 172
+                },
+                "Layout": {
+                  "totalMs": 8.698,
+                  "maxMs": 1.011,
+                  "count": 45
+                },
+                "Paint": {
+                  "totalMs": 1.096,
+                  "maxMs": 0.31,
+                  "count": 15
+                }
+              },
+              "layoutStacks": {
+                "(no JavaScript stack)": 8.698
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "lowZoomOut": {
+              "start": 26062.19999998808,
+              "end": 28484.599999964237,
+              "elapsedMs": 2422.399999976158,
+              "scriptMs": 57.09800000000031,
+              "taskMs": 2156.2780000000002,
+              "layoutMs": 571.6740000000007,
+              "styleMs": 57.02799999999997,
+              "presentations": 156,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 13,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 25.400000000001455,
+              "maxFrameMs": 33.400000000001455,
+              "trace": {
+                "FunctionCall": {
+                  "totalMs": 76.18400000000022,
+                  "maxMs": 6.656,
+                  "count": 707
+                },
+                "PrePaint": {
+                  "totalMs": 98.33200000000001,
+                  "maxMs": 1.486,
+                  "count": 279
+                },
+                "EventDispatch": {
+                  "totalMs": 31.060000000000002,
+                  "maxMs": 1.075,
+                  "count": 120
+                },
+                "UpdateLayoutTree": {
+                  "totalMs": 59.27100000000006,
+                  "maxMs": 4.831,
+                  "count": 509
+                },
+                "Layout": {
+                  "totalMs": 564.9969999999998,
+                  "maxMs": 5.843,
+                  "count": 123
+                },
+                "Paint": {
+                  "totalMs": 210.46600000000026,
+                  "maxMs": 2.014,
+                  "count": 613
+                },
+                "HitTest": {
+                  "totalMs": 16.19599999999999,
+                  "maxMs": 0.978,
+                  "count": 129
+                }
+              },
+              "layoutStacks": {
+                "(no JavaScript stack)": 564.9969999999998
+              },
+              "traceScope": "CrRendererMain"
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 129,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 50.59999996423721,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": [
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 1,
+              "ms": 4.300000011920929
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 1,
+              "ms": 100.40000003576279
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 1,
+              "ms": 16.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 2,
+              "ms": 4.100000023841858
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 2,
+              "ms": 64.09999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 2,
+              "ms": 19.400000035762787
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 3,
+              "ms": 20
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 268.7000000476837
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 3,
+              "ms": 67.59999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 199.0999999642372
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 146.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 132.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 120.59999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 94.89999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 70.89999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 47.39999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 32
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 23.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 22.900000035762787
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 22.200000047683716
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 25.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 35.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 50.09999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 72.10000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 87.10000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 111.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 125.90000003576279
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 128.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 141
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 152.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 223.39999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 266.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 204.20000004768372
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 3,
+              "ms": 149.4000000357628
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 4,
+              "ms": 2
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 4,
+              "ms": 147.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 4,
+              "ms": 66.90000003576279
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 4,
+              "ms": 207.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 4,
+              "ms": 269.39999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 5,
+              "ms": 2.399999976158142
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 5,
+              "ms": 268.10000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 5,
+              "ms": 68.40000003576279
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 6,
+              "ms": 3.699999988079071
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 63
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 6,
+              "ms": 19.399999976158142
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 49
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 39.59999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 37.10000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 37.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 29.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 24.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 18.799999952316284
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 12.199999988079071
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 9
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 9.100000023841858
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 7.5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 9.399999976158142
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 13.300000011920929
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 17
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 22.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 29.100000023841858
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 33.09999996423721
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 35.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 38.89999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 40.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 43.39999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 55.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 63.60000002384186
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 6,
+              "ms": 64
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 7,
+              "ms": 19.399999976158142
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 7,
+              "ms": 272.69999998807907
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 7,
+              "ms": 69.80000001192093
+            },
+            {
+              "type": "auditTiming",
+              "stage": "scene",
+              "version": 8,
+              "ms": 5
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "detail",
+              "version": 8,
+              "ms": 105.89999997615814
+            },
+            {
+              "type": "auditTiming",
+              "stage": "render",
+              "purpose": "overview",
+              "version": 8,
+              "ms": 10.5
+            }
+          ]
+        }
+      ]
+    },
+    "stress-scaling-stroke": {
+      "url": "http://127.0.0.1:4178/",
+      "focusReference": "working tree",
+      "commit": "f316114ca96d3f097765d5edbe91988429f47352",
+      "focusSourceSha256": "7a772d3a81bf35549bd52b203775f12325b3fc3aa29351576c4c8bc1d389fcc0",
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": false,
+        "freezeHitTransform": false,
+        "stressZoom": true,
+        "lowPinch": false,
+        "layerGestures": false,
+        "hitScalingStroke": true,
+        "touch": true
+      },
+      "network": "Unthrottled loopback; response encodings recorded per run",
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 7018321,
+          "phases": {
+            "highZoom": {
+              "start": 8509.899999976158,
+              "end": 10604.300000011921,
+              "elapsedMs": 2094.400000035763,
+              "scriptMs": 53.730000000000054,
+              "taskMs": 1831.0589999999997,
+              "layoutMs": 159.59,
+              "styleMs": 65.64,
+              "presentations": 157,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 10,
+              "longTaskCount": 1,
+              "longTaskMs": 201,
+              "maxLongTaskMs": 201,
+              "frameP95Ms": 18.100000000000364,
+              "maxFrameMs": 201.29999999999927
+            },
+            "highPan": {
+              "start": 10607.099999964237,
+              "end": 12221.599999964237,
+              "elapsedMs": 1614.5,
+              "scriptMs": 19.18399999999987,
+              "taskMs": 558.7320000000009,
+              "layoutMs": 4.703999999999986,
+              "styleMs": 36.297,
+              "presentations": 189,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 33.100000000000364
+            },
+            "highZoomOut": {
+              "start": 12224.399999976158,
+              "end": 14445.599999964237,
+              "elapsedMs": 2221.199999988079,
+              "scriptMs": 49.80699999999993,
+              "taskMs": 1981.4310000000005,
+              "layoutMs": 225.406,
+              "styleMs": 89.43700000000001,
+              "presentations": 153,
+              "svgFallbackFrames": 3,
+              "scenePosts": 0,
+              "detailRequests": 11,
+              "longTaskCount": 1,
+              "longTaskMs": 152,
+              "maxLongTaskMs": 152,
+              "frameP95Ms": 25.899999999999636,
+              "maxFrameMs": 150.6999999999989
+            },
+            "highPinch": {
+              "start": 14448.399999976158,
+              "end": 15703.099999964237,
+              "elapsedMs": 1254.699999988079,
+              "scriptMs": 11.079000000000061,
+              "taskMs": 446.90799999999876,
+              "layoutMs": 26.495000000000047,
+              "styleMs": 22.084999999999965,
+              "presentations": 149,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.100000000000364,
+              "maxFrameMs": 23.099999999998545
+            },
+            "lowZoom": {
+              "start": 17179,
+              "end": 18877.19999998808,
+              "elapsedMs": 1698.199999988079,
+              "scriptMs": 30.253000000000085,
+              "taskMs": 1433.572,
+              "layoutMs": 90.6349999999999,
+              "styleMs": 47.425999999999966,
+              "presentations": 155,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 10,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 17.899999999997817,
+              "maxFrameMs": 26.600000000002183
+            },
+            "lowPan": {
+              "start": 18880.19999998808,
+              "end": 20489.099999964237,
+              "elapsedMs": 1608.8999999761581,
+              "scriptMs": 20.01300000000006,
+              "taskMs": 596.7510000000011,
+              "layoutMs": 5.220000000000002,
+              "styleMs": 36.62399999999999,
+              "presentations": 190,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.899999999997817,
+              "maxFrameMs": 24.900000000001455
+            },
+            "lowZoomOut": {
+              "start": 20491.69999998808,
+              "end": 22305.19999998808,
+              "elapsedMs": 1813.5,
+              "scriptMs": 32.703999999999844,
+              "taskMs": 1541.2790000000011,
+              "layoutMs": 95.28800000000004,
+              "styleMs": 43.513000000000076,
+              "presentations": 158,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 13,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 18,
+              "maxFrameMs": 24.80000000000291
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 118.90000003576279,
+              "landHits": 118
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 48.799999952316284,
+              "landHits": 37
+            }
+          },
+          "structure": {
+            "paths": 432,
+            "pathCharacters": 13246668,
+            "map": {
+              "width": 390,
+              "height": 796
+            }
+          },
+          "workerHandlerTimings": []
+        }
+      ]
+    },
+    "layers": {
+      "url": "http://127.0.0.1:4178/",
+      "focusReference": "working tree",
+      "commit": "f316114ca96d3f097765d5edbe91988429f47352",
+      "focusSourceSha256": "7a772d3a81bf35549bd52b203775f12325b3fc3aa29351576c4c8bc1d389fcc0",
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": false,
+        "freezeHitTransform": false,
+        "stressZoom": false,
+        "lowPinch": false,
+        "layerGestures": true,
+        "hitScalingStroke": false,
+        "touch": false
+      },
+      "network": "Unthrottled loopback; response encodings recorded per run",
+      "runs": [
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 9871288,
+          "phases": {
+            "highZoom": {
+              "start": 5645.099999964237,
+              "end": 6366.5,
+              "elapsedMs": 721.4000000357628,
+              "scriptMs": 6.125999999999965,
+              "taskMs": 392.6439999999998,
+              "layoutMs": 208.037,
+              "styleMs": 7.8750000000000036,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.100000000000364,
+              "maxFrameMs": 16.799999999999272
+            },
+            "highPan": {
+              "start": 6367.800000011921,
+              "end": 7477,
+              "elapsedMs": 1109.199999988079,
+              "scriptMs": 5.898999999999988,
+              "taskMs": 199.02599999999993,
+              "layoutMs": 3.445000000000004,
+              "styleMs": 10.654999999999998,
+              "presentations": 133,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.300000000000182,
+              "maxFrameMs": 10.300000000000182
+            },
+            "lowZoom": {
+              "start": 9263.800000011921,
+              "end": 9950.099999964237,
+              "elapsedMs": 686.2999999523163,
+              "scriptMs": 4.6040000000000525,
+              "taskMs": 219.34599999999983,
+              "layoutMs": 57.65899999999991,
+              "styleMs": 6.878999999999996,
+              "presentations": 83,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 10.200000000000728,
+              "maxFrameMs": 10.399999999999636
+            },
+            "lowPan": {
+              "start": 9951.399999976158,
+              "end": 11049.699999988079,
+              "elapsedMs": 1098.300000011921,
+              "scriptMs": 4.97599999999998,
+              "taskMs": 166.51600000000056,
+              "layoutMs": 1.9050000000000455,
+              "styleMs": 10.064000000000004,
+              "presentations": 132,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.799999999999272,
+              "maxFrameMs": 10.199999999998909
+            },
+            "reliefZoom": {
+              "start": 13655.099999964237,
+              "end": 14349.899999976158,
+              "elapsedMs": 694.8000000119209,
+              "scriptMs": 4.565999999999959,
+              "taskMs": 225.0540000000001,
+              "layoutMs": 112.29500000000003,
+              "styleMs": 5.722000000000005,
+              "presentations": 84,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 2,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 8.600000000000364,
+              "maxFrameMs": 10
+            },
+            "reliefPan": {
+              "start": 14351.300000011921,
+              "end": 15462.699999988079,
+              "elapsedMs": 1111.3999999761581,
+              "scriptMs": 5.102999999999969,
+              "taskMs": 125.83699999999976,
+              "layoutMs": 1.1799999999999589,
+              "styleMs": 6.749999999999992,
+              "presentations": 133,
+              "svgFallbackFrames": 0,
+              "scenePosts": 0,
+              "detailRequests": 1,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.899999999999636,
+              "maxFrameMs": 10
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 43.10000002384186,
+              "landHits": 114
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 21.599999964237213,
+              "landHits": 98
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        },
+        {
+          "config": {
+            "name": "desktop",
+            "width": 1200,
+            "height": 800,
+            "dpr": 1,
+            "cpu": 1,
+            "mobile": false,
+            "layers": true
+          },
+          "renderer": "svg",
+          "repeat": 0,
+          "errors": [],
+          "responseEncodings": [
+            "gzip"
+          ],
+          "totalNetworkBytes": 9871288,
+          "phases": {
+            "highZoom": {
+              "start": 6244.5,
+              "end": 9091.199999988079,
+              "elapsedMs": 2846.699999988079,
+              "scriptMs": 10.585999999999984,
+              "taskMs": 2667.957,
+              "layoutMs": 227.637,
+              "styleMs": 6.940000000000001,
+              "presentations": 63,
+              "svgFallbackFrames": 63,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 29,
+              "longTaskMs": 1774,
+              "maxLongTaskMs": 74,
+              "frameP95Ms": 75.10000000000036,
+              "maxFrameMs": 76.5
+            },
+            "highPan": {
+              "start": 9092.899999976158,
+              "end": 11541.5,
+              "elapsedMs": 2448.600000023842,
+              "scriptMs": 14.792000000000026,
+              "taskMs": 1785.7139999999995,
+              "layoutMs": 3.4319999999999906,
+              "styleMs": 11.548000000000002,
+              "presentations": 169,
+              "svgFallbackFrames": 169,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 1,
+              "longTaskMs": 69,
+              "maxLongTaskMs": 69,
+              "frameP95Ms": 33.5,
+              "maxFrameMs": 41.899999999999636
+            },
+            "lowZoom": {
+              "start": 13779.600000023842,
+              "end": 15415.899999976158,
+              "elapsedMs": 1636.2999999523163,
+              "scriptMs": 9.955999999999964,
+              "taskMs": 1288.8450000000003,
+              "layoutMs": 61.91999999999997,
+              "styleMs": 6.960000000000008,
+              "presentations": 79,
+              "svgFallbackFrames": 79,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 41.70000000000073,
+              "maxFrameMs": 42.600000000000364
+            },
+            "lowPan": {
+              "start": 15417.300000011921,
+              "end": 16740.899999976158,
+              "elapsedMs": 1323.5999999642372,
+              "scriptMs": 11.082999999999954,
+              "taskMs": 558.7619999999997,
+              "layoutMs": 1.8180000000000418,
+              "styleMs": 10.991000000000001,
+              "presentations": 156,
+              "svgFallbackFrames": 156,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 9.700000000000728,
+              "maxFrameMs": 25.200000000000728
+            },
+            "reliefZoom": {
+              "start": 19976.600000023842,
+              "end": 21532.69999998808,
+              "elapsedMs": 1556.0999999642372,
+              "scriptMs": 8.70700000000002,
+              "taskMs": 1187.8899999999994,
+              "layoutMs": 134.39600000000007,
+              "styleMs": 5.266000000000007,
+              "presentations": 76,
+              "svgFallbackFrames": 76,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 33.5,
+              "maxFrameMs": 33.900000000001455
+            },
+            "reliefPan": {
+              "start": 21534.100000023842,
+              "end": 23075.100000023842,
+              "elapsedMs": 1541,
+              "scriptMs": 11.037000000000074,
+              "taskMs": 801.323,
+              "layoutMs": 1.1539999999999884,
+              "styleMs": 6.155999999999995,
+              "presentations": 163,
+              "svgFallbackFrames": 163,
+              "scenePosts": 0,
+              "detailRequests": 0,
+              "longTaskCount": 0,
+              "longTaskMs": 0,
+              "maxLongTaskMs": 0,
+              "frameP95Ms": 16.700000000000728,
+              "maxFrameMs": 25.099999999998545
+            },
+            "highHitTest": {
+              "queries": 400,
+              "elapsedMs": 169.89999997615814,
+              "landHits": 121
+            },
+            "lowHitTest": {
+              "queries": 400,
+              "elapsedMs": 42.60000002384186,
+              "landHits": 101
+            }
+          },
+          "structure": {
+            "paths": 679,
+            "pathCharacters": 19777700,
+            "map": {
+              "width": 1200,
+              "height": 738
+            }
+          },
+          "workerHandlerTimings": []
+        }
+      ]
+    }
+  }
+}
