@@ -4,6 +4,8 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.8.1 — 2026-10-05
+
 ### Improvements
 
 - Removed an extra animation-frame wait at the start of mouse dragging, matching touch behavior while retaining drag thresholds and batching subsequent movements.
