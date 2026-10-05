@@ -17,21 +17,27 @@ export function projectedUnitFocus(
   // A unit can contain distant islands or cross the antimeridian. Favor its
   // largest landmass only when the full footprint would mislead click-to-zoom.
   if (displayUnit.geometry.type === 'MultiPolygon') {
-    const largestLandmass = displayUnit.geometry.coordinates
-      .map((coordinates) => ({
-        ...displayUnit,
-        geometry: { type: 'Polygon' as const, coordinates },
-      }))
+    // Scan each polygon once; repeatedly measuring a complex mainland for
+    // every small island made high-detail focus preparation expensive.
+    const largest = displayUnit.geometry.coordinates
+      .map((coordinates) => {
+        const feature = {
+          ...displayUnit,
+          geometry: { type: 'Polygon' as const, coordinates },
+        }
+        return { feature, area: geoArea(feature) }
+      })
       .reduce((largest, candidate) =>
-        geoArea(candidate) > geoArea(largest) ? candidate : largest,
+        candidate.area > largest.area ? candidate : largest,
       )
+    const largestLandmass = largest.feature
 
     const mainBounds = generator.bounds(largestLandmass) as MapBounds
     const fullWidth = Math.max(1, displayBounds[1][0] - displayBounds[0][0])
     const fullHeight = Math.max(1, displayBounds[1][1] - displayBounds[0][1])
     const mainWidth = Math.max(1, mainBounds[1][0] - mainBounds[0][0])
     const mainHeight = Math.max(1, mainBounds[1][1] - mainBounds[0][1])
-    const mainlandAreaShare = geoArea(largestLandmass) / geoArea(displayUnit)
+    const mainlandAreaShare = largest.area / geoArea(displayUnit)
     const spansMostOfMap = fullWidth > mapWidth * 0.65
     const hasWideProjectedFootprint = Math.max(fullWidth / mainWidth, fullHeight / mainHeight) > 2
     const mainlandDominates = mainlandAreaShare > 0.75

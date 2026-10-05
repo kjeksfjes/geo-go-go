@@ -4,6 +4,14 @@ Concise, user-facing notes for local releases. Add upcoming changes under **Unre
 
 ## Unreleased
 
+## 0.8.1 — 2026-10-05
+
+### Improvements
+
+- Removed an extra animation-frame wait at the start of mouse dragging, matching touch behavior while retaining drag thresholds and batching subsequent movements.
+- Reduced canvas zoom and pinch layout work by removing unnecessary fixed-width stroke calculations from invisible country hit paths, retaining full click geometry and keyboard focus outlines.
+- Reduced map initialization and first high-detail loading time by calculating each landmass area once when choosing country focus, preserving existing geometry and click targets.
+
 ## 0.8.0 — Every Island Counts — 2026-10-05
 
 ### Fixes

@@ -1595,6 +1595,8 @@ async function setProjection(nextId: MapProjectionId) {
 .world-map--canvas .country.country--hit-only {
   fill: none;
   stroke: none;
+  /* Invisible hit paths need no fixed-width stroke calculations on zoom. */
+  vector-effect: none;
   pointer-events: visibleFill;
   transition: none;
 }
@@ -1607,6 +1609,7 @@ async function setProjection(nextId: MapProjectionId) {
 .world-map--canvas .country.country--hit-only:focus-visible {
   fill: rgb(247 192 122 / 82%);
   stroke: #172d38;
+  vector-effect: non-scaling-stroke;
 }
 
 .country--visual {
