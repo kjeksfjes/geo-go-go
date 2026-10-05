@@ -80,6 +80,9 @@ try {
   }
 
   const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8')
+  if (/^## Unreleased\s*$/m.test(changelog)) {
+    throw new Error('Replace the Unreleased changelog heading with the versioned release heading before publishing.')
+  }
   const entry = changelog.split(/^## /m).find((section) => section.startsWith(`${version} `) || section.startsWith(`${version}\n`))
   if (!entry || !entry.slice(entry.indexOf('\n') + 1).trim()) {
     throw new Error(`CHANGELOG.md needs a nonempty ${version} entry.`)
