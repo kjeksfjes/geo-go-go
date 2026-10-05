@@ -1,8 +1,6 @@
 # Changelog
 
-Concise, user-facing notes for local releases. Add upcoming changes under **Unreleased**, then move them into a versioned entry when preparing a release.
-
-## Unreleased
+Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
 ## 0.8.1 — 2026-10-05
 
