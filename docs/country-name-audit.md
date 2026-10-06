@@ -10,6 +10,7 @@ Use established, readable short names in each language. Retain valid exonyms and
 - **R**: [Språkrådet state names](https://sprakradet.no/stedsnavn-og-navn-pa-statsorgan/navnelister-norsk-skrivemate/utanlandske-stadnamn-navn-pa-stater-og-sprak-transkripsjon/navn-pa-stater/), coordinated with Norway's Foreign Ministry, for Bokmål state names and permitted variants.
 - **S**: Statistics Norway's [country-code classification](https://www.ssb.no/klass/klassifikasjoner/100), current version 1693: [English](https://data.ssb.no/api/klass/v1/versions/1693?language=en) and [Bokmål](https://data.ssb.no/api/klass/v1/versions/1693?language=nb), for territories and a second bilingual comparison. Classification titles may differ from readable map labels.
 - **G**: [Språkrådet foreign place names](https://sprakradet.no/stedsnavn-og-navn-pa-statsorgan/navnelister-norsk-skrivemate/utanlandske-stadnamn-navn-pa-stater-og-sprak-transkripsjon/utanlandske-stadnamn/), including capitalization of Jomfruøyene.
+- **F**: [UK government Turkey travel advice](https://www.gov.uk/foreign-travel-advice/turkey), supporting established English usage for Turkey.
 - **U**: [UN country/area names](https://unstats.un.org/unsd/methodology/m49/), supporting Cabo Verde and Türkiye; [UN Naoero entry](https://metadata.un.org/skosmos/thesaurus/en/page/1004349), recording the name change effective 26 June 2026.
 - **A**: [Australian government territory inventory](https://www.infrastructure.gov.au/territories-regions/australian-territories), for Ashmore and Cartier Islands and the grouped Indian Ocean Territories. Their Bokmål labels are descriptive app translations, not claims of standardized official Norwegian titles.
 - **H**: [Saint Helena government](https://www.sainthelena.gov.sh/st-helena/government/legislation/general-introduction/), confirming the territory's three constituent parts.
@@ -39,7 +40,8 @@ Naoero is the current English state name in PCGN and the UN. Bokmål retains Nau
 ## Retained variants and scope decisions
 
 - CIV: “Ivory Coast” is PCGN's English short name; “Elfenbenskysten” is an explicitly permitted Bokmål spelling. Neither needs to become Côte d'Ivoire.
-- CPV/TUR: retain the UN forms Cabo Verde and Türkiye in English, with established Bokmål Kapp Verde and Tyrkia.
+- CPV: retain Cabo Verde in English and established Bokmål Kapp Verde.
+- TUR: updated on 2026-10-06 to Turkey in English and retained Tyrkia in Bokmål, following the user’s preference for familiar English short names. Türkiye remains the UN form and a search alias; accent normalization also matches Turkiye. This changes the label only, retaining the TUR identity and flag.
 - TLS: East Timor / Øst-Timor remain established short names; Timor-Leste is also valid but does not require a rename here.
 - LUX/NZL: Luxemburg and New Zealand are permitted Norwegian forms; do not rewrite valid variants merely to match SSB's first choice.
 - MMR: Myanmar (Burma) is a permitted, informative Norwegian presentation; the English short name remains Myanmar.
@@ -276,7 +278,7 @@ References identify the naming authorities consulted, not an assertion that ever
 | TON | Tonga | Tonga | P, R, S |
 | TTO | Trinidad and Tobago | Trinidad og Tobago | P, R, S |
 | TUN | Tunisia | Tunisia | P, R, S |
-| TUR | Türkiye | Tyrkia | P, R, S, U |
+| TUR | Turkey | Tyrkia | F, R, U |
 | TUV | Tuvalu | Tuvalu | P, R, S |
 | TWN | Taiwan | Taiwan | S |
 | TZA | Tanzania | Tanzania | P, R, S |

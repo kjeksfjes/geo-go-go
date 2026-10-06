@@ -58,6 +58,7 @@ function handleSkipShortcut(event: KeyboardEvent) {
 }
 
 const automaticRevealButton = ref<HTMLButtonElement | null>(null)
+const namedAnswerRevealButton = ref<HTMLButtonElement | null>(null)
 async function revealNamedAnswer() {
   emit('reveal-correct-answer')
   if (document.documentElement.dataset.inputModality !== 'keyboard') return
@@ -65,10 +66,20 @@ async function revealNamedAnswer() {
   automaticRevealButton.value?.focus()
 }
 
+async function toggleAutomaticReveal() {
+  const enabled = !props.automaticReveal
+  emit('update:automaticReveal', enabled)
+  if (enabled || document.documentElement.dataset.inputModality !== 'keyboard') return
+  await nextTick()
+  namedAnswerRevealButton.value?.focus()
+}
+
 const nextButton = ref<HTMLButtonElement | null>(null)
 const alwaysShowButton = ref<HTMLButtonElement | null>(null)
+const clickedAnswerRevealButton = ref<HTMLButtonElement | null>(null)
 const questionHeading = ref<HTMLHeadingElement | null>(null)
 const isCorrect = computed(() => props.answer?.id === props.question?.id)
+const showQuestionFlag = computed(() => !props.identify || (props.phase === 'answered' && isCorrect.value))
 const showWrongAnswer = computed(() => props.alwaysShowWrongAnswer || props.wrongAnswerRevealed)
 
 async function revealAnswer() {
@@ -78,10 +89,12 @@ async function revealAnswer() {
   alwaysShowButton.value?.focus()
 }
 
-function toggleAlwaysShow() {
-  // Turning the preference off should hide future answers, not this one.
-  emit('reveal-wrong-answer')
-  emit('update:alwaysShowWrongAnswer', !props.alwaysShowWrongAnswer)
+async function toggleAlwaysShow() {
+  const enabled = !props.alwaysShowWrongAnswer
+  emit('update:alwaysShowWrongAnswer', enabled)
+  if (enabled || document.documentElement.dataset.inputModality !== 'keyboard') return
+  await nextTick()
+  clickedAnswerRevealButton.value?.focus()
 }
 
 watch(() => props.phase, async (phase) => {
@@ -99,12 +112,12 @@ watch(() => props.question?.id, async (countryId) => {
 </script>
 
 <template>
-  <section class="quiz-panel map-overlay__content" :class="[`quiz-panel--${phase}`, { 'quiz-panel--identify': identify }]" :aria-label="t(identify ? 'nameCountry' : 'quiz')" @keydown.capture="handleSkipShortcut">
+  <section class="quiz-panel map-overlay__content" :class="[`quiz-panel--${phase}`, { 'quiz-panel--identify': identify, 'quiz-panel--with-flag': showQuestionFlag }]" :aria-label="t(identify ? 'nameCountry' : 'quiz')" @keydown.capture="handleSkipShortcut">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
         <p v-if="resumeNotice" class="quiz-panel__resume">{{ resumeNotice }}</p>
-        <p class="quiz-panel__eyebrow">{{ t('regionComplete') }}</p>
-        <h2>{{ t('finalScore', { score, total }) }}</h2>
+        <p class="map-overlay__eyebrow">{{ t('regionComplete') }}</p>
+        <h2 class="map-overlay__heading">{{ t('finalScore', { score, total }) }}</h2>
       </div>
       <button ref="restartButton" class="quiz-panel__button" type="button" @click="emit('restart')">
         {{ t('playAgain') }}
@@ -113,25 +126,25 @@ watch(() => props.question?.id, async (countryId) => {
 
     <template v-else-if="phase === 'empty'">
       <div class="quiz-panel__message">
-        <p class="quiz-panel__eyebrow">{{ t(identify ? 'nameCountry' : 'findCountry') }}</p>
-        <h2>{{ t('noCountries') }}</h2>
+        <p class="map-overlay__eyebrow">{{ t(identify ? 'nameCountry' : 'findCountry') }}</p>
+        <h2 class="map-overlay__heading">{{ t('noCountries') }}</h2>
       </div>
     </template>
 
     <template v-else-if="question">
       <span
-        v-if="!identify"
-        class="quiz-panel__flag fi"
+        v-if="showQuestionFlag"
+        class="quiz-panel__flag map-overlay__flag fi"
         :class="`fi-${question.flagCode}`"
         role="img"
         :aria-label="t('flag', { name: countryName(question.id) })"
       />
       <div class="quiz-panel__message">
-        <p class="quiz-panel__eyebrow">
+        <p class="map-overlay__eyebrow">
           {{ t('questionStatus', { number: questionNumber, total, score, points: t(score === 1 ? 'point' : 'points') }) }}
         </p>
         <p v-if="resumeNotice" class="quiz-panel__resume" role="status">{{ resumeNotice }}</p>
-        <h2 ref="questionHeading" tabindex="-1">{{ identify ? t('identifyQuestion') : t('find', { name: countryName(question.id) }) }}</h2>
+        <h2 class="map-overlay__heading" ref="questionHeading" tabindex="-1">{{ identify ? t('identifyQuestion') : t('find', { name: countryName(question.id) }) }}</h2>
       </div>
       <CountryAnswerCombobox
         ref="answerInput"
@@ -145,8 +158,8 @@ watch(() => props.question?.id, async (countryId) => {
         @answer="emit('answer', $event)"
       />
       <div class="quiz-panel__status" aria-live="polite">
-        <p v-if="phase === 'question' && !identify" class="quiz-panel__hint">
-          {{ t('clickLocation') }}
+        <p v-if="phase === 'question'" class="quiz-panel__hint">
+          {{ t(identify ? 'countryAnswerHint' : 'clickLocation') }}
         </p>
         <p
           v-else-if="isCorrect"
@@ -158,12 +171,18 @@ watch(() => props.question?.id, async (countryId) => {
           <p class="quiz-panel__feedback" :class="{ 'quiz-panel__feedback--wrong': phase !== 'skipped' }">{{ t(phase === 'skipped' ? 'skippedQuestion' : 'notQuite') }}</p>
           <div class="quiz-panel__answer">
             <template v-if="correctAnswerVisible">
-              <span>{{ t('correctAnswer') }} <strong class="quiz-panel__correct-name">{{ countryName(question.id) }}</strong></span>
-              <button ref="automaticRevealButton" class="quiz-panel__text-button quiz-panel__text-button--preference" type="button" :aria-pressed="automaticReveal" :aria-label="t('alwaysRevealAnswers')" @click="emit('update:automaticReveal', !automaticReveal)">
+              <span class="quiz-panel__correct-answer">
+                <span>{{ t('correctAnswer') }}</span>
+                <span class="quiz-panel__correct-country">
+                  <span class="quiz-panel__answer-flag fi" :class="`fi-${question.flagCode}`" aria-hidden="true" />
+                  <strong class="quiz-panel__correct-name">{{ countryName(question.id) }}</strong>
+                </span>
+              </span>
+              <button ref="automaticRevealButton" class="quiz-panel__text-button quiz-panel__text-button--preference" type="button" :aria-pressed="automaticReveal" :aria-label="t('alwaysRevealAnswers')" @click="toggleAutomaticReveal">
                 {{ t('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !automaticReveal }" aria-hidden="true">✓</span>
               </button>
             </template>
-            <button v-else class="quiz-panel__text-button" type="button" @click="revealNamedAnswer">{{ t('showAnswer') }}</button>
+            <button v-else ref="namedAnswerRevealButton" class="quiz-panel__text-button" type="button" @click="revealNamedAnswer">{{ t('showAnswer') }}</button>
           </div>
         </template>
         <template v-else-if="answer">
@@ -181,7 +200,7 @@ watch(() => props.question?.id, async (countryId) => {
                 {{ t('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !alwaysShowWrongAnswer }" aria-hidden="true">✓</span>
               </button>
             </template>
-            <button v-else class="quiz-panel__text-button" type="button" @click="revealAnswer">
+            <button v-else ref="clickedAnswerRevealButton" class="quiz-panel__text-button" type="button" @click="revealAnswer">
               {{ t('whatDidIClick') }}
             </button>
           </div>
@@ -232,19 +251,15 @@ watch(() => props.question?.id, async (countryId) => {
 <style scoped>
 .quiz-panel {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
+  grid-template-columns: var(--ui-card-flag-width) minmax(0, 1fr);
   align-items: start;
-  gap: 0.45rem 1.1rem;
+  gap: var(--ui-card-row-gap) var(--ui-card-column-gap);
 }
 
 .quiz-panel__flag {
   grid-column: 1;
   grid-row: 1;
-  align-self: center;
-  width: 1.333333em;
-  border-radius: 4px;
-  box-shadow: 0 8px 20px rgba(23, 45, 56, 0.25);
-  font-size: 3.4rem;
+  align-self: start;
 }
 
 .quiz-panel__message {
@@ -255,77 +270,71 @@ watch(() => props.question?.id, async (countryId) => {
 
 .quiz-panel__message:first-child { grid-column: 1 / -1; }
 
-.quiz-panel__eyebrow {
-  margin: 0 0 0.3rem;
-  color: #687678;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.quiz-panel__resume { margin: 0 0 0.3rem; color: #52676e; font-size: 0.75rem; }
-
-.quiz-panel h2 {
-  margin: 0;
-  color: #172d38;
-  font-size: clamp(1.15rem, 2.5vw, 1.65rem);
-  line-height: 1.15;
-}
+.quiz-panel__resume { margin: 0 0 0.3rem; color: var(--ui-text); font-size: var(--ui-text-small); }
 
 .quiz-panel__status {
   grid-column: 2;
   grid-row: 2;
   display: flex;
-  min-height: 3rem;
+  min-height: 0;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.2rem;
 }
 
-.quiz-panel__hint,
-.quiz-panel__feedback {
+.quiz-panel__hint {
   margin: 0;
-  color: #687678;
-  font-size: 0.85rem;
+  color: var(--ui-muted);
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
+  line-height: 1.4;
 }
 
-.quiz-panel__feedback--correct { color: #28704a; }
-.quiz-panel__feedback--wrong { color: #a13d2c; }
+.quiz-panel__feedback {
+  margin: 0;
+  color: var(--ui-muted);
+  font-size: var(--ui-text-body); font-weight: var(--ui-weight-large);
+}
+
+.quiz-panel__feedback--correct { color: var(--ui-success); }
+.quiz-panel__feedback--wrong { color: var(--ui-error); }
 
 .quiz-panel__answer {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.4em;
-  color: #52676e;
-  font-size: 0.82rem;
+  color: var(--ui-text);
+  font-size: var(--ui-text-body); font-weight: var(--ui-weight-large);
   line-height: 1.2;
 }
 
-.quiz-panel__answer strong { font-weight: 800; }
-.quiz-panel__correct-name { color: #28704a; }
+.quiz-panel__answer strong { font-weight: var(--ui-weight-emphasis); }
+.quiz-panel__correct-name { color: var(--ui-success); }
+.quiz-panel__correct-answer { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: var(--ui-space-2); }
+.quiz-panel__correct-country { display: inline-flex; align-items: center; gap: var(--ui-space-2); min-width: 0; }
+.quiz-panel__answer-flag { flex: 0 0 auto; width: 1.333333rem; font-size: 1rem; border-radius: var(--ui-radius-flag); }
 
 .quiz-panel__text-button {
   border: 0;
   padding: 0;
-  color: #172d38;
+  color: var(--ui-ink);
   background: none;
   font: inherit;
-  font-weight: 750;
+  font-weight: var(--ui-weight);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
 
 .quiz-panel__answer .quiz-panel__text-button { margin-left: 0; }
-.quiz-panel__text-button:hover { color: #a13d2c; }
+.quiz-panel__text-button:hover { color: var(--ui-ink); }
 .quiz-panel__text-button--preference {
   white-space: nowrap;
-  color: #687a80;
-  font-size: 0.76rem;
-  font-weight: 400;
-  text-decoration-color: #a7b3b6;
+  color: var(--ui-muted);
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
+  text-decoration-color: var(--ui-border-strong);
 }
 
 .quiz-panel__preference-check {
@@ -346,23 +355,23 @@ watch(() => props.question?.id, async (countryId) => {
   gap: 0.5rem;
   margin-top: 0.1rem;
   padding-top: 0.7rem;
-  border-top: 1px solid #d9e3e6;
+  border-top: 1px solid var(--ui-border);
 }
 
-.quiz-panel__restart { margin-right: auto; color: #687a80; font-size: 0.75rem; font-weight: 500; }
+.quiz-panel__restart { min-height: var(--ui-control-height); margin-right: auto; color: var(--ui-muted); font-size: var(--ui-text-small); font-weight: var(--ui-weight); }
 
 .quiz-panel__button {
-  padding: 0.65rem 0.95rem;
+  min-height: var(--ui-control-height);
+  padding: 0.55rem 0.85rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--ui-radius-control);
   color: #fff;
-  background: #172d38;
-  font-size: 0.82rem;
-  font-weight: 750;
+  background: var(--ui-ink);
+  font-size: var(--ui-text-body); font-weight: var(--ui-weight-large);
   cursor: pointer;
 }
 
-.quiz-panel__button:hover { background: #315060; }
+.quiz-panel__button:hover { background: var(--ui-focus); }
 
 .quiz-panel > .quiz-panel__button {
   grid-column: 1 / -1;
@@ -370,13 +379,13 @@ watch(() => props.question?.id, async (countryId) => {
 }
 
 .quiz-panel__button--secondary {
-  color: #52676e;
+  color: var(--ui-text);
   background: transparent;
 }
 
 .quiz-panel__button--secondary:hover {
-  color: #172d38;
-  background: #e6eef1;
+  color: var(--ui-ink);
+  background: var(--ui-hover);
 }
 
 .quiz-panel__button--reserved {
@@ -385,49 +394,32 @@ watch(() => props.question?.id, async (countryId) => {
 
 :global(html[data-input-modality='keyboard'] .quiz-panel__button:focus-visible),
 :global(html[data-input-modality='keyboard'] .quiz-panel__text-button:focus-visible) {
-  outline: 2px solid #172d38;
+  outline: 2px solid var(--ui-focus);
   outline-offset: 3px;
 }
 
-.quiz-panel--identify { grid-template-columns: minmax(0, 1fr); }
-.quiz-panel--identify .quiz-panel__message,
+.quiz-panel--identify:not(.quiz-panel--with-flag) { grid-template-columns: minmax(0, 1fr); }
+.quiz-panel--identify:not(.quiz-panel--with-flag) .quiz-panel__message,
 .quiz-panel--identify .quiz-panel__status { grid-column: 1 / -1; }
 .quiz-panel__input { grid-column: 1 / -1; grid-row: 2; }
 .quiz-panel--identify .quiz-panel__status { grid-row: 3; min-height: 0; }
-.quiz-panel__view-hint { grid-row: 4; grid-column: 1 / -1; margin: 0; color: #687678; font-size: 0.75rem; }
+.quiz-panel__view-hint { grid-row: 4; grid-column: 1 / -1; margin: 0; color: var(--ui-muted); font-size: var(--ui-text-small); }
 .quiz-panel--identify .quiz-panel__actions { grid-row: 5; flex-wrap: wrap; }
-.quiz-panel__shortcut { margin-left: 0.35rem; font: inherit; font-weight: 400; opacity: 0.75; }
+.quiz-panel__shortcut { margin-left: 0.35rem; font: inherit; font-weight: var(--ui-weight); opacity: 0.75; }
 
 @media (hover: none), (pointer: coarse) {
-  .quiz-panel__shortcut { display: none; }
+  .quiz-panel__shortcut,
+  .quiz-panel__hint { display: none; }
+}
+
+@media (max-width: 680px) {
+  .quiz-panel__hint { display: none; }
 }
 
 @media (max-width: 560px) {
-  .quiz-panel {
-    grid-template-columns: 2.75rem minmax(0, 1fr);
-    gap: 0.25rem 0.65rem;
-  }
-
-  .quiz-panel--identify { grid-template-columns: minmax(0, 1fr); }
+  .quiz-panel--identify:not(.quiz-panel--with-flag) { grid-template-columns: minmax(0, 1fr); }
   .quiz-panel--identify .quiz-panel__status { grid-row: 3; }
   .quiz-panel--identify .quiz-panel__actions { grid-row: 5; }
-
-  .quiz-panel__flag {
-    align-self: start;
-    margin-top: 0.1rem;
-    box-shadow: 0 2px 6px rgba(23, 45, 56, 0.16);
-    font-size: 2rem;
-  }
-
-  .quiz-panel__eyebrow {
-    margin-bottom: 0.1rem;
-    font-size: 0.62rem;
-    letter-spacing: 0.045em;
-  }
-
-  .quiz-panel h2 {
-    font-size: 1.05rem;
-  }
 
   .quiz-panel__status {
     grid-column: 1 / -1;
@@ -438,11 +430,10 @@ watch(() => props.question?.id, async (countryId) => {
     gap: 0.15rem 0.45rem;
   }
 
-  .quiz-panel__hint { display: none; }
-
   .quiz-panel__feedback,
   .quiz-panel__answer {
-    font-size: 0.76rem;
+    font-size: var(--ui-text-control);
+    font-weight: var(--ui-weight);
   }
 
   .quiz-panel__actions {
@@ -457,7 +448,8 @@ watch(() => props.question?.id, async (countryId) => {
   .quiz-panel__button {
     min-height: 2.75rem;
     padding: 0.45rem 0.75rem;
-    font-size: 0.76rem;
+    font-size: var(--ui-text-control);
+    font-weight: var(--ui-weight);
   }
 
 }

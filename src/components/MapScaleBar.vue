@@ -27,8 +27,8 @@ defineProps<{ scale: ScaleBar }>()
   bottom: calc(4.4rem + env(safe-area-inset-bottom));
   right: calc(3rem + env(safe-area-inset-right));
   color: #40545d;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
   line-height: 1;
   pointer-events: none;
 }

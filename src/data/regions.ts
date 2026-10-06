@@ -3,7 +3,7 @@ import type { MapUnitFeature } from '../types/country'
 import type { MapPoint } from '../composables/useMapZoom'
 
 export type MapRegionId =
-  | 'world' | 'europe' | 'nordics' | 'baltics' | 'balkans'
+  | 'world' | 'europe' | 'western-europe' | 'eastern-europe' | 'balkans'
   | 'africa' | 'asia' | 'east-asia' | 'southeast-asia' | 'south-asia' | 'central-asia'
   | 'middle-east' | 'north-america' | 'central-america-caribbean'
   | 'south-america' | 'oceania'
@@ -33,13 +33,20 @@ export const regions: readonly MapRegion[] = [
     regionalProjection: { center: [10, 52] },
     children: [
       {
-        id: 'nordics', label: 'Nordics', view: { center: [8, 64], zoom: 4.25, panReach: 0.75 },
+        id: 'western-europe', label: 'Western Europe', view: { center: [2, 50], zoom: 3.25, panReach: 0.75 },
         regionalProjection: {
-          center: [15, 64],
-          frame: { west: -75, south: 53, east: 36, north: 84 },
+          center: [2, 50],
+          frame: { west: -75, south: 34, east: 34, north: 84 },
         },
       },
-      { id: 'baltics', label: 'Baltics', view: { center: [25, 57.5], zoom: 7 } },
+      {
+        id: 'eastern-europe', label: 'Eastern Europe', view: { center: [35, 55], zoom: 4.25, panReach: 0.75 },
+        // Frame the European practice area without splitting Russia's country identity.
+        regionalProjection: {
+          center: [35, 55],
+          frame: { west: 12, south: 34, east: 65, north: 72 },
+        },
+      },
       { id: 'balkans', label: 'Balkans', view: { center: [29.72, 41.73], zoom: 11.56 } },
     ],
   },
@@ -68,11 +75,28 @@ export const regions: readonly MapRegion[] = [
   { id: 'oceania', label: 'Oceania', view: { center: [145.05, -26.9], zoom: 4.25, horizontalWrap: true } },
 ]
 
+// Game policy adapted from the Norwegian Wikipedia Land table, with Greece
+// assigned to the western/Mediterranean group and Turkey retained in the east.
+// https://no.wikipedia.org/w/index.php?title=Øst-Europa&oldid=25912362#Land
+const easternEuropeEntityIds = new Set([
+  'EST', 'LVA', 'LTU', 'POL', 'CZE', 'SVK', 'HUN', 'BLR', 'UKR', 'MDA', 'ROU', 'BGR', 'RUS',
+  'ALB', 'BIH', 'HRV', 'KOS', 'MKD', 'MNE', 'SRB', 'SVN', 'TUR',
+])
+
+// Western Europe is the remaining canonical European country identities,
+// including Nordic and Mediterranean countries. Preserve Greenland/Faroes in
+// Explore. Using quiz identities keeps source-data splits out of this policy.
+const westernEuropeEntityIds = new Set([
+  ...mapUnits
+    .filter((unit) => unit.properties.regionUn === 'Europe'
+      && !easternEuropeEntityIds.has(unit.quizEntityId))
+    .map((unit) => unit.quizEntityId),
+  'GRL', 'FRO',
+])
+
 const playableEntityIds: Partial<Record<MapRegionId, ReadonlySet<string>>> = {
-  // A playable grouping can cross canonical regions. Greenland belongs to
-  // Nordics here, but its canonical North American unit does not enter Europe.
-  nordics: new Set(['DNK', 'FRO', 'FIN', 'GRL', 'ISL', 'NOR', 'SWE']),
-  baltics: new Set(['EST', 'LVA', 'LTU']),
+  'western-europe': westernEuropeEntityIds,
+  'eastern-europe': easternEuropeEntityIds,
   balkans: new Set(['ALB', 'BIH', 'BGR', 'HRV', 'GRC', 'KOS', 'MKD', 'MNE', 'ROU', 'SRB', 'SVN', 'TUR']),
 }
 

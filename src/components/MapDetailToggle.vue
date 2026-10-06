@@ -55,32 +55,32 @@ const emit = defineEmits<{
 .detail-toggle {
   display: flex;
   align-items: center;
+  min-height: var(--ui-control-height);
   gap: 0.55rem;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid rgba(82, 103, 110, 0.18);
-  border-radius: 999px;
-  color: #52676e;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 3px 12px rgba(23, 45, 56, 0.08);
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-control);
   font: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
   white-space: nowrap;
   cursor: pointer;
-  backdrop-filter: blur(7px);
 }
 
 :global(html[data-input-modality='keyboard'] .detail-toggle:focus-visible) {
-  outline: 2px solid rgba(23, 45, 56, 0.35);
+  outline: 2px solid var(--ui-focus);
   outline-offset: 2px;
 }
 
 .detail-toggle__text { flex: 1; min-width: 0; text-align: left; }
 .detail-toggle--described { align-items: flex-start; white-space: normal; }
 .detail-toggle--described .detail-toggle__indicator { margin-top: 0.15rem; }
-.detail-toggle__help { display: grid; gap: 0.3rem; margin-top: 0.4rem; font-size: 0.72rem; line-height: 1.4; }
-.detail-toggle__context { color: #687a80; font-weight: 650; }
-.detail-toggle__description { color: #687678; font-weight: 400; }
+.detail-toggle__help { display: grid; gap: var(--ui-space-1); margin-top: var(--ui-space-2); font-size: var(--ui-text-small); line-height: 1.4; }
+.detail-toggle__context { color: var(--ui-muted); font-weight: var(--ui-weight); }
+.detail-toggle__description { color: var(--ui-muted); font-weight: var(--ui-weight); }
 
 .detail-toggle:disabled {
   cursor: default;
@@ -101,7 +101,7 @@ const emit = defineEmits<{
   width: 1.8rem;
   height: 1rem;
   border-radius: 999px;
-  background: #b8c3c5;
+  background: var(--ui-border-strong);
   transition: background 140ms ease;
 }
 
@@ -112,13 +112,13 @@ const emit = defineEmits<{
   width: 0.7rem;
   height: 0.7rem;
   border-radius: 50%;
-  background: #fff;
+  background: var(--ui-surface);
   box-shadow: 0 1px 3px rgba(23, 45, 56, 0.3);
   transition: transform 140ms ease;
 }
 
 .detail-toggle--active .detail-toggle__track {
-  background: #e76f51;
+  background: var(--ui-accent);
 }
 
 .detail-toggle--active .detail-toggle__thumb {

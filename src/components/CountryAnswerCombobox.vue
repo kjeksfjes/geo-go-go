@@ -5,6 +5,7 @@ import {
   ComboboxItem, ComboboxPortal, ComboboxRoot, ComboboxViewport,
 } from 'reka-ui'
 import { countryName, locale, t } from '../i18n'
+import { countryInfoById } from '../data/countries'
 import { filterCountrySuggestions, normalizeCountrySearch } from '../logic/countrySuggestions'
 
 const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean }>()
@@ -97,34 +98,30 @@ onMounted(() => {
           <ComboboxViewport class="country-suggestions__viewport">
             <ComboboxEmpty class="country-suggestions__empty">{{ t('noCountryMatches') }}</ComboboxEmpty>
             <ComboboxItem v-for="option in suggestions" :key="option.id" :value="option.id" :text-value="option.name" class="country-suggestions__item">
-              {{ option.name }}
+              <span v-if="countryInfoById.get(option.id)?.flagCode" class="country-suggestions__flag fi" :class="`fi-${countryInfoById.get(option.id)?.flagCode}`" aria-hidden="true" />
+              <span class="country-suggestions__name">{{ option.name }}</span>
             </ComboboxItem>
           </ComboboxViewport>
         </ComboboxContent>
       </ComboboxPortal>
     </ComboboxRoot>
-    <p v-if="!answerId" class="country-answer__hint">{{ t('countryAnswerHint') }}</p>
   </div>
 </template>
 
 <style scoped>
 .country-answer { min-width: 0; }
-.country-answer__label { display: block; margin-bottom: 0.35rem; color: #52676e; font-size: 0.8rem; font-weight: 650; }
+.country-answer__label { display: block; margin-bottom: 0.35rem; color: var(--ui-text); font-size: var(--ui-text-control); font-weight: var(--ui-weight); }
 .country-answer__anchor {
   display: flex; align-items: center; gap: 0.65rem;
-  border: 1px solid #b4c4c9; border-radius: 12px; padding: 0.65rem 0.8rem;
-  color: #687a80; background: #fff;
+  border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-control); padding: var(--ui-space-3);
+  color: var(--ui-muted); background: var(--ui-surface);
 }
-.country-answer__anchor--correct { border-color: #76a68b; background: #f5fbf7; color: #26774a; }
-.country-answer__anchor--wrong { border-color: #cf887c; background: #fff8f5; color: #a13d2c; }
-.country-answer__anchor:focus-within { border-color: #315d6d; box-shadow: 0 0 0 3px rgb(49 93 109 / 12%); }
-.country-answer__input { width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: #172d38; font: inherit; font-size: 1rem; }
-.country-answer__input::placeholder { color: #83949b; }
-.country-answer__hint { margin: 0.4rem 0 0; color: #687678; font-size: 0.73rem; }
-
-@media (max-width: 680px) {
-  .country-answer__hint { display: none; }
-}
+.country-answer__anchor--correct { border-color: var(--ui-success-border); background: var(--ui-success-surface); color: var(--ui-success); }
+.country-answer__anchor--wrong { border-color: var(--ui-error-border); background: var(--ui-error-surface); color: var(--ui-error); }
+.country-answer__anchor:focus-within { border-color: var(--ui-focus); box-shadow: 0 0 0 3px var(--ui-focus-halo); }
+.country-answer__input { width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: var(--ui-ink); font: inherit; font-size: 1rem; font-weight: var(--ui-weight-large); }
+.country-answer__input[readonly] { font-weight: var(--ui-weight-emphasis); }
+.country-answer__input::placeholder { color: var(--ui-muted); }
 </style>
 
 <!-- The portaled content wrapper does not inherit this component’s scope ID. -->
@@ -132,11 +129,13 @@ onMounted(() => {
 .country-suggestions {
   z-index: 20; width: var(--reka-combobox-trigger-width);
   max-height: min(260px, var(--reka-combobox-content-available-height, 260px)); overflow: hidden;
-  border: 1px solid #c6d4d9; border-radius: 12px; padding: 0.3rem;
-  background: #fff; color: #172d38; box-shadow: 0 12px 30px rgb(23 45 56 / 18%);
+  border: 1px solid var(--ui-border); border-radius: var(--ui-radius-control); padding: 0.3rem;
+  background: var(--ui-surface); color: var(--ui-ink); box-shadow: var(--ui-shadow-panel);
 }
 .country-suggestions__viewport { min-height: 0; max-height: inherit; overflow-y: auto; overscroll-behavior: contain; }
-.country-suggestions__item { padding: 0.7rem 0.8rem; border-radius: 8px; font-size: 0.94rem; cursor: pointer; outline: none; }
-.country-suggestions__item[data-highlighted] { background: #e6eff2; color: #17374b; }
-.country-suggestions__empty { padding: 0.75rem; color: #687678; font-size: 0.85rem; }
+.country-suggestions__item { display: flex; align-items: center; gap: var(--ui-space-2); min-height: var(--ui-control-height); line-height: 1.4; padding: 0.625rem var(--ui-space-3); border-radius: var(--ui-radius-small); font-size: var(--ui-text-body); font-weight: var(--ui-weight-large); cursor: pointer; outline: none; }
+.country-suggestions__flag { flex: 0 0 auto; width: 1.333333rem; font-size: 1rem; border-radius: 2px; }
+.country-suggestions__name { min-width: 0; overflow-wrap: anywhere; }
+.country-suggestions__item[data-highlighted] { background: var(--ui-hover); color: var(--ui-ink); }
+.country-suggestions__empty { padding: 0.75rem; color: var(--ui-muted); font-size: var(--ui-text-body); font-weight: var(--ui-weight-large); }
 </style>
