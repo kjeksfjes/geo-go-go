@@ -13,6 +13,7 @@ export interface MapHomeView {
 }
 export interface ZoomToBoundsOptions {
   preferredScale?: number
+  viewport?: MapBounds
 }
 
 const MIN_ZOOM = 1
@@ -308,15 +309,18 @@ export function useMapZoom(
   function zoomToBounds(
     bounds: MapBounds,
     focusPoint?: MapPoint,
-    { preferredScale }: ZoomToBoundsOptions = {},
+    { preferredScale, viewport = [[0, 0], [width.value, height.value]] }: ZoomToBoundsOptions = {},
   ) {
     const [[x0, y0], [x1, y1]] = bounds
+    const [[viewLeft, viewTop], [viewRight, viewBottom]] = viewport
+    const viewWidth = Math.max(1, viewRight - viewLeft)
+    const viewHeight = Math.max(1, viewBottom - viewTop)
     const boundsWidth = Math.max(1, x1 - x0)
     const boundsHeight = Math.max(1, y1 - y0)
     const minimumScale = Math.max(1.8, viewConstraint.value?.minScale ?? MIN_ZOOM)
     const fitScale = Math.max(
       minimumScale,
-      Math.min(MAX_ZOOM, 0.68 / Math.max(boundsWidth / width.value, boundsHeight / height.value)),
+      Math.min(MAX_ZOOM, 0.68 / Math.max(boundsWidth / viewWidth, boundsHeight / viewHeight)),
     )
     const requestedScale = preferredScale === undefined
       ? fitScale
@@ -331,8 +335,8 @@ export function useMapZoom(
     // current view before traversing the map. The balanced (target-anchored)
     // motion can otherwise sweep across the scene while still highly zoomed.
     animateTo(
-      width.value / 2 - scale * (focusPoint?.[0] ?? (x0 + x1) / 2),
-      height.value / 2 - scale * (focusPoint?.[1] ?? (y0 + y1) / 2),
+      (viewLeft + viewRight) / 2 - scale * (focusPoint?.[0] ?? (x0 + x1) / 2),
+      (viewTop + viewBottom) / 2 - scale * (focusPoint?.[1] ?? (y0 + y1) / 2),
       scale,
       750,
       scale < transform.scale ? 'zoom-out' : 'balanced',

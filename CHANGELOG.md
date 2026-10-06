@@ -10,6 +10,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Centered automatic country framing in the space below mobile quiz and country cards, using the card's actual height for both positioning and zoom fitting.
 - Organized settings into Map appearance, Quiz, and Navigation & scale, with High detail first, persistent quiz preferences available in every mode, a two-column desktop layout, and language at the top of mobile settings. Panels scroll only when needed to fit the screen.
 - Improved contrast between selected geographic components and the rest of their country; Name the country uses a violet question highlight distinct from ocean colors.
 - Stabilized inline reveal controls, hid keyboard shortcut hints on touch devices, and added password-manager autofill exclusions to country-answer fields.

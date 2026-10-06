@@ -31,6 +31,7 @@ const selectedCountryId = ref<string | null>(null)
 const selectedGeographicUnitId = ref<string | null>(null)
 const selectedLandAreaId = ref<string | null>(null)
 const worldMap = shallowRef<InstanceType<typeof WorldMap> | null>(null)
+const mapOverlay = ref<HTMLElement | null>(null)
 type GameMode = 'explore' | 'find-country' | 'name-country'
 const mode = ref<GameMode>('explore')
 const quizMode = computed(() => mode.value !== 'explore')
@@ -405,6 +406,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
     <section class="map-card" :aria-label="t('worldMapGame')">
       <WorldMap
         ref="worldMap"
+        :focus-overlay="mapOverlay"
         :geographic-units="renderedGeographicUnits"
         :detailed-geographic-units="detailedGeographicUnits"
         :detail-loading="detailLoading"
@@ -438,7 +440,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         @land-select="handleLandAreaSelection"
         @quiz-next="advanceQuizQuestion"
       />
-      <div v-if="quizMode" class="map-overlay" :inert="detailLoading">
+      <div v-if="quizMode" ref="mapOverlay" class="map-overlay" :inert="detailLoading">
         <div class="map-overlay__card">
           <CountryQuizPanel
             :key="`${mode}:${activeRegionId}`"
@@ -467,7 +469,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
           />
         </div>
       </div>
-      <div v-else-if="selectedCountry || selectedLandArea" class="map-overlay" :inert="detailLoading">
+      <div v-else-if="selectedCountry || selectedLandArea" ref="mapOverlay" class="map-overlay" :inert="detailLoading">
         <div class="map-overlay__card">
           <CountryCard :country="selectedCountry" :component="selectedComponent" :area="selectedLandArea" />
         </div>

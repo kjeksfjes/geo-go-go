@@ -22,6 +22,7 @@ import {
   type MapHomeView,
   type MapPoint,
   type MapViewConstraint,
+  type ZoomToBoundsOptions,
 } from '../composables/useMapZoom'
 import type { GeographicUnitFeature } from '../types/country'
 import type { CanvasMapScene } from '../types/mapCanvas'
@@ -77,6 +78,7 @@ function initialScaleUnits(): ScaleUnitSystem {
 }
 
 const props = defineProps<{
+  focusOverlay: HTMLElement | null
   geographicUnits: GeographicUnitFeature[]
   detailedGeographicUnits: GeographicUnitFeature[] | null
   detailLoading: boolean
@@ -632,7 +634,7 @@ watch([() => props.quizQuestionId, () => props.quizAnswerId], () => {
   hoveredUnit.value = null
 })
 watch(
-  () => [props.nameCountryQuiz, props.quizViewingGuess, props.quizQuestionId, props.quizComplete, props.activeRegion.id, props.geographicUnits, props.detailLoading, projectionId.value],
+  () => [props.nameCountryQuiz, props.quizViewingGuess, props.quizQuestionId, props.quizComplete, props.activeRegion.id, props.geographicUnits, props.detailLoading, projectionId.value, mapWidth.value, mapHeight.value],
   async () => {
     if (!props.nameCountryQuiz || props.quizComplete || !props.quizQuestionId || props.detailLoading) return
     await nextTick()
@@ -660,7 +662,23 @@ watch(isInteracting, (active) => {
 watch(projectionId, () => focusActiveRegion(false), { flush: 'post' })
 watch([mapWidth, mapHeight], () => focusActiveRegion(false), { flush: 'post' })
 
-function selectCountry(
+function countryFocusOptions(): ZoomToBoundsOptions {
+  const options: ZoomToBoundsOptions = limitedCountryZoomEnabled.value
+    ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
+    : {}
+  // On narrow screens the card spans the map. Measure its actual bottom,
+  // including its top offset, rather than assuming a fixed card height.
+  const mapRect = container.value?.getBoundingClientRect()
+  const overlayRect = props.focusOverlay?.getBoundingClientRect()
+  if (window.matchMedia('(max-width: 680px)').matches && mapRect && overlayRect && mapRect.height > 0) {
+    const top = Math.max(0, Math.min(mapHeight.value - 1,
+      (overlayRect.bottom - mapRect.top + 12) * mapHeight.value / mapRect.height))
+    options.viewport = [[0, top], [mapWidth.value, mapHeight.value]]
+  }
+  return options
+}
+
+async function selectCountry(
   countryId: string,
   geographicUnitId: string,
   bounds: MapBounds,
@@ -690,6 +708,9 @@ function selectCountry(
   }
   emit('select', countryId, geographicUnitId)
   if (props.quizMode) return
+  // The first selection creates the card; wait for it before measuring.
+  await nextTick()
+  if (props.quizMode || props.selectedCountryId !== countryId || props.selectedGeographicUnitId !== geographicUnitId) return
   const detailed = canvasRendererActive.value
     ? detailedGeographicPathById.value.get(geographicUnitId)
     : undefined
@@ -704,14 +725,13 @@ function selectCountry(
   zoomToBounds(
     target.bounds,
     target.focusPoint,
-    limitedCountryZoomEnabled.value
-      ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
-      : undefined,
+    countryFocusOptions(),
   )
   restoreHoverUnderPointer()
 }
 
-function focusCountry(countryId: string) {
+async function focusCountry(countryId: string) {
+  await nextTick()
   const candidates = geographicPaths.value.filter(({ unit, path }) =>
     path && unit.properties.entityId === countryId && isGeographicUnitVisible(unit),
   )
@@ -734,14 +754,32 @@ function focusCountry(countryId: string) {
   zoomToBounds(
     target.bounds,
     target.focusPoint,
-    limitedCountryZoomEnabled.value
-      ? { preferredScale: PREFERRED_COUNTRY_FOCUS_SCALE }
-      : undefined,
+    countryFocusOptions(),
   )
   restoreHoverUnderPointer()
 }
 
 defineExpose({ focusCountry })
+
+let focusOverlayObserver: ResizeObserver | undefined
+watch(() => props.focusOverlay, (overlay) => {
+  focusOverlayObserver?.disconnect()
+  if (!overlay) return
+  let previousTop: number | undefined
+  focusOverlayObserver = new ResizeObserver(() => {
+    const top = countryFocusOptions().viewport?.[0][1]
+    if (top === previousTop) return
+    previousTop = top
+    // The asynchronously loaded answer field can change the question card's
+    // height. Refit unanswered questions, without moving answered feedback.
+    if (top !== undefined && props.nameCountryQuiz && !props.quizComplete
+      && props.quizAnswerId === null && !props.quizSkipped && props.quizQuestionId
+      && !interactionLocked.value && !isDragging.value && !isPinching.value && !isWheeling.value) {
+      void focusCountry(props.quizQuestionId)
+    }
+  })
+  focusOverlayObserver.observe(overlay)
+}, { flush: 'post' })
 
 function handleMapClick(event: MouseEvent) {
   if (!props.quizMode) {
@@ -981,6 +1019,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  focusOverlayObserver?.disconnect()
   if (debugTimer !== undefined) window.clearInterval(debugTimer)
   if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
   if (hoverRestoreFrame !== undefined) cancelAnimationFrame(hoverRestoreFrame)
