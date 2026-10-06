@@ -424,7 +424,7 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
 
 @media (max-width: 680px) {
   .app-header {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.4rem;
     min-height: calc(3rem + env(safe-area-inset-top));
     padding: calc(0.25rem + env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right)) 0.25rem max(0.6rem, env(safe-area-inset-left));
@@ -443,9 +443,10 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
   .header-navigation { display: contents; }
 
   .mode-selector {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: start;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    width: 100%;
     min-width: 0;
     padding: 0.15rem;
   }
@@ -466,9 +467,9 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
   .header-region-icon { margin-left: 0.45rem; }
 
   .header-region-control .map-select-field .vue3-treeselect { width: 100%; }
-  .header-actions { grid-column: 3; grid-row: 1; gap: 0.3rem; }
+  .header-actions { grid-column: 2; grid-row: 1; gap: 0.3rem; }
   .header-actions > .language-selector { display: none; }
-  .mode-selector button { min-height: 2.05rem; padding: 0.25rem 0.6rem; }
+  .mode-selector button { flex: 1; min-height: 2.05rem; padding: 0.25rem 0.6rem; }
   .settings-button { width: 2.35rem; height: 2.35rem; }
   .map-overlay { top: 0.5rem; left: 0.5rem; width: min(390px, calc(100% - 1rem)); }
   .map-overlay__card { border-radius: 15px; }

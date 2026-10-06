@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useId } from 'vue'
 import { t } from '../i18n'
 import LoadingSpinner from './LoadingSpinner.vue'
 
@@ -7,10 +8,14 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   modelValue: boolean
   label?: string
+  context?: string
+  description?: string
 }>(), {
   loading: false,
   disabled: false,
 })
+
+const descriptionId = `setting-description-${useId()}`
 
 const emit = defineEmits<{
   'update:modelValue': [enabled: boolean]
@@ -20,15 +25,23 @@ const emit = defineEmits<{
 <template>
   <button
     class="detail-toggle"
-    :class="{ 'detail-toggle--active': modelValue }"
+    :class="{ 'detail-toggle--active': modelValue, 'detail-toggle--described': context || description }"
     type="button"
     role="switch"
+    :aria-label="label ?? t('highDetail')"
+    :aria-describedby="context || description ? descriptionId : undefined"
     :aria-checked="modelValue"
     :aria-busy="loading"
     :disabled="loading || disabled"
     @click="emit('update:modelValue', !props.modelValue)"
   >
-    <span>{{ label ?? t('highDetail') }}</span>
+    <span class="detail-toggle__text">
+      <span>{{ label ?? t('highDetail') }}</span>
+      <span v-if="context || description" :id="descriptionId" class="detail-toggle__help">
+        <span v-if="context" class="detail-toggle__context">{{ context }}</span>
+        <span v-if="description" class="detail-toggle__description">{{ description }}</span>
+      </span>
+    </span>
     <span class="detail-toggle__indicator" aria-hidden="true">
       <LoadingSpinner v-if="loading" />
       <span v-else class="detail-toggle__track">
@@ -61,6 +74,13 @@ const emit = defineEmits<{
   outline: 2px solid rgba(23, 45, 56, 0.35);
   outline-offset: 2px;
 }
+
+.detail-toggle__text { flex: 1; min-width: 0; text-align: left; }
+.detail-toggle--described { align-items: flex-start; white-space: normal; }
+.detail-toggle--described .detail-toggle__indicator { margin-top: 0.15rem; }
+.detail-toggle__help { display: grid; gap: 0.3rem; margin-top: 0.4rem; font-size: 0.72rem; line-height: 1.4; }
+.detail-toggle__context { color: #687a80; font-weight: 650; }
+.detail-toggle__description { color: #687678; font-weight: 400; }
 
 .detail-toggle:disabled {
   cursor: default;

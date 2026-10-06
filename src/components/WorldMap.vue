@@ -89,6 +89,12 @@ const props = defineProps<{
   selectedGeographicUnitId: string | null
   selectedLandAreaId: string | null
   quizMode: boolean
+  nameCountryQuiz: boolean
+  quizViewingGuess: boolean
+  suggestAllCountries: boolean
+  automaticAnswerReveal: boolean
+  quizSkipped: boolean
+  correctAnswerVisible: boolean
   quizComplete: boolean
   quizQuestionId: string | null
   quizAnswerId: string | null
@@ -103,6 +109,9 @@ const emit = defineEmits<{
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'locale-change': [locale: Locale]
   'reset-settings': []
+  'suggest-all-countries-change': [value: boolean]
+  'wrong-answer-preference-change': [value: boolean]
+  'automatic-answer-reveal-change': [value: boolean]
 }>()
 
 const container = ref<HTMLElement | null>(null)
@@ -138,6 +147,8 @@ const interactionState = computed<MapInteractionState>(() => ({
   selectedGeographicUnitId: props.selectedGeographicUnitId,
   hoveredEntityId: hoveredUnit.value?.entityId ?? null,
   quizMode: props.quizMode,
+  quizSkipped: props.quizSkipped,
+  nameCountryQuiz: props.nameCountryQuiz,
   quizComplete: props.quizComplete,
   quizQuestionId: props.quizQuestionId,
   quizAnswerId: props.quizAnswerId,
@@ -146,8 +157,6 @@ const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const debugEnabled = new URLSearchParams(window.location.search).has('debug')
-const highlightRestoredLand = ref(false)
-const reviewedLandId = ref('')
 interface MapDebugVerticalFit {
   span: number
   topGap: number
@@ -215,19 +224,6 @@ const visibleSupplementalLandPaths = computed(() => props.quizMode
   ? supplementalLandPaths.value.filter((area) => !quizMergedSourceIds.has(area.id))
   : supplementalExploreLandPaths.value,
 )
-function reviewRestoredLand(id: string) {
-  reviewedLandId.value = id
-  highlightRestoredLand.value = true
-  const area = supplementalLandPaths.value.find((area) => area.id === id)
-  if (!area) return
-  const [[left, top], [right, bottom]] = area.bounds
-  if (![left, top, right, bottom].every(Number.isFinite)) return
-  // Leave room around tiny islands and long buffer zones for geographic context.
-  const scale = Math.min(2048, Math.max(8,
-    Math.min(mapWidth.value / Math.max(right - left, 0.001),
-      mapHeight.value / Math.max(bottom - top, 0.001)) * 0.35))
-  zoomToPoint([(left + right) / 2, (top + bottom) / 2], scale)
-}
 // Global projections keep their world-sized canvas. At minimum zoom, center
 // the filtered region within that canvas instead of returning to world origin.
 const minimumZoomPoint = computed<MapPoint | null>(() => {
@@ -433,6 +429,8 @@ function updateDebugMetrics() {
 // Reuse the active drawing paths for SVG hit targets in both renderers.
 // Coarser hit geometry omits visible islands and disagrees with coastlines.
 function geographicUnitLabel(unit: GeographicUnitFeature) {
+  if (props.nameCountryQuiz && !props.quizComplete
+    && ((props.quizAnswerId === null && !props.quizSkipped) || (!props.correctAnswerVisible && unit.properties.entityId === props.quizQuestionId))) return t('highlightedCountry')
   const component = unit.properties.componentId
     ? componentInfoById.get(unit.properties.componentId) : undefined
   const country = countryName(unit.properties.entityId)
@@ -449,7 +447,7 @@ const detailedGeographicPathById = computed(() => new Map(
 const paintedGeographicPaths = computed(() => {
   const paths = geographicPaths.value
   const foregroundIds = props.quizMode
-    ? (props.quizAnswerId === null ? [] : [props.quizAnswerId, props.quizQuestionId])
+    ? (props.quizAnswerId === null ? (props.nameCountryQuiz ? [props.quizQuestionId] : []) : [props.quizAnswerId, props.quizQuestionId])
     : [props.selectedCountryId]
   if (!foregroundIds.some(Boolean)) return paths
 
@@ -540,15 +538,23 @@ const smallCountryAnchors = computed<SmallCountryAnchor[]>(() => {
 })
 
 const quizSmallCountryMarkers = computed(() =>
-  props.quizMode && props.quizAnswerId === null && !props.quizComplete && !isInteracting.value
+  props.quizMode && !props.nameCountryQuiz && props.quizAnswerId === null && !props.quizSkipped && !props.quizComplete && !isInteracting.value
     ? groupSmallCountryMarkers(
         smallCountryAnchors.value, transform, copyOffsets.value, mapWidth.value, mapHeight.value,
       )
     : [],
 )
 
+const namedQuestionMarkers = computed(() => props.nameCountryQuiz && props.quizAnswerId === null && !props.quizSkipped && !props.quizComplete && !isInteracting.value
+  ? groupSmallCountryMarkers(
+      smallCountryAnchors.value.filter(({ countryId }) => countryId === props.quizQuestionId),
+      transform, copyOffsets.value, mapWidth.value, mapHeight.value,
+    )
+  : [],
+)
+
 const quizFeedbackMarkers = computed<SmallCountryFeedbackMarker[]>(() => {
-  if (!props.quizMode || props.quizAnswerId === null || props.quizComplete || isInteracting.value) return []
+  if (!props.quizMode || (props.quizAnswerId === null && !props.quizSkipped) || props.quizComplete || isInteracting.value) return []
   const answerIds = new Set([props.quizQuestionId, props.quizAnswerId])
   return groupSmallCountryMarkers(
     smallCountryAnchors.value.filter((anchor) => answerIds.has(anchor.countryId)),
@@ -615,7 +621,7 @@ watch(
   () => focusActiveRegion(projectionId.value !== 'regional-equal-area'),
   { flush: 'post' },
 )
-watch(() => props.quizMode, (active) => {
+watch(() => [props.quizMode, props.nameCountryQuiz], ([active]) => {
   hoveredUnit.value = null
   if (active) focusActiveRegion(true, true)
 }, { flush: 'post' })
@@ -625,6 +631,17 @@ watch([() => props.activeRegion.id, () => props.geographicUnits], () => {
 watch([() => props.quizQuestionId, () => props.quizAnswerId], () => {
   hoveredUnit.value = null
 })
+watch(
+  () => [props.nameCountryQuiz, props.quizViewingGuess, props.quizQuestionId, props.quizComplete, props.activeRegion.id, props.geographicUnits, props.detailLoading, projectionId.value],
+  async () => {
+    if (!props.nameCountryQuiz || props.quizComplete || !props.quizQuestionId || props.detailLoading) return
+    await nextTick()
+    const targetId = props.quizViewingGuess ? props.quizAnswerId : props.quizQuestionId
+    if (props.nameCountryQuiz && !props.quizComplete && targetId && !props.detailLoading) focusCountry(targetId)
+  },
+  { flush: 'post' },
+)
+
 watch(isInteracting, (active) => {
   if (hoverRestoreFrame !== undefined) {
     cancelAnimationFrame(hoverRestoreFrame)
@@ -734,7 +751,7 @@ function handleMapClick(event: MouseEvent) {
     }
     return
   }
-  if (props.quizAnswerId === null) return
+  if (props.quizAnswerId === null && !props.quizSkipped) return
   if (consumeDragClick()) return
   if (backgroundClickAction(event.detail, interactionState.value) === 'next') emit('quiz-next')
 }
@@ -844,7 +861,7 @@ function restoreHoverUnderPointer() {
   if (hoverRestoreFrame !== undefined) cancelAnimationFrame(hoverRestoreFrame)
   hoverRestoreFrame = requestAnimationFrame(() => {
     hoverRestoreFrame = undefined
-    if (isInteracting.value) return
+    if (props.nameCountryQuiz || isInteracting.value) return
     const target = document.elementFromPoint(pointer.clientX, pointer.clientY)
     const hit = target instanceof Element
       ? target.closest<SVGElement>('[data-country-id][data-geographic-unit-id]')
@@ -864,7 +881,7 @@ function hoverGeographicUnit(unit: GeographicUnitFeature, event: PointerEvent) {
   // a tap or a pan. Only hover-capable pointers should preview a country.
   if (event.pointerType === 'touch') return
   rememberHoverPointer(event)
-  if (!isInteracting.value) hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
+  if (!props.nameCountryQuiz && !isInteracting.value) hoveredUnit.value = { id: unit.id, entityId: unit.properties.entityId }
 }
 
 function hoverSmallCountryMarker(marker: SmallCountryMarker | null) {
@@ -932,8 +949,6 @@ function setReliefEnabled(enabled: boolean) {
 }
 
 function resetMapSettings() {
-  highlightRestoredLand.value = false
-  reviewedLandId.value = ''
   limitedCountryZoomEnabled.value = true
   setBathymetryEnabled(!usesMobileMapDefaults)
   setReliefEnabled(false)
@@ -1043,6 +1058,7 @@ async function setProjection(nextId: MapProjectionId) {
         :class="{
           'world-map--wrapped': wrapActive,
           'world-map--canvas': canvasRendererActive,
+          'world-map--naming': nameCountryQuiz,
           'world-map--bathymetry': bathymetryEnabled && bathymetryPaths.length > 0,
         }"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
@@ -1136,12 +1152,12 @@ async function setProjection(nextId: MapProjectionId) {
                 :style="outlinePath !== undefined ? { stroke: 'none' } : undefined"
                 :data-country-id="unit.properties.entityId"
                 :data-geographic-unit-id="unit.id"
-                role="button"
+                :role="nameCountryQuiz ? 'img' : 'button'"
                 :tabindex="offset === 0 && isGeographicUnitVisible(unit) && canActivateGeographicUnit(interactionState) ? 0 : -1"
                 :aria-label="geographicUnitLabel(unit)"
-                :aria-hidden="!isGeographicUnitVisible(unit)"
-                :aria-disabled="!canActivateGeographicUnit(interactionState)"
-                :aria-pressed="quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit)"
+                :aria-hidden="!isGeographicUnitVisible(unit) || (nameCountryQuiz && unit.properties.entityId !== (quizViewingGuess ? quizAnswerId : quizQuestionId))"
+                :aria-disabled="nameCountryQuiz ? undefined : !canActivateGeographicUnit(interactionState)"
+                :aria-pressed="nameCountryQuiz ? undefined : (quizMode ? unit.id === selectedGeographicUnitId : isPrimarySelectedExploreUnit(unit))"
                 @click="selectCountry(unit.properties.entityId, unit.id, bounds, focusPoint, $event, offset)"
                 @pointerenter="hoverGeographicUnit(unit, $event)"
                 @pointerleave="clearHoveredUnit(unit.id)"
@@ -1178,7 +1194,6 @@ async function setProjection(nextId: MapProjectionId) {
                 :d="area.path"
                 class="supplemental-land"
                 :class="[supplementalCountryClasses(area.id), {
-                  'supplemental-land--review': debugEnabled && highlightRestoredLand,
                   'supplemental-land--named': canSelectSupplementalArea(area.id),
                   'supplemental-land--selected': supplementalAreaInfoByDisplayId.get(area.id)?.id === selectedLandAreaId,
                 }]"
@@ -1194,7 +1209,6 @@ async function setProjection(nextId: MapProjectionId) {
                 @pointerenter="hoveredUnit = null"
               >
                 <title v-if="!quizMode && supplementalAreaName(area.id)">{{ supplementalAreaName(area.id) }}</title>
-                <title v-else-if="debugEnabled && highlightRestoredLand">{{ area.name }} (unassigned land)</title>
               </path>
               <path
                 v-if="supplementalAreaInfoByDisplayId.has(area.id)"
@@ -1208,21 +1222,18 @@ async function setProjection(nextId: MapProjectionId) {
                 class="regional-division internal-boundary"
                 aria-hidden="true"
               />
-              <circle
-                v-if="debugEnabled && highlightRestoredLand && (area.bounds[1][0] - area.bounds[0][0]) * transform.scale < 10 && (area.bounds[1][1] - area.bounds[0][1]) * transform.scale < 10"
-                class="supplemental-land-marker"
-                :cx="(area.bounds[0][0] + area.bounds[1][0]) / 2"
-                :cy="(area.bounds[0][1] + area.bounds[1][1]) / 2"
-                :r="5 / transform.scale"
-              />
             </g>
           </g>
+        </g>
+        <g v-if="namedQuestionMarkers.length" class="named-question-markers" role="img" :aria-label="t('highlightedCountry')">
+          <circle v-for="marker in namedQuestionMarkers" :key="marker.key" :cx="marker.x" :cy="marker.y" r="9" />
         </g>
         <SmallCountryMarkers
           v-if="quizSmallCountryMarkers.length || quizFeedbackMarkers.length"
           :markers="quizSmallCountryMarkers"
           :feedback-markers="quizFeedbackMarkers"
           :always-show-wrong-answer="alwaysShowWrongAnswer"
+          :hide-correct-name="nameCountryQuiz && !correctAnswerVisible"
           @activate="activateSmallCountryMarker"
           @hover="hoverSmallCountryMarker"
         />
@@ -1291,7 +1302,7 @@ async function setProjection(nextId: MapProjectionId) {
         </g>
       </svg>
 
-      <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel">
+      <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel" role="region" :aria-label="t('mapSettings')">
         <div class="map-settings-language">
           <span>{{ t('language') }}</span>
           <div class="language-selector" role="group" :aria-label="t('language')">
@@ -1299,66 +1310,82 @@ async function setProjection(nextId: MapProjectionId) {
             <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="emit('locale-change', 'nb')">NO</button>
           </div>
         </div>
-        <div class="projection-control">
-          <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
-            <path d="m2 5 6-2 8 2 6-2v16l-6 2-8-2-6 2V5Zm6-2v16m8-14v16" />
-          </svg>
-          <ProjectionSelector
-            :model-value="projectionId"
-            :disabled="interactionLocked"
-            :options="projectionOptions"
-            @update:model-value="setProjection"
+        <section class="settings-section" aria-labelledby="settings-appearance-heading">
+          <h3 id="settings-appearance-heading">{{ t('mapAppearance') }}</h3>
+          <MapDetailToggle
+            :loading="detailLoading"
+            :disabled="projectionLoading"
+            :model-value="highDetailEnabled"
+            @update:model-value="requestDetailChange"
           />
+          <MapDetailToggle :label="t('bathymetry')" :loading="bathymetryLoading" :disabled="interactionLocked" :model-value="bathymetryEnabled" @update:model-value="setBathymetryEnabled" />
+          <MapDetailToggle :label="t('relief')" :loading="reliefLoading" :disabled="interactionLocked" :model-value="reliefEnabled" @update:model-value="setReliefEnabled" />
+          <MapDetailToggle :label="t('waterNames')" :disabled="interactionLocked" :model-value="marineLabelsEnabled" @update:model-value="marineLabelsEnabled = $event" />
+          <div class="projection-control">
+            <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
+              <path d="m2 5 6-2 8 2 6-2v16l-6 2-8-2-6 2V5Zm6-2v16m8-14v16" />
+            </svg>
+            <ProjectionSelector :model-value="projectionId" :disabled="interactionLocked" :options="projectionOptions" @update:model-value="setProjection" />
+          </div>
+        </section>
+        <div class="settings-side-column">
+          <section class="settings-section" aria-labelledby="settings-quiz-heading">
+            <h3 id="settings-quiz-heading">{{ t('quizSettings') }}</h3>
+            <fieldset class="answer-scope-setting" aria-describedby="answer-scope-context answer-scope-hint">
+              <legend class="visually-hidden">{{ t('answerSuggestions') }}</legend>
+              <p class="settings-card-title" aria-hidden="true">{{ t('answerSuggestions') }}</p>
+              <p id="answer-scope-context" class="settings-context">{{ t('appliesToMode', { mode: t('nameCountry') }) }}</p>
+              <div class="answer-scope-choices">
+                <label>
+                  <input type="radio" name="quiz-answer-scope" :checked="!suggestAllCountries" @change="emit('suggest-all-countries-change', false)" />
+                  <span>{{ t('selectedRegion') }}</span>
+                </label>
+                <label>
+                  <input type="radio" name="quiz-answer-scope" :checked="suggestAllCountries" @change="emit('suggest-all-countries-change', true)" />
+                  <span>{{ t('allCountries') }}</span>
+                </label>
+              </div>
+              <p id="answer-scope-hint" class="settings-hint">{{ t('answerSuggestionsHint') }}</p>
+            </fieldset>
+            <MapDetailToggle
+              :label="t('revealAnswersAutomatically')"
+              :context="t('appliesToMode', { mode: t('nameCountry') })"
+              :description="t('revealAnswersAutomaticallyHint')"
+              :model-value="automaticAnswerReveal"
+              @update:model-value="emit('automatic-answer-reveal-change', $event)"
+            />
+            <MapDetailToggle
+              :label="t('revealClickedCountry')"
+              :context="t('appliesToMode', { mode: t('findCountry') })"
+              :description="t('revealClickedCountryHint')"
+              :model-value="alwaysShowWrongAnswer"
+              @update:model-value="emit('wrong-answer-preference-change', $event)"
+            />
+          </section>
+          <section class="settings-section" aria-labelledby="settings-navigation-heading">
+            <h3 id="settings-navigation-heading">{{ t('navigationAndScale') }}</h3>
+            <MapDetailToggle
+              :label="t('limitAutomaticCountryZoom')"
+              :description="t('limitCountryZoomHint')"
+              :model-value="limitedCountryZoomEnabled"
+              @update:model-value="limitedCountryZoomEnabled = $event"
+            />
+            <MapDetailToggle :label="t('showScaleBar')" :model-value="scaleBarEnabled" @update:model-value="scaleBarEnabled = $event" />
+            <label class="scale-units-control" for="map-scale-units">
+              <span>{{ t('scaleUnits') }}</span>
+              <select id="map-scale-units" v-model="scaleUnits">
+                <option value="metric">{{ t('metricUnits') }}</option>
+                <option value="imperial">{{ t('imperialUnits') }}</option>
+                <option value="nautical">{{ t('nauticalUnits') }}</option>
+              </select>
+            </label>
+          </section>
         </div>
-        <MapDetailToggle
-          :label="t('limitAutomaticCountryZoom')"
-          :model-value="limitedCountryZoomEnabled"
-          @update:model-value="limitedCountryZoomEnabled = $event"
-        />
-        <MapDetailToggle
-          :label="t('bathymetry')"
-          :loading="bathymetryLoading"
-          :disabled="interactionLocked"
-          :model-value="bathymetryEnabled"
-          @update:model-value="setBathymetryEnabled"
-        />
-        <MapDetailToggle
-          :label="t('relief')"
-          :loading="reliefLoading"
-          :disabled="interactionLocked"
-          :model-value="reliefEnabled"
-          @update:model-value="setReliefEnabled"
-        />
-        <MapDetailToggle
-          :label="t('waterNames')"
-          :disabled="interactionLocked"
-          :model-value="marineLabelsEnabled"
-          @update:model-value="marineLabelsEnabled = $event"
-        />
-        <MapDetailToggle
-          :label="t('showScaleBar')"
-          :model-value="scaleBarEnabled"
-          @update:model-value="scaleBarEnabled = $event"
-        />
-        <label class="scale-units-control" for="map-scale-units">
-          <span>{{ t('scaleUnits') }}</span>
-          <select id="map-scale-units" v-model="scaleUnits">
-            <option value="metric">{{ t('metricUnits') }}</option>
-            <option value="imperial">{{ t('imperialUnits') }}</option>
-            <option value="nautical">{{ t('nauticalUnits') }}</option>
-          </select>
-        </label>
-        <MapDetailToggle
-          :loading="detailLoading"
-          :disabled="projectionLoading"
-          :model-value="highDetailEnabled"
-          @update:model-value="requestDetailChange"
-        />
       </div>
 
       <div class="map-tools" :class="{ 'map-tools--with-scale': scaleBar }">
         <span>
-          {{ quizMode && quizAnswerId !== null ? t('continueHint') : t('mapHint') }}
+          {{ quizMode && (quizAnswerId !== null || quizSkipped) ? t('continueHint') : t('mapHint') }}
         </span>
         <button v-if="isZoomed" type="button" @click="resetView">
           {{ t('resetView') }}
@@ -1369,12 +1396,6 @@ async function setProjection(nextId: MapProjectionId) {
         v-if="debugEnabled && debugMetrics"
         v-bind="debugMetrics"
         :disabled="interactionLocked"
-        :restored-land="supplementalLandPaths"
-        :highlight-restored-land="highlightRestoredLand"
-        :reviewed-land-id="reviewedLandId"
-        :can-review-land="activeRegion.id === 'world' && projectionId !== 'regional-equal-area'"
-        @toggle-restored-land="highlightRestoredLand = !highlightRestoredLand"
-        @review-land="reviewRestoredLand"
         @reset-settings="resetMapSettings"
       />
     </div>
@@ -1641,8 +1662,8 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--related,
 :global(html[data-input-modality='keyboard'] .country--related:focus-visible) {
-  fill: rgb(239 144 72 / 70%);
-  stroke: #bd7842;
+  fill: rgb(247 192 122 / 38%);
+  stroke: #c39362;
   stroke-width: 0.95;
 }
 
@@ -1657,6 +1678,12 @@ async function setProjection(nextId: MapProjectionId) {
 .country--identity-hover:not(.country--selected, .country--related) {
   fill: rgb(247 192 122 / 82%);
 }
+
+.country--quiz-question-related { fill: rgb(190 169 218 / 80%); stroke: #80619e; stroke-width: 1.1; }
+.country--quiz-question { fill: rgb(143 108 183 / 88%); stroke: #593779; stroke-width: 1.5; }
+.named-question-markers { fill: #8f6cb7; stroke: #fff; stroke-width: 2; pointer-events: none; }
+.world-map--naming .country,
+.world-map--naming .country.country--hit-only { pointer-events: none; cursor: grab; }
 
 .country--quiz-correct-related,
 :global(html[data-input-modality='keyboard'] .country--quiz-correct-related:focus-visible) {
@@ -1687,13 +1714,13 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .country:hover {
+  .world-map:not(.world-map--naming) .country:not(.country--selected, .country--related):hover {
     fill: rgb(247 192 122 / 82%);
   }
 
   .country--related:hover {
-    fill: rgb(247 162 86 / 80%);
-    stroke: #bd7842;
+    fill: rgb(247 192 122 / 48%);
+    stroke: #c39362;
   }
 
   .country--selected:hover {
@@ -1768,21 +1795,6 @@ async function setProjection(nextId: MapProjectionId) {
   vector-effect: non-scaling-stroke;
 }
 
-.supplemental-land.supplemental-land--review {
-  fill: #e850b4;
-  stroke: #9d126c;
-  stroke-width: 1.25;
-  vector-effect: non-scaling-stroke;
-}
-
-.supplemental-land-marker {
-  fill: none;
-  stroke: #9d126c;
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-  pointer-events: none;
-}
-
 .map-tools {
   position: absolute;
   z-index: 3;
@@ -1827,6 +1839,22 @@ async function setProjection(nextId: MapProjectionId) {
   color: #17374b;
 }
 
+.settings-section { display: grid; align-content: start; gap: 0.35rem; }
+.settings-side-column { display: grid; align-content: start; gap: 0.35rem; }
+.settings-side-column > .settings-section:first-child { border-top: 1px solid #d9e3e6; padding-top: 0.8rem; margin-top: 0.45rem; }
+.settings-section + .settings-section { border-top: 1px solid #c6d4da; padding-top: 1rem; margin-top: 0.7rem; }
+.settings-section h3 { margin: 0 0 0.2rem; padding: 0 0.2rem; color: #687a80; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.settings-hint { margin: 0.35rem 0.2rem 0; color: #687678; font-size: 0.72rem; line-height: 1.4; }
+.answer-scope-setting { min-width: 0; margin: 0; padding: 0.6rem 0.7rem; border: 1px solid rgba(82, 103, 110, 0.18); border-radius: 12px; background: rgba(255, 255, 255, 0.86); box-shadow: 0 3px 12px rgba(23, 45, 56, 0.08); }
+.settings-card-title { margin: 0; color: #52676e; font-size: 0.72rem; font-weight: 700; }
+.settings-context { margin: 0.4rem 0 0.5rem; color: #687a80; font-size: 0.72rem; font-weight: 650; }
+.answer-scope-choices { display: flex; gap: 0.2rem; padding: 0.2rem; border: 1px solid #ccd8dc; border-radius: 10px; background: #fff; }
+.answer-scope-choices label { position: relative; flex: 1; text-align: center; cursor: pointer; }
+.answer-scope-choices input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.answer-scope-choices span { display: block; padding: 0.55rem 0.25rem; border-radius: 7px; color: #52676e; font-size: 0.72rem; font-weight: 700; }
+.answer-scope-choices input:checked + span { background: #17374b; color: #fff; }
+.answer-scope-choices input:focus-visible + span { outline: 2px solid #315d6d; outline-offset: 2px; }
+
 .map-settings-panel {
   position: absolute;
   z-index: 4;
@@ -1835,7 +1863,10 @@ async function setProjection(nextId: MapProjectionId) {
   display: grid;
   width: min(18rem, calc(100% - 1.5rem));
   gap: 0.35rem;
-  padding: 0.5rem;
+  max-height: min(calc(100% - 1.7rem), calc(100dvh - 5.5rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.7rem;
   border: 1px solid rgba(82, 103, 110, 0.18);
   border-radius: 16px;
   background: rgba(250, 252, 252, 0.95);
@@ -1850,9 +1881,7 @@ async function setProjection(nextId: MapProjectionId) {
   border-radius: 12px;
 }
 
-.map-settings-language {
-  display: none;
-}
+.map-settings-language { display: none; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.2rem; color: #52676e; font-size: 0.72rem; font-weight: 700; }
 
 .scale-units-control {
   display: flex;
@@ -1913,23 +1942,16 @@ async function setProjection(nextId: MapProjectionId) {
   .map-settings-panel { top: 0.75rem; right: 0.75rem; }
 }
 
-@media (max-width: 680px) {
-  .map-settings-panel {
-    max-height: calc(100% - 1.5rem);
-    overflow-y: auto;
-  }
+@media (min-width: 900px) {
+  .map-settings-panel { width: min(36rem, calc(100% - 2.5rem)); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+  .settings-side-column > .settings-section:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+}
 
-  .map-settings-language {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 0.35rem;
-    padding: 0.2rem 0.2rem 0.55rem;
-    border-bottom: 1px solid rgba(82, 103, 110, 0.18);
-    color: #52676e;
-    font-size: 0.72rem;
-    font-weight: 700;
+@media (max-width: 680px) {
+  .map-settings-language { display: flex; padding-bottom: 0.6rem; margin-bottom: 0.25rem; border-bottom: 1px solid #d9e3e6; }
+  .map-settings-panel {
+    max-height: min(calc(100% - 1.5rem), calc(100dvh - 7.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+    overflow-y: auto;
   }
 
   .map-settings-language :deep(.language-selector) { padding: 0.15rem; }

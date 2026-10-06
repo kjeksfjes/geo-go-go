@@ -2,6 +2,19 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Features
+
+- Added “Name the country” / “Navngi landet”: identify a highlighted country from the active region using translated, filtered suggestions with keyboard and touch selection, shared quiz scoring, and both map detail levels and renderers. After a wrong answer, “My guess” lets you locate the country you selected. A remembered “Selected region / All countries” answer-suggestion setting broadens the list without changing regional questions. Added Skip feedback with Cmd/Ctrl+Enter, close-on-clear suggestions, and one shared automatic reveal preference for wrong guesses and skipped questions, off by default. Inline “Always show” controls update the saved preferences without hiding answers already seen.
+
+### Improvements
+
+- Organized settings into Map appearance, Quiz, and Navigation & scale, with High detail first, persistent quiz preferences available in every mode, a two-column desktop layout, and language at the top of mobile settings. Panels scroll only when needed to fit the screen.
+- Improved contrast between selected geographic components and the rest of their country; Name the country uses a violet question highlight distinct from ocean colors.
+- Stabilized inline reveal controls, hid keyboard shortcut hints on touch devices, and added password-manager autofill exclusions to country-answer fields.
+- Removed the temporary restored-land review controls from the debug panel while retaining restored map coverage.
+
 ## 0.8.1 — 2026-10-05
 
 ### Improvements

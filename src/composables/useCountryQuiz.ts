@@ -2,7 +2,7 @@ import { computed, ref, shallowRef } from 'vue'
 import { countryInfoById } from '../data/countries'
 import { quizCountryIds } from '../data/quizCountries'
 
-export type QuizPhase = 'question' | 'answered' | 'complete' | 'empty'
+export type QuizPhase = 'question' | 'answered' | 'skipped' | 'complete' | 'empty'
 
 function shuffle(ids: string[]): string[] {
   for (let index = ids.length - 1; index > 0; index--) {
@@ -19,6 +19,7 @@ export function useCountryQuiz() {
   const questionIndex = ref(0)
   const answeredCountryId = ref<string | null>(null)
   const score = ref(0)
+  const skipped = ref(false)
 
   const total = computed(() => questionIds.value.length)
   const currentCountryId = computed(() => questionIds.value[questionIndex.value] ?? null)
@@ -31,6 +32,7 @@ export function useCountryQuiz() {
   const phase = computed<QuizPhase>(() => {
     if (total.value === 0) return 'empty'
     if (!currentCountryId.value) return 'complete'
+    if (skipped.value) return 'skipped'
     return answeredCountryId.value ? 'answered' : 'question'
   })
   const questionNumber = computed(() => Math.min(questionIndex.value + 1, total.value))
@@ -42,6 +44,7 @@ export function useCountryQuiz() {
     questionIndex.value = 0
     answeredCountryId.value = null
     score.value = 0
+    skipped.value = false
   }
 
   function answer(countryId: string) {
@@ -50,9 +53,15 @@ export function useCountryQuiz() {
     if (countryId === currentCountryId.value) score.value++
   }
 
+  function skip() {
+    if (phase.value !== 'question') return
+    skipped.value = true
+  }
+
   function next() {
-    if (phase.value !== 'answered') return
+    if (phase.value !== 'answered' && phase.value !== 'skipped') return
     answeredCountryId.value = null
+    skipped.value = false
     questionIndex.value++
   }
 
@@ -66,6 +75,7 @@ export function useCountryQuiz() {
     phase,
     questionNumber,
     score,
+    skip,
     start,
     total,
   }
