@@ -1,10 +1,19 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import type { QuizPhase } from '../composables/useCountryQuiz'
 import type { CountryInfo, GeographicComponentInfo } from '../types/country'
 import { componentName, countryName, t } from '../i18n'
 
+const CountryAnswerCombobox = defineAsyncComponent(() => import('./CountryAnswerCombobox.vue'))
+
 const props = defineProps<{
+  identify?: boolean
+  viewingOutsideRegion?: boolean
+  resumeNotice: string
+  wrongAnswerRevealed: boolean
+  correctAnswerVisible: boolean
+  automaticReveal: boolean
+  countryIds?: readonly string[]
   phase: QuizPhase
   question: CountryInfo | null
   answer: CountryInfo | null
@@ -16,21 +25,54 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  answer: [countryId: string]
+  skip: []
+  'reveal-correct-answer': []
+  'reveal-wrong-answer': []
+  'update:automaticReveal': [visible: boolean]
   next: []
   restart: []
   'show-answer': []
+  'show-guess': []
   'update:alwaysShowWrongAnswer': [value: boolean]
 }>()
+const answerDraft = defineModel<string>('answerDraft', { required: true })
+const answerInput = ref<{ focusInput: () => void } | null>(null)
+
+function focusAnswer() {
+  if (props.identify && props.phase === 'question') answerInput.value?.focusInput()
+}
+
+defineExpose({ focusAnswer })
+
+const restartButton = ref<HTMLButtonElement | null>(null)
+const skipKeyHint = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘↵' : 'Ctrl↵'
+
+function handleSkipShortcut(event: KeyboardEvent) {
+  if (!props.identify || props.phase !== 'question' || event.key !== 'Enter'
+    || !(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey || event.repeat || event.isComposing) return
+  event.preventDefault()
+  event.stopPropagation()
+  document.documentElement.dataset.inputModality = 'keyboard'
+  emit('skip')
+}
+
+const automaticRevealButton = ref<HTMLButtonElement | null>(null)
+async function revealNamedAnswer() {
+  emit('reveal-correct-answer')
+  if (document.documentElement.dataset.inputModality !== 'keyboard') return
+  await nextTick()
+  automaticRevealButton.value?.focus()
+}
 
 const nextButton = ref<HTMLButtonElement | null>(null)
 const alwaysShowButton = ref<HTMLButtonElement | null>(null)
 const questionHeading = ref<HTMLHeadingElement | null>(null)
 const isCorrect = computed(() => props.answer?.id === props.question?.id)
-const revealedAnswer = ref(false)
-const showWrongAnswer = computed(() => props.alwaysShowWrongAnswer || revealedAnswer.value)
+const showWrongAnswer = computed(() => props.alwaysShowWrongAnswer || props.wrongAnswerRevealed)
 
 async function revealAnswer() {
-  revealedAnswer.value = true
+  emit('reveal-wrong-answer')
   if (document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
   alwaysShowButton.value?.focus()
@@ -38,46 +80,47 @@ async function revealAnswer() {
 
 function toggleAlwaysShow() {
   // Turning the preference off should hide future answers, not this one.
-  revealedAnswer.value = true
+  emit('reveal-wrong-answer')
   emit('update:alwaysShowWrongAnswer', !props.alwaysShowWrongAnswer)
 }
 
 watch(() => props.phase, async (phase) => {
-  if (phase !== 'answered') revealedAnswer.value = false
-  if (phase !== 'answered' || document.documentElement.dataset.inputModality !== 'keyboard') return
+  if (!['answered', 'skipped', 'complete'].includes(phase) || document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
-  nextButton.value?.focus()
+  if (phase === 'complete') restartButton.value?.focus()
+  else nextButton.value?.focus()
 })
 
 watch(() => props.question?.id, async (countryId) => {
-  revealedAnswer.value = false
-  if (!countryId || document.documentElement.dataset.inputModality !== 'keyboard') return
+  if (props.identify || !countryId || document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
   questionHeading.value?.focus()
 })
 </script>
 
 <template>
-  <section class="quiz-panel map-overlay__content" :class="`quiz-panel--${phase}`" :aria-label="t('quiz')">
+  <section class="quiz-panel map-overlay__content" :class="[`quiz-panel--${phase}`, { 'quiz-panel--identify': identify }]" :aria-label="t(identify ? 'nameCountry' : 'quiz')" @keydown.capture="handleSkipShortcut">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
+        <p v-if="resumeNotice" class="quiz-panel__resume">{{ resumeNotice }}</p>
         <p class="quiz-panel__eyebrow">{{ t('regionComplete') }}</p>
         <h2>{{ t('finalScore', { score, total }) }}</h2>
       </div>
-      <button class="quiz-panel__button" type="button" @click="emit('restart')">
+      <button ref="restartButton" class="quiz-panel__button" type="button" @click="emit('restart')">
         {{ t('playAgain') }}
       </button>
     </template>
 
     <template v-else-if="phase === 'empty'">
       <div class="quiz-panel__message">
-        <p class="quiz-panel__eyebrow">{{ t('findCountry') }}</p>
+        <p class="quiz-panel__eyebrow">{{ t(identify ? 'nameCountry' : 'findCountry') }}</p>
         <h2>{{ t('noCountries') }}</h2>
       </div>
     </template>
 
     <template v-else-if="question">
       <span
+        v-if="!identify"
         class="quiz-panel__flag fi"
         :class="`fi-${question.flagCode}`"
         role="img"
@@ -85,12 +128,24 @@ watch(() => props.question?.id, async (countryId) => {
       />
       <div class="quiz-panel__message">
         <p class="quiz-panel__eyebrow">
-          {{ t('questionStatus', { number: questionNumber, total, score }) }}
+          {{ t('questionStatus', { number: questionNumber, total, score, points: t(score === 1 ? 'point' : 'points') }) }}
         </p>
-        <h2 ref="questionHeading" tabindex="-1">{{ t('find', { name: countryName(question.id) }) }}</h2>
+        <p v-if="resumeNotice" class="quiz-panel__resume" role="status">{{ resumeNotice }}</p>
+        <h2 ref="questionHeading" tabindex="-1">{{ identify ? t('identifyQuestion') : t('find', { name: countryName(question.id) }) }}</h2>
       </div>
+      <CountryAnswerCombobox
+        ref="answerInput"
+        v-if="identify && phase !== 'skipped'"
+        :key="question.id"
+        v-model:search="answerDraft"
+        class="quiz-panel__input"
+        :country-ids="countryIds ?? []"
+        :answer-id="phase === 'answered' ? answer?.id ?? null : null"
+        :correct="isCorrect"
+        @answer="emit('answer', $event)"
+      />
       <div class="quiz-panel__status" aria-live="polite">
-        <p v-if="phase === 'question'" class="quiz-panel__hint">
+        <p v-if="phase === 'question' && !identify" class="quiz-panel__hint">
           {{ t('clickLocation') }}
         </p>
         <p
@@ -99,6 +154,18 @@ watch(() => props.question?.id, async (countryId) => {
         >
           {{ t('correct') }}
         </p>
+        <template v-else-if="identify && (answer || phase === 'skipped')">
+          <p class="quiz-panel__feedback" :class="{ 'quiz-panel__feedback--wrong': phase !== 'skipped' }">{{ t(phase === 'skipped' ? 'skippedQuestion' : 'notQuite') }}</p>
+          <div class="quiz-panel__answer">
+            <template v-if="correctAnswerVisible">
+              <span>{{ t('correctAnswer') }} <strong class="quiz-panel__correct-name">{{ countryName(question.id) }}</strong></span>
+              <button ref="automaticRevealButton" class="quiz-panel__text-button quiz-panel__text-button--preference" type="button" :aria-pressed="automaticReveal" :aria-label="t('alwaysRevealAnswers')" @click="emit('update:automaticReveal', !automaticReveal)">
+                {{ t('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !automaticReveal }" aria-hidden="true">✓</span>
+              </button>
+            </template>
+            <button v-else class="quiz-panel__text-button" type="button" @click="revealNamedAnswer">{{ t('showAnswer') }}</button>
+          </div>
+        </template>
         <template v-else-if="answer">
           <p class="quiz-panel__feedback quiz-panel__feedback--wrong">{{ t('wrong') }}</p>
           <div class="quiz-panel__answer">
@@ -111,7 +178,7 @@ watch(() => props.question?.id, async (countryId) => {
                 :aria-pressed="alwaysShowWrongAnswer"
                 @click="toggleAlwaysShow"
               >
-                {{ t('alwaysShowAnswer') }}<span v-if="alwaysShowWrongAnswer" aria-hidden="true"> ✓</span>
+                {{ t('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !alwaysShowWrongAnswer }" aria-hidden="true">✓</span>
               </button>
             </template>
             <button v-else class="quiz-panel__text-button" type="button" @click="revealAnswer">
@@ -120,9 +187,23 @@ watch(() => props.question?.id, async (countryId) => {
           </div>
         </template>
       </div>
+      <p v-if="viewingOutsideRegion" class="quiz-panel__view-hint" aria-live="polite">{{ t('viewingOutsideGuess') }}</p>
       <div class="quiz-panel__actions">
+        <button class="quiz-panel__text-button quiz-panel__restart" type="button" @click="emit('restart')">{{ t('restartQuiz') }}</button>
+        <button v-if="identify && phase === 'question'" class="quiz-panel__button quiz-panel__button--secondary" type="button" aria-keyshortcuts="Control+Enter Meta+Enter" :aria-label="t('skipQuestion')" @click="emit('skip')">
+          {{ t('skipQuestion') }} <kbd class="quiz-panel__shortcut" aria-hidden="true">{{ skipKeyHint }}</kbd>
+        </button>
         <button
-          v-if="phase === 'answered' && !isCorrect"
+          v-if="identify && phase === 'answered' && !isCorrect && answer"
+          class="quiz-panel__button quiz-panel__button--secondary"
+          type="button"
+          :aria-label="`${t('myGuess')} — ${t('showCountryOnMap', { name: countryName(answer.id) })}`"
+          @click="emit('show-guess')"
+        >
+          {{ t('myGuess') }}
+        </button>
+        <button
+          v-if="!identify && phase === 'answered' && !isCorrect"
           class="quiz-panel__button quiz-panel__button--secondary"
           type="button"
           :aria-label="t('showCountryOnMap', { name: countryName(question.id) })"
@@ -131,13 +212,14 @@ watch(() => props.question?.id, async (countryId) => {
           {{ t('showOnMap') }}
         </button>
         <button
+          v-if="phase === 'answered' || phase === 'skipped' || !identify"
           ref="nextButton"
           class="quiz-panel__button"
-          :class="{ 'quiz-panel__button--reserved': phase !== 'answered' }"
+          :class="{ 'quiz-panel__button--reserved': phase === 'question' }"
           type="button"
-          :disabled="phase !== 'answered'"
-          :aria-hidden="phase !== 'answered'"
-          :tabindex="phase === 'answered' ? 0 : -1"
+          :disabled="phase === 'question'"
+          :aria-hidden="phase === 'question'"
+          :tabindex="phase === 'question' ? -1 : 0"
           @click="emit('next')"
         >
           {{ questionNumber === total ? t('seeResults') : t('nextCountry') }}
@@ -182,6 +264,8 @@ watch(() => props.question?.id, async (countryId) => {
   text-transform: uppercase;
 }
 
+.quiz-panel__resume { margin: 0 0 0.3rem; color: #52676e; font-size: 0.75rem; }
+
 .quiz-panel h2 {
   margin: 0;
   color: #172d38;
@@ -211,15 +295,16 @@ watch(() => props.question?.id, async (countryId) => {
 
 .quiz-panel__answer {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.4em;
-  row-gap: 0;
   color: #52676e;
   font-size: 0.82rem;
   line-height: 1.2;
 }
 
 .quiz-panel__answer strong { font-weight: 800; }
+.quiz-panel__correct-name { color: #28704a; }
 
 .quiz-panel__text-button {
   border: 0;
@@ -236,22 +321,35 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel__answer .quiz-panel__text-button { margin-left: 0; }
 .quiz-panel__text-button:hover { color: #a13d2c; }
 .quiz-panel__text-button--preference {
+  white-space: nowrap;
   color: #687a80;
   font-size: 0.76rem;
   font-weight: 400;
   text-decoration-color: #a7b3b6;
 }
 
+.quiz-panel__preference-check {
+  display: inline-block;
+  width: 1em;
+  margin-left: 0.3em;
+}
+
+.quiz-panel__preference-check--hidden { visibility: hidden; }
+
 .quiz-panel__actions {
   grid-column: 1 / -1;
   grid-row: 3;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.1rem;
   padding-top: 0.7rem;
   border-top: 1px solid #d9e3e6;
 }
+
+.quiz-panel__restart { margin-right: auto; color: #687a80; font-size: 0.75rem; font-weight: 500; }
 
 .quiz-panel__button {
   padding: 0.65rem 0.95rem;
@@ -291,11 +389,28 @@ watch(() => props.question?.id, async (countryId) => {
   outline-offset: 3px;
 }
 
+.quiz-panel--identify { grid-template-columns: minmax(0, 1fr); }
+.quiz-panel--identify .quiz-panel__message,
+.quiz-panel--identify .quiz-panel__status { grid-column: 1 / -1; }
+.quiz-panel__input { grid-column: 1 / -1; grid-row: 2; }
+.quiz-panel--identify .quiz-panel__status { grid-row: 3; min-height: 0; }
+.quiz-panel__view-hint { grid-row: 4; grid-column: 1 / -1; margin: 0; color: #687678; font-size: 0.75rem; }
+.quiz-panel--identify .quiz-panel__actions { grid-row: 5; flex-wrap: wrap; }
+.quiz-panel__shortcut { margin-left: 0.35rem; font: inherit; font-weight: 400; opacity: 0.75; }
+
+@media (hover: none), (pointer: coarse) {
+  .quiz-panel__shortcut { display: none; }
+}
+
 @media (max-width: 560px) {
   .quiz-panel {
     grid-template-columns: 2.75rem minmax(0, 1fr);
     gap: 0.25rem 0.65rem;
   }
+
+  .quiz-panel--identify { grid-template-columns: minmax(0, 1fr); }
+  .quiz-panel--identify .quiz-panel__status { grid-row: 3; }
+  .quiz-panel--identify .quiz-panel__actions { grid-row: 5; }
 
   .quiz-panel__flag {
     align-self: start;
@@ -337,7 +452,7 @@ watch(() => props.question?.id, async (countryId) => {
     padding-top: 0.4rem;
   }
 
-  .quiz-panel--question .quiz-panel__actions { display: none; }
+  .quiz-panel--question:not(.quiz-panel--identify) .quiz-panel__button--reserved { display: none; }
 
   .quiz-panel__button {
     min-height: 2.75rem;

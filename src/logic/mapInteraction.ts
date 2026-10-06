@@ -6,6 +6,8 @@ export interface MapInteractionState {
   selectedGeographicUnitId: string | null
   hoveredEntityId: string | null
   quizMode: boolean
+  quizSkipped?: boolean
+  nameCountryQuiz?: boolean
   quizComplete: boolean
   quizQuestionId: string | null
   quizAnswerId: string | null
@@ -29,13 +31,17 @@ export function geographicUnitClasses(unit: GeographicUnitFeature, state: MapInt
     }
   }
 
-  const answered = state.quizAnswerId !== null
+  const answered = state.quizAnswerId !== null || !!state.quizSkipped
   const correct = answered && entityId === state.quizQuestionId
   const wrong = answered && entityId === state.quizAnswerId && !correct
   const primaryAnswer = isPrimaryQuizHighlightUnit(unit, state.selectedGeographicUnitId)
 
   return {
-    'country--identity-hover': (state.quizComplete || (!answered && state.quizQuestionId !== null))
+    'country--quiz-question': !!state.nameCountryQuiz && !answered && !state.quizComplete
+      && entityId === state.quizQuestionId && primaryAnswer,
+    'country--quiz-question-related': !!state.nameCountryQuiz && !answered && !state.quizComplete
+      && entityId === state.quizQuestionId && !primaryAnswer,
+    'country--identity-hover': !state.nameCountryQuiz && (state.quizComplete || (!answered && state.quizQuestionId !== null))
       && state.hoveredEntityId === entityId,
     'country--quiz-correct': correct && primaryAnswer,
     'country--quiz-correct-related': correct && !primaryAnswer,
@@ -51,7 +57,7 @@ export function hasVisualHighlight(unit: GeographicUnitFeature, state: MapIntera
 }
 
 export function canActivateGeographicUnit(state: MapInteractionState) {
-  return !state.quizMode || (state.quizQuestionId !== null && state.quizAnswerId === null)
+  return !state.quizMode || (!state.nameCountryQuiz && !state.quizSkipped && state.quizQuestionId !== null && state.quizAnswerId === null)
 }
 
 export type CountryClickAction = 'select' | 'clear' | 'ignore' | 'ignore-stop'
@@ -74,5 +80,5 @@ export function countryClickAction(
 
 export function backgroundClickAction(clickCount: number, state: MapInteractionState) {
   if (!state.quizMode) return state.selectedCountryId === null ? 'ignore' : 'clear'
-  return state.quizAnswerId !== null && clickCount <= 1 ? 'next' : 'ignore'
+  return (state.quizAnswerId !== null || state.quizSkipped) && clickCount <= 1 ? 'next' : 'ignore'
 }
