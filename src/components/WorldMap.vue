@@ -108,6 +108,7 @@ const emit = defineEmits<{
   select: [countryId: string | null, geographicUnitId: string | null]
   'land-select': [id: string | null]
   'quiz-next': []
+  'focus-answer': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'locale-change': [locale: Locale]
   'reset-settings': []
@@ -867,6 +868,14 @@ function handleTouch(event: TouchEvent) {
   }, 700)
   const tapTarget = tap?.target
   if (consumeDragClick() || !tap || !(tapTarget instanceof Element) || !tapTarget.isConnected) return
+
+  if (props.nameCountryQuiz && props.quizQuestionId && props.quizAnswerId === null
+    && !props.quizSkipped && !props.quizComplete && !interactionLocked.value) {
+    // Keep focus synchronous with the real touchend so iOS can open its
+    // keyboard. Tap detection above has already rejected pans and pinches.
+    emit('focus-answer')
+    return
+  }
 
   tapTarget.dispatchEvent(new MouseEvent('click', {
     bubbles: true,

@@ -4,6 +4,14 @@ import { quizCountryIds } from '../data/quizCountries'
 
 export type QuizPhase = 'question' | 'answered' | 'skipped' | 'complete' | 'empty'
 
+export interface QuizSnapshot {
+  questionIds: readonly string[]
+  questionIndex: number
+  answeredCountryId: string | null
+  score: number
+  skipped: boolean
+}
+
 function shuffle(ids: string[]): string[] {
   for (let index = ids.length - 1; index > 0; index--) {
     const swapIndex = Math.floor(Math.random() * (index + 1))
@@ -65,6 +73,24 @@ export function useCountryQuiz() {
     questionIndex.value++
   }
 
+  function snapshot(): QuizSnapshot {
+    return {
+      questionIds: [...questionIds.value],
+      questionIndex: questionIndex.value,
+      answeredCountryId: answeredCountryId.value,
+      score: score.value,
+      skipped: skipped.value,
+    }
+  }
+
+  function restore(saved: QuizSnapshot) {
+    questionIds.value = [...saved.questionIds]
+    questionIndex.value = saved.questionIndex
+    answeredCountryId.value = saved.answeredCountryId
+    score.value = saved.score
+    skipped.value = saved.skipped
+  }
+
   return {
     answeredCountry,
     answeredCountryId,
@@ -75,6 +101,8 @@ export function useCountryQuiz() {
     phase,
     questionNumber,
     score,
+    snapshot,
+    restore,
     skip,
     start,
     total,

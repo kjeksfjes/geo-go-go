@@ -1,6 +1,6 @@
 # Performance audit — 0.8.0 — 2026-10-05
 
-Status: First optimization approved and implemented; build and computational/browser comparisons complete. Real-device and visual acceptance remain with Joakim. Audit branch: `codex/performance-audit`; baseline: `92c3c3689dee6e82005d252c9f85457e5325ed6f`. TASK-005 records the remaining device acceptance and deferred follow-up.
+Status: First optimization approved and implemented; build and computational/browser comparisons complete. Real-device and visual acceptance remain with the user. Audit branch: `codex/performance-audit`; baseline: `92c3c3689dee6e82005d252c9f85457e5325ed6f`. TASK-005 records the remaining device acceptance and deferred follow-up.
 
 ## Findings and implemented change
 
@@ -10,7 +10,7 @@ The implementation computes each candidate's area once, retains the winning area
 
 Across three Node repetitions, the implementation reduces high-detail Mercator projection from 3.34 to 1.16 seconds (65%). Its improvements apply to all five tested projections and also reduce low-detail and regional preparation. Browser comparisons show first high-detail activation falling from 3.86 to 1.82 seconds on desktop canvas and from 14.49 to 5.12 seconds on the mobile canvas proxy. These are local Chromium measurements, not a promised iPhone speedup.
 
-Joakim reports a clearly noticeable desktop improvement, but little noticeable gain on his iPhone. Treat the mobile Chromium proxy gains as diagnostic evidence only; they have not translated into a confirmed phone improvement. Pan/zoom performance is the next separately authorized audit.
+The user reports a clearly noticeable desktop improvement, but little noticeable gain on their iPhone. Treat the mobile Chromium proxy gains as diagnostic evidence only; they have not translated into a confirmed phone improvement. Pan/zoom performance is the next separately authorized audit.
 
 ## Environment and method
 
@@ -51,7 +51,7 @@ Median milliseconds over three sequential runs using the same production-preview
 
 Cold activation improves by 52–65% across the four profiles; the largest long task improves by 66–67%. High-detail pan/zoom task time changes by roughly −7% to +1.3%; retained heap after collection remains about 76–83 MB. The single-pass calculation removes repeated work during preparation, so it does not promise faster steady-state gestures.
 
-The first warm mobile canvas return is slower in this sequence (184 versus 113 ms), with higher layout/task time. This cannot honestly be described as an across-the-board improvement. A separate exact-release preview and optimized preview each ran seven additional warm cycles with garbage collection before each cycle: high-detail return medians were 101.5 and 103.3 ms, layout medians about 17.5 and 17.5 ms, and neither recorded a 50 ms long task. This shows no persistent penalty in controlled repeated switches, but does not establish the cause of the initial warm-return difference; garbage collection and later-cycle state are both different from the primary sequence. First warm return and Europe switching should be checked on Joakim's phone before release; do not add a speculative renderer change to conceal this result.
+The first warm mobile canvas return is slower in this sequence (184 versus 113 ms), with higher layout/task time. This cannot honestly be described as an across-the-board improvement. A separate exact-release preview and optimized preview each ran seven additional warm cycles with garbage collection before each cycle: high-detail return medians were 101.5 and 103.3 ms, layout medians about 17.5 and 17.5 ms, and neither recorded a 50 ms long task. This shows no persistent penalty in controlled repeated switches, but does not establish the cause of the initial warm-return difference; garbage collection and later-cycle state are both different from the primary sequence. First warm return and Europe switching should be checked on the user's phone before release; do not add a speculative renderer change to conceal this result.
 
 ## Interaction and SVG hit layer
 
@@ -115,7 +115,7 @@ Default desktop bathymetry is loaded after the base map: its additional 2.44 MB 
 3. **Investigate payload/retained data if network or phone memory becomes the limit.** Existing detailed imports preserve valuable semantic and regional shapes. A reproducible compiled display asset could avoid unused source data, but its pipeline and maintenance tradeoffs need a separate proposal backed by an inventory. Do not start by reducing coastline accuracy.
 4. **Revisit SVG and quiz/region update costs using the faster baseline.** Preserve full hit targets, keyboard access, pointer correctness, and sharp settled frames; no speculative index or extra cache is proposed now.
 
-Joakim approved the first optimization after reviewing the baseline. It is implemented locally; no changes have been committed, pushed, merged, or published. Further optimizations require a separate decision backed by measurements. The earlier release-page publication issue is separate from this performance work.
+The user approved the first optimization after reviewing the baseline. It is implemented locally; no changes have been committed, pushed, merged, or published. Further optimizations require a separate decision backed by measurements. The earlier release-page publication issue is separate from this performance work.
 
 ## Reproduction and remaining acceptance
 
@@ -134,4 +134,4 @@ For targeted layer/hover/touch checks, set `PROFILE_LAYERS=1 PROFILE_TOUCH=1` an
 
 Machine-readable baseline measurements are in `performance-baseline-0.8.0.json`; implementation comparisons and controlled warm checks are in `performance-results-0.8.0.json`. The primary twelve browser comparison runs and optional-layer/touch checks completed without page errors. One optional desktop/canvas sample overlapped a baseline build and was replaced with a sequential rerun; it is excluded from reported comparisons. Projection/bounds/focus checksums matched for all 27 operation pairs, and 5,710 additional focus cases matched exactly. `npm run build`, both diagnostic script syntax checks and whitespace checks passed; there is no permanent test suite. The initial game bundle grows by 54 decoded bytes / 13 gzip bytes, with unchanged geometry payloads. Instrumentation has some overhead, so future comparisons must use the same method. Network measurements, paint readiness, optional-layer runs and CPU proxies have the limits described above.
 
-Still needed before release acceptance: real Safari/iPhone cold and warm measurements, lock/unlock behavior against production-like preview rather than Vite development HMR, visual acceptance of gestures and both map detail levels, and device process/GPU memory observations if available. Device comparisons should cover the same controlled scenarios and optional layers; verify no meaningful steady-state interaction regression and no geometry/identity/click-target changes. Joakim owns visual acceptance.
+Still needed before release acceptance: real Safari/iPhone cold and warm measurements, lock/unlock behavior against production-like preview rather than Vite development HMR, visual acceptance of gestures and both map detail levels, and device process/GPU memory observations if available. Device comparisons should cover the same controlled scenarios and optional layers; verify no meaningful steady-state interaction regression and no geometry/identity/click-target changes. Visual acceptance remains with the user.

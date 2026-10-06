@@ -11,7 +11,7 @@ const props = defineProps<{ countryIds: readonly string[]; answerId: string | nu
 const emit = defineEmits<{ answer: [countryId: string] }>()
 const root = ref<HTMLElement | null>(null)
 const inputId = `country-answer-${useId()}`
-const search = ref('')
+const search = defineModel<string>('search', { required: true })
 const open = ref(false)
 const suggestions = computed(() => filterCountrySuggestions(
   props.countryIds.map((id) => ({ id, name: countryName(id) })), search.value, locale.value,
@@ -28,10 +28,16 @@ watch(search, (value) => { open.value = !!normalizeCountrySearch(value) }, { flu
 
 watch(locale, () => { search.value = ''; open.value = false })
 
+function focusInput() {
+  if (!props.answerId) root.value?.querySelector('input')?.focus({ preventScroll: true })
+}
+
+defineExpose({ focusInput })
+
 onMounted(() => {
   // Let phone users inspect the map before opening the software keyboard.
   if (!props.answerId && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    root.value?.querySelector('input')?.focus({ preventScroll: true })
+    focusInput()
   }
 })
 </script>
@@ -115,6 +121,10 @@ onMounted(() => {
 .country-answer__input { width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: #172d38; font: inherit; font-size: 1rem; }
 .country-answer__input::placeholder { color: #83949b; }
 .country-answer__hint { margin: 0.4rem 0 0; color: #687678; font-size: 0.73rem; }
+
+@media (max-width: 680px) {
+  .country-answer__hint { display: none; }
+}
 </style>
 
 <!-- The portaled content wrapper does not inherit this component’s scope ID. -->

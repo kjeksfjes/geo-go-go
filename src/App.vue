@@ -4,7 +4,7 @@ import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import RegionSelector from './components/RegionSelector.vue'
 import WorldMap from './components/WorldMap.vue'
-import { useCountryQuiz } from './composables/useCountryQuiz'
+import { useCountryQuiz, type QuizSnapshot } from './composables/useCountryQuiz'
 import { quizCountryIds } from './data/quizCountries'
 import {
   countryInfoById,
@@ -23,7 +23,7 @@ import {
 } from './data/regions'
 import { afterPaint, wait } from './utils/paint'
 import { clearStoredValues, readStoredBoolean, readStoredValue, writeStoredValue } from './utils/storage'
-import { locale, resetLocale, setLocale, t } from './i18n'
+import { locale, regionName, resetLocale, setLocale, t } from './i18n'
 import { isCountryLevelSelection } from './data/mapSelection'
 import { supplementalAreaInfoById } from './data/supplementalLand'
 
@@ -31,13 +31,29 @@ const selectedCountryId = ref<string | null>(null)
 const selectedGeographicUnitId = ref<string | null>(null)
 const selectedLandAreaId = ref<string | null>(null)
 const worldMap = shallowRef<InstanceType<typeof WorldMap> | null>(null)
+const quizPanel = shallowRef<InstanceType<typeof CountryQuizPanel> | null>(null)
 const mapOverlay = ref<HTMLElement | null>(null)
 type GameMode = 'explore' | 'find-country' | 'name-country'
+type QuizMode = Exclude<GameMode, 'explore'>
+interface PausedQuiz {
+  regionId: MapRegionId
+  quiz: QuizSnapshot
+  geographicUnitId: string | null
+  correctAnswerRevealed: boolean
+  wrongAnswerRevealed: boolean
+  answerDraft: string
+  showingGuess: boolean
+}
+const pausedQuizzes: Partial<Record<QuizMode, PausedQuiz>> = {}
+const answerDraft = ref('')
+const wrongAnswerRevealed = ref(false)
+const resumedQuiz = ref(false)
 const mode = ref<GameMode>('explore')
 const quizMode = computed(() => mode.value !== 'explore')
 const activeRegionId = ref<MapRegionId>('world')
+const regionSelectionRevision = ref(0)
 const showingQuizGuess = ref(false)
-watch([mode, activeRegionId], () => { selectedLandAreaId.value = null; showingQuizGuess.value = false })
+watch([mode, activeRegionId], () => { selectedLandAreaId.value = null })
 const selectedLandArea = computed(() => {
   const area = selectedLandAreaId.value ? supplementalAreaInfoById.get(selectedLandAreaId.value) : undefined
   return area ? { name: area.name[locale.value], type: area.type[locale.value] } : null
@@ -88,6 +104,8 @@ function readWrongAnswerPreference() {
 }
 
 function setAlwaysShowWrongAnswer(value: boolean) {
+  if (mode.value === 'find-country' && quizPhase.value === 'answered'
+    && (alwaysShowWrongAnswer.value || wrongAnswerRevealed.value)) wrongAnswerRevealed.value = true
   alwaysShowWrongAnswer.value = value
   try { localStorage.setItem(wrongAnswerPreferenceKey, String(value)) } catch { /* The setting still works for this session. */ }
 }
@@ -136,13 +154,20 @@ const {
   phase: quizPhase,
   questionNumber: quizQuestionNumber,
   score: quizScore,
+  snapshot: snapshotQuiz,
+  restore: restoreQuiz,
   skip: skipQuizQuestion,
   start: startQuiz,
   total: quizTotal,
 } = useCountryQuiz()
 // A guess can be outside the round's region. Preview it without changing
 // the selected region, question pool or score; the next question restores it.
-watch(quizQuestionId, () => { showingQuizGuess.value = false; correctAnswerRevealed.value = false }, { flush: 'sync' })
+watch(quizQuestionId, () => {
+  showingQuizGuess.value = false
+  correctAnswerRevealed.value = false
+  wrongAnswerRevealed.value = false
+  answerDraft.value = ''
+}, { flush: 'sync' })
 const correctAnswerVisible = computed(() => quizAnswerId.value === quizQuestionId.value
   || correctAnswerRevealed.value
   || automaticAnswerReveal.value)
@@ -162,6 +187,10 @@ const quizAnswerComponent = computed(() => {
 })
 
 function startRegionalQuiz() {
+  if (mode.value !== 'explore') delete pausedQuizzes[mode.value]
+  resumedQuiz.value = false
+  answerDraft.value = ''
+  wrongAnswerRevealed.value = false
   correctAnswerRevealed.value = false
   showingQuizGuess.value = false
   startQuiz(quizRegionEntityIds.value)
@@ -169,10 +198,42 @@ function startRegionalQuiz() {
 
 function setMode(nextMode: GameMode) {
   if (mode.value === nextMode) return
+  if (mode.value !== 'explore') {
+    pausedQuizzes[mode.value] = {
+      regionId: activeRegionId.value,
+      quiz: snapshotQuiz(),
+      geographicUnitId: selectedGeographicUnitId.value,
+      correctAnswerRevealed: correctAnswerRevealed.value
+        || (['answered', 'skipped'].includes(quizPhase.value) && correctAnswerVisible.value),
+      wrongAnswerRevealed: wrongAnswerRevealed.value
+        || (quizPhase.value === 'answered' && alwaysShowWrongAnswer.value),
+      answerDraft: answerDraft.value,
+      showingGuess: showingQuizGuess.value,
+    }
+  }
   mode.value = nextMode
   selectedCountryId.value = null
   selectedGeographicUnitId.value = null
-  if (nextMode !== 'explore') startRegionalQuiz()
+  showingQuizGuess.value = false
+  resumedQuiz.value = false
+  if (nextMode === 'explore') return
+  const saved = pausedQuizzes[nextMode]
+  if (!saved) {
+    startRegionalQuiz()
+    return
+  }
+  activeRegionId.value = saved.regionId
+  if (saved.quiz.questionIndex === 0 && saved.quiz.answeredCountryId === null && !saved.quiz.skipped) {
+    startRegionalQuiz()
+    return
+  }
+  restoreQuiz(saved.quiz)
+  selectedGeographicUnitId.value = saved.geographicUnitId
+  correctAnswerRevealed.value = saved.correctAnswerRevealed
+  wrongAnswerRevealed.value = saved.wrongAnswerRevealed
+  answerDraft.value = saved.answerDraft
+  showingQuizGuess.value = saved.showingGuess
+  resumedQuiz.value = true
 }
 
 function handleMapSelection(countryId: string | null, geographicUnitId: string | null) {
@@ -180,7 +241,7 @@ function handleMapSelection(countryId: string | null, geographicUnitId: string |
   selectedLandAreaId.value = null
   selectedGeographicUnitId.value = geographicUnitId
   if (mode.value === 'find-country') {
-    if (countryId) answerQuiz(countryId)
+    if (countryId) { resumedQuiz.value = false; answerQuiz(countryId) }
   } else {
     selectedCountryId.value = countryId
   }
@@ -196,16 +257,19 @@ function handleLandAreaSelection(id: string | null) {
 
 function answerNamedCountry(countryId: string) {
   if (mode.value !== 'name-country' || !quizCountryOptions.value.includes(countryId)) return
+  resumedQuiz.value = false
   answerQuiz(countryId)
 }
 
 function advanceQuizQuestion() {
+  resumedQuiz.value = false
   selectedGeographicUnitId.value = null
   nextQuizQuestion()
 }
 
 function skipNamedCountry() {
   if (mode.value !== 'name-country') return
+  resumedQuiz.value = false
   selectedGeographicUnitId.value = null
   skipQuizQuestion()
 }
@@ -227,6 +291,9 @@ function showQuizGuessOnMap() {
 }
 
 function restartQuiz() {
+  if (['question', 'answered', 'skipped'].includes(quizPhase.value)
+    && quizQuestionNumber.value > 1
+    && !window.confirm(t('restartQuizConfirmation'))) return
   selectedGeographicUnitId.value = null
   startRegionalQuiz()
 }
@@ -277,7 +344,17 @@ onBeforeUnmount(() => {
 })
 
 function setActiveRegion(regionId: MapRegionId) {
+  if (regionId === activeRegionId.value) return
+  const region = regionById.get(regionId)
+  if (!region) return
+  if (quizMode.value && ['question', 'answered', 'skipped'].includes(quizPhase.value)
+    && !window.confirm(t('changeQuizRegionConfirmation', { region: regionName(region) }))) {
+    // Reset the selector's internal selection after a cancelled change.
+    regionSelectionRevision.value++
+    return
+  }
   activeRegionId.value = regionId
+  showingQuizGuess.value = false
 
   if (quizMode.value) {
     selectedGeographicUnitId.value = null
@@ -365,6 +442,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
             <path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3Z" />
           </svg>
           <RegionSelector
+            :key="regionSelectionRevision"
             :model-value="activeRegionId"
             :options="regions"
             @update:model-value="setActiveRegion"
@@ -439,11 +517,16 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         @select="handleMapSelection"
         @land-select="handleLandAreaSelection"
         @quiz-next="advanceQuizQuestion"
+        @focus-answer="quizPanel?.focusAnswer()"
       />
       <div v-if="quizMode" ref="mapOverlay" class="map-overlay" :inert="detailLoading">
         <div class="map-overlay__card">
           <CountryQuizPanel
+            ref="quizPanel"
             :key="`${mode}:${activeRegionId}`"
+            v-model:answer-draft="answerDraft"
+            :wrong-answer-revealed="wrongAnswerRevealed"
+            :resume-notice="resumedQuiz ? t('resumingQuiz', { region: regionName(activeRegion) }) : ''"
             :identify="mode === 'name-country'"
             :country-ids="quizCountryOptions"
             :viewing-outside-region="outsideQuizGuess"
@@ -460,6 +543,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
             @answer="answerNamedCountry"
             @skip="skipNamedCountry"
             @reveal-correct-answer="revealCurrentCorrectAnswer"
+            @reveal-wrong-answer="wrongAnswerRevealed = true"
             @update:automatic-reveal="setAutomaticAnswerReveal"
             @next="advanceQuizQuestion"
             @restart="restartQuiz"

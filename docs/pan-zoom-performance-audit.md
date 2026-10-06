@@ -1,6 +1,6 @@
 # Pan and zoom performance audit — 2026-10-05
 
-Baseline: `f316114`, the committed loading optimization on `codex/performance-audit`. The measured hit-path styling and immediate mouse-drag update are implemented locally and accepted by Joakim as a small perceived improvement. Application changes and audit files remain uncommitted; no merge, push or release has been requested.
+Baseline: `f316114`, the committed loading optimization on `codex/performance-audit`. The measured hit-path styling and immediate mouse-drag update are implemented locally and accepted by the user as a small perceived improvement. Application changes and audit files remain uncommitted; no merge, push or release has been requested.
 
 ## Method
 
@@ -66,7 +66,7 @@ Repeating the long mobile stress sequence with the candidate styling reduces hig
 
 ### Trialed optimization and remaining investigation
 
-The trial applied a narrow canvas-only `vector-effect: none` rule to invisible country hit paths and explicitly restored `non-scaling-stroke` for focus-visible paths. The application currently uses the candidate styling again for production-preview acceptance. This matches the measured browser styling experiment. This changes a redundant stroke policy rather than geometry or target coverage, has a small maintenance footprint, and has a measured causal benefit. Keep the existing SVG fallback and painted borders unchanged. The build and focused measurements pass, and Joakim accepts the small perceived improvement in production preview. The Chromium figures do not establish equivalent iPhone gains.
+The trial applied a narrow canvas-only `vector-effect: none` rule to invisible country hit paths and explicitly restored `non-scaling-stroke` for focus-visible paths. The application currently uses the candidate styling again for production-preview acceptance. This matches the measured browser styling experiment. This changes a redundant stroke policy rather than geometry or target coverage, has a small maintenance footprint, and has a measured causal benefit. Keep the existing SVG fallback and painted borders unchanged. The build and focused measurements pass, and the user accepts the small perceived improvement in production preview. The Chromium figures do not establish equivalent iPhone gains.
 
 Do not start with simpler hit geometry, reduced coastline detail or another cache. Pan is comparatively inexpensive in the default renderer, actual hit-testing time is much smaller than scaling layout cost, and no repeated scene construction was observed. If movement still feels slow on the phone after the styling change, measure worker/presentation behavior on that device and complex selected-country overlays before changing overscan, frame freshness or pixel density. Those policies protect coverage and sharp settled frames.
 
@@ -80,7 +80,7 @@ PLAYWRIGHT_PACKAGE=/path/to/playwright BROWSER_EXECUTABLE=/path/to/chrome-headle
 
 For causal experiments add `PROFILE_DEVICE=mobile-proxy PROFILE_RENDERER=canvas` and either `PROFILE_FREEZE_HIT=1` or `PROFILE_HIT_SCALING_STROKE=1`; use three repetitions. The frozen-transform experiment deliberately breaks target alignment during a gesture and must never enter the application. For traced diagnostics add `PROFILE_WORKER=1 PROFILE_GESTURE_TRACE=1`; run once because trace overhead changes timing. `PROFILE_LOW_PINCH=1` adds a low-detail pinch phase, altering later camera state. `PROFILE_STRESS=1` enables the longer zoom-in/out sequence. `PROFILE_LAYERS=1 PROFILE_LAYER_GESTURES=1 PROFILE_DEVICE=desktop` measures default bathymetry and later Europe relief movement. Run timed workloads and builds sequentially.
 
-Machine-readable movement results are in `pan-zoom-performance-results.json`. The audit-only commit was undone at Joakim’s request while retaining its files; the accepted implementation and audit evidence remain local. Nothing has been pushed or published.
+Machine-readable movement results are in `pan-zoom-performance-results.json`. The audit-only commit was undone at the user’s request while retaining its files; the accepted implementation and audit evidence remain local. Nothing has been pushed or published.
 
 ## Final validation and acceptance
 
@@ -88,4 +88,4 @@ The implemented changes remove unnecessary non-scaling stroke calculations from 
 
 Focused pointer-start measurements compare both stroke policies in production preview and development mode at both detail levels, starting over Canada, Algeria and ocean. First-camera-update medians are about 10 ms in preview and 14–17 ms in development in that workload. Additional bathymetry on/off checks use a 1600 × 900 DPR 2 viewport with canvas and SVG. With bathymetry enabled, the immediate-start change lowers canvas first-update medians from 10.1/10.7 ms (50m/10m) to 7.6/7.8 ms; SVG checks also complete at both detail levels. These are DOM mutation and next-RAF timings, not visible compositor or Safari latency. Results are retained in `pan-start-comparison.json` and `bathymetry-pan-start-comparison.json`; the focused harness is `scripts/profile-pan-start.mjs`.
 
-`npm run build`, diagnostic script syntax checks and whitespace checks pass. Joakim notices a slight perceived gain in production preview and accepts the current behavior. No additional visual testing was performed by Codex. No further performance investigation is pending; the existing measurements remain diagnostic evidence, not a promise of equivalent gains on every device.
+`npm run build`, diagnostic script syntax checks and whitespace checks pass. The user notices a slight perceived gain in production preview and accepts the current behavior. No additional visual testing was performed by Codex. No further performance investigation is pending; the existing measurements remain diagnostic evidence, not a promise of equivalent gains on every device.

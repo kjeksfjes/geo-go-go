@@ -301,4 +301,4 @@ References identify the naming authorities consulted, not an assertion that ever
 
 ## Verification
 
-`npm run build` checks complete English/Bokmål catalog coverage against canonical map identities before type checking and bundling. Focused runtime checks confirm that every canonical identity uses the catalog in each locale, including Elfenbenskysten, grouped territories, and the corrected names. There is no permanent test suite. Visual acceptance is left to Joakim.
+`npm run build` checks complete English/Bokmål catalog coverage against canonical map identities before type checking and bundling. Focused runtime checks confirm that every canonical identity uses the catalog in each locale, including Elfenbenskysten, grouped territories, and the corrected names. There is no permanent test suite. Visual acceptance is left to the user.
