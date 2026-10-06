@@ -20,11 +20,11 @@ defineProps<{
   gap: 0.7rem;
   margin: 0;
   padding: 0.7rem 1rem;
-  border-radius: 999px;
-  color: #52676e;
-  background: rgb(255 255 255 / 94%);
-  box-shadow: 0 8px 24px rgb(23 45 56 / 14%);
-  font-size: 0.8rem;
-  font-weight: 750;
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-text);
+  background: var(--ui-panel);
+  box-shadow: var(--ui-shadow-panel);
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
 }
 </style>

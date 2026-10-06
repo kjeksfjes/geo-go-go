@@ -22,31 +22,33 @@ const componentDetail = computed(() => {
 <template>
   <aside class="country-card map-overlay__content" aria-live="polite">
     <template v-if="area">
-      <div>
-        <p class="country-card__label">{{ t('selectedArea') }}</p>
-        <h2>{{ area.name }}</h2>
+      <div class="country-card__message">
+        <p class="map-overlay__eyebrow">{{ t('selectedArea') }}</p>
+        <h2 class="map-overlay__heading">{{ area.name }}</h2>
         <p class="country-card__component"><em>{{ area.type }}</em></p>
       </div>
     </template>
     <template v-else-if="country">
       <div class="country-card__flags">
         <span
-          class="country-card__flag fi"
+          class="country-card__flag map-overlay__flag fi"
           :class="`fi-${country.flagCode}`"
           role="img"
           :aria-label="t('flag', { name: countryName(country.id) })"
         />
         <span
           v-if="componentDetail?.flagCode"
-          class="country-card__flag country-card__flag--component fi"
+          class="country-card__flag map-overlay__flag country-card__flag--component fi"
           :class="`fi-${componentDetail.flagCode}`"
           role="img"
           :aria-label="t('flag', { name: componentDetail.name })"
         />
       </div>
-      <div>
-        <p class="country-card__label">{{ t('selectedCountry') }}</p>
-        <h2>{{ countryName(country.id) }}</h2>
+      <div class="country-card__message">
+        <p class="map-overlay__eyebrow">{{ t('selectedCountry') }}</p>
+        <h2 class="map-overlay__heading">{{ countryName(country.id) }}</h2>
+      </div>
+      <div class="country-card__details">
         <p v-if="componentDetail" class="country-card__component">
           {{ componentDetail.name }}<span v-if="componentDetail.type"> · <em>{{ componentDetail.type }}</em></span>
         </p>
@@ -59,98 +61,42 @@ const componentDetail = computed(() => {
 
 <style scoped>
 .country-card {
-  display: flex;
-  min-height: 128px;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 1.5rem;
-  /* Keep the largest flag within the card's reserved 128px height. */
+  display: grid;
+  grid-template-columns: var(--ui-card-flag-width) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ui-card-row-gap) var(--ui-card-column-gap);
 }
 
-.country-card__flag {
-  width: 1.333333em;
-  flex: 0 0 auto;
-  border-radius: 7px;
-  box-shadow: 0 10px 28px rgba(23, 45, 56, 0.3);
-  font-size: clamp(4rem, 8vw, 6.5rem);
-}
+.country-card__message { min-width: 0; }
+.country-card__message:first-child,
+.country-card__empty { grid-column: 1 / -1; }
+.country-card__details { grid-column: 2; min-width: 0; }
 
 .country-card__flags {
   display: flex;
-  flex: 0 0 auto;
-  align-items: flex-end;
-  gap: 0.45rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui-space-2);
 }
 
-.country-card__flag--component {
-  border-radius: 4px;
-  box-shadow: 0 6px 16px rgba(23, 45, 56, 0.22);
-  font-size: clamp(1.6rem, 3vw, 2.3rem);
-}
+.country-card__flag { flex: 0 0 auto; }
+.country-card__flag--component { width: 1.666667rem; font-size: 1.25rem; }
 
-.country-card__label,
 .country-card__code,
+.country-card__component,
 .country-card__empty {
   margin: 0;
-  color: #687678;
+  color: var(--ui-muted);
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
+  line-height: 1.4;
 }
 
-.country-card__label {
-  margin-bottom: 0.2rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
+.country-card__component + .country-card__code { margin-top: var(--ui-space-1); }
 
-.country-card__code {
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
-}
-
-.country-card__component {
-  margin: 0.2rem 0 0;
-  color: #52676e;
-  font-size: 0.9rem;
-}
-
-h2 {
-  margin: 0;
-  color: #172d38;
-  font-size: clamp(1.2rem, 2.5vw, 1.65rem);
-}
-
-.country-card__empty {
-  text-align: left;
-}
-
-@media (max-width: 520px) {
-  .country-card {
-    min-height: 0;
-    gap: 0.65rem;
-  }
-
-  .country-card__flag {
-    border-radius: 4px;
-    font-size: 2.4rem;
-  }
-
-  .country-card__flag--component {
-    font-size: 1.25rem;
-  }
-
-  .country-card__label {
-    margin-bottom: 0.05rem;
-    font-size: 0.62rem;
-  }
-
-  .country-card__component {
-    margin-top: 0.1rem;
-    font-size: 0.78rem;
-  }
-
+@media (max-width: 560px) {
+  .country-card__details { grid-column: 1 / -1; }
   .country-card__code { display: none; }
-
-  h2 { font-size: 1.05rem; }
+  .country-card__component { font-size: var(--ui-text-small); }
 }
 </style>

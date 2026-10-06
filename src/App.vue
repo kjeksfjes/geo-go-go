@@ -85,7 +85,7 @@ function readAutomaticAnswerReveal() {
 }
 
 function setAutomaticAnswerReveal(value: boolean) {
-  if (['answered', 'skipped'].includes(quizPhase.value) && correctAnswerVisible.value) correctAnswerRevealed.value = true
+  if (mode.value === 'name-country' && ['answered', 'skipped'].includes(quizPhase.value)) correctAnswerRevealed.value = value
   automaticAnswerReveal.value = value
   writeStoredValue(automaticAnswerRevealKey, value)
 }
@@ -104,8 +104,7 @@ function readWrongAnswerPreference() {
 }
 
 function setAlwaysShowWrongAnswer(value: boolean) {
-  if (mode.value === 'find-country' && quizPhase.value === 'answered'
-    && (alwaysShowWrongAnswer.value || wrongAnswerRevealed.value)) wrongAnswerRevealed.value = true
+  if (mode.value === 'find-country' && quizPhase.value === 'answered') wrongAnswerRevealed.value = value
   alwaysShowWrongAnswer.value = value
   try { localStorage.setItem(wrongAnswerPreferenceKey, String(value)) } catch { /* The setting still works for this session. */ }
 }
@@ -348,6 +347,7 @@ function setActiveRegion(regionId: MapRegionId) {
   const region = regionById.get(regionId)
   if (!region) return
   if (quizMode.value && ['question', 'answered', 'skipped'].includes(quizPhase.value)
+    && quizQuestionNumber.value > 1
     && !window.confirm(t('changeQuizRegionConfirmation', { region: regionName(region) }))) {
     // Reset the selector's internal selection after a cancelled change.
     regionSelectionRevision.value++

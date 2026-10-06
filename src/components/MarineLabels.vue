@@ -194,9 +194,9 @@ onBeforeUnmount(() => {
 .marine-label {
   fill: #24465a;
   fill-opacity: 0.74;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--ui-font);
   font-size: 0.84em;
-  font-weight: 600;
+  font-weight: var(--ui-weight);
   letter-spacing: 0.11em;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -204,7 +204,7 @@ onBeforeUnmount(() => {
 
 .marine-label--ocean {
   font-size: 1em;
-  font-weight: 650;
+  font-weight: var(--ui-weight-large);
   letter-spacing: 0.25em;
 }
 

@@ -61,7 +61,7 @@ const messages = {
     changeQuizRegionConfirmation: 'Start a new quiz in {region}? Your progress in the current round will be lost.',
     noCountries: 'No quiz countries in this region',
     questionStatus: 'Question {number}/{total} · {score} {points}', point: 'pt', points: 'pts',
-    find: 'Find {name}', clickLocation: 'Click its location on the map. Dots mark tiny countries.',
+    find: 'Find {name}', clickLocation: 'Click the country on the map · Dots mark tiny countries',
     selectSmallCountry: 'Select {name}', zoomToSmallCountries: 'Zoom in on {count} small countries',
     correctSmallCountry: 'Correct country: {name}', wrongSmallCountry: 'Your answer: {name}',
     wrongAnswerMarker: 'Your selected country',
@@ -98,7 +98,7 @@ const messages = {
     changeQuizRegionConfirmation: 'Starte en ny quiz i {region}? Fremgangen i den nåværende runden går tapt.',
     noCountries: 'Ingen quizland i denne regionen',
     questionStatus: 'Spørsmål {number}/{total} · {score} {points}', point: 'poeng', points: 'poeng',
-    find: 'Finn {name}', clickLocation: 'Klikk på landet i kartet. Prikker viser små land.',
+    find: 'Finn {name}', clickLocation: 'Klikk på landet i kartet · Prikker viser små land',
     selectSmallCountry: 'Velg {name}', zoomToSmallCountries: 'Zoom inn på {count} små land',
     correctSmallCountry: 'Riktig land: {name}', wrongSmallCountry: 'Ditt svar: {name}',
     wrongAnswerMarker: 'Landet du valgte',
@@ -124,7 +124,7 @@ export function t(key: MessageKey, values: Record<string, string | number> = {})
 }
 
 const norwegianRegions: Record<MapRegion['id'], string> = {
-  world: 'Verden', europe: 'Europa', nordics: 'Norden', baltics: 'Baltikum',
+  world: 'Verden', europe: 'Europa', 'western-europe': 'Vest-Europa', 'eastern-europe': 'Øst-Europa',
   balkans: 'Balkan', africa: 'Afrika', asia: 'Asia', 'middle-east': 'Midtøsten',
   'central-asia': 'Sentral-Asia', 'south-asia': 'Sør-Asia', 'east-asia': 'Øst-Asia',
   'southeast-asia': 'Sørøst-Asia', 'north-america': 'Nord-Amerika',

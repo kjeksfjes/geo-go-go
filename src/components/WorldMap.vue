@@ -1851,9 +1851,9 @@ async function setProjection(nextId: MapProjectionId) {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  color: #52676e;
-  font-size: 0.72rem;
-  font-weight: 650;
+  color: var(--ui-text);
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
   pointer-events: none;
 }
 
@@ -1862,9 +1862,10 @@ async function setProjection(nextId: MapProjectionId) {
   display: flex;
   align-items: center;
   min-width: 0;
-  border: 1px solid rgba(82, 103, 110, 0.18);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-control);
 }
 
 .projection-control :deep(.map-select-field) {
@@ -1884,24 +1885,24 @@ async function setProjection(nextId: MapProjectionId) {
   height: 1.4rem;
   flex: none;
   margin-left: 0.65rem;
-  color: #17374b;
+  color: var(--ui-ink);
 }
 
-.settings-section { display: grid; align-content: start; gap: 0.35rem; }
+.settings-section { display: grid; align-content: start; gap: var(--ui-space-2); }
 .settings-side-column { display: grid; align-content: start; gap: 0.35rem; }
-.settings-side-column > .settings-section:first-child { border-top: 1px solid #d9e3e6; padding-top: 0.8rem; margin-top: 0.45rem; }
-.settings-section + .settings-section { border-top: 1px solid #c6d4da; padding-top: 1rem; margin-top: 0.7rem; }
-.settings-section h3 { margin: 0 0 0.2rem; padding: 0 0.2rem; color: #687a80; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; }
-.settings-hint { margin: 0.35rem 0.2rem 0; color: #687678; font-size: 0.72rem; line-height: 1.4; }
-.answer-scope-setting { min-width: 0; margin: 0; padding: 0.6rem 0.7rem; border: 1px solid rgba(82, 103, 110, 0.18); border-radius: 12px; background: rgba(255, 255, 255, 0.86); box-shadow: 0 3px 12px rgba(23, 45, 56, 0.08); }
-.settings-card-title { margin: 0; color: #52676e; font-size: 0.72rem; font-weight: 700; }
-.settings-context { margin: 0.4rem 0 0.5rem; color: #687a80; font-size: 0.72rem; font-weight: 650; }
-.answer-scope-choices { display: flex; gap: 0.2rem; padding: 0.2rem; border: 1px solid #ccd8dc; border-radius: 10px; background: #fff; }
+.settings-side-column > .settings-section:first-child { border-top: 1px solid var(--ui-border); padding-top: 0.8rem; margin-top: 0.45rem; }
+.settings-section + .settings-section { border-top: 1px solid var(--ui-border); padding-top: 1rem; margin-top: 0.7rem; }
+.settings-section h3 { margin: 0 0 var(--ui-space-1); padding: 0 0.2rem; color: var(--ui-muted); font-size: var(--ui-text-small); letter-spacing: 0.1em; text-transform: uppercase; }
+.settings-hint { margin: 0.35rem 0.2rem 0; color: var(--ui-muted); font-size: var(--ui-text-small); line-height: 1.4; }
+.answer-scope-setting { min-width: 0; margin: 0; padding: var(--ui-space-3); border: 1px solid var(--ui-border); border-radius: var(--ui-radius-control); background: var(--ui-surface); box-shadow: var(--ui-shadow-control); }
+.settings-card-title { margin: 0; color: var(--ui-text); font-size: var(--ui-text-control); font-weight: var(--ui-weight); }
+.settings-context { margin: 0.4rem 0 0.5rem; color: var(--ui-muted); font-size: var(--ui-text-small); font-weight: var(--ui-weight); }
+.answer-scope-choices { display: flex; gap: 0.2rem; padding: 0.2rem; border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-control); background: var(--ui-surface); }
 .answer-scope-choices label { position: relative; flex: 1; text-align: center; cursor: pointer; }
 .answer-scope-choices input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.answer-scope-choices span { display: block; padding: 0.55rem 0.25rem; border-radius: 7px; color: #52676e; font-size: 0.72rem; font-weight: 700; }
-.answer-scope-choices input:checked + span { background: #17374b; color: #fff; }
-.answer-scope-choices input:focus-visible + span { outline: 2px solid #315d6d; outline-offset: 2px; }
+.answer-scope-choices span { display: block; padding: 0.55rem 0.25rem; border-radius: var(--ui-radius-small); color: var(--ui-text); font-size: var(--ui-text-control); font-weight: var(--ui-weight); }
+.answer-scope-choices input:checked + span { background: var(--ui-ink); color: #fff; }
+.answer-scope-choices input:focus-visible + span { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
 
 .map-settings-panel {
   position: absolute;
@@ -1914,69 +1915,82 @@ async function setProjection(nextId: MapProjectionId) {
   max-height: min(calc(100% - 1.7rem), calc(100dvh - 5.5rem));
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0.7rem;
-  border: 1px solid rgba(82, 103, 110, 0.18);
-  border-radius: 16px;
-  background: rgba(250, 252, 252, 0.95);
-  box-shadow: 0 12px 30px rgba(23, 45, 56, 0.15);
+  padding: var(--ui-space-3);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-panel);
+  background: var(--ui-panel);
+  box-shadow: var(--ui-shadow-panel);
   backdrop-filter: blur(12px);
 }
 
 .map-settings-panel :deep(.detail-toggle) {
   width: 100%;
-  min-height: 2.55rem;
+  min-height: var(--ui-control-height);
   justify-content: space-between;
-  border-radius: 12px;
+  border-radius: var(--ui-radius-control);
 }
 
-.map-settings-language { display: none; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.2rem; color: #52676e; font-size: 0.72rem; font-weight: 700; }
+.map-settings-language { display: none; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.2rem; color: var(--ui-text); font-size: var(--ui-text-control); font-weight: var(--ui-weight); }
 
 .scale-units-control {
+  position: relative;
   display: flex;
-  min-height: 2.55rem;
+  min-height: var(--ui-control-height);
   align-items: center;
   justify-content: space-between;
   gap: 0.65rem;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid rgba(82, 103, 110, 0.18);
-  border-radius: 12px;
-  color: #52676e;
-  background: rgba(255, 255, 255, 0.86);
-  font-size: 0.72rem;
-  font-weight: 700;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
+  box-shadow: var(--ui-shadow-control);
+}
+
+.scale-units-control::after {
+  position: absolute; right: 1.1rem; top: 50%;
+  width: 0.4rem; height: 0.4rem;
+  border-right: 1.5px solid var(--ui-ink); border-bottom: 1.5px solid var(--ui-ink);
+  transform: translateY(-0.3rem) rotate(45deg);
+  pointer-events: none; content: "";
 }
 
 .scale-units-control select {
+  appearance: none;
+  min-height: 2rem;
   min-width: 0;
   max-width: 9rem;
-  padding: 0.25rem;
-  border: 1px solid rgba(82, 103, 110, 0.25);
-  border-radius: 6px;
-  color: #17374b;
-  background: #fff;
+  padding: var(--ui-space-1) 1.75rem var(--ui-space-1) var(--ui-space-2);
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-radius-small);
+  color: var(--ui-ink);
+  background: var(--ui-surface);
   font: inherit;
 }
 
 .map-tools span,
 .map-tools button {
   padding: 0.4rem 0.65rem;
-  border: 1px solid rgba(82, 103, 110, 0.18);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 3px 12px rgba(23, 45, 56, 0.08);
-  backdrop-filter: blur(7px);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-panel);
+  box-shadow: var(--ui-shadow-control);
 }
 
 .map-tools button {
-  color: #172d38;
+  color: var(--ui-ink);
   cursor: pointer;
   pointer-events: auto;
   white-space: nowrap;
 }
 
-.map-tools button:hover,
-:global(html[data-input-modality='keyboard'] .map-tools button:focus-visible) {
-  background: #fff;
+.map-tools button:hover { background: var(--ui-surface); }
+:global(html[data-input-modality='keyboard'] .map-tools button:focus-visible),
+:global(html[data-input-modality='keyboard'] .scale-units-control select:focus-visible) {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
 }
 
 @media (max-width: 1100px) {
@@ -1996,7 +2010,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 @media (max-width: 680px) {
-  .map-settings-language { display: flex; padding-bottom: 0.6rem; margin-bottom: 0.25rem; border-bottom: 1px solid #d9e3e6; }
+  .map-settings-language { display: flex; padding-bottom: 0.6rem; margin-bottom: 0.25rem; border-bottom: 1px solid var(--ui-border); }
   .map-settings-panel {
     max-height: min(calc(100% - 1.5rem), calc(100dvh - 7.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
     overflow-y: auto;

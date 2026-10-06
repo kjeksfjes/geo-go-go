@@ -2,6 +2,18 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.10.0 — Pocket Atlas — 2026-10-06
+
+### Improvements
+
+- Refreshed the interface with warm pocket-atlas paper surfaces, shared colors, consistent controls and menus, retained individual shadows, clearer text contrast, and keyboard focus. Bricolage Grotesque headings and Geist UI text are locally hosted with their original licenses.
+- Aligned Explore and both quiz cards with shared headings, captions, compact flags, and responsive spacing. Added flags to country-name suggestions; Name the country shows a header flag after a correct guess and a smaller flag beside a revealed answer after a wrong guess or skip.
+- Made “Always show” reversible in both quizzes: turning it off hides the revealed answer and restores “What did I click” or “Show answer,” with keyboard focus returning to the restored control.
+- Allowed immediate region switching on the first quiz question, including after an answer or skip; unfinished rounds beyond the first question still ask for confirmation.
+- Replaced Nordics and Baltics with mutually exclusive Western Europe / Vest-Europa (24 quiz countries) and Eastern Europe / Øst-Europa (22). Western Europe includes Nordic and Mediterranean countries, including Greece; Eastern Europe includes Turkey. Greenland and the Faroes remain in Explore, and Balkan remains a smaller overlapping practice group.
+- Used Turkey as the English country label, retaining Norwegian Tyrkia and matching Türkiye/Turkiye in country-name suggestions.
+- Prevented header overlap at intermediate widths and matched the initial loading shell and browser theme color to the interface.
+
 ## 0.9.0 — Name That Country — 2026-10-06
 
 ### Features
