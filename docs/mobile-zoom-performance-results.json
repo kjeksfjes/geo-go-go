@@ -1,0 +1,1453 @@
+{
+  "date": "2026-10-07",
+  "scope": "Local Chromium mobile proxy; no real iPhone/Safari or visual acceptance",
+  "rendererChangesRetained": false,
+  "experiments": {
+    "rafBaseline": {
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": true,
+        "freezeHitTransform": false,
+        "stressZoom": true,
+        "lowPinch": true,
+        "layerGestures": false,
+        "hitScalingStroke": false,
+        "touch": true
+      },
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "phases": {
+            "highZoom": {
+              "elapsedMs": 2142.2000000476837,
+              "taskMs": 1863.9189999999992,
+              "scriptMs": 65.12099999999998,
+              "layoutMs": 120.68500000000002,
+              "styleMs": 63.70000000000001,
+              "frameP95Ms": 18.600000000000364,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 191.51000000000042
+            },
+            "highPan": {
+              "elapsedMs": 1654.5,
+              "taskMs": 662.6779999999997,
+              "scriptMs": 20.462000000000202,
+              "layoutMs": 13.583000000000013,
+              "styleMs": 35.95799999999999,
+              "frameP95Ms": 9.199999999998909,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 9.035999999999994
+            },
+            "highZoomOut": {
+              "elapsedMs": 2177.600000023842,
+              "taskMs": 1895.963,
+              "scriptMs": 50.07699999999993,
+              "layoutMs": 169.95299999999997,
+              "styleMs": 63.23900000000002,
+              "frameP95Ms": 19,
+              "maxLongTaskMs": 173,
+              "longTaskCount": 2,
+              "svgFallbackFrames": 1,
+              "detailRequests": 11,
+              "scenePosts": 0,
+              "paintTraceMs": 189.13700000000046
+            },
+            "highPinch": {
+              "elapsedMs": 1204.7999999523163,
+              "taskMs": 510.3749999999998,
+              "scriptMs": 21.43399999999973,
+              "layoutMs": 33.46300000000002,
+              "styleMs": 17.95599999999997,
+              "frameP95Ms": 9.30000000000291,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 49.822000000000024
+            },
+            "lowZoom": {
+              "elapsedMs": 1817.4000000357628,
+              "taskMs": 1536.2109999999998,
+              "scriptMs": 45.46399999999995,
+              "layoutMs": 94.42099999999998,
+              "styleMs": 45.436000000000035,
+              "frameP95Ms": 17.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 147.63200000000003
+            },
+            "lowPan": {
+              "elapsedMs": 1629.5,
+              "taskMs": 688.1689999999985,
+              "scriptMs": 21.233000000000057,
+              "layoutMs": 11.902999999999997,
+              "styleMs": 37.26399999999997,
+              "frameP95Ms": 9.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 10.370999999999997
+            },
+            "lowPinch": {
+              "elapsedMs": 1238,
+              "taskMs": 497.0010000000009,
+              "scriptMs": 14.491000000000032,
+              "layoutMs": 32.08299999999997,
+              "styleMs": 15.363999999999988,
+              "frameP95Ms": 9.100000000002183,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 42.513999999999996
+            },
+            "lowZoomOut": {
+              "elapsedMs": 1900.3999999761581,
+              "taskMs": 1614.7860000000023,
+              "scriptMs": 45.206999999999994,
+              "layoutMs": 103.24200000000006,
+              "styleMs": 48.64900000000005,
+              "frameP95Ms": 17.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 13,
+              "scenePosts": 0,
+              "paintTraceMs": 162.30600000000038
+            }
+          },
+          "errors": []
+        }
+      ]
+    },
+    "readBatchTrial": {
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": true,
+        "freezeHitTransform": false,
+        "stressZoom": true,
+        "lowPinch": true,
+        "layerGestures": false,
+        "hitScalingStroke": false,
+        "touch": true
+      },
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "phases": {
+            "highZoom": {
+              "elapsedMs": 2282.099999964237,
+              "taskMs": 1923.8590000000002,
+              "scriptMs": 56.99199999999993,
+              "layoutMs": 150.84400000000002,
+              "styleMs": 55.18400000000001,
+              "frameP95Ms": 24.899999999999636,
+              "maxLongTaskMs": 199,
+              "longTaskCount": 1,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 176.78800000000032
+            },
+            "highPan": {
+              "elapsedMs": 1625.4000000357628,
+              "taskMs": 599.0190000000002,
+              "scriptMs": 18.893999999999966,
+              "layoutMs": 10.934,
+              "styleMs": 30.922999999999977,
+              "frameP95Ms": 9.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 11.964000000000002
+            },
+            "highZoomOut": {
+              "elapsedMs": 2193.5,
+              "taskMs": 1939.9730000000002,
+              "scriptMs": 48.28099999999979,
+              "layoutMs": 199.19499999999996,
+              "styleMs": 77.509,
+              "frameP95Ms": 24.80000000000109,
+              "maxLongTaskMs": 146,
+              "longTaskCount": 3,
+              "svgFallbackFrames": 2,
+              "detailRequests": 11,
+              "scenePosts": 0,
+              "paintTraceMs": 172.78300000000024
+            },
+            "highPinch": {
+              "elapsedMs": 1156.5,
+              "taskMs": 486.8830000000006,
+              "scriptMs": 17.561999999999856,
+              "layoutMs": 33.009999999999984,
+              "styleMs": 18.031999999999993,
+              "frameP95Ms": 9.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 45.404999999999994
+            },
+            "lowZoom": {
+              "elapsedMs": 1864.7000000476837,
+              "taskMs": 1683.2139999999995,
+              "scriptMs": 48.74400000000012,
+              "layoutMs": 104.51599999999995,
+              "styleMs": 47.656000000000034,
+              "frameP95Ms": 17.5,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 152.5070000000003
+            },
+            "lowPan": {
+              "elapsedMs": 1654.6000000238419,
+              "taskMs": 656.8470000000009,
+              "scriptMs": 23.233999999999977,
+              "layoutMs": 12.05400000000001,
+              "styleMs": 33.94199999999997,
+              "frameP95Ms": 9.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 7.119999999999997
+            },
+            "lowPinch": {
+              "elapsedMs": 1429.2999999523163,
+              "taskMs": 632.7099999999995,
+              "scriptMs": 31.508999999999787,
+              "layoutMs": 37.344000000000044,
+              "styleMs": 22.453,
+              "frameP95Ms": 16.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 55.42200000000002
+            },
+            "lowZoomOut": {
+              "elapsedMs": 2221.699999988079,
+              "taskMs": 1967.0240000000022,
+              "scriptMs": 69.57799999999992,
+              "layoutMs": 137.575,
+              "styleMs": 64.04800000000004,
+              "frameP95Ms": 24.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 13,
+              "scenePosts": 0,
+              "paintTraceMs": 203.20300000000043
+            }
+          },
+          "errors": []
+        }
+      ]
+    },
+    "compositorTrial": {
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestures": true,
+        "gestureTrace": true,
+        "freezeHitTransform": false,
+        "stressZoom": true,
+        "lowPinch": true,
+        "layerGestures": false,
+        "hitScalingStroke": false,
+        "touch": true
+      },
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "phases": {
+            "highZoom": {
+              "elapsedMs": 1950.1000000238419,
+              "taskMs": 1650.5039999999997,
+              "scriptMs": 50.21999999999993,
+              "layoutMs": 103.015,
+              "styleMs": 45.698,
+              "frameP95Ms": 17.19999999999891,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 150.56500000000014
+            },
+            "highPan": {
+              "elapsedMs": 1624.5999999642372,
+              "taskMs": 565.1860000000006,
+              "scriptMs": 21.20199999999994,
+              "layoutMs": 11.875999999999998,
+              "styleMs": 31.735000000000014,
+              "frameP95Ms": 9.100000000000364,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 2.156
+            },
+            "highZoomOut": {
+              "elapsedMs": 2166.899999976158,
+              "taskMs": 1893.7950000000008,
+              "scriptMs": 38.553999999999974,
+              "layoutMs": 163.20299999999997,
+              "styleMs": 68.71499999999997,
+              "frameP95Ms": 23.69999999999891,
+              "maxLongTaskMs": 178,
+              "longTaskCount": 2,
+              "svgFallbackFrames": 1,
+              "detailRequests": 11,
+              "scenePosts": 0,
+              "paintTraceMs": 152.44799999999992
+            },
+            "highPinch": {
+              "elapsedMs": 1198.1000000238419,
+              "taskMs": 491.4050000000003,
+              "scriptMs": 18.212999999999813,
+              "layoutMs": 28.017000000000014,
+              "styleMs": 20.128000000000036,
+              "frameP95Ms": 9.100000000000364,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 38.31699999999999
+            },
+            "lowZoom": {
+              "elapsedMs": 1838.3999999761581,
+              "taskMs": 1569.977999999999,
+              "scriptMs": 41.109000000000066,
+              "layoutMs": 95.87400000000001,
+              "styleMs": 46.887000000000015,
+              "frameP95Ms": 17.19999999999709,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 151.61200000000005
+            },
+            "lowPan": {
+              "elapsedMs": 1675.800000011921,
+              "taskMs": 643.654999999999,
+              "scriptMs": 15.316999999999581,
+              "layoutMs": 12.699000000000016,
+              "styleMs": 34.42799999999996,
+              "frameP95Ms": 9.100000000002183,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 1.502
+            },
+            "lowPinch": {
+              "elapsedMs": 1370.699999988079,
+              "taskMs": 615.9659999999984,
+              "scriptMs": 27.05700000000011,
+              "layoutMs": 35.759999999999906,
+              "styleMs": 26.608000000000022,
+              "frameP95Ms": 16.5,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 51.991999999999976
+            },
+            "lowZoomOut": {
+              "elapsedMs": 2254.899999976158,
+              "taskMs": 2003.8529999999994,
+              "scriptMs": 71.4640000000002,
+              "layoutMs": 139.7630000000001,
+              "styleMs": 76.91099999999994,
+              "frameP95Ms": 24.700000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 13,
+              "scenePosts": 0,
+              "paintTraceMs": 199.87400000000008
+            }
+          },
+          "errors": []
+        }
+      ]
+    },
+    "fixedCadenceBaseline": {
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestureIntervalMs": 16.667,
+        "pinchOut": true,
+        "gestures": true,
+        "gestureTrace": true,
+        "freezeHitTransform": false,
+        "stressZoom": true,
+        "lowPinch": true,
+        "layerGestures": false,
+        "hitScalingStroke": false,
+        "touch": true
+      },
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "phases": {
+            "highZoom": {
+              "elapsedMs": 2370,
+              "taskMs": 1740.977,
+              "scriptMs": 47.64800000000014,
+              "layoutMs": 116.828,
+              "styleMs": 59.444999999999986,
+              "frameP95Ms": 16.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 168.7560000000002
+            },
+            "highPan": {
+              "elapsedMs": 1164.6000000238419,
+              "taskMs": 501.14200000000153,
+              "scriptMs": 18.101000000000145,
+              "layoutMs": 7.024000000000003,
+              "styleMs": 31.461000000000016,
+              "frameP95Ms": 9.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 5.997999999999995
+            },
+            "highZoomOut": {
+              "elapsedMs": 2325.599999964237,
+              "taskMs": 1650.0439999999994,
+              "scriptMs": 38.794,
+              "layoutMs": 104.565,
+              "styleMs": 44.85899999999998,
+              "frameP95Ms": 16.5,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 12,
+              "scenePosts": 0,
+              "paintTraceMs": 153.89900000000026
+            },
+            "highPinch": {
+              "elapsedMs": 913.3000000119209,
+              "taskMs": 475.31999999999994,
+              "scriptMs": 20.855000000000068,
+              "layoutMs": 25.485000000000035,
+              "styleMs": 21.90600000000001,
+              "frameP95Ms": 9.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 42.747000000000014
+            },
+            "highPinchOut": {
+              "elapsedMs": 903.5,
+              "taskMs": 461.3270000000007,
+              "scriptMs": 15.257999999999772,
+              "layoutMs": 26.649999999999952,
+              "styleMs": 17.030999999999963,
+              "frameP95Ms": 9.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 37.74900000000001
+            },
+            "lowZoom": {
+              "elapsedMs": 2319.900000035763,
+              "taskMs": 1587.7550000000015,
+              "scriptMs": 33.83599999999998,
+              "layoutMs": 93.05199999999996,
+              "styleMs": 50.207,
+              "frameP95Ms": 16.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 147.9740000000001
+            },
+            "lowPan": {
+              "elapsedMs": 1155.800000011921,
+              "taskMs": 487.43300000000113,
+              "scriptMs": 8.957000000000104,
+              "layoutMs": 6.7629999999999635,
+              "styleMs": 31.37599999999996,
+              "frameP95Ms": 10.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 7.510999999999998
+            },
+            "lowPinch": {
+              "elapsedMs": 886.1000000238419,
+              "taskMs": 407.5150000000001,
+              "scriptMs": 12.313999999999936,
+              "layoutMs": 25.271000000000043,
+              "styleMs": 14.355000000000008,
+              "frameP95Ms": 9.100000000002183,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 39.263
+            },
+            "lowPinchOut": {
+              "elapsedMs": 885.2000000476837,
+              "taskMs": 409.0570000000007,
+              "scriptMs": 15.868999999999911,
+              "layoutMs": 25.738999999999955,
+              "styleMs": 15.46900000000001,
+              "frameP95Ms": 9.099999999998545,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 3,
+              "scenePosts": 0,
+              "paintTraceMs": 39.58400000000001
+            },
+            "lowZoomOut": {
+              "elapsedMs": 2322.800000011921,
+              "taskMs": 1532.743,
+              "scriptMs": 38.124000000000265,
+              "layoutMs": 118.57600000000002,
+              "styleMs": 39.44999999999999,
+              "frameP95Ms": 14.5,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 13,
+              "scenePosts": 0,
+              "paintTraceMs": 160.35400000000018
+            }
+          },
+          "errors": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 1,
+          "phases": {
+            "highZoom": {
+              "elapsedMs": 2327.800000011921,
+              "taskMs": 1733.5169999999991,
+              "scriptMs": 49.14099999999988,
+              "layoutMs": 112.72099999999999,
+              "styleMs": 48.885,
+              "frameP95Ms": 17.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 168.65100000000044
+            },
+            "highPan": {
+              "elapsedMs": 1200.300000011921,
+              "taskMs": 737.6930000000002,
+              "scriptMs": 29.422999999999977,
+              "layoutMs": 12.298000000000004,
+              "styleMs": 47.832000000000015,
+              "frameP95Ms": 14.800000000001091,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 14.543999999999997
+            },
+            "highZoomOut": {
+              "elapsedMs": 2327.2000000476837,
+              "taskMs": 1869.4620000000004,
+              "scriptMs": 64.49099999999986,
+              "layoutMs": 118.23799999999999,
+              "styleMs": 71.70899999999996,
+              "frameP95Ms": 23.5,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 12,
+              "scenePosts": 0,
+              "paintTraceMs": 188.8460000000004
+            },
+            "highPinch": {
+              "elapsedMs": 897.5,
+              "taskMs": 483.7680000000013,
+              "scriptMs": 16.934000000000005,
+              "layoutMs": 28.852000000000043,
+              "styleMs": 20.51900000000001,
+              "frameP95Ms": 10.399999999999636,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 47.25700000000002
+            },
+            "highPinchOut": {
+              "elapsedMs": 904.8000000119209,
+              "taskMs": 467.6940000000016,
+              "scriptMs": 14.10800000000001,
+              "layoutMs": 28.315999999999953,
+              "styleMs": 17.655000000000033,
+              "frameP95Ms": 8.699999999998909,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 46.126
+            },
+            "lowZoom": {
+              "elapsedMs": 2336.2000000476837,
+              "taskMs": 1755.8759999999988,
+              "scriptMs": 46.24899999999998,
+              "layoutMs": 109.80900000000004,
+              "styleMs": 56.63800000000002,
+              "frameP95Ms": 16.599999999998545,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 184.74000000000075
+            },
+            "lowPan": {
+              "elapsedMs": 1137.5999999642372,
+              "taskMs": 558.130000000002,
+              "scriptMs": 10.172999999999988,
+              "layoutMs": 9.60799999999995,
+              "styleMs": 32.221,
+              "frameP95Ms": 8.899999999997817,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 8.220999999999995
+            },
+            "lowPinch": {
+              "elapsedMs": 917.3999999761581,
+              "taskMs": 430.3990000000013,
+              "scriptMs": 10.863000000000067,
+              "layoutMs": 27.886000000000077,
+              "styleMs": 14.469999999999983,
+              "frameP95Ms": 8.899999999997817,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 37.736000000000004
+            },
+            "lowPinchOut": {
+              "elapsedMs": 926.2999999523163,
+              "taskMs": 405.80500000000086,
+              "scriptMs": 13.011000000000106,
+              "layoutMs": 24.96199999999993,
+              "styleMs": 13.948000000000016,
+              "frameP95Ms": 12.700000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 3,
+              "scenePosts": 0,
+              "paintTraceMs": 38.288
+            },
+            "lowZoomOut": {
+              "elapsedMs": 2327,
+              "taskMs": 1588.2889999999995,
+              "scriptMs": 38.469999999999786,
+              "layoutMs": 104.711,
+              "styleMs": 54.881999999999984,
+              "frameP95Ms": 15.899999999997817,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 13,
+              "scenePosts": 0,
+              "paintTraceMs": 160.29500000000027
+            }
+          },
+          "errors": []
+        },
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 2,
+          "phases": {
+            "highZoom": {
+              "elapsedMs": 2323.600000023842,
+              "taskMs": 1827.1160000000011,
+              "scriptMs": 58.393999999999835,
+              "layoutMs": 120.708,
+              "styleMs": 59.546,
+              "frameP95Ms": 17.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 182.9860000000004
+            },
+            "highPan": {
+              "elapsedMs": 1178.8999999761581,
+              "taskMs": 619.280999999999,
+              "scriptMs": 26.502000000000024,
+              "layoutMs": 8.696000000000009,
+              "styleMs": 36.221000000000004,
+              "frameP95Ms": 10.399999999999636,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 11.050999999999993
+            },
+            "highZoomOut": {
+              "elapsedMs": 2332.5,
+              "taskMs": 1887.506,
+              "scriptMs": 53.26800000000009,
+              "layoutMs": 120.88100000000001,
+              "styleMs": 59.075999999999986,
+              "frameP95Ms": 17.19999999999891,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 12,
+              "scenePosts": 0,
+              "paintTraceMs": 179.41200000000018
+            },
+            "highPinch": {
+              "elapsedMs": 948.3999999761581,
+              "taskMs": 547.1850000000007,
+              "scriptMs": 20.499000000000045,
+              "layoutMs": 34.59699999999999,
+              "styleMs": 22.634999999999987,
+              "frameP95Ms": 15.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 48.214000000000006
+            },
+            "highPinchOut": {
+              "elapsedMs": 950,
+              "taskMs": 532.2559999999985,
+              "scriptMs": 21.64699999999975,
+              "layoutMs": 34.72599999999998,
+              "styleMs": 23.602999999999984,
+              "frameP95Ms": 16.600000000000364,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 48.374
+            },
+            "lowZoom": {
+              "elapsedMs": 2346.400000035763,
+              "taskMs": 1850.4359999999983,
+              "scriptMs": 47.409000000000034,
+              "layoutMs": 123.58800000000004,
+              "styleMs": 58.36900000000001,
+              "frameP95Ms": 16.700000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 191.31200000000038
+            },
+            "lowPan": {
+              "elapsedMs": 1150.300000011921,
+              "taskMs": 590.1149999999973,
+              "scriptMs": 19.881999999999955,
+              "layoutMs": 8.812000000000042,
+              "styleMs": 39.684999999999974,
+              "frameP95Ms": 9.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 8.79599999999999
+            },
+            "lowPinch": {
+              "elapsedMs": 1062.699999988079,
+              "taskMs": 605.6549999999987,
+              "scriptMs": 31.91999999999995,
+              "layoutMs": 37.38499999999989,
+              "styleMs": 28.106999999999992,
+              "frameP95Ms": 16.700000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 2,
+              "scenePosts": 0,
+              "paintTraceMs": 52.58400000000003
+            },
+            "lowPinchOut": {
+              "elapsedMs": 1025.800000011921,
+              "taskMs": 578.679000000001,
+              "scriptMs": 21.625000000000227,
+              "layoutMs": 38.519000000000084,
+              "styleMs": 23.914000000000048,
+              "frameP95Ms": 16.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 3,
+              "scenePosts": 0,
+              "paintTraceMs": 55.30900000000001
+            },
+            "lowZoomOut": {
+              "elapsedMs": 2326.7999999523163,
+              "taskMs": 1592.022,
+              "scriptMs": 41.80899999999976,
+              "layoutMs": 111.70199999999997,
+              "styleMs": 45.45499999999991,
+              "frameP95Ms": 16.599999999998545,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 13,
+              "scenePosts": 0,
+              "paintTraceMs": 161.17900000000034
+            }
+          },
+          "errors": []
+        }
+      ]
+    },
+    "widePinchBaseline": {
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestureIntervalMs": 16.667,
+        "pinchStep": 2,
+        "pinchOut": true,
+        "gestures": true,
+        "gestureTrace": true,
+        "freezeHitTransform": false,
+        "stressZoom": true,
+        "lowPinch": true,
+        "layerGestures": false,
+        "hitScalingStroke": false,
+        "touch": true
+      },
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "phases": {
+            "highZoom": {
+              "elapsedMs": 2350.800000011921,
+              "taskMs": 1649.3270000000005,
+              "scriptMs": 51.14299999999994,
+              "layoutMs": 104.237,
+              "styleMs": 49.33099999999999,
+              "frameP95Ms": 16.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 166.8620000000002
+            },
+            "highPan": {
+              "elapsedMs": 1162.699999988079,
+              "taskMs": 553.7080000000003,
+              "scriptMs": 17.724000000000075,
+              "layoutMs": 8.844000000000019,
+              "styleMs": 32.89500000000001,
+              "frameP95Ms": 9.200000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 8.731999999999992
+            },
+            "highZoomOut": {
+              "elapsedMs": 2325.400000035763,
+              "taskMs": 1738.0770000000005,
+              "scriptMs": 41.870000000000076,
+              "layoutMs": 114.32099999999998,
+              "styleMs": 53.826000000000015,
+              "frameP95Ms": 16.80000000000109,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 12,
+              "scenePosts": 0,
+              "paintTraceMs": 170.8230000000004
+            },
+            "highPinch": {
+              "elapsedMs": 1087.5,
+              "taskMs": 622.2860000000007,
+              "scriptMs": 16.853999999999925,
+              "layoutMs": 66.70399999999998,
+              "styleMs": 31.818000000000012,
+              "frameP95Ms": 9.399999999999636,
+              "maxLongTaskMs": 166,
+              "longTaskCount": 1,
+              "svgFallbackFrames": 1,
+              "detailRequests": 3,
+              "scenePosts": 0,
+              "paintTraceMs": 41.95
+            },
+            "highPinchOut": {
+              "elapsedMs": 1013.5999999642372,
+              "taskMs": 592.3359999999996,
+              "scriptMs": 15.692999999999735,
+              "layoutMs": 53.07500000000004,
+              "styleMs": 37.82099999999999,
+              "frameP95Ms": 16.599999999998545,
+              "maxLongTaskMs": 71,
+              "longTaskCount": 1,
+              "svgFallbackFrames": 2,
+              "detailRequests": 3,
+              "scenePosts": 0,
+              "paintTraceMs": 49.49100000000004
+            },
+            "lowZoom": {
+              "elapsedMs": 2319.699999988079,
+              "taskMs": 1710.7050000000008,
+              "scriptMs": 49.64999999999975,
+              "layoutMs": 112.124,
+              "styleMs": 57.52800000000002,
+              "frameP95Ms": 16.700000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 10,
+              "scenePosts": 0,
+              "paintTraceMs": 166.02200000000033
+            },
+            "lowPan": {
+              "elapsedMs": 1142,
+              "taskMs": 494.99700000000144,
+              "scriptMs": 13.182000000000027,
+              "layoutMs": 8.172999999999986,
+              "styleMs": 30.09999999999996,
+              "frameP95Ms": 9.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 10.677
+            },
+            "lowPinch": {
+              "elapsedMs": 918.6999999880791,
+              "taskMs": 487.23000000000025,
+              "scriptMs": 14.438999999999869,
+              "layoutMs": 28.092000000000006,
+              "styleMs": 21.376000000000005,
+              "frameP95Ms": 9.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 4,
+              "scenePosts": 0,
+              "paintTraceMs": 42.38400000000001
+            },
+            "lowPinchOut": {
+              "elapsedMs": 917.4000000357628,
+              "taskMs": 434.1089999999994,
+              "scriptMs": 10.666000000000064,
+              "layoutMs": 25.571000000000012,
+              "styleMs": 18.023999999999983,
+              "frameP95Ms": 9.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 4,
+              "scenePosts": 0,
+              "paintTraceMs": 34.832000000000015
+            },
+            "lowZoomOut": {
+              "elapsedMs": 2327,
+              "taskMs": 1620.3749999999993,
+              "scriptMs": 38.424000000000014,
+              "layoutMs": 110.86400000000008,
+              "styleMs": 52.939000000000014,
+              "frameP95Ms": 16.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 13,
+              "scenePosts": 0,
+              "paintTraceMs": 148.71200000000007
+            }
+          },
+          "errors": []
+        }
+      ]
+    },
+    "earlyRefreshTrial": {
+      "browser": "148.0.7778.96",
+      "diagnostics": {
+        "gestureIntervalMs": 16.667,
+        "pinchStep": 2,
+        "pinchOut": true,
+        "gestures": true,
+        "gestureTrace": true,
+        "freezeHitTransform": false,
+        "stressZoom": true,
+        "lowPinch": true,
+        "layerGestures": false,
+        "hitScalingStroke": false,
+        "touch": true
+      },
+      "runs": [
+        {
+          "config": {
+            "name": "mobile-proxy",
+            "width": 390,
+            "height": 844,
+            "dpr": 3,
+            "cpu": 4,
+            "mobile": true
+          },
+          "renderer": "canvas",
+          "repeat": 0,
+          "phases": {
+            "highZoom": {
+              "elapsedMs": 2362.900000035763,
+              "taskMs": 1735.967999999999,
+              "scriptMs": 58.00500000000008,
+              "layoutMs": 106.17699999999999,
+              "styleMs": 59.337,
+              "frameP95Ms": 16.700000000000728,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 14,
+              "scenePosts": 0,
+              "paintTraceMs": 151.93300000000016
+            },
+            "highPan": {
+              "elapsedMs": 1186,
+              "taskMs": 594.906,
+              "scriptMs": 19.431999999999896,
+              "layoutMs": 8.080000000000004,
+              "styleMs": 33.01699999999999,
+              "frameP95Ms": 9.300000000001091,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 11.801000000000004
+            },
+            "highZoomOut": {
+              "elapsedMs": 2322.399999976158,
+              "taskMs": 1837.1720000000007,
+              "scriptMs": 52.76199999999997,
+              "layoutMs": 111.42999999999998,
+              "styleMs": 57.757000000000005,
+              "frameP95Ms": 17.19999999999891,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 19,
+              "scenePosts": 0,
+              "paintTraceMs": 168.86700000000044
+            },
+            "highPinch": {
+              "elapsedMs": 1117,
+              "taskMs": 668.8519999999993,
+              "scriptMs": 22.65399999999973,
+              "layoutMs": 75.957,
+              "styleMs": 33.62100000000001,
+              "frameP95Ms": 16.200000000000728,
+              "maxLongTaskMs": 152,
+              "longTaskCount": 1,
+              "svgFallbackFrames": 1,
+              "detailRequests": 3,
+              "scenePosts": 0,
+              "paintTraceMs": 49.00800000000002
+            },
+            "highPinchOut": {
+              "elapsedMs": 979.4000000357628,
+              "taskMs": 548.0820000000008,
+              "scriptMs": 16.048999999999758,
+              "layoutMs": 48.047000000000004,
+              "styleMs": 32.88799999999997,
+              "frameP95Ms": 9.400000000001455,
+              "maxLongTaskMs": 57,
+              "longTaskCount": 1,
+              "svgFallbackFrames": 2,
+              "detailRequests": 4,
+              "scenePosts": 0,
+              "paintTraceMs": 45.772000000000006
+            },
+            "lowZoom": {
+              "elapsedMs": 2329.300000011921,
+              "taskMs": 1702.4249999999981,
+              "scriptMs": 42.148000000000074,
+              "layoutMs": 106.46100000000003,
+              "styleMs": 47.39099999999996,
+              "frameP95Ms": 16.69999999999709,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 15,
+              "scenePosts": 0,
+              "paintTraceMs": 149.17900000000049
+            },
+            "lowPan": {
+              "elapsedMs": 1149.2999999523163,
+              "taskMs": 522.2419999999986,
+              "scriptMs": 17.317999999999945,
+              "layoutMs": 8.888999999999925,
+              "styleMs": 28.525000000000023,
+              "frameP95Ms": 9.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 1,
+              "scenePosts": 0,
+              "paintTraceMs": 9.798999999999992
+            },
+            "lowPinch": {
+              "elapsedMs": 901.7999999523163,
+              "taskMs": 453.0419999999999,
+              "scriptMs": 11.076000000000086,
+              "layoutMs": 26.775000000000105,
+              "styleMs": 20.20700000000003,
+              "frameP95Ms": 9.299999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 5,
+              "scenePosts": 0,
+              "paintTraceMs": 37.312
+            },
+            "lowPinchOut": {
+              "elapsedMs": 932.5,
+              "taskMs": 497.4760000000025,
+              "scriptMs": 21.616999999999997,
+              "layoutMs": 27.648999999999923,
+              "styleMs": 18.31699999999997,
+              "frameP95Ms": 15.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 8,
+              "scenePosts": 0,
+              "paintTraceMs": 41.61399999999999
+            },
+            "lowZoomOut": {
+              "elapsedMs": 2368.100000023842,
+              "taskMs": 1792.688000000002,
+              "scriptMs": 45.30900000000004,
+              "layoutMs": 110.41699999999999,
+              "styleMs": 60.424999999999955,
+              "frameP95Ms": 16.799999999999272,
+              "maxLongTaskMs": 0,
+              "longTaskCount": 0,
+              "svgFallbackFrames": 0,
+              "detailRequests": 25,
+              "scenePosts": 0,
+              "paintTraceMs": 169.16000000000048
+            }
+          },
+          "errors": []
+        }
+      ]
+    },
+    "lowDetailCards": {
+      "browser": "148.0.7778.96",
+      "settings": "50m, no bathymetry/relief, 390x844 DPR3 CPU4, seeded questions, 2.66x touch pinch",
+      "runs": [
+        {
+          "mode": "Explore",
+          "blur": true,
+          "card": {
+            "height": 67.75,
+            "blur": "blur(12px)"
+          },
+          "phases": {
+            "pinchIn": {
+              "taskMs": 486.7799999999995,
+              "layoutMs": 30.673999999999978,
+              "styleMs": 21.788,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-2901.6302900757455 -5298.829822781817) scale(13.285714285714286)"
+            },
+            "pinchOut": {
+              "taskMs": 447.889,
+              "layoutMs": 26.891,
+              "styleMs": 17.21800000000001,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-970.3984962650654 -1670.3314337460129) scale(5)"
+            }
+          },
+          "errors": []
+        },
+        {
+          "mode": "Explore",
+          "blur": false,
+          "card": {
+            "height": 67.75,
+            "blur": "none"
+          },
+          "phases": {
+            "pinchIn": {
+              "taskMs": 493.79100000000034,
+              "layoutMs": 26.703000000000003,
+              "styleMs": 19.753000000000007,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-2901.6302900757455 -5298.829822781817) scale(13.285714285714286)"
+            },
+            "pinchOut": {
+              "taskMs": 461.3390000000006,
+              "layoutMs": 23.508000000000003,
+              "styleMs": 18.517000000000007,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-970.3984962650654 -1670.3314337460129) scale(5)"
+            }
+          },
+          "errors": []
+        },
+        {
+          "mode": "Find the country",
+          "blur": true,
+          "card": {
+            "height": 126.328125,
+            "blur": "blur(12px)"
+          },
+          "phases": {
+            "pinchIn": {
+              "taskMs": 478.1449999999996,
+              "layoutMs": 22.030999999999995,
+              "styleMs": 15.798000000000007,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-1552.1777142857145 -2941.9541860803038) scale(7.9714285714285715)"
+            },
+            "pinchOut": {
+              "taskMs": 486.82199999999966,
+              "layoutMs": 24.561,
+              "styleMs": 17.569000000000003,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-462.5400000000001 -783.3352263852287) scale(3)"
+            }
+          },
+          "errors": []
+        },
+        {
+          "mode": "Find the country",
+          "blur": false,
+          "card": {
+            "height": 126.328125,
+            "blur": "none"
+          },
+          "phases": {
+            "pinchIn": {
+              "taskMs": 442.35199999999963,
+              "layoutMs": 18.52999999999999,
+              "styleMs": 17.429,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-1552.1777142857145 -2941.9541860803038) scale(7.9714285714285715)"
+            },
+            "pinchOut": {
+              "taskMs": 502.5189999999995,
+              "layoutMs": 21.816000000000003,
+              "styleMs": 23.487999999999996,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-462.5400000000001 -783.3352263852287) scale(3)"
+            }
+          },
+          "errors": []
+        },
+        {
+          "mode": "Name the country",
+          "blur": true,
+          "card": {
+            "height": 205.921875,
+            "blur": "blur(12px)"
+          },
+          "phases": {
+            "pinchIn": {
+              "taskMs": 463.39600000000036,
+              "layoutMs": 26.694999999999997,
+              "styleMs": 20.85200000000001,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-2528.026064780359 -5091.685445813067) scale(13.285714285714286)"
+            },
+            "pinchOut": {
+              "taskMs": 438.52500000000026,
+              "layoutMs": 24.324999999999985,
+              "styleMs": 18.017000000000007,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-829.7947555625005 -1592.3738725212147) scale(5)"
+            }
+          },
+          "errors": []
+        },
+        {
+          "mode": "Name the country",
+          "blur": false,
+          "card": {
+            "height": 205.921875,
+            "blur": "none"
+          },
+          "phases": {
+            "pinchIn": {
+              "taskMs": 400.6920000000003,
+              "layoutMs": 21.301000000000016,
+              "styleMs": 15.373999999999999,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-2528.026064780359 -5091.685445813067) scale(13.285714285714286)"
+            },
+            "pinchOut": {
+              "taskMs": 496.6929999999996,
+              "layoutMs": 25.223999999999997,
+              "styleMs": 23.355,
+              "maxLongTask": 0,
+              "fallback": 0,
+              "transform": "translate(-829.7947555625005 -1592.3738725212147) scale(5)"
+            }
+          },
+          "errors": []
+        }
+      ]
+    }
+  },
+  "reportedDevice": {
+    "model": "iPhone 17",
+    "highDetail": false,
+    "bathymetry": false,
+    "relief": false,
+    "severity": "noticeable modest zoom lag",
+    "browserAndOS": "unconfirmed",
+    "renderer": "Canvas worker"
+  },
+  "inputCleanup": {
+    "retained": true,
+    "pinchStartRectangleReads": {
+      "before": 3,
+      "after": 1
+    },
+    "pinchUpdateRectangleReads": {
+      "before": 2,
+      "after": 1
+    },
+    "matchedGestureCases": 18,
+    "identicalCameraAndReleaseBehavior": true,
+    "removedRectangleReadsInChecks": 1116,
+    "realDeviceSpeedup": "not measured"
+  }
+}

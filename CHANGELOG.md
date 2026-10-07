@@ -6,6 +6,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Removed duplicate viewport measurements during touch pinch updates, sharing one fresh rectangle between both fingers while preserving zoom and pan behavior.
 - Consolidated Asia into Middle East & Western Asia (20 quiz countries), Central & South Asia (13), and East & Southeast Asia (17), with broader map framing and Norwegian labels. Iran joins the western group, Egypt retains its Middle East membership, and all 49 Asia quiz countries remain covered exactly once.
 
 ### Fixes

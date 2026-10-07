@@ -435,8 +435,7 @@ export function useMapZoom(
     }
   }
 
-  function mapPoint(clientX: number, clientY: number, svg: SVGSVGElement): MapPoint {
-    const rect = svg.getBoundingClientRect()
+  function mapPoint(clientX: number, clientY: number, rect: DOMRect): MapPoint {
     return [
       (clientX - rect.left) * width.value / rect.width,
       (clientY - rect.top) * height.value / rect.height,
@@ -464,8 +463,8 @@ export function useMapZoom(
     flushPendingPan()
     const rect = svg.getBoundingClientRect()
     const [firstTouch, secondTouch] = [...activeTouches.values()]
-    const first = mapPoint(firstTouch.clientX, firstTouch.clientY, svg)
-    const second = mapPoint(secondTouch.clientX, secondTouch.clientY, svg)
+    const first = mapPoint(firstTouch.clientX, firstTouch.clientY, rect)
+    const second = mapPoint(secondTouch.clientX, secondTouch.clientY, rect)
     const centerX = (first[0] + second[0]) / 2
     const centerY = (first[1] + second[1]) / 2
     pinchState = {
@@ -503,8 +502,11 @@ export function useMapZoom(
     const pinch = pinchState
     if (!pinch) return
     const [firstTouch, secondTouch] = pinch.identifiers.map((id) => activeTouches.get(id)!)
-    const first = mapPoint(firstTouch.clientX, firstTouch.clientY, pinch.svg)
-    const second = mapPoint(secondTouch.clientX, secondTouch.clientY, pinch.svg)
+    // Both fingers use the same live viewport measurement. Avoid repeated
+    // layout reads without caching a rectangle across movement or resize.
+    const rect = pinch.svg.getBoundingClientRect()
+    const first = mapPoint(firstTouch.clientX, firstTouch.clientY, rect)
+    const second = mapPoint(secondTouch.clientX, secondTouch.clientY, rect)
     const distance = Math.hypot(first[0] - second[0], first[1] - second[1])
     const scale = Math.max(viewConstraint.value?.minScale ?? MIN_ZOOM,
       Math.min(MAX_ZOOM, pinch.scale * distance / pinch.distance))
