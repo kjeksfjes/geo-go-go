@@ -2,6 +2,12 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Fixes
+
+- Kept Find the country hover highlighting at country level after an answer, retaining correct/wrong feedback colors across all parts instead of highlighting individual components. Explore retains component hover behavior.
+
 ## 0.10.0 — Pocket Atlas — 2026-10-06
 
 ### Improvements

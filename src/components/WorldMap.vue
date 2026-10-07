@@ -1107,6 +1107,7 @@ async function setProjection(nextId: MapProjectionId) {
           'world-map--wrapped': wrapActive,
           'world-map--canvas': canvasRendererActive,
           'world-map--naming': nameCountryQuiz,
+          'world-map--quiz': quizMode,
           'world-map--bathymetry': bathymetryEnabled && bathymetryPaths.length > 0,
         }"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
@@ -1762,7 +1763,7 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .world-map:not(.world-map--naming) .country:not(.country--selected, .country--related):hover {
+  .world-map:not(.world-map--quiz) .country:not(.country--selected, .country--related):hover {
     fill: rgb(247 192 122 / 82%);
   }
 
@@ -1775,19 +1776,19 @@ async function setProjection(nextId: MapProjectionId) {
     fill: rgb(247 163 84 / 90%);
   }
 
-  .country--quiz-correct-related:hover {
+  .country--quiz-correct-related.country--identity-hover {
     fill: rgb(188 229 201 / 76%);
   }
 
-  .country--quiz-correct:hover {
+  .country--quiz-correct.country--identity-hover {
     fill: rgb(124 204 153 / 84%);
   }
 
-  .country--quiz-wrong-related:hover {
+  .country--quiz-wrong-related.country--identity-hover {
     fill: rgb(245 198 181 / 76%);
   }
 
-  .country--quiz-wrong:hover {
+  .country--quiz-wrong.country--identity-hover {
     fill: rgb(237 134 106 / 84%);
   }
 }

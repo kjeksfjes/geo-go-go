@@ -41,7 +41,7 @@ export function geographicUnitClasses(unit: GeographicUnitFeature, state: MapInt
       && entityId === state.quizQuestionId && primaryAnswer,
     'country--quiz-question-related': !!state.nameCountryQuiz && !answered && !state.quizComplete
       && entityId === state.quizQuestionId && !primaryAnswer,
-    'country--identity-hover': !state.nameCountryQuiz && (state.quizComplete || (!answered && state.quizQuestionId !== null))
+    'country--identity-hover': !state.nameCountryQuiz && (state.quizComplete || state.quizQuestionId !== null)
       && state.hoveredEntityId === entityId,
     'country--quiz-correct': correct && primaryAnswer,
     'country--quiz-correct-related': correct && !primaryAnswer,
