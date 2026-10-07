@@ -2,6 +2,15 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.12.0 — Guided Horizons — 2026-10-07
+
+### Improvements
+
+- Added an optional four-step map and quiz guide with a permanent Help button, a dismissible first-visit invitation, English/Norwegian text, and touch-specific navigation guidance. Animated transitions respect reduced-motion preferences, and the guide preserves ongoing quiz progress.
+- Added an optional “Proportional regions” setting that selects Regional Equal Area when choosing a region and restores the selected global projection for World or when disabled. The preference is off by default and remembered between visits.
+- Tuned desktop Regional Equal Area framing for Western Europe, Africa, Central & South Asia, East & Southeast Asia, North America, and Oceania using the user’s preferred centers and zoom levels.
+- Grouped High detail, Bathymetry, Relief, and Water names with one shared performance note for mobile and less powerful devices.
+
 ## 0.11.0 — Smooth Sailing — 2026-10-07
 
 ### Improvements

@@ -540,11 +540,11 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
   :root { --ui-control-height: 2.75rem; }
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1300px) {
   .app-brand .eyebrow { display: none; }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .app-header {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.4rem;
@@ -600,3 +600,46 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
   .map-overlay__card { border-radius: var(--ui-radius-panel); }
   .map-overlay__content { padding: var(--ui-space-3); }
 }
+
+/* Help stays labeled at every viewport width so the guide is easy to reopen. */
+.help-button {
+  min-height: var(--ui-control-height);
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-ink);
+  background: var(--ui-surface);
+  font: inherit;
+  font-size: var(--ui-text-control);
+  cursor: pointer;
+}
+.help-button:hover { background: var(--ui-hover); }
+.help-button:focus-visible, .help-invitation button:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
+.help-button:disabled, .help-invitation button:disabled { opacity: 0.5; cursor: default; }
+.help-invitation, .help-error {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: max(0.75rem, env(safe-area-inset-right));
+  width: min(300px, calc(100vw - 1.5rem));
+  padding: var(--ui-space-4);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-panel);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-panel);
+  font-size: var(--ui-text-body);
+}
+.help-invitation p { margin: 0 0 var(--ui-space-3); }
+.help-invitation .help-invitation__return { color: var(--ui-muted); font-size: var(--ui-text-control); }
+.help-invitation > div { display: flex; gap: var(--ui-space-2); }
+.help-invitation button {
+  min-height: var(--ui-control-height);
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-ink);
+  background: var(--ui-paper);
+  font: inherit;
+  font-size: var(--ui-text-control);
+  cursor: pointer;
+}
+.help-invitation button:first-child { background: var(--ui-ink); color: var(--ui-paper); }

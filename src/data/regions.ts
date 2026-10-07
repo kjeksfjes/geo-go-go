@@ -20,6 +20,8 @@ export interface MapRegion {
   label: string
   view: { center: MapPoint; zoom: number; panReach?: number; horizontalWrap?: boolean } | null
   regionalProjection?: { center: MapPoint; roll?: number; frame?: GeographicFrame }
+  // User-adjusted desktop camera framing; independent of projection rotation/fit.
+  regionalDesktopView?: { center: MapPoint; zoom: number }
   children?: readonly MapRegion[]
 }
 
@@ -34,6 +36,7 @@ export const regions: readonly MapRegion[] = [
     children: [
       {
         id: 'western-europe', label: 'Western Europe', view: { center: [2, 50], zoom: 3.25, panReach: 0.75 },
+        regionalDesktopView: { center: [-2.63, 60.63], zoom: 1 },
         regionalProjection: {
           center: [2, 50],
           frame: { west: -75, south: 34, east: 34, north: 84 },
@@ -50,7 +53,7 @@ export const regions: readonly MapRegion[] = [
       { id: 'balkans', label: 'Balkans', view: { center: [29.72, 41.73], zoom: 11.56 } },
     ],
   },
-  { id: 'africa', label: 'Africa', view: { center: [20.13, 2.17], zoom: 2.84 } },
+  { id: 'africa', label: 'Africa', view: { center: [20.13, 2.17], zoom: 2.84 }, regionalDesktopView: { center: [22.53, 1.44], zoom: 1.19 } },
   {
     id: 'asia', label: 'Asia', view: { center: [87, 26.2], zoom: 2.69 },
     children: [
@@ -61,11 +64,13 @@ export const regions: readonly MapRegion[] = [
       },
       {
         id: 'central-south-asia', label: 'Central & South Asia',
+        regionalDesktopView: { center: [77.51, 29.73], zoom: 1.1 },
         view: { center: [77, 31], zoom: 3.8, panReach: 0.75 },
         regionalProjection: { center: [77, 31], frame: { west: 55, south: -1, east: 99, north: 57 } },
       },
       {
         id: 'east-southeast-asia', label: 'East & Southeast Asia',
+        regionalDesktopView: { center: [117.29, 20.18], zoom: 1.02 },
         view: { center: [116, 22], zoom: 3, panReach: 0.75 },
         regionalProjection: { center: [116, 22], frame: { west: 85, south: -12, east: 148, north: 55 } },
       },
@@ -73,6 +78,7 @@ export const regions: readonly MapRegion[] = [
   },
   {
     id: 'north-america', label: 'North America', view: { center: [-102.74, 52.73], zoom: 2.11, horizontalWrap: true },
+    regionalDesktopView: { center: [-100.43, 49.31], zoom: 1 },
     children: [
       {
         id: 'central-america-caribbean',
@@ -82,7 +88,7 @@ export const regions: readonly MapRegion[] = [
     ],
   },
   { id: 'south-america', label: 'South America', view: { center: [-61.68, -26.07], zoom: 2.92 } },
-  { id: 'oceania', label: 'Oceania', view: { center: [145.05, -26.9], zoom: 4.25, horizontalWrap: true } },
+  { id: 'oceania', label: 'Oceania', view: { center: [145.05, -26.9], zoom: 4.25, horizontalWrap: true }, regionalDesktopView: { center: [145.64, -27.11], zoom: 1.25 } },
 ]
 
 // Game policy adapted from the Norwegian Wikipedia Land table, with Greece
