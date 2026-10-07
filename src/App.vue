@@ -4,6 +4,7 @@ import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import RegionSelector from './components/RegionSelector.vue'
 import WorldMap from './components/WorldMap.vue'
+import { useHelpTour } from './composables/useHelpTour'
 import { useCountryQuiz, type QuizSnapshot } from './composables/useCountryQuiz'
 import { quizCountryIds } from './data/quizCountries'
 import {
@@ -65,6 +66,16 @@ const highDetailPreferred = readStoredBoolean(highDetailPreferenceKey, false)
 const detailLoading = ref(false)
 const detailBlurred = ref(false)
 const settingsOpen = ref(false)
+const { invitationVisible, active: helpActive, loading: helpLoading, error: helpError,
+  start: startHelp, dismissInvitation, resetInvitation } = useHelpTour()
+function dismissHelpInvitation() {
+  dismissInvitation()
+  void nextTick(() => document.querySelector<HTMLButtonElement>('.help-button')?.focus({ preventScroll: true }))
+}
+function openHelp() {
+  settingsOpen.value = false
+  void startHelp()
+}
 const detailedGeographicUnits = shallowRef<typeof geographicUnits | null>(null)
 const wrongAnswerPreferenceKey = 'geo-go-go.quiz.always-show-wrong-answer'
 const alwaysShowWrongAnswer = ref(readWrongAnswerPreference())
@@ -111,6 +122,7 @@ function setAlwaysShowWrongAnswer(value: boolean) {
 
 function resetSettings() {
   clearStoredValues('geo-go-go.')
+  resetInvitation()
   resetLocale()
   setAlwaysShowWrongAnswer(false)
   setSuggestAllCountries(false)
@@ -299,7 +311,8 @@ function restartQuiz() {
 
 function handleQuizShortcut(event: KeyboardEvent) {
   if (
-    event.code !== 'Space'
+    helpActive.value
+    || event.code !== 'Space'
     || event.repeat
     || event.altKey
     || event.ctrlKey
@@ -436,7 +449,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         <p class="visually-hidden">{{ t('subtitle') }}</p>
       </div>
       <div class="header-navigation">
-        <div class="header-region-control">
+        <div class="header-region-control" data-help="region">
           <svg class="header-region-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
             <path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3Z" />
@@ -448,7 +461,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
             @update:model-value="setActiveRegion"
           />
         </div>
-        <div class="mode-selector" role="group" :aria-label="t('gameMode')">
+        <div class="mode-selector" data-help="mode" role="group" :aria-label="t('gameMode')">
           <button type="button" :aria-pressed="mode === 'explore'" @click="setMode('explore')">
             {{ t('explore') }}
           </button>
@@ -461,12 +474,16 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         </div>
       </div>
       <div class="header-actions">
+        <button class="help-button" type="button" :disabled="helpLoading || detailLoading" :aria-busy="helpLoading" @click="openHelp">
+          {{ t('help') }}
+        </button>
         <div class="language-selector" role="group" :aria-label="t('language')">
           <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="setLocale('en')">EN</button>
           <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="setLocale('nb')">NO</button>
         </div>
         <button
           class="settings-button"
+          data-help="settings"
           type="button"
           :aria-label="t('mapSettings')"
           :aria-expanded="settingsOpen"
@@ -479,6 +496,16 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
           </svg>
         </button>
       </div>
+      <aside v-if="invitationVisible" class="help-invitation" :aria-label="t('help')">
+        <p>{{ t('helpInvitation') }}</p>
+        <p class="help-invitation__return">{{ t('helpReturn') }}</p>
+        <p v-if="helpError" role="status">{{ t('helpLoadError') }}</p>
+        <div>
+          <button type="button" :disabled="helpLoading || detailLoading" @click="openHelp">{{ t('helpStart') }}</button>
+          <button type="button" @click="dismissHelpInvitation">{{ t('helpDismiss') }}</button>
+        </div>
+      </aside>
+      <p v-if="helpError && !invitationVisible" class="help-error" role="status">{{ t('helpLoadError') }}</p>
     </header>
 
     <section class="map-card" :aria-label="t('worldMapGame')">
@@ -493,6 +520,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :settings-open="settingsOpen"
         :locale="locale"
         :active-region="displayedRegion"
+        :selected-region-id="activeRegionId"
         :selected-country-id="selectedCountryId"
         :selected-geographic-unit-id="selectedGeographicUnitId"
         :selected-land-area-id="selectedLandAreaId"

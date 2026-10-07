@@ -29,7 +29,7 @@ import {
 } from '../composables/useMapZoom'
 import type { GeographicUnitFeature } from '../types/country'
 import type { CanvasMapScene } from '../types/mapCanvas'
-import type { MapRegion } from '../data/regions'
+import type { MapRegion, MapRegionId } from '../data/regions'
 import { loadBathymetryBands, type BathymetryBand } from '../data/bathymetry'
 import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
@@ -62,6 +62,8 @@ import {
 const PREFERRED_COUNTRY_FOCUS_SCALE = 5
 const mapSettingKeys = {
   projection: 'geo-go-go.map.projection',
+  autoRegionalProjection: 'geo-go-go.map.auto-regional-projection',
+  globalProjection: 'geo-go-go.map.global-projection',
   limitedCountryZoom: 'geo-go-go.map.limit-automatic-country-zoom',
   bathymetry: 'geo-go-go.map.bathymetry',
   relief: 'geo-go-go.map.relief',
@@ -90,6 +92,7 @@ const props = defineProps<{
   settingsOpen: boolean
   locale: Locale
   activeRegion: MapRegion
+  selectedRegionId: MapRegionId
   selectedCountryId: string | null
   selectedGeographicUnitId: string | null
   selectedLandAreaId: string | null
@@ -124,6 +127,14 @@ const container = ref<HTMLElement | null>(null)
 const svg = ref<SVGSVGElement | null>(null)
 const mapContent = ref<SVGGElement | null>(null)
 const projectionId = ref<MapProjectionId>(initialProjection())
+const autoRegionalProjection = ref(readStoredBoolean(mapSettingKeys.autoRegionalProjection, false))
+const savedGlobalProjection = readStoredValue(mapSettingKeys.globalProjection)
+const globalProjectionId = ref<MapProjectionId>(
+  projectionOptions.some(({ id }) => id !== 'regional-equal-area' && id === savedGlobalProjection)
+    ? savedGlobalProjection as MapProjectionId
+    : projectionId.value !== 'regional-equal-area' ? projectionId.value : 'mercator',
+)
+const pendingAutoProjection = ref<MapProjectionId | null>(null)
 const usesMobileMapDefaults = window.matchMedia('(hover: none) and (pointer: coarse)').matches
 const bathymetryEnabled = ref(readStoredBoolean(mapSettingKeys.bathymetry, !usesMobileMapDefaults))
 const reliefEnabled = ref(readStoredBoolean(mapSettingKeys.relief, false))
@@ -142,6 +153,8 @@ const canvasContextKind = ref('unavailable')
 const fastTouchZoomPreview = ref(false)
 const restoringTouchDetail = ref(false)
 const canvasRendererActive = computed(() => canvasRendererEnabled && canvasReady.value)
+watch(autoRegionalProjection, (value) => writeStoredValue(mapSettingKeys.autoRegionalProjection, value))
+watch(globalProjectionId, (value) => writeStoredValue(mapSettingKeys.globalProjection, value))
 watch(projectionId, (value) => writeStoredValue(mapSettingKeys.projection, value))
 watch(limitedCountryZoomEnabled, (value) => writeStoredValue(mapSettingKeys.limitedCountryZoom, value))
 watch(bathymetryEnabled, (value) => writeStoredValue(mapSettingKeys.bathymetry, value))
@@ -279,7 +292,11 @@ const regionViewConstraint = computed<MapViewConstraint | null>(() => {
   }
 })
 const homeView = computed<MapHomeView | null>(() => {
-  if (projectionId.value === 'regional-equal-area') return null
+  if (projectionId.value === 'regional-equal-area') {
+    const view = !usesMobileMapDefaults ? props.activeRegion.regionalDesktopView : undefined
+    const point = view && projectPoint(view.center)
+    return view && point ? { point, scale: view.zoom } : null
+  }
 
   const regionalView = props.activeRegion.view
   const center = regionalView?.center
@@ -696,7 +713,7 @@ function geographicPathsAt(offset: number) {
 }
 
 function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
-  // This projection is already fitted to the selected region at scale 1.
+  // Use the regional home view, including any configured desktop camera framing.
   if (projectionId.value === 'regional-equal-area') {
     resetZoom(animated)
     restoreHoverUnderPointer()
@@ -1112,6 +1129,9 @@ function setReliefEnabled(enabled: boolean) {
 }
 
 function resetMapSettings() {
+  autoRegionalProjection.value = false
+  pendingAutoProjection.value = null
+  globalProjectionId.value = 'mercator'
   limitedCountryZoomEnabled.value = true
   setBathymetryEnabled(!usesMobileMapDefaults)
   setReliefEnabled(false)
@@ -1153,6 +1173,35 @@ onBeforeUnmount(() => {
   if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
   if (hoverRestoreFrame !== undefined) cancelAnimationFrame(hoverRestoreFrame)
 })
+
+// Automatic changes follow the selected region, not temporary quiz-guess framing.
+// Queue the latest request while detail/projection work is busy.
+watch([() => props.selectedRegionId, autoRegionalProjection], ([regionId, enabled], previous) => {
+  if (enabled) {
+    writeStoredValue(mapSettingKeys.globalProjection, globalProjectionId.value)
+    pendingAutoProjection.value = regionId === 'world' ? globalProjectionId.value : 'regional-equal-area'
+  } else {
+    // Turning automation off also undoes its projection. Initial/manual choices
+    // remain untouched while the preference was already off.
+    pendingAutoProjection.value = previous?.[1] ? globalProjectionId.value : null
+  }
+}, { immediate: true })
+watch([pendingAutoProjection, interactionLocked], ([nextId, locked]) => {
+  if (nextId === null || locked) return
+  pendingAutoProjection.value = null
+  void setProjection(nextId)
+}, { immediate: true, flush: 'post' })
+
+function selectProjection(nextId: MapProjectionId) {
+  if (interactionLocked.value) return
+  pendingAutoProjection.value = null
+  if (nextId !== 'regional-equal-area') {
+    globalProjectionId.value = nextId
+    // Also remember an unchanged global choice before the first automatic switch.
+    writeStoredValue(mapSettingKeys.globalProjection, nextId)
+  }
+  void setProjection(nextId)
+}
 
 async function setProjection(nextId: MapProjectionId) {
   if (nextId === projectionId.value || interactionLocked.value) return
@@ -1201,6 +1250,7 @@ async function setProjection(nextId: MapProjectionId) {
     <div
       ref="container"
       class="map-container"
+      data-help="map"
       :style="mapPaletteCssVariables"
       :class="{
         'map-container--dragging': isDragging,
@@ -1493,20 +1543,30 @@ async function setProjection(nextId: MapProjectionId) {
         </div>
         <section class="settings-section" aria-labelledby="settings-appearance-heading">
           <h3 id="settings-appearance-heading">{{ t('mapAppearance') }}</h3>
+          <div class="settings-layer-options" role="group" aria-labelledby="settings-appearance-heading" aria-describedby="settings-layer-performance-hint">
+            <MapDetailToggle
+              :loading="detailLoading"
+              :disabled="projectionLoading"
+              :model-value="highDetailEnabled"
+              @update:model-value="requestDetailChange"
+            />
+            <MapDetailToggle :label="t('bathymetry')" :loading="bathymetryLoading" :disabled="interactionLocked" :model-value="bathymetryEnabled" @update:model-value="setBathymetryEnabled" />
+            <MapDetailToggle :label="t('relief')" :loading="reliefLoading" :disabled="interactionLocked" :model-value="reliefEnabled" @update:model-value="setReliefEnabled" />
+            <MapDetailToggle :label="t('waterNames')" :disabled="interactionLocked" :model-value="marineLabelsEnabled" @update:model-value="marineLabelsEnabled = $event" />
+            <p id="settings-layer-performance-hint" class="settings-hint">{{ t('mapPerformanceHint') }}</p>
+          </div>
           <MapDetailToggle
-            :loading="detailLoading"
-            :disabled="projectionLoading"
-            :model-value="highDetailEnabled"
-            @update:model-value="requestDetailChange"
+            :label="t('autoRegionalProjection')"
+            :description="t('autoRegionalProjectionHint')"
+            :model-value="autoRegionalProjection"
+            :disabled="interactionLocked"
+            @update:model-value="autoRegionalProjection = $event"
           />
-          <MapDetailToggle :label="t('bathymetry')" :loading="bathymetryLoading" :disabled="interactionLocked" :model-value="bathymetryEnabled" @update:model-value="setBathymetryEnabled" />
-          <MapDetailToggle :label="t('relief')" :loading="reliefLoading" :disabled="interactionLocked" :model-value="reliefEnabled" @update:model-value="setReliefEnabled" />
-          <MapDetailToggle :label="t('waterNames')" :disabled="interactionLocked" :model-value="marineLabelsEnabled" @update:model-value="marineLabelsEnabled = $event" />
           <div class="projection-control">
             <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
               <path d="m2 5 6-2 8 2 6-2v16l-6 2-8-2-6 2V5Zm6-2v16m8-14v16" />
             </svg>
-            <ProjectionSelector :model-value="projectionId" :disabled="interactionLocked" :options="projectionOptions" @update:model-value="setProjection" />
+            <ProjectionSelector :model-value="projectionId" :disabled="interactionLocked" :options="projectionOptions" @update:model-value="selectProjection" />
           </div>
         </section>
         <div class="settings-side-column">
@@ -2038,7 +2098,15 @@ async function setProjection(nextId: MapProjectionId) {
   color: var(--ui-ink);
 }
 
-.settings-section { display: grid; align-content: start; gap: var(--ui-space-2); }
+.settings-section, .settings-layer-options { display: grid; align-content: start; gap: var(--ui-space-2); }
+.settings-layer-options {
+  min-width: 0;
+  padding: var(--ui-space-3);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-panel);
+  background: var(--ui-paper);
+}
+.settings-layer-options > .settings-hint { margin-top: var(--ui-space-1); }
 .settings-side-column { display: grid; align-content: start; gap: 0.35rem; }
 .settings-side-column > .settings-section:first-child { border-top: 1px solid var(--ui-border); padding-top: 0.8rem; margin-top: 0.45rem; }
 .settings-section + .settings-section { border-top: 1px solid var(--ui-border); padding-top: 1rem; margin-top: 0.7rem; }

@@ -1,0 +1,54 @@
+@import 'driver.js/dist/driver.css';
+
+.driver-popover.geo-help-tour {
+  --driver-popover-font-family: var(--ui-font);
+  color: var(--ui-ink);
+  background: var(--ui-surface);
+  border-radius: var(--ui-radius-panel);
+  box-shadow: var(--ui-shadow-panel);
+  min-width: 0;
+  width: min(340px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: var(--ui-space-4);
+}
+.geo-help-tour .driver-popover-title {
+  padding-right: 1.5rem;
+  font-family: var(--ui-font-display);
+  font-weight: var(--ui-weight-card-heading);
+  font-size: var(--ui-text-card-heading);
+}
+.geo-help-tour .driver-popover-description { font-size: var(--ui-text-body); font-weight: var(--ui-weight-large); }
+.geo-help-tour .driver-popover-description ul {
+  padding-inline-start: 1.4em;
+  list-style-position: outside;
+}
+.geo-help-tour .driver-popover-description li {
+  padding-inline-start: 0;
+  text-indent: 0;
+}
+.geo-help-tour .driver-popover-description strong { font-weight: var(--ui-weight-emphasis); }
+/* Geist has no bundled italic face; allow italics only for guide emphasis. */
+.geo-help-tour .driver-popover-description em { font-style: italic; font-synthesis: style; }
+.geo-help-tour .driver-popover-progress-text { color: var(--ui-muted); font-family: var(--ui-font); }
+.geo-help-tour .driver-popover-footer { gap: var(--ui-space-2); }
+.geo-help-tour .driver-popover-footer-btn {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-ink);
+  background: var(--ui-paper);
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight);
+}
+.geo-help-tour .driver-popover-next-btn { color: var(--ui-paper); background: var(--ui-ink); border-color: var(--ui-ink); }
+.geo-help-tour .driver-popover-footer-btn:hover { background: var(--ui-hover); color: var(--ui-ink); }
+.geo-help-tour .driver-popover-close-btn { color: var(--ui-muted); width: 2.75rem; height: 2.75rem; }
+.geo-help-tour button:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
+.geo-help-tour .driver-popover-arrow-side-left { border-left-color: var(--ui-surface); }
+.geo-help-tour .driver-popover-arrow-side-right { border-right-color: var(--ui-surface); }
+.geo-help-tour .driver-popover-arrow-side-top { border-top-color: var(--ui-surface); }
+.geo-help-tour .driver-popover-arrow-side-bottom { border-bottom-color: var(--ui-surface); }
