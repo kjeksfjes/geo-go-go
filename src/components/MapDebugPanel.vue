@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { copyText } from '../utils/copyText'
 import { onBeforeUnmount, ref } from 'vue'
 import type { ProjectionDebugState } from '../composables/useMapProjection'
 import type { MapPoint } from '../composables/useMapZoom'
@@ -100,21 +101,6 @@ function debugText() {
   return lines.join('\n')
 }
 
-function legacyCopy(text: string) {
-  const textarea = document.createElement('textarea')
-  textarea.value = text
-  textarea.setAttribute('readonly', '')
-  textarea.style.position = 'fixed'
-  textarea.style.opacity = '0'
-  textarea.style.pointerEvents = 'none'
-  document.body.appendChild(textarea)
-  textarea.select()
-  textarea.setSelectionRange(0, text.length)
-  const copied = document.execCommand('copy')
-  textarea.remove()
-  return copied
-}
-
 function showCopyState(state: 'copied' | 'failed') {
   copyState.value = state
   if (copyStateTimer !== undefined) window.clearTimeout(copyStateTimer)
@@ -125,22 +111,7 @@ function showCopyState(state: 'copied' | 'failed') {
 }
 
 async function copyDebugData() {
-  const text = debugText()
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text)
-    } else if (!legacyCopy(text)) {
-      throw new Error('Clipboard unavailable')
-    }
-    showCopyState('copied')
-  } catch {
-    try {
-      if (!legacyCopy(text)) throw new Error('Clipboard unavailable')
-      showCopyState('copied')
-    } catch {
-      showCopyState('failed')
-    }
-  }
+  showCopyState(await copyText(debugText()) ? 'copied' : 'failed')
 }
 
 function resetSettings() {

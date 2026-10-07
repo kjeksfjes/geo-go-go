@@ -209,6 +209,7 @@ workerScope.onmessage = (event) => {
     width,
     height,
     overscan,
+    pixelRatio,
     bitmap: surface.transferToImageBitmap(),
   }
   workerScope.postMessage(frame, [frame.bitmap])

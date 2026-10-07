@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { geoArea, geoDistance } from 'd3-geo'
+import packageInfo from '../../package.json'
+import { createGestureDiagnostics, type GestureWorkerEvent } from '../logic/gestureDiagnostics'
+import { copyText } from '../utils/copyText'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
@@ -135,6 +138,9 @@ const limitedCountryZoomEnabled = ref(readStoredBoolean(mapSettingKeys.limitedCo
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
 const canvasReady = ref(false)
+const canvasContextKind = ref('unavailable')
+const fastTouchZoomPreview = ref(false)
+const restoringTouchDetail = ref(false)
 const canvasRendererActive = computed(() => canvasRendererEnabled && canvasReady.value)
 watch(projectionId, (value) => writeStoredValue(mapSettingKeys.projection, value))
 watch(limitedCountryZoomEnabled, (value) => writeStoredValue(mapSettingKeys.limitedCountryZoom, value))
@@ -326,6 +332,92 @@ const {
   homeView,
 )
 
+const gestureDiagnosticsActive = ref(false)
+const lastGestureReport = shallowRef<Record<string, unknown> | null>(null)
+const gestureCopyState = ref<'idle' | 'copied' | 'failed'>('idle')
+let gestureRecorder: ReturnType<typeof createGestureDiagnostics> | null = null
+let gestureFrame: number | undefined
+let gestureSettleTimer: number | undefined
+let gestureCopyTimer: number | undefined
+let gestureLongTaskObserver: PerformanceObserver | null = null
+let gestureLongTasksAvailable = false
+const gestureLongTasksSupported = typeof PerformanceObserver !== 'undefined'
+  && PerformanceObserver.supportedEntryTypes?.includes('longtask') === true
+
+function gestureSample() {
+  return { scale: transform.scale, x: transform.x, y: transform.y, canvas: canvasRendererActive.value, preview: fastTouchZoomPreview.value }
+}
+
+function captureGestureReport() {
+  if (gestureSettleTimer !== undefined) window.clearTimeout(gestureSettleTimer)
+  gestureSettleTimer = undefined
+  for (const entry of gestureLongTaskObserver?.takeRecords() ?? []) gestureRecorder?.longTask(entry.startTime, entry.duration)
+  gestureLongTaskObserver?.disconnect()
+  gestureLongTaskObserver = null
+  if (gestureRecorder) lastGestureReport.value = {
+    ...gestureRecorder.report(performance.now(), gestureLongTasksAvailable),
+    finalRendering: { renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG', canvasContext: canvasContextKind.value, viewportWidth: mapWidth.value, viewportHeight: mapHeight.value },
+  }
+  gestureRecorder = null
+  gestureDiagnosticsActive.value = false
+}
+
+function beginGestureReport(now: number, gesture: 'pinch' | 'pan', initial = gestureSample()) {
+  captureGestureReport()
+  gestureCopyState.value = 'idle'
+  gestureRecorder = createGestureDiagnostics({
+    appVersion: packageInfo.version,
+    gesture,
+    recordedAt: new Date().toISOString(),
+    browser: navigator.userAgent,
+    viewport: { width: mapWidth.value, height: mapHeight.value, devicePixelRatio: window.devicePixelRatio },
+    map: { renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG', canvasContext: canvasContextKind.value, detail: props.highDetailEnabled ? '10m' : '50m', projection: projectionId.value, region: props.activeRegion.id, mode: props.nameCountryQuiz ? 'name-country' : props.quizMode ? 'find-country' : 'explore', bathymetry: bathymetryEnabled.value, relief: reliefEnabled.value, countryPaths: geographicPaths.value.length, highlightPaths: highlightedGeographicPaths.value.length },
+    experiment: { adaptiveTouchPreview: true, coverageBridge: true, memoizedCountryGeometry: true },
+  }, now, initial)
+  gestureDiagnosticsActive.value = true
+  gestureLongTasksAvailable = false
+  if (gestureLongTasksSupported) {
+    try {
+      gestureLongTaskObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) gestureRecorder?.longTask(entry.startTime, entry.duration)
+      })
+      gestureLongTaskObserver.observe({ type: 'longtask' })
+      gestureLongTasksAvailable = true
+    } catch {
+      gestureLongTaskObserver?.disconnect()
+      gestureLongTaskObserver = null
+    }
+  }
+  const sample = (time: number) => {
+    gestureRecorder?.frame(time, gestureSample())
+    gestureFrame = requestAnimationFrame(sample)
+  }
+  gestureFrame = requestAnimationFrame(sample)
+}
+
+function endGestureReport(now: number, cancelled = false) {
+  if (!gestureRecorder) return
+  if (gestureFrame !== undefined) cancelAnimationFrame(gestureFrame)
+  gestureFrame = undefined
+  gestureRecorder?.finish(now, gestureSample(), cancelled)
+  // Include the final worker replies without recording an unrelated later gesture.
+  gestureSettleTimer = window.setTimeout(captureGestureReport, 300)
+}
+
+function recordGestureRender(event: GestureWorkerEvent) { gestureRecorder?.worker(event) }
+
+// Record every edge, including changes that occur between sampled RAF callbacks.
+watch(fastTouchZoomPreview, (active) => gestureRecorder?.transition('preview', active, performance.now()), { flush: 'sync' })
+watch(canvasRendererActive, (active) => gestureRecorder?.transition('renderer', active, performance.now()), { flush: 'sync' })
+
+async function copyLastGesture() {
+  if (!lastGestureReport.value || gestureDiagnosticsActive.value) return
+  const text = `Geo Go Go — last ${lastGestureReport.value.gesture === 'pan' ? 'pan' : 'pinch'}\n${JSON.stringify(lastGestureReport.value, null, 2)}`
+  gestureCopyState.value = await copyText(text) ? 'copied' : 'failed'
+  if (gestureCopyTimer !== undefined) window.clearTimeout(gestureCopyTimer)
+  gestureCopyTimer = window.setTimeout(() => { gestureCopyState.value = 'idle'; gestureCopyTimer = undefined }, 1600)
+}
+
 const scaleBar = computed(() => {
   if (!scaleBarEnabled.value) return null
   // A map projection has a local scale, not one fixed scale across the world.
@@ -500,18 +592,25 @@ const needsBothNeighbors = computed(() => {
   return period !== undefined && transform.scale * period < mapWidth.value
 })
 
-const copyOffsets = computed(() => {
+const copyOffsets = computed<number[]>((previous) => {
   const wrap = horizontalWrap.value
-  if (!wrap) return [0]
+  let offsets: number[]
+  if (!wrap) offsets = [0]
   // A narrow projected world can expose more than one repeat on very wide
   // screens. At closer zoom, only the neighbor toward the seam is needed.
-  if (!needsBothNeighbors.value) return [0, wrapNeighborDirection.value * wrap.period]
-  const count = visibleCopyCount.value
-  return [
-    0,
-    ...Array.from({ length: count }, (_, index) => -(index + 1) * wrap.period),
-    ...Array.from({ length: count }, (_, index) => (index + 1) * wrap.period),
-  ]
+  else if (!needsBothNeighbors.value) offsets = [0, wrapNeighborDirection.value * wrap.period]
+  else {
+    const count = visibleCopyCount.value
+    offsets = [
+      0,
+      ...Array.from({ length: count }, (_, index) => -(index + 1) * wrap.period),
+      ...Array.from({ length: count }, (_, index) => (index + 1) * wrap.period),
+    ]
+  }
+  // Camera movement usually leaves the displayed copies unchanged. Reuse
+  // their identity so child layers do not update just for a fresh array.
+  return previous?.length === offsets.length && offsets.every((offset, index) => offset === previous[index])
+    ? previous : offsets
 })
 
 const smallCountryAnchors = computed<SmallCountryAnchor[]>(() => {
@@ -850,7 +949,23 @@ function handlePointerEnd(event: PointerEvent) {
 
 function handleTouch(event: TouchEvent) {
   if (!svg.value) return
+  if (gestureRecorder && !isPinching.value && !isDragging.value && event.type === 'touchstart') captureGestureReport()
+  const startedAt = performance.now()
+  const initial = gestureSample()
+  const previousGesture = isPinching.value ? 'pinch' : isDragging.value ? 'pan' : null
   const tap = updateTouches(event, svg.value)
+  const currentGesture = isPinching.value ? 'pinch' : isDragging.value ? 'pan' : null
+  const handlerMs = performance.now() - startedAt
+  if (previousGesture !== currentGesture) {
+    if (previousGesture) {
+      gestureRecorder?.input(handlerMs)
+      endGestureReport(performance.now(), event.type === 'touchcancel')
+    }
+    if (currentGesture) {
+      beginGestureReport(startedAt, currentGesture, currentGesture === 'pan' ? initial : gestureSample())
+      gestureRecorder?.input(handlerMs)
+    }
+  } else gestureRecorder?.input(handlerMs)
   if (event.type === 'touchcancel') {
     consumeDragClick()
     return
@@ -1028,6 +1143,10 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (gestureFrame !== undefined) cancelAnimationFrame(gestureFrame)
+  if (gestureSettleTimer !== undefined) window.clearTimeout(gestureSettleTimer)
+  if (gestureCopyTimer !== undefined) window.clearTimeout(gestureCopyTimer)
+  gestureLongTaskObserver?.disconnect()
   focusOverlayObserver?.disconnect()
   if (debugTimer !== undefined) window.clearInterval(debugTimer)
   if (compatibilityClickTimer !== undefined) window.clearTimeout(compatibilityClickTimer)
@@ -1085,6 +1204,7 @@ async function setProjection(nextId: MapProjectionId) {
       :class="{
         'map-container--dragging': isDragging,
         'map-container--interacting': isInteracting,
+        'map-container--fast-touch-zoom': fastTouchZoomPreview,
       }"
       :aria-busy="interactionLocked"
       :inert="interactionLocked"
@@ -1096,9 +1216,16 @@ async function setProjection(nextId: MapProjectionId) {
         :scene="canvasScene"
         :camera="transform"
         :interacting="isInteracting"
+        :touch-zooming="usesMobileMapDefaults && isPinching"
+        :touch-panning="usesMobileMapDefaults && isDragging"
+        :diagnostics-active="gestureDiagnosticsActive"
         :wrap-offset="canvasWrapOffset"
         :wrap-period="horizontalWrap?.period ?? null"
         @ready-change="canvasReady = $event"
+        @preview-change="fastTouchZoomPreview = $event"
+        @restoring-change="restoringTouchDetail = $event"
+        @render-diagnostic="recordGestureRender"
+        @context-ready="canvasContextKind = $event"
       />
       <svg
         ref="svg"
@@ -1182,10 +1309,13 @@ async function setProjection(nextId: MapProjectionId) {
               />
             </g>
           </g>
+          <!-- Geometry and answer state change independently of the camera.
+               Keep this expensive path loop cached during ordinary movement. -->
           <g
             v-for="offset in copyOffsets"
             :key="offset"
             class="countries"
+            v-memo="[paintedGeographicPaths, wrappedGeographicPaths, interactionState, visibleMapUnitIds, activeRegion, locale, canvasRendererActive, correctAnswerVisible, alwaysShowWrongAnswer, quizViewingGuess]"
             :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             :aria-hidden="offset !== 0"
           >
@@ -1440,6 +1570,19 @@ async function setProjection(nextId: MapProjectionId) {
           {{ t('resetView') }}
         </button>
       </div>
+      <button
+        v-if="usesMobileMapDefaults"
+        type="button"
+        class="touch-zoom-preview-status"
+        :disabled="!lastGestureReport || gestureDiagnosticsActive"
+        :aria-label="t(lastGestureReport ? 'copyLastGesture' : 'noGestureReport')"
+        :title="t(lastGestureReport ? 'copyLastGesture' : 'noGestureReport')"
+        @click="copyLastGesture"
+        :class="{ 'touch-zoom-preview-status--active': fastTouchZoomPreview && canvasRendererActive }"
+      >
+        <span class="touch-zoom-preview-status__dot" aria-hidden="true" />
+        {{ t(gestureCopyState === 'copied' ? 'gestureCopied' : gestureCopyState === 'failed' ? 'gestureCopyFailed' : !canvasRendererActive ? 'svgZoom' : fastTouchZoomPreview ? (isDragging ? 'touchPanPreview' : 'fastZoomPreview') : restoringTouchDetail ? 'restoringZoomDetail' : 'normalZoom') }}
+      </button>
       <MapScaleBar v-if="scaleBar" :scale="scaleBar" />
       <MapDebugPanel
         v-if="debugEnabled && debugMetrics"
@@ -1670,6 +1813,10 @@ async function setProjection(nextId: MapProjectionId) {
   pointer-events: visibleFill;
   transition: none;
 }
+
+/* Pinches cannot select countries. Suspend only invisible hit geometry;
+   neutral land and answer highlights stay visible, and SVG fallback stays intact. */
+.map-container--fast-touch-zoom .world-map--canvas .country--hit-only { display: none; }
 
 .world-map--canvas .country--hit-only.country--quiz-inactive,
 .map-container--dragging .world-map--canvas .country--hit-only {
@@ -1970,6 +2117,31 @@ async function setProjection(nextId: MapProjectionId) {
   background: var(--ui-surface);
   font: inherit;
 }
+
+/* Temporary visible feedback for the mobile preview experiment. */
+.touch-zoom-preview-status {
+  position: absolute;
+  z-index: 4;
+  left: 0.75rem;
+  bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border: 2px solid var(--ui-ink);
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-ink);
+  background: var(--ui-paper);
+  font-size: var(--ui-text-control);
+  font-weight: var(--ui-weight-emphasis);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.touch-zoom-preview-status:disabled { cursor: default; opacity: 1; }
+:global(html[data-input-modality='keyboard'] .touch-zoom-preview-status:focus-visible) { outline: 2px solid var(--ui-focus); outline-offset: 3px; }
+.touch-zoom-preview-status--active { color: var(--ui-paper); background: var(--ui-ink); border-color: var(--ui-accent); }
+.touch-zoom-preview-status__dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.touch-zoom-preview-status--active .touch-zoom-preview-status__dot { background: var(--ui-accent); }
 
 .map-tools span,
 .map-tools button {

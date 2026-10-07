@@ -6,6 +6,9 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Made the mobile zoom-status badge copy a local report of the last completed pinch or touch pan, including frame gaps, timestamped preview/renderer/frame-density transitions, worker timing, and map settings, with copied/failed feedback.
+- Reused country-path rendering nodes during camera-only movement, while refreshing them for geometry, region, language, hover, and quiz-state changes.
+- Added an experimental fast touch-zoom preview on coarse-pointer devices: lower-density canvas frames during rapid pinches and touch pans, cached raster coverage while awaiting replacements, restored full-density frames after movement, and unchanged desktop zoom behavior.
 - Removed duplicate viewport measurements during touch pinch updates, sharing one fresh rectangle between both fingers while preserving zoom and pan behavior.
 - Consolidated Asia into Middle East & Western Asia (20 quiz countries), Central & South Asia (13), and East & Southeast Asia (17), with broader map framing and Norwegian labels. Iran joins the western group, Egypt retains its Middle East membership, and all 49 Asia quiz countries remain covered exactly once.
 

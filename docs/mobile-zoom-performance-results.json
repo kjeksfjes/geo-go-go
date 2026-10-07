@@ -1,7 +1,7 @@
 {
   "date": "2026-10-07",
   "scope": "Local Chromium mobile proxy; no real iPhone/Safari or visual acceptance",
-  "rendererChangesRetained": false,
+  "rendererChangesRetained": true,
   "experiments": {
     "rafBaseline": {
       "browser": "148.0.7778.96",
@@ -1449,5 +1449,85 @@
     "identicalCameraAndReleaseBehavior": true,
     "removedRectangleReadsInChecks": 1116,
     "realDeviceSpeedup": "not measured"
+  },
+  "adaptiveTouchPreview": {
+    "experimental": true,
+    "touchOnly": true,
+    "enterLogScaleSpeed": 1.5,
+    "exitLogScaleSpeed": 0.8,
+    "slowDelayMs": 120,
+    "smoothingMs": 50,
+    "previewPixelRatio": 1,
+    "fullQualityRestoreVerified": true,
+    "desktopActivationVerifiedFalse": true,
+    "visibleStatusBadge": true,
+    "visualAcceptance": "exclusively the user",
+    "iPhoneSpeedup": "not established",
+    "coverageBridge": true,
+    "temporaryRasterMagnificationAllowed": true,
+    "viewportCoverageMandatory": true
+  },
+  "svgGeometryCaching": {
+    "retained": true,
+    "consecutiveCameraUpdatesReusingVNode": {
+      "canvas": 15,
+      "svg": 15
+    },
+    "invalidationChecked": [
+      "locale",
+      "quiz mode",
+      "answer classes",
+      "map detail"
+    ],
+    "pageErrors": [],
+    "visualAcceptance": "exclusively the user",
+    "iPhoneSpeedup": "not established"
+  },
+  "reportedPinch20261007": {
+    "schema": "geo-go-go.last-pinch.v2",
+    "recordedAt": "2026-10-07T16:44:10.324Z",
+    "detail": "10m",
+    "durationMs": 948,
+    "zoomRatio": 5.95,
+    "previewEnteredAtMs": 78,
+    "previewExitsDuringGesture": 0,
+    "previewReenteredDuringGesture": false,
+    "canvasToSvgAtMs": 194,
+    "workerRoundTripMaxMs": 1115,
+    "rafSamples": 5,
+    "maxRafGapMs": 81,
+    "finalRenderer": "SVG",
+    "longTasksSupported": false
+  },
+  "lastGestureLogging": {
+    "schema": "geo-go-go.last-gesture.v3",
+    "latestOnly": true,
+    "storage": "memory",
+    "settleWindowMs": 300,
+    "copyTrigger": "user taps badge; latest completed gesture",
+    "locationOrTouchCoordinates": false,
+    "unsupportedTimingExplicitlyMarked": true,
+    "collectorAndClipboardChecks": "passed",
+    "visualAcceptance": "exclusively the user",
+    "timestampedTransitions": [
+      "preview",
+      "renderer",
+      "displayedFrameDensity"
+    ],
+    "transitionFrameGapCorrelation": true,
+    "gestures": [
+      "pinch",
+      "pan"
+    ],
+    "relativePanDisplacement": true
+  },
+  "userAcceptance": {
+    "date": "2026-10-07",
+    "device": "iPhone 17",
+    "highDetail": true,
+    "pinchZoom": "very much improved",
+    "touchPan": "much better",
+    "bathymetryTesting": "pending",
+    "basis": "user real-device observation"
   }
 }
