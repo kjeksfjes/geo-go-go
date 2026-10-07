@@ -125,9 +125,9 @@ export function t(key: MessageKey, values: Record<string, string | number> = {})
 
 const norwegianRegions: Record<MapRegion['id'], string> = {
   world: 'Verden', europe: 'Europa', 'western-europe': 'Vest-Europa', 'eastern-europe': 'Øst-Europa',
-  balkans: 'Balkan', africa: 'Afrika', asia: 'Asia', 'middle-east': 'Midtøsten',
-  'central-asia': 'Sentral-Asia', 'south-asia': 'Sør-Asia', 'east-asia': 'Øst-Asia',
-  'southeast-asia': 'Sørøst-Asia', 'north-america': 'Nord-Amerika',
+  balkans: 'Balkan', africa: 'Afrika', asia: 'Asia',
+  'middle-east-western-asia': 'Midtøsten og Vest-Asia', 'central-south-asia': 'Sentral- og Sør-Asia',
+  'east-southeast-asia': 'Øst- og Sørøst-Asia', 'north-america': 'Nord-Amerika',
   'central-america-caribbean': 'Mellom-Amerika og Karibia',
   'south-america': 'Sør-Amerika', oceania: 'Oseania',
 }

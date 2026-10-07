@@ -4,6 +4,10 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ## Unreleased
 
+### Improvements
+
+- Consolidated Asia into Middle East & Western Asia (20 quiz countries), Central & South Asia (13), and East & Southeast Asia (17), with broader map framing and Norwegian labels. Iran joins the western group, Egypt retains its Middle East membership, and all 49 Asia quiz countries remain covered exactly once.
+
 ### Fixes
 
 - Kept Find the country hover highlighting at country level after an answer, retaining correct/wrong feedback colors across all parts instead of highlighting individual components. Explore retains component hover behavior.
