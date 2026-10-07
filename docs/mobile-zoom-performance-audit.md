@@ -128,3 +128,37 @@ Touch-pan detail snapshots now use 3× viewport overscan at the same preview pix
 ## User acceptance — 2026-10-07
 
 After the wider pan crop and earlier refresh requests, the user confirms that touch panning is much better and that both zoom and pan are very much improved, tested with high detail. This is user-reported real-device acceptance, not an automated iPhone benchmark. Bathymetry testing remains pending; no additional visual testing was performed by the assistant. The current improvements and diagnostics are committed together before that further testing.
+
+## Bathymetry-enabled pan trial
+
+The user's 716ms high-detail pan with bathymetry stayed on Canvas and in preview mode, with a 137ms maximum worker round trip and RAF gaps up to 93ms. The two large gaps preceded displayed replacement frames, while no mode transitions occurred during those gaps. Bitmap preparation/handoff is a hypothesis, not an isolated timing measurement.
+
+Bathymetry-enabled touch-pan previews now use a 0.75 density cap instead of 1 at the same 3× overscan: roughly 44% fewer raster pixels. Non-bathymetry preview density, bathymetry geometry, normal resting quality, other movement previews, and desktop behavior remain unchanged. This can look slightly softer during the drag and awaits the user's comparison; no speedup or visual acceptance is claimed yet.
+
+## Bathymetry density trial rejected; stage timing added
+
+The user still observed lag with 0.75-density bathymetry pan previews. Their report recorded 126/99ms gaps shortly before buffers displayed at 179/451ms, with no renderer fallback or preview exits. The density trial is reverted to 1. These timings do not isolate worker drawing, bitmap export, or main-thread handoff, so no further quality change is made.
+
+Gesture reports now include bounded per-frame timings for worker draw/export and main-thread resize, bitmap transfer, and presentation updates, together with the existing round trip and relative receipt time. These are synchronous API wall times, not GPU/compositor profiling. The next device report can distinguish expensive worker calls from a costly receiving/presentation path. No visual testing was performed.
+
+## Immediate detail-buffer handoff trial
+
+The user's next report showed a detail frame received at 143ms with 69ms worker draw, 1ms export, and 1ms main-thread installation. Yet it was not displayed until 405ms, with Canvas changing to SVG at 146ms. The implementation deferred the buffer swap to another RAF callback, while painting the hidden buffer first reevaluated visibility against the old front buffer. That can enter expensive SVG fallback despite a replacement already being installed and covering the viewport.
+
+A coverage-valid detail buffer is now selected in the same task as its installation, before presentation/visibility updates. Stale-version and viewport-coverage guards remain. No additional animation callback is required for the swap. Main handoff timings still include presentation updates. The user also perceived a small benefit from the 0.75 bathymetry-pan density, so that value is restored as a trial. No visual testing was performed.
+
+## Bathymetry pan acceptance and restoration cleanup
+
+The user considers the latest bathymetry-enabled high-detail pan acceptable. Canvas remained active throughout, with a 17ms median RAF gap, 27ms p95, and one 125ms gap near the first replacement frame. That frame took 102ms in worker drawing and 1ms in main-thread installation; this suggests remaining bitmap-production cost, but does not isolate GPU work or prove the cause of the gap. No vector-to-bitmap renderer transition occurred.
+
+The report also showed an intermediate density-1 request after release before restoring density 2. Reduced-density requests now require an active touch gesture as well as preview mode, so restoration requests full quality directly. This small cleanup does not claim to remove the measured mid-gesture gap. Visual acceptance remains with the user.
+
+## Mobile Reset view preview
+
+The user reports adequate pinch performance but lag during Reset view. Animated camera zooms previously bypassed the speed-based preview because only the physical pinch state enabled it. On touch-first devices, camera animations now enable the same policy, including the raster coverage bridge and full-quality restoration when the animation ends. This also applies to existing animated region and country framing; desktop behavior and reduced-motion handling remain unchanged. The user will assess performance and appearance; no visual testing was performed.
+
+The user's consecutive frames then showed an excessively enlarged world overview during Reset view and country framing. Animated zooms now have a separate preview input: they share the speed policy but retain the ordinary 2× magnification guard, including during restoration. The world overview always retains that guard, even during pinches; the relaxed pinch bridge applies only to recent detail/settled buffers. Mobile animations request the same wider 3× detail crop as touch pans to provide more coverage. If no acceptable bitmap covers the viewport, SVG remains the fallback. Device performance and visual acceptance remain with the user.
+
+## Release acceptance and optional diagnostics
+
+The user accepts the final mobile movement behavior, including high detail, bathymetry, Reset view, and country-framing animations. Version 0.11.0 — Smooth Sailing includes these improvements. Gesture recording and the mobile status/copy button are now enabled only with the `gesture-debug` URL query flag, independently of the existing `debug` map panel. Without the flag, touch events do not start a recorder, sampling RAF loop, long-task observer, or settling capture. The rendering preview remains available during normal use. Visual acceptance was performed by the user.

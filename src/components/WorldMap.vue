@@ -166,6 +166,7 @@ const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const debugEnabled = new URLSearchParams(window.location.search).has('debug')
+const gestureDebugEnabled = new URLSearchParams(window.location.search).has('gesture-debug')
 interface MapDebugVerticalFit {
   span: number
   topGap: number
@@ -372,7 +373,7 @@ function beginGestureReport(now: number, gesture: 'pinch' | 'pan', initial = ges
     browser: navigator.userAgent,
     viewport: { width: mapWidth.value, height: mapHeight.value, devicePixelRatio: window.devicePixelRatio },
     map: { renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG', canvasContext: canvasContextKind.value, detail: props.highDetailEnabled ? '10m' : '50m', projection: projectionId.value, region: props.activeRegion.id, mode: props.nameCountryQuiz ? 'name-country' : props.quizMode ? 'find-country' : 'explore', bathymetry: bathymetryEnabled.value, relief: reliefEnabled.value, countryPaths: geographicPaths.value.length, highlightPaths: highlightedGeographicPaths.value.length },
-    experiment: { adaptiveTouchPreview: true, coverageBridge: true, memoizedCountryGeometry: true },
+    experiment: { adaptiveTouchPreview: true, coverageBridge: true, bathymetryPanPreviewDensity: 0.75, immediateBufferSwap: true, memoizedCountryGeometry: true },
   }, now, initial)
   gestureDiagnosticsActive.value = true
   gestureLongTasksAvailable = false
@@ -949,20 +950,20 @@ function handlePointerEnd(event: PointerEvent) {
 
 function handleTouch(event: TouchEvent) {
   if (!svg.value) return
-  if (gestureRecorder && !isPinching.value && !isDragging.value && event.type === 'touchstart') captureGestureReport()
-  const startedAt = performance.now()
-  const initial = gestureSample()
+  if (gestureDebugEnabled && gestureRecorder && !isPinching.value && !isDragging.value && event.type === 'touchstart') captureGestureReport()
+  const startedAt = gestureDebugEnabled ? performance.now() : 0
+  const initial = gestureDebugEnabled ? gestureSample() : null
   const previousGesture = isPinching.value ? 'pinch' : isDragging.value ? 'pan' : null
   const tap = updateTouches(event, svg.value)
   const currentGesture = isPinching.value ? 'pinch' : isDragging.value ? 'pan' : null
-  const handlerMs = performance.now() - startedAt
-  if (previousGesture !== currentGesture) {
+  const handlerMs = gestureDebugEnabled ? performance.now() - startedAt : 0
+  if (gestureDebugEnabled && previousGesture !== currentGesture) {
     if (previousGesture) {
       gestureRecorder?.input(handlerMs)
       endGestureReport(performance.now(), event.type === 'touchcancel')
     }
     if (currentGesture) {
-      beginGestureReport(startedAt, currentGesture, currentGesture === 'pan' ? initial : gestureSample())
+      beginGestureReport(startedAt, currentGesture, currentGesture === 'pan' && initial ? initial : gestureSample())
       gestureRecorder?.input(handlerMs)
     }
   } else gestureRecorder?.input(handlerMs)
@@ -1217,6 +1218,7 @@ async function setProjection(nextId: MapProjectionId) {
         :camera="transform"
         :interacting="isInteracting"
         :touch-zooming="usesMobileMapDefaults && isPinching"
+        :animated-zooming="usesMobileMapDefaults && isAnimating"
         :touch-panning="usesMobileMapDefaults && isDragging"
         :diagnostics-active="gestureDiagnosticsActive"
         :wrap-offset="canvasWrapOffset"
@@ -1571,7 +1573,7 @@ async function setProjection(nextId: MapProjectionId) {
         </button>
       </div>
       <button
-        v-if="usesMobileMapDefaults"
+        v-if="gestureDebugEnabled && usesMobileMapDefaults"
         type="button"
         class="touch-zoom-preview-status"
         :disabled="!lastGestureReport || gestureDiagnosticsActive"

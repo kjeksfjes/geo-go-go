@@ -45,5 +45,6 @@ export interface CanvasWorkerFrame {
   height: number
   overscan: number
   pixelRatio: number
+  timings?: { drawMs: number; exportMs: number }
   bitmap: ImageBitmap
 }

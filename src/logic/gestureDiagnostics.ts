@@ -7,13 +7,16 @@ export interface GestureSample {
 }
 
 export interface GestureWorkerEvent {
-  stage: 'requested' | 'received' | 'discarded' | 'displayed'
+  stage: 'requested' | 'received' | 'discarded' | 'displayed' | 'handoff'
   key: string
   purpose: string
   pixelRatio: number
   at: number
   proxy?: boolean
   displayScale?: number
+  workerDrawMs?: number
+  workerExportMs?: number
+  mainWork?: { resizeMs: number; transferMs: number; presentationMs: number; totalMs: number }
 }
 
 const round = (value: number) => Math.round(value * 100) / 100
@@ -41,6 +44,7 @@ export function createGestureDiagnostics(context: Record<string, unknown>, start
   const slowFrames: Array<{ atMs: number; gapMs: number }> = []
   const requests = new Map<string, number>()
   const roundTrips: number[] = []
+  const frameTimings: Array<{ key: string; receivedAtMs: number; phase: 'gesture' | 'settle'; purpose: string; roundTripMs: number | null; workerDrawMs: number | null; workerExportMs: number | null; mainWork?: GestureWorkerEvent['mainWork']; discarded?: boolean }> = []
   let requested = 0
   let received = 0
   let discarded = 0
@@ -103,8 +107,15 @@ export function createGestureDiagnostics(context: Record<string, unknown>, start
       const sent = requests.get(event.key)
       if (sent !== undefined && roundTrips.length < 100) roundTrips.push(event.at - sent)
       requests.delete(event.key)
-    } else if (event.stage === 'discarded') discarded++
-    else {
+      if (frameTimings.length < 30) frameTimings.push({ key: event.key, receivedAtMs: round(event.at - start), phase: end === null ? 'gesture' : 'settle', purpose: event.purpose, roundTripMs: sent === undefined ? null : round(event.at - sent), workerDrawMs: event.workerDrawMs === undefined ? null : round(event.workerDrawMs), workerExportMs: event.workerExportMs === undefined ? null : round(event.workerExportMs) })
+    } else if (event.stage === 'discarded') {
+      discarded++
+      const timing = frameTimings.find((entry) => entry.key === event.key)
+      if (timing) timing.discarded = true
+    } else if (event.stage === 'handoff') {
+      const timing = frameTimings.find((entry) => entry.key === event.key)
+      if (timing && event.mainWork) timing.mainWork = { resizeMs: round(event.mainWork.resizeMs), transferMs: round(event.mainWork.transferMs), presentationMs: round(event.mainWork.presentationMs), totalMs: round(event.mainWork.totalMs) }
+    } else {
       if (event.displayScale !== undefined) maxObservedDisplayedScale = Math.max(maxObservedDisplayedScale, event.displayScale)
       if (displayedBuffers.length < 30) displayedBuffers.push({ atMs: round(event.at - start), phase: end === null ? 'gesture' : 'settle', buffer: event.purpose, sourceDensity: event.pixelRatio, displayScale: event.displayScale === undefined ? null : round(event.displayScale), proxy: event.proxy ?? null })
       transition('displayedFrameDensity', event.pixelRatio, event.at)
@@ -140,7 +151,7 @@ export function createGestureDiagnostics(context: Record<string, unknown>, start
       zoom: { start: round(initial.scale), end: round(finalScale), ratio: round(ratio) },
       input: { events: inputCount, maxHandlerMs: round(maxInputHandler) },
       animationFrames: { samples, medianGapMs: percentile(gaps, 0.5), p95GapMs: percentile(gaps, 0.95), maxGapMs: round(maxGap), retainedGapSamples: gaps.length, slowFrames },
-      rendering: { previewSamples, svgFallbackSamples: svgSamples, requests: requested, received, discarded, lowDensityRequests, maxObservedDisplayedScale: round(maxObservedDisplayedScale), displayedBuffers, pendingAtCapture: requests.size, workerRoundTripP95Ms: percentile(roundTrips, 0.95), workerRoundTripMaxMs: round(Math.max(0, ...roundTrips)) },
+      rendering: { previewSamples, svgFallbackSamples: svgSamples, requests: requested, received, discarded, lowDensityRequests, maxObservedDisplayedScale: round(maxObservedDisplayedScale), displayedBuffers, frameTimings, pendingAtCapture: requests.size, workerRoundTripP95Ms: percentile(roundTrips, 0.95), workerRoundTripMaxMs: round(Math.max(0, ...roundTrips)) },
       modeSwitching: {
         initial: { preview: initial.preview, canvas: initial.canvas },
         previewEntriesDuringGesture: previewEntries,
@@ -155,7 +166,7 @@ export function createGestureDiagnostics(context: Record<string, unknown>, start
         slowFrameCorrelations: slowFrames.map((gap) => ({ ...gap, transitionsWithinGap: transitions.filter((event) => event.from !== null && event.phase === 'gesture' && event.atMs >= gap.atMs - gap.gapMs && event.atMs <= gap.atMs) })),
       },
       longTasks: { supported: longTasksSupported, entries: longTasks },
-      limits: 'RAF intervals are main-thread callback gaps, not compositor FPS. Worker round trips include queueing and delivery; received counts can include requests predating the gesture. Transition timestamps can show correlation with slow RAF gaps, not prove causation. Displayed frame density is its source raster density, excluding current CSS scaling. Timing lists are bounded. Long-task entries are unavailable in some browsers. No location or touch coordinates are recorded.',
+      limits: 'RAF intervals are main-thread callback gaps, not compositor FPS. Worker draw/export and main handoff timings measure synchronous API wall time, not isolated GPU work. Worker round trips include queueing and delivery; received counts can include requests predating the gesture. Transition timestamps can show correlation with slow RAF gaps, not prove causation. Displayed frame density is its source raster density, excluding current CSS scaling. Timing lists are bounded. Long-task entries are unavailable in some browsers. No location or touch coordinates are recorded.',
     }
   }
 

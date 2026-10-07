@@ -2,13 +2,17 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
-## Unreleased
+## 0.11.0 — Smooth Sailing — 2026-10-07
 
 ### Improvements
 
-- Made the mobile zoom-status badge copy a local report of the last completed pinch or touch pan, including frame gaps, timestamped preview/renderer/frame-density transitions, worker timing, and map settings, with copied/failed feedback.
+- Applied the mobile pinch raster-preview policy to animated zooms, including Reset view, with full-quality restoration after the animation.
+- Kept world-overview magnification capped during previews and gave mobile zoom animations wider detail coverage to avoid enlarged overview pixels.
+- Swapped usable canvas detail frames immediately after installation to avoid waiting in SVG fallback for another animation callback.
+- Requested full-density replacement frames directly after touch gestures end, avoiding an intermediate preview-density request during restoration.
+- Kept gesture diagnostics available through `?gesture-debug`, with recording and the status button disabled by default. The mobile zoom-status badge copies a local report of the last completed pinch or touch pan, including frame gaps, timestamped preview/renderer/frame-density transitions, worker timing, and map settings, with copied/failed feedback.
 - Reused country-path rendering nodes during camera-only movement, while refreshing them for geometry, region, language, hover, and quiz-state changes.
-- Added an experimental fast touch-zoom preview on coarse-pointer devices: lower-density canvas frames during rapid pinches and touch pans, cached raster coverage while awaiting replacements, restored full-density frames after movement, and unchanged desktop zoom behavior.
+- Added a fast touch-zoom preview on coarse-pointer devices: lower-density canvas frames during rapid pinches and touch pans, cached raster coverage while awaiting replacements, restored full-density frames after movement, and unchanged desktop zoom behavior.
 - Removed duplicate viewport measurements during touch pinch updates, sharing one fresh rectangle between both fingers while preserving zoom and pan behavior.
 - Consolidated Asia into Middle East & Western Asia (20 quiz countries), Central & South Asia (13), and East & Southeast Asia (17), with broader map framing and Norwegian labels. Iran joins the western group, Egypt retains its Middle East membership, and all 49 Asia quiz countries remain covered exactly once.
 

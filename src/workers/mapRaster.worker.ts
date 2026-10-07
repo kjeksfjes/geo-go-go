@@ -166,6 +166,7 @@ workerScope.onmessage = (event) => {
   }
   if (!scene || message.version !== sceneVersion) return
 
+  const renderStarted = performance.now()
   const { width, height, pixelRatio, overscan, camera } = message
   const pixelWidth = Math.max(1, Math.round(width * overscan * pixelRatio))
   const pixelHeight = Math.max(1, Math.round(height * overscan * pixelRatio))
@@ -200,6 +201,9 @@ workerScope.onmessage = (event) => {
     : offsets.filter((offset) => offset <= viewport[1][0] && offset + width >= viewport[0][0])
   drawScene(context, scene, camera.scale, visibleOffsets, viewport)
 
+  const drawFinished = performance.now()
+  const bitmap = surface.transferToImageBitmap()
+  const exportFinished = performance.now()
   const frame: CanvasWorkerFrame = {
     type: 'frame',
     purpose: message.purpose,
@@ -210,7 +214,8 @@ workerScope.onmessage = (event) => {
     height,
     overscan,
     pixelRatio,
-    bitmap: surface.transferToImageBitmap(),
+    bitmap,
+    timings: { drawMs: drawFinished - renderStarted, exportMs: exportFinished - drawFinished },
   }
   workerScope.postMessage(frame, [frame.bitmap])
 }

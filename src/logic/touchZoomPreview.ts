@@ -5,6 +5,7 @@ const exitSpeed = 0.8
 const smoothingMs = 50
 const slowDelayMs = 120
 export const touchZoomPreviewPixelRatio = 1
+export const touchPanBathymetryPreviewPixelRatio = 0.75
 
 export function createTouchZoomPreview() {
   let previousScale = 1
