@@ -4,8 +4,8 @@ import type { MapPoint } from '../composables/useMapZoom'
 
 export type MapRegionId =
   | 'world' | 'europe' | 'western-europe' | 'eastern-europe' | 'balkans'
-  | 'africa' | 'asia' | 'east-asia' | 'southeast-asia' | 'south-asia' | 'central-asia'
-  | 'middle-east' | 'north-america' | 'central-america-caribbean'
+  | 'africa' | 'asia' | 'east-southeast-asia' | 'central-south-asia'
+  | 'middle-east-western-asia' | 'north-america' | 'central-america-caribbean'
   | 'south-america' | 'oceania'
 
 export interface GeographicFrame {
@@ -54,11 +54,21 @@ export const regions: readonly MapRegion[] = [
   {
     id: 'asia', label: 'Asia', view: { center: [87, 26.2], zoom: 2.69 },
     children: [
-      { id: 'middle-east', label: 'Middle East', view: { center: [43.51, 28.76], zoom: 5.76 } },
-      { id: 'central-asia', label: 'Central Asia', view: { center: [67.47, 46.21], zoom: 7.24 } },
-      { id: 'south-asia', label: 'South Asia', view: { center: [72.08, 24.09], zoom: 5.93 } },
-      { id: 'east-asia', label: 'East Asia', view: { center: [111.99, 37.53], zoom: 4.85 } },
-      { id: 'southeast-asia', label: 'Southeast Asia', view: { center: [114.44, 7.9], zoom: 5.49 } },
+      {
+        id: 'middle-east-western-asia', label: 'Middle East & Western Asia',
+        view: { center: [46, 29], zoom: 4.5, panReach: 0.75 },
+        regionalProjection: { center: [46, 29], frame: { west: 24, south: 10, east: 64, north: 44 } },
+      },
+      {
+        id: 'central-south-asia', label: 'Central & South Asia',
+        view: { center: [77, 31], zoom: 3.8, panReach: 0.75 },
+        regionalProjection: { center: [77, 31], frame: { west: 55, south: -1, east: 99, north: 57 } },
+      },
+      {
+        id: 'east-southeast-asia', label: 'East & Southeast Asia',
+        view: { center: [116, 22], zoom: 3, panReach: 0.75 },
+        regionalProjection: { center: [116, 22], frame: { west: 85, south: -12, east: 148, north: 55 } },
+      },
     ],
   },
   {
@@ -116,12 +126,11 @@ function belongsToRegion(unit: MapUnitFeature, id: MapRegionId): boolean {
     case 'south-america': return regionUn === 'Americas' && subregion === 'South America'
     case 'oceania': return regionUn === 'Oceania'
     case 'central-america-caribbean': return ['Central America', 'Caribbean'].includes(subregion)
-    case 'central-asia': return subregion === 'Central Asia'
-    case 'south-asia': return subregion === 'Southern Asia'
-    case 'east-asia': return subregion === 'Eastern Asia'
-    case 'southeast-asia': return subregion === 'South-Eastern Asia'
-    // Middle East is a game grouping based on M49 Western Asia plus Egypt.
-    case 'middle-east': return subregion === 'Western Asia' || entityId === 'EGY'
+    // Three practice groups partition the canonical Asia pool. Iran joins
+    // Western Asia; Egypt remains an explicit cross-continent Middle East member.
+    case 'middle-east-western-asia': return subregion === 'Western Asia' || ['IRN', 'EGY'].includes(entityId)
+    case 'central-south-asia': return ['Central Asia', 'Southern Asia'].includes(subregion) && entityId !== 'IRN'
+    case 'east-southeast-asia': return ['Eastern Asia', 'South-Eastern Asia'].includes(subregion)
     default: return false
   }
 }

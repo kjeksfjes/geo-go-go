@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { createTouchZoomPreview, touchZoomPreviewPixelRatio, touchPanBathymetryPreviewPixelRatio } from '../logic/touchZoomPreview'
+import type { GestureWorkerEvent } from '../logic/gestureDiagnostics'
 import type { CanvasCamera, CanvasMapScene, CanvasWorkerFrame, CanvasWorkerRequest } from '../types/mapCanvas'
 
 const props = defineProps<{
@@ -8,11 +10,20 @@ const props = defineProps<{
   scene: CanvasMapScene
   camera: Readonly<CanvasCamera>
   interacting: boolean
+  touchZooming: boolean
+  animatedZooming: boolean
+  touchPanning: boolean
+  diagnosticsActive: boolean
   wrapOffset: number | null
   wrapPeriod: number | null
 }>()
 
-const emit = defineEmits<{ 'ready-change': [ready: boolean] }>()
+const emit = defineEmits<{ 'ready-change': [ready: boolean]; 'preview-change': [active: boolean]; 'render-diagnostic': [event: GestureWorkerEvent]; 'context-ready': [kind: 'bitmaprenderer' | '2d']; 'restoring-change': [active: boolean] }>()
+const zoomPreview = createTouchZoomPreview()
+let previewActive = false
+let previewBridge = false
+let bridgeFromPinch = false
+let restoringDetail = false
 const canvasA = ref<HTMLCanvasElement | null>(null)
 const canvasB = ref<HTMLCanvasElement | null>(null)
 const overviewCanvas = ref<HTMLCanvasElement | null>(null)
@@ -20,6 +31,8 @@ const settledCanvas = ref<HTMLCanvasElement | null>(null)
 // Leave enough image outside the viewport for several wheel events while the
 // worker prepares the next frame. The overlap prevents exposed bitmap edges.
 const overscan = 1.8
+// Touch pans need more translation runway while a replacement is in flight.
+const touchPanOverscan = 3
 // At minimum zoom, the camera can move by 65% of the viewport in either
 // direction. Keep a complete map snapshot available for fast zoom-outs.
 const overviewOverscan = 2.4
@@ -35,7 +48,6 @@ let settledRequestId = 0
 let pending = false
 let refreshAfterPending = false
 let forceAfterPending = false
-let swapFrame: number | undefined
 let settleTimer: number | undefined
 let visibleIndex = 0
 let hasShownDetail = false
@@ -46,7 +58,15 @@ type Snapshot = {
   width: number
   height: number
   overscan: number
+  pixelRatio: number
+  version: number
+  requestId: number
+  purpose: CanvasWorkerFrame['purpose']
 }
+let currentShownIndex = -1
+let reportedDisplayedFrame: Snapshot | null = null
+let reportedProxy = false
+let showingProxy = false
 let snapshots: Array<Snapshot | null> = [null, null, null, null]
 
 function canvases() {
@@ -117,12 +137,12 @@ function coversViewport(index: number) {
 function updateVisibility() {
   // The sharp frame has no overscan, so prefer it at its exact resting
   // camera. It can also bridge a small zoom-in if it still covers the view.
-  // A close-up must not magnify that overview's pixels and border widths;
-  // fall back to the existing SVG renderer while awaiting a usable bitmap.
+  // Ordinary movement retains its sharpness guard. A fast touch preview can
+  // bridge worker latency with a softer cached raster, but never exposed edges.
   const overview = presentation(overviewIndex)
   const settled = presentation(settledIndex)
   const detail = presentation(visibleIndex)
-  const shownIndex = !props.interacting && matchesCurrentCamera(snapshots[settledIndex])
+  let shownIndex = !props.interacting && matchesCurrentCamera(snapshots[settledIndex])
     ? settledIndex
     : detail && detail.ratio <= maximumFrameScale && coversViewport(visibleIndex)
       ? visibleIndex
@@ -130,8 +150,40 @@ function updateVisibility() {
         ? settledIndex
         : hasShownDetail && overview && overview.ratio <= maximumFrameScale && coversViewport(overviewIndex)
           ? overviewIndex : -1
+  if (shownIndex === -1 && previewBridge) {
+    let bestDensity = -Infinity
+    for (const index of [visibleIndex, settledIndex, overviewIndex]) {
+      if (index === overviewIndex && !hasShownDetail) continue
+      const frame = presentation(index)
+      const snapshot = snapshots[index]
+      if (!frame || !snapshot || !coversViewport(index)) continue
+      // Large magnification is a fast-pinch compromise, never a pan preview.
+      if ((index === overviewIndex || !bridgeFromPinch || props.touchPanning || props.animatedZooming)
+        && frame.ratio > maximumFrameScale) continue
+      const density = snapshot.pixelRatio / frame.ratio
+      if (density > bestDensity) { bestDensity = density; shownIndex = index }
+    }
+  }
+  const shownSnapshot = snapshots[shownIndex]
+  const shownPresentation = presentation(shownIndex)
+  const sharp = shownSnapshot && shownPresentation
+    && shownSnapshot.pixelRatio >= pixelRatio() / 1.1 && Math.abs(shownPresentation.ratio - 1) <= 0.01
+  if (previewBridge && !previewActive && sharp) previewBridge = false
+  showingProxy = shownIndex !== -1 && previewBridge && !sharp
+  const restoring = showingProxy && !previewActive
+  if (restoring !== restoringDetail) {
+    restoringDetail = restoring
+    emit('restoring-change', restoring)
+  }
   for (const [index, element] of canvases().entries()) {
     element?.style.setProperty('opacity', index === shownIndex ? '1' : '0')
+  }
+  currentShownIndex = shownIndex
+  const shown = snapshots[shownIndex]
+  if (props.diagnosticsActive && shown && (shown !== reportedDisplayedFrame || showingProxy !== reportedProxy)) {
+    recordRender('displayed', shown, { proxy: showingProxy, displayScale: shownPresentation?.ratio })
+    reportedDisplayedFrame = shown
+    reportedProxy = showingProxy
   }
   const nextReady = shownIndex !== -1
   if (nextReady !== ready) {
@@ -143,12 +195,18 @@ function updateVisibility() {
 function needsRefresh() {
   const frame = presentation(visibleIndex)
   if (!frame) return true
-  const marginX = props.width * 0.08
-  const marginY = props.height * 0.08
+  const margin = props.touchPanning ? 0.45 : 0.08
+  const marginX = props.width * margin
+  const marginY = props.height * margin
   return frame.ratio > 1.35 || frame.ratio < 0.8
     || frame.x > -marginX || frame.y > -marginY
     || frame.x + frame.ratio * frame.width < props.width + marginX
     || frame.y + frame.ratio * frame.height < props.height + marginY
+}
+
+function recordRender(stage: GestureWorkerEvent['stage'], frame: { version: number; requestId: number; purpose: string; pixelRatio: number; timings?: CanvasWorkerFrame['timings'] }, display: { proxy?: boolean; displayScale?: number; mainWork?: GestureWorkerEvent['mainWork'] } = {}) {
+  if (!props.diagnosticsActive) return
+  emit('render-diagnostic', { stage, key: `${frame.version}:${frame.purpose}:${frame.requestId}`, purpose: frame.purpose, pixelRatio: frame.pixelRatio, at: performance.now(), workerDrawMs: frame.timings?.drawMs, workerExportMs: frame.timings?.exportMs, ...display })
 }
 
 function requestFrame(force = false) {
@@ -160,6 +218,9 @@ function requestFrame(force = false) {
   }
   pending = true
   requestId += 1
+  const imageOverscan = props.touchPanning || props.animatedZooming ? touchPanOverscan : overscan
+  const previewDensity = props.touchPanning && props.scene.bathymetry.length > 0
+    ? touchPanBathymetryPreviewPixelRatio : touchZoomPreviewPixelRatio
   const message: CanvasWorkerRequest = {
     type: 'render',
     purpose: 'detail',
@@ -167,11 +228,13 @@ function requestFrame(force = false) {
     requestId,
     width: props.width,
     height: props.height,
-    pixelRatio: pixelRatio(),
-    overscan,
+    pixelRatio: previewActive && (props.touchZooming || props.touchPanning || props.animatedZooming)
+      ? Math.min(previewDensity, pixelRatio(imageOverscan)) : pixelRatio(imageOverscan),
+    overscan: imageOverscan,
     camera: currentCamera(),
     wrapOffset: props.wrapOffset,
   }
+  recordRender('requested', message)
   worker.postMessage(message)
 }
 
@@ -189,6 +252,7 @@ function requestOverview() {
     camera: { x: 0, y: 0, scale: 1 },
     wrapOffset: props.wrapPeriod,
   }
+  recordRender('requested', message)
   worker.postMessage(message)
 }
 
@@ -196,10 +260,12 @@ function scheduleSettledFrame() {
   if (settleTimer !== undefined) window.clearTimeout(settleTimer)
   settleTimer = undefined
   // On small viewports the moving frame is already at its target resolution.
-  if (props.interacting || pixelRatio(1) <= pixelRatio() * 1.1) return
+  const needsQualityRestore = () => (snapshots[visibleIndex]?.pixelRatio ?? pixelRatio()) < pixelRatio(1) / 1.1
+  if (props.interacting || (!needsQualityRestore() && pixelRatio(1) <= pixelRatio() * 1.1)) return
   settleTimer = window.setTimeout(() => {
     settleTimer = undefined
     if (!worker || props.interacting || matchesCurrentCamera(snapshots[settledIndex])) return
+    if (!needsQualityRestore() && pixelRatio(1) <= pixelRatio() * 1.1) return
     settledRequestId += 1
     const message: CanvasWorkerRequest = {
       type: 'render',
@@ -213,20 +279,23 @@ function scheduleSettledFrame() {
       camera: currentCamera(),
       wrapOffset: props.wrapOffset,
     }
+    recordRender('requested', message)
     worker.postMessage(message)
   }, settleDelay)
 }
 
-function paintBitmap(index: number, frame: CanvasWorkerFrame) {
+function paintBitmap(index: number, frame: CanvasWorkerFrame, activateDetail = false) {
   const element = canvases()[index]
   const context = contexts[index]
   if (!element || !context) {
     frame.bitmap.close()
     return false
   }
+  const workStarted = props.diagnosticsActive ? performance.now() : 0
   // Only ever resize a hidden canvas. Resizing clears its front buffer.
   if (element.width !== frame.bitmap.width) element.width = frame.bitmap.width
   if (element.height !== frame.bitmap.height) element.height = frame.bitmap.height
+  const resizeFinished = props.diagnosticsActive ? performance.now() : 0
   if ('transferFromImageBitmap' in context) {
     context.transferFromImageBitmap(frame.bitmap)
   } else {
@@ -234,17 +303,30 @@ function paintBitmap(index: number, frame: CanvasWorkerFrame) {
     context.drawImage(frame.bitmap, 0, 0)
     frame.bitmap.close()
   }
-  snapshots[index] = { camera: frame.camera, width: frame.width, height: frame.height, overscan: frame.overscan }
+  const transferFinished = props.diagnosticsActive ? performance.now() : 0
+  snapshots[index] = { camera: frame.camera, width: frame.width, height: frame.height, overscan: frame.overscan, pixelRatio: frame.pixelRatio, version: frame.version, requestId: frame.requestId, purpose: frame.purpose }
   element.style.width = `${frame.overscan * 100}%`
   element.style.height = `${frame.overscan * 100}%`
+  // Installing and selecting the hidden buffer in one task prevents the old
+  // frame from triggering SVG fallback while an already-ready bitmap waits.
+  if (activateDetail && coversViewport(index)) {
+    visibleIndex = index
+    hasShownDetail = true
+  }
   updatePresentation()
+  if (props.diagnosticsActive) {
+    const finished = performance.now()
+    recordRender('handoff', frame, { mainWork: { resizeMs: resizeFinished - workStarted, transferMs: transferFinished - resizeFinished, presentationMs: finished - transferFinished, totalMs: finished - workStarted } })
+  }
   return true
 }
 
 function receiveFrame(frame: CanvasWorkerFrame) {
+  recordRender('received', frame)
   if (frame.version !== sceneVersion
     || (frame.purpose === 'detail' && frame.requestId !== requestId)
     || (frame.purpose === 'settled' && frame.requestId !== settledRequestId)) {
+    recordRender('discarded', frame)
     frame.bitmap.close()
     return
   }
@@ -254,6 +336,7 @@ function receiveFrame(frame: CanvasWorkerFrame) {
   }
   if (frame.purpose === 'settled') {
     if (props.interacting || !matchesCurrentCamera(frame)) {
+      recordRender('discarded', frame)
       frame.bitmap.close()
       return
     }
@@ -263,8 +346,9 @@ function receiveFrame(frame: CanvasWorkerFrame) {
   const backIndex = 1 - visibleIndex
   // Resize and replace only the hidden back buffer. The front image remains
   // visible until the replacement is ready to be shown in one paint.
-  if (!paintBitmap(backIndex, frame)) return
+  if (!paintBitmap(backIndex, frame, true)) return
   if (!coversViewport(backIndex)) {
+    recordRender('discarded', frame)
     // A wheel/animation gesture outran the worker. Do not show this stale
     // snapshot; ask for one at the camera position we have now.
     pending = false
@@ -273,29 +357,12 @@ function receiveFrame(frame: CanvasWorkerFrame) {
     requestFrame(true)
     return
   }
-  swapFrame = requestAnimationFrame(() => {
-    swapFrame = undefined
-    if (frame.version !== sceneVersion || !canvases()[backIndex]) return
-    // Another gesture event can move the camera between receiving a frame
-    // and this paint. Recheck before replacing the current front buffer.
-    if (!coversViewport(backIndex)) {
-      pending = false
-      refreshAfterPending = false
-      forceAfterPending = false
-      requestFrame(true)
-      return
-    }
-    visibleIndex = backIndex
-    hasShownDetail = true
-    updatePresentation()
-    pending = false
-
-    const refresh = refreshAfterPending
-    const force = forceAfterPending
-    refreshAfterPending = false
-    forceAfterPending = false
-    if (refresh && (force || needsRefresh())) requestFrame()
-  })
+  pending = false
+  const refresh = refreshAfterPending
+  const force = forceAfterPending
+  refreshAfterPending = false
+  forceAfterPending = false
+  if (refresh && (force || needsRefresh() || (previewBridge && !props.interacting))) requestFrame()
 }
 
 function configureScene() {
@@ -304,9 +371,7 @@ function configureScene() {
     && configuredCoordinates.width === props.width && configuredCoordinates.height === props.height
   configuredCoordinates = { key: props.scene.coordinateKey, width: props.width, height: props.height }
   sceneVersion += 1
-  if (swapFrame !== undefined) cancelAnimationFrame(swapFrame)
   if (settleTimer !== undefined) window.clearTimeout(settleTimer)
-  swapFrame = undefined
   settleTimer = undefined
   pending = false
   refreshAfterPending = false
@@ -331,10 +396,39 @@ function configureScene() {
   scheduleSettledFrame()
 }
 
+function setPreview(active: boolean) {
+  if (active) {
+    previewBridge = true
+    bridgeFromPinch = props.touchZooming && !props.touchPanning && !props.animatedZooming
+  }
+  if (previewActive === active) return
+  previewActive = active
+  emit('preview-change', active)
+  // A quality change needs a replacement even if the camera still fits.
+  requestFrame(true)
+}
+
+watch(() => props.diagnosticsActive, (active) => {
+  reportedDisplayedFrame = null
+  const shown = snapshots[currentShownIndex]
+  if (active && shown) {
+    recordRender('displayed', shown, { proxy: showingProxy, displayScale: presentation(currentShownIndex)?.ratio })
+    reportedDisplayedFrame = shown
+    reportedProxy = showingProxy
+  }
+})
+
+watch([() => props.touchZooming, () => props.touchPanning, () => props.animatedZooming], ([pinching, panning, animating]) => {
+  zoomPreview.reset(props.camera.scale, performance.now())
+  if (panning) setPreview(true)
+  else if (!pinching && !animating) setPreview(false)
+})
+
 watch(() => [props.scene, props.width, props.height], configureScene, { flush: 'post' })
 watch(
   () => [props.camera.x, props.camera.y, props.camera.scale],
   () => {
+    if ((props.touchZooming || props.animatedZooming) && !props.touchPanning) setPreview(zoomPreview.update(props.camera.scale, performance.now()))
     updatePresentation()
     if (needsRefresh()) requestFrame()
     scheduleSettledFrame()
@@ -360,6 +454,7 @@ onMounted(() => {
   if (canvases().some((canvas) => !canvas) || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') return
   contexts = canvases().map((element) => element?.getContext('bitmaprenderer') ?? element?.getContext('2d') ?? null)
   if (contexts.some((context) => !context)) return
+  emit('context-ready', contexts.every((context) => context !== null && 'transferFromImageBitmap' in context) ? 'bitmaprenderer' : '2d')
   try {
     worker = new Worker(new URL('../workers/mapRaster.worker.ts', import.meta.url), { type: 'module' })
   } catch {
@@ -373,13 +468,19 @@ onMounted(() => {
     worker?.terminate()
     worker = null
     for (const element of canvases()) element?.style.setProperty('opacity', '0')
+    currentShownIndex = -1
+    reportedDisplayedFrame = null
+    previewBridge = false
+    restoringDetail = false
+    emit('restoring-change', false)
     emit('ready-change', false)
   }
   configureScene()
 })
 
 onBeforeUnmount(() => {
-  if (swapFrame !== undefined) cancelAnimationFrame(swapFrame)
+  emit('preview-change', false)
+  emit('restoring-change', false)
   if (settleTimer !== undefined) window.clearTimeout(settleTimer)
   worker?.terminate()
   worker = null

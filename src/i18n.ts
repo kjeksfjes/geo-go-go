@@ -51,6 +51,8 @@ const messages = {
     region: 'Region', projection: 'Projection', regionalEqualArea: 'Regional Equal Area', mapSettings: 'Map settings', mapControls: 'Map controls', highDetail: 'High detail', bathymetry: 'Bathymetry', relief: 'Relief', waterNames: 'Water names', limitAutomaticCountryZoom: 'Limit country zoom', limitCountryZoomHint: 'Keep more surroundings visible when automatically framing a country. Manual zoom is unchanged.',
     showScaleBar: 'Show scale bar', scaleUnits: 'Scale units', metricUnits: 'Metric', imperialUnits: 'Imperial', nauticalUnits: 'Nautical', scaleAtMapCenter: 'Approximate scale near map center: {distance}',
     interactiveMap: 'Interactive world map', resetView: 'Reset view',
+    fastZoomPreview: 'Fast zoom preview', touchPanPreview: 'Pan preview', normalZoom: 'Normal zoom', restoringZoomDetail: 'Restoring detail', svgZoom: 'SVG renderer',
+    copyLastGesture: 'Copy last pinch or pan report', noGestureReport: 'Pinch or pan the map first to record a report', gestureCopied: 'Gesture report copied', gestureCopyFailed: 'Copy failed — tap to retry',
     mapHint: 'Scroll to zoom · Drag to move', continueHint: 'Click map or press Space to continue',
     loadingMap: 'Loading detailed map…', selectedCountry: 'Selected country', selectedArea: 'Selected area',
     mapCode: 'Map code · {code}', chooseCountry: 'Choose a country on the map',
@@ -88,6 +90,8 @@ const messages = {
     region: 'Region', projection: 'Projeksjon', regionalEqualArea: 'Regional arealriktig', mapSettings: 'Kartinnstillinger', mapControls: 'Kartvalg', highDetail: 'Høy detaljgrad', bathymetry: 'Havdybde', relief: 'Relieff', waterNames: 'Havnavn', limitAutomaticCountryZoom: 'Begrens landzoom', limitCountryZoomHint: 'Vis mer av omgivelsene når kartet automatisk zoomer inn på et land. Manuell zoom er uendret.',
     showScaleBar: 'Vis målestokk', scaleUnits: 'Måleenheter', metricUnits: 'Metrisk', imperialUnits: 'Britiske enheter', nauticalUnits: 'Nautiske mil', scaleAtMapCenter: 'Omtrentlig målestokk nær kartets sentrum: {distance}',
     interactiveMap: 'Interaktivt verdenskart', resetView: 'Tilbakestill visning',
+    fastZoomPreview: 'Rask zoom-forhåndsvisning', touchPanPreview: 'Panoreringsvisning', normalZoom: 'Normal zoom', restoringZoomDetail: 'Gjenoppretter detaljer', svgZoom: 'SVG-visning',
+    copyLastGesture: 'Kopier siste zoom- eller panoreringsrapport', noGestureReport: 'Zoom eller panorer kartet for å registrere en rapport', gestureCopied: 'Bevegelsesrapport kopiert', gestureCopyFailed: 'Kopiering feilet – trykk igjen',
     mapHint: 'Rull for å zoome · Dra for å flytte', continueHint: 'Klikk på kartet eller trykk mellomrom for å fortsette',
     loadingMap: 'Laster detaljert kart…', selectedCountry: 'Valgt land', selectedArea: 'Valgt område',
     mapCode: 'Kartkode · {code}', chooseCountry: 'Velg et land på kartet',
@@ -125,9 +129,9 @@ export function t(key: MessageKey, values: Record<string, string | number> = {})
 
 const norwegianRegions: Record<MapRegion['id'], string> = {
   world: 'Verden', europe: 'Europa', 'western-europe': 'Vest-Europa', 'eastern-europe': 'Øst-Europa',
-  balkans: 'Balkan', africa: 'Afrika', asia: 'Asia', 'middle-east': 'Midtøsten',
-  'central-asia': 'Sentral-Asia', 'south-asia': 'Sør-Asia', 'east-asia': 'Øst-Asia',
-  'southeast-asia': 'Sørøst-Asia', 'north-america': 'Nord-Amerika',
+  balkans: 'Balkan', africa: 'Afrika', asia: 'Asia',
+  'middle-east-western-asia': 'Midtøsten og Vest-Asia', 'central-south-asia': 'Sentral- og Sør-Asia',
+  'east-southeast-asia': 'Øst- og Sørøst-Asia', 'north-america': 'Nord-Amerika',
   'central-america-caribbean': 'Mellom-Amerika og Karibia',
   'south-america': 'Sør-Amerika', oceania: 'Oseania',
 }

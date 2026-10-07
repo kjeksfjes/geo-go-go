@@ -13,6 +13,10 @@ if (!['localhost', '127.0.0.1'].includes(new URL(url).hostname)) throw new Error
 const repeats = Number(process.argv[3] || 3)
 const layers = process.env.PROFILE_LAYERS === '1'
 const touch = process.env.PROFILE_TOUCH === '1'
+const gestureIntervalMs = Number(process.env.PROFILE_GESTURE_INTERVAL_MS || 0)
+const pinchStep = Number(process.env.PROFILE_PINCH_STEP || 1)
+if (!Number.isFinite(pinchStep) || pinchStep <= 0) throw new Error('PROFILE_PINCH_STEP must be positive')
+if (!Number.isFinite(gestureIntervalMs) || gestureIntervalMs < 0) throw new Error('PROFILE_GESTURE_INTERVAL_MS must be a nonnegative number')
 const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}) })
 const profiles = [
   { name: 'desktop', width: 1200, height: 800, dpr: 1, cpu: 1, mobile: false, layers },
@@ -20,7 +24,7 @@ const profiles = [
 ]
 const focusReference = process.env.PROFILE_BUILD_REF
 const focusSource = focusReference ? execFileSync('git', ['show', `${focusReference}:src/logic/mapFocus.ts`], { encoding: 'utf8' }) : readFileSync(new URL('../src/logic/mapFocus.ts', import.meta.url))
-const result = { url, focusReference: focusReference ?? 'working tree', commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), focusSourceSha256: createHash('sha256').update(focusSource).digest('hex'), browser: browser.version(), diagnostics: { gestures: process.env.PROFILE_GESTURE_AUDIT === '1', gestureTrace: process.env.PROFILE_GESTURE_TRACE === '1', freezeHitTransform: process.env.PROFILE_FREEZE_HIT === '1', stressZoom: process.env.PROFILE_STRESS === '1', lowPinch: process.env.PROFILE_LOW_PINCH === '1', layerGestures: process.env.PROFILE_LAYER_GESTURES === '1', hitScalingStroke: process.env.PROFILE_HIT_SCALING_STROKE === '1', touch }, network: 'Unthrottled loopback; response encodings recorded per run', runs: [] }
+const result = { url, focusReference: focusReference ?? 'working tree', commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), focusSourceSha256: createHash('sha256').update(focusSource).digest('hex'), browser: browser.version(), diagnostics: { gestureIntervalMs, pinchStep, pinchOut: process.env.PROFILE_PINCH_OUT === '1', gestures: process.env.PROFILE_GESTURE_AUDIT === '1', gestureTrace: process.env.PROFILE_GESTURE_TRACE === '1', freezeHitTransform: process.env.PROFILE_FREEZE_HIT === '1', stressZoom: process.env.PROFILE_STRESS === '1', lowPinch: process.env.PROFILE_LOW_PINCH === '1', layerGestures: process.env.PROFILE_LAYER_GESTURES === '1', hitScalingStroke: process.env.PROFILE_HIT_SCALING_STROKE === '1', touch }, network: 'Unthrottled loopback; response encodings recorded per run', runs: [] }
 async function metric(cdp) {
   return Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map(item => [item.name, item.value]))
 }
@@ -116,14 +120,14 @@ for (const config of profiles) for (const renderer of ['canvas', 'svg']) for (le
   async function phase(name, action) {
     const start = await page.evaluate(() => performance.now())
     const before = await metric(cdp)
-    const traceGesture = process.env.PROFILE_GESTURE_TRACE === '1' && /^(high|low|relief)(Pan|Zoom|ZoomOut|Pinch)$/.test(name)
+    const traceGesture = process.env.PROFILE_GESTURE_TRACE === '1' && /^(high|low|relief)(Pan|Zoom|ZoomOut|Pinch|PinchOut)$/.test(name)
     const traceEvents = []
     const collectTrace = event => traceEvents.push(...event.value)
     if (traceGesture) {
       cdp.on('Tracing.dataCollected', collectTrace)
       await cdp.send('Tracing.start', { categories: 'devtools.timeline,disabled-by-default-devtools.timeline', options: 'record-as-much-as-possible' })
     }
-    const freezeHit = process.env.PROFILE_FREEZE_HIT === '1' && /^(high|low|relief)(Pan|Zoom|ZoomOut|Pinch)$/.test(name)
+    const freezeHit = process.env.PROFILE_FREEZE_HIT === '1' && /^(high|low|relief)(Pan|Zoom|ZoomOut|Pinch|PinchOut)$/.test(name)
     if (freezeHit) await page.evaluate(() => {
       const node = document.querySelector('.map-content')
       const original = node.setAttribute.bind(node)
@@ -226,13 +230,19 @@ for (const config of profiles) for (const renderer of ['canvas', 'svg']) for (le
     const rect = await page.locator('.world-map').boundingBox()
     for (let i = 0; i < 60; i++) await page.mouse.move(rect.x + rect.width * (0.15 + 0.7 * (i / 59)), rect.y + rect.height * 0.45)
   })
+  async function waitForGestureStep(start, step) {
+    if (gestureIntervalMs > 0) {
+      await new Promise(resolve => setTimeout(resolve, Math.max(0, start + (step + 1) * gestureIntervalMs - performance.now())))
+    } else await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
+  }
   async function gesture(kind) {
     if (kind === 'pan' && config.mobile && touch) {
       const rect = await page.locator('.world-map').boundingBox()
       const x = rect.x + rect.width / 2, y = rect.y + rect.height / 2
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] })
+      const start = performance.now()
       for (let i = 0; i < 45; i++) {
-        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
+        await waitForGestureStep(start, i)
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + i * 2, y, id: 1 }] })
       }
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
@@ -243,43 +253,50 @@ for (const config of profiles) for (const renderer of ['canvas', 'svg']) for (le
       const rect = await page.locator('.world-map').boundingBox()
       const x = rect.x + rect.width / 2, y = rect.y + rect.height / 2
       await page.mouse.move(x, y); await page.mouse.down()
+      const start = performance.now()
       for (let i = 0; i < 45; i++) {
-        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
+        await waitForGestureStep(start, i)
         await page.mouse.move(x + i * 2, y)
       }
       await page.mouse.up(); await page.waitForTimeout(300)
       return
     }
-    await page.evaluate(async ({ kind, steps, delta }) => {
+    await page.evaluate(async ({ kind, steps, delta, interval }) => {
       const svg = document.querySelector('.world-map'), rect = svg.getBoundingClientRect()
       const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2
       const dispatch = (type, dx = 0) => svg.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 42, pointerType: 'mouse', isPrimary: true, button: 0, buttons: type === 'pointerup' ? 0 : 1, clientX: x + dx, clientY: y }))
       if (kind === 'pan') dispatch('pointerdown')
+      const start = performance.now()
       for (let i = 0; i < steps; i++) {
-        await new Promise(resolve => requestAnimationFrame(resolve))
+        if (interval > 0) await new Promise(resolve => setTimeout(resolve, Math.max(0, start + (i + 1) * interval - performance.now())))
+        else await new Promise(resolve => requestAnimationFrame(resolve))
         if (kind === 'pan') dispatch('pointermove', i * 2)
         else svg.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: x, clientY: y, deltaY: kind === 'zoomOut' ? delta : -delta }))
       }
       if (kind === 'pan') dispatch('pointerup', 88)
       await new Promise(resolve => setTimeout(resolve, 300))
-    }, { kind, steps: process.env.PROFILE_STRESS === '1' ? 120 : 45, delta: process.env.PROFILE_STRESS === '1' ? 16 : 8 })
+    }, { kind, interval: gestureIntervalMs, steps: process.env.PROFILE_STRESS === '1' ? 120 : 45, delta: process.env.PROFILE_STRESS === '1' ? 16 : 8 })
   }
   await phase('highZoom', () => gesture('zoom'))
   await phase('highPan', () => gesture('pan'))
   if (process.env.PROFILE_STRESS === '1') await phase('highZoomOut', () => gesture('zoomOut'))
-  async function pinchGesture() {
+  async function pinchGesture(out = false) {
     const rect = await page.locator('.world-map').boundingBox()
     const x = rect.x + rect.width / 2, y = rect.y + rect.height / 2
     const points = gap => [{ x: x - gap, y, id: 1 }, { x: x + gap, y, id: 2 }]
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: points(35) })
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: points(out ? 35 + 29 * pinchStep : 35) })
+    const start = performance.now()
     for (let i = 0; i < 30; i++) {
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)))
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: points(35 + i) })
+      await waitForGestureStep(start, i)
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: points(out ? 35 + (29 - i) * pinchStep : 35 + i * pinchStep) })
     }
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
     await page.waitForTimeout(300)
   }
-  if (config.mobile && touch) await phase('highPinch', pinchGesture)
+  if (config.mobile && touch) {
+    await phase('highPinch', () => pinchGesture())
+    if (process.env.PROFILE_PINCH_OUT === '1') await phase('highPinchOut', () => pinchGesture(true))
+  }
   await phase('highCountryActivation', () => page.locator('path.country[data-country-id="KEN"]').first().press('Enter'))
   await phase('quizCold', () => page.getByRole('button', { name: 'Find the country', exact: true }).click())
   await phase('exploreReturn', () => page.getByRole('button', { name: 'Explore', exact: true }).click())
@@ -293,7 +310,10 @@ for (const config of profiles) for (const renderer of ['canvas', 'svg']) for (le
   await page.getByRole('button', { name: 'Map settings', exact: true }).click()
   await phase('lowZoom', () => gesture('zoom'))
   await phase('lowPan', () => gesture('pan'))
-  if (config.mobile && touch && process.env.PROFILE_LOW_PINCH === '1') await phase('lowPinch', pinchGesture)
+  if (config.mobile && touch && process.env.PROFILE_LOW_PINCH === '1') {
+    await phase('lowPinch', () => pinchGesture())
+    if (process.env.PROFILE_PINCH_OUT === '1') await phase('lowPinchOut', () => pinchGesture(true))
+  }
   if (process.env.PROFILE_STRESS === '1') await phase('lowZoomOut', () => gesture('zoomOut'))
   await page.getByRole('button', { name: 'Map settings', exact: true }).click()
   await phase('highDetailWarm', () => page.getByRole('switch', { name: 'High detail', exact: true }).click())
