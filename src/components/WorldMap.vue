@@ -29,7 +29,7 @@ import {
 } from '../composables/useMapZoom'
 import type { GeographicUnitFeature } from '../types/country'
 import type { CanvasMapScene } from '../types/mapCanvas'
-import type { MapRegion, MapRegionId } from '../data/regions'
+import { quizEntityIdsByRegion, type MapRegion, type MapRegionId } from '../data/regions'
 import { loadBathymetryBands, type BathymetryBand } from '../data/bathymetry'
 import { loadReliefBands, type ReliefBand } from '../data/relief'
 import { afterPaint, wait } from '../utils/paint'
@@ -52,6 +52,7 @@ import {
   type MapInteractionState,
 } from '../logic/mapInteraction'
 import { selectionFocusTarget } from '../logic/mapFocus'
+import { mergeQuestionMarkerRings } from '../logic/questionMarkerRings'
 import {
   smallCountryMarkers as groupSmallCountryMarkers,
   type SmallCountryAnchor,
@@ -60,8 +61,12 @@ import {
 } from '../logic/smallCountryMarkers'
 
 const PREFERRED_COUNTRY_FOCUS_SCALE = 5
+const COUNTRY_MARKER_MIN_ZOOM = 2
+const MARKER_DISTRIBUTION_MS = 200
+const MARKER_STAGGER_MS = 120
 const mapSettingKeys = {
   projection: 'geo-go-go.map.projection',
+  countryMarkers: 'geo-go-go.quiz.country-markers',
   autoRegionalProjection: 'geo-go-go.map.auto-regional-projection',
   globalProjection: 'geo-go-go.map.global-projection',
   limitedCountryZoom: 'geo-go-go.map.limit-automatic-country-zoom',
@@ -145,6 +150,7 @@ const reliefBands = shallowRef<readonly ReliefBand[]>([])
 const marineLabelsEnabled = ref(readStoredBoolean(mapSettingKeys.marineLabels, true))
 const scaleBarEnabled = ref(readStoredBoolean(mapSettingKeys.scaleBar, true))
 const scaleUnits = ref<ScaleUnitSystem>(initialScaleUnits())
+const countryMarkersEnabled = ref(readStoredBoolean(mapSettingKeys.countryMarkers, true))
 const limitedCountryZoomEnabled = ref(readStoredBoolean(mapSettingKeys.limitedCountryZoom, true))
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
@@ -153,6 +159,7 @@ const canvasContextKind = ref('unavailable')
 const fastTouchZoomPreview = ref(false)
 const restoringTouchDetail = ref(false)
 const canvasRendererActive = computed(() => canvasRendererEnabled && canvasReady.value)
+watch(countryMarkersEnabled, (value) => writeStoredValue(mapSettingKeys.countryMarkers, value))
 watch(autoRegionalProjection, (value) => writeStoredValue(mapSettingKeys.autoRegionalProjection, value))
 watch(globalProjectionId, (value) => writeStoredValue(mapSettingKeys.globalProjection, value))
 watch(projectionId, (value) => writeStoredValue(mapSettingKeys.projection, value))
@@ -224,6 +231,7 @@ const {
   horizontalWrap,
   interactionGeographicPaths,
   projectPoint,
+  questionLandmassAnchors,
   projectionDebug,
   projectionScale,
   reliefClipPath,
@@ -247,30 +255,49 @@ const visibleSupplementalLandPaths = computed(() => props.quizMode
   ? supplementalLandPaths.value.filter((area) => !quizMergedSourceIds.has(area.id))
   : supplementalExploreLandPaths.value,
 )
-// Global projections keep their world-sized canvas. At minimum zoom, center
-// the filtered region within that canvas instead of returning to world origin.
-const minimumZoomPoint = computed<MapPoint | null>(() => {
-  if (props.activeRegion.id === 'world' || projectionId.value === 'regional-equal-area') return null
-  const center = props.activeRegion.view?.center
-  return center ? projectPoint(center) ?? null : null
-})
 const regionViewConstraint = computed<MapViewConstraint | null>(() => {
   if (props.activeRegion.id === 'world') return null
   if (projectionId.value !== 'regional-equal-area') {
     const view = props.activeRegion.view
     const center = view && projectPoint(view.center)
     if (!view || !center) return null
-    // The global projections need an explicit region-centered navigation
-    // envelope. A member's remote geometry must not open up the whole world.
+    // Start with the existing regional envelope. Expand it only to the
+    // region's quiz-country focus points, so distant source pieces cannot
+    // open the whole world while legitimate questions remain reachable.
     const reach = view.panReach ?? 0.45
     const radiusX = mapWidth.value * reach / view.zoom
     const radiusY = mapHeight.value * reach / view.zoom
+    let left = center[0] - radiusX, right = center[0] + radiusX
+    let top = center[1] - radiusY, bottom = center[1] + radiusY
+    const paddingX = mapWidth.value * 0.25 / view.zoom
+    const paddingY = mapHeight.value * 0.25 / view.zoom
+    const regionCountries = quizEntityIdsByRegion.get(props.activeRegion.id)
+    const candidatesByCountry = new Map<string, typeof interactionGeographicPaths.value>()
+    for (const candidate of interactionGeographicPaths.value) {
+      const id = candidate.unit.properties.entityId
+      if (!candidate.path || !quizCountryIds.has(id) || !regionCountries?.has(id) || !isGeographicUnitVisible(candidate.unit)) continue
+      const candidates = candidatesByCountry.get(id) ?? []
+      candidates.push(candidate)
+      candidatesByCountry.set(id, candidates)
+    }
+    for (const [id, candidates] of candidatesByCountry) {
+      const main = candidates.find(({ unit }) => unit.id === `entity:${id}`)
+        ?? candidates.reduce((largest, candidate) => geoArea(candidate.unit) > geoArea(largest.unit) ? candidate : largest)
+      const target = selectionFocusTarget(main.unit.id, main.bounds, main.focusPoint,
+        interactionGeographicPaths.value, props.visibleMapUnitIds, 0)
+      let x = target.focusPoint?.[0] ?? (target.bounds[0][0] + target.bounds[1][0]) / 2
+      const y = target.focusPoint?.[1] ?? (target.bounds[0][1] + target.bounds[1][1]) / 2
+      if (![x, y].every(Number.isFinite)) continue
+      const wrap = horizontalWrap.value
+      if (wrap) x += Math.round((center[0] - x) / wrap.period) * wrap.period
+      left = Math.min(left, x - paddingX)
+      right = Math.max(right, x + paddingX)
+      top = Math.min(top, y - paddingY)
+      bottom = Math.max(bottom, y + paddingY)
+    }
     return {
       minScale: Math.max(1.15, view.zoom * 0.8),
-      bounds: [
-        [center[0] - radiusX, center[1] - radiusY],
-        [center[0] + radiusX, center[1] + radiusY],
-      ],
+      bounds: [[left, top], [right, bottom]],
     }
   }
 
@@ -345,7 +372,6 @@ const {
   mapHeight,
   mapContent,
   horizontalWrap,
-  minimumZoomPoint,
   regionViewConstraint,
   homeView,
 )
@@ -657,8 +683,14 @@ const smallCountryAnchors = computed<SmallCountryAnchor[]>(() => {
   }))
 })
 
+// Regional Equal Area is already fitted to a selected region at scale one.
+// Global views need a closer camera before tiny-country helpers become useful.
+const countryMarkersVisible = computed(() => countryMarkersEnabled.value && (
+  transform.scale >= COUNTRY_MARKER_MIN_ZOOM
+  || (projectionId.value === 'regional-equal-area' && props.activeRegion.id !== 'world')
+))
 const quizSmallCountryMarkers = computed(() =>
-  props.quizMode && !props.nameCountryQuiz && props.quizAnswerId === null && !props.quizSkipped && !props.quizComplete && !isInteracting.value
+  countryMarkersVisible.value && props.quizMode && !props.nameCountryQuiz && props.quizAnswerId === null && !props.quizSkipped && !props.quizComplete && !isInteracting.value
     ? groupSmallCountryMarkers(
         smallCountryAnchors.value, transform, copyOffsets.value, mapWidth.value, mapHeight.value,
       )
@@ -669,7 +701,7 @@ const zoomTargetHighlights = shallowRef<SmallCountryMarker['targets']>([])
 let pendingZoomTargets: SmallCountryMarker['targets'] = []
 let zoomedMarkerQuestionId: string | null = null
 let zoomHighlightTimer: number | undefined
-const markerDistribution = shallowRef<{ marker: SmallCountryMarker; origin: MapPoint; progress: number } | null>(null)
+const markerDistribution = shallowRef<{ marker: SmallCountryMarker; origin: MapPoint; progress: number; delays: number[] } | null>(null)
 let markerDistributionFrame: number | undefined
 let suppressMarkerTransitionTouch = false
 function cancelMarkerDistribution() {
@@ -685,12 +717,16 @@ const displayedQuizSmallCountryMarkers = computed(() => markerDistribution.value
 const distributingCountryDots = computed(() => {
   const distribution = markerDistribution.value
   if (!distribution) return []
-  const progress = 1 - (1 - distribution.progress) ** 3
-  return distribution.marker.targets.map((target) => ({
-    key: `${target.countryId}:${target.offset}`,
-    x: transform.x + transform.scale * (distribution.origin[0] + progress * (target.x + target.offset - distribution.origin[0])),
-    y: transform.y + transform.scale * (distribution.origin[1] + progress * (target.y - distribution.origin[1])),
-  }))
+  const elapsed = distribution.progress * (MARKER_DISTRIBUTION_MS + MARKER_STAGGER_MS)
+  return distribution.marker.targets.map((target, index) => {
+    const localProgress = Math.max(0, Math.min(1, (elapsed - distribution.delays[index]!) / MARKER_DISTRIBUTION_MS))
+    const progress = 1 - (1 - localProgress) ** 3
+    return {
+      key: `${target.countryId}:${target.offset}`,
+      x: transform.x + transform.scale * (distribution.origin[0] + progress * (target.x + target.offset - distribution.origin[0])),
+      y: transform.y + transform.scale * (distribution.origin[1] + progress * (target.y - distribution.origin[1])),
+    }
+  })
 })
 function clearZoomTargetHighlights() {
   if (zoomHighlightTimer !== undefined) window.clearTimeout(zoomHighlightTimer)
@@ -707,7 +743,7 @@ function showZoomTargetHighlights() {
   pendingZoomTargets = []
   zoomedMarkerQuestionId = null
 }
-watch([() => props.quizQuestionId, () => props.quizAnswerId, () => props.activeRegion.id, () => props.quizMode, () => props.nameCountryQuiz, () => props.quizSkipped, () => props.quizComplete, projectionId, mapWidth, mapHeight], () => {
+watch([() => props.quizQuestionId, () => props.quizAnswerId, () => props.activeRegion.id, () => props.quizMode, () => props.nameCountryQuiz, () => props.quizSkipped, () => props.quizComplete, countryMarkersVisible, projectionId, mapWidth, mapHeight], () => {
   cancelMarkerDistribution()
   clearZoomTargetHighlights()
 })
@@ -721,7 +757,7 @@ watch(isInteracting, (active) => {
   if (active) clearZoomTargetHighlights()
 })
 const revealedCountryMarkers = computed<SmallCountryMarker[]>(() => {
-  if (isInteracting.value || !props.quizMode || props.nameCountryQuiz || props.quizSkipped || props.quizComplete || props.quizAnswerId !== null) return []
+  if (!countryMarkersVisible.value || isInteracting.value || !props.quizMode || props.nameCountryQuiz || props.quizSkipped || props.quizComplete || props.quizAnswerId !== null) return []
   // Only countries that no longer need a small-country target get a temporary selection dot.
   // Still-small countries retain their persistent selection/zoom controls.
   const stillSmall = new Set(quizSmallCountryMarkers.value.flatMap((marker) => marker.targets
@@ -735,16 +771,50 @@ const revealedCountryMarkers = computed<SmallCountryMarker[]>(() => {
     })).filter(({ x, y }) => x >= 0 && x <= mapWidth.value && y >= 0 && y <= mapHeight.value)
 })
 
-const namedQuestionMarkers = computed(() => props.nameCountryQuiz && props.quizAnswerId === null && !props.quizSkipped && !props.quizComplete && !isInteracting.value
-  ? groupSmallCountryMarkers(
-      smallCountryAnchors.value.filter(({ countryId }) => countryId === props.quizQuestionId),
-      transform, copyOffsets.value, mapWidth.value, mapHeight.value,
-    )
-  : [],
-)
+const questionRingGroupingGap = ref(0)
+const questionLocationRings = computed(() => {
+  // These communicate the question itself, so keep them available at its
+  // fitted zoom even when the general Find-the-country helpers are hidden.
+  if (!countryMarkersEnabled.value || !props.nameCountryQuiz || props.quizAnswerId !== null
+    || props.quizSkipped || props.quizComplete || isInteracting.value) return []
+  const questionUnits = geographicPaths.value.filter(({ unit, path }) => path
+    && unit.properties.entityId === props.quizQuestionId && isGeographicUnitVisible(unit))
+  const anchors: SmallCountryAnchor[] = []
+  const landmassRadii = new Map<string, number>()
+  for (const { unit } of questionUnits) {
+    const landmasses = questionLandmassAnchors(unit, transform.scale)
+    if (landmasses === null) return []
+    landmasses.forEach((point, index) => {
+      const anchorId = `${unit.id}:landmass:${index}`
+      landmassRadii.set(anchorId, point.radius * transform.scale)
+      anchors.push({
+        ...point,
+        anchorId,
+        countryId: props.quizQuestionId!,
+        unitId: unit.id,
+        // Eligibility was checked by land area, not the wide island-group bounds.
+        width: 0,
+        height: 0,
+      })
+    })
+  }
+  return groupSmallCountryMarkers(anchors, transform, copyOffsets.value, mapWidth.value, mapHeight.value, 0)
+    .map((marker) => ({
+      ...marker,
+      // Enclose the actual landmass bounds, with ten pixels of clear space.
+      radius: Math.max(14, ...marker.targets.map((target) => Math.hypot(target.screenX - marker.x, target.screenY - marker.y)
+        + (landmassRadii.get(target.anchorId!) ?? 0) + 10)),
+    }))
+})
+
+// Include the white outline in the overlap baseline; the slider adds extra room.
+const namedQuestionMarkers = computed(() => mergeQuestionMarkerRings(questionLocationRings.value, 5 + questionRingGroupingGap.value))
+function setQuestionRingGroupingGap(value: number) {
+  if (Number.isFinite(value)) questionRingGroupingGap.value = Math.max(0, Math.min(80, value))
+}
 
 const quizFeedbackMarkers = computed<SmallCountryFeedbackMarker[]>(() => {
-  if (!props.quizMode || (props.quizAnswerId === null && !props.quizSkipped) || props.quizComplete || isInteracting.value) return []
+  if (!countryMarkersVisible.value || !props.quizMode || (props.quizAnswerId === null && !props.quizSkipped) || props.quizComplete || isInteracting.value) return []
   const answerIds = new Set([props.quizQuestionId, props.quizAnswerId])
   return groupSmallCountryMarkers(
     smallCountryAnchors.value.filter((anchor) => answerIds.has(anchor.countryId)),
@@ -1161,7 +1231,7 @@ function hoverSmallCountryMarker(marker: SmallCountryMarker | null) {
 
 function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEvent | KeyboardEvent) {
   if (event instanceof MouseEvent && (consumeDragClick() || event.detail > 1)) return
-  if (markerDistribution.value || !canActivateGeographicUnit(interactionState.value)) return
+  if (!countryMarkersVisible.value || markerDistribution.value || !canActivateGeographicUnit(interactionState.value)) return
 
   if (marker.targets.length === 1) {
     const target = marker.targets[0]
@@ -1175,16 +1245,22 @@ function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEven
     zoomSmallCountryGroup(marker)
     return
   }
-  markerDistribution.value = {
-    marker,
-    origin: [(marker.x - transform.x) / transform.scale, (marker.y - transform.y) / transform.scale],
-    progress: 0,
-  }
+  const origin: MapPoint = [(marker.x - transform.x) / transform.scale, (marker.y - transform.y) / transform.scale]
+  // Start at twelve o'clock and stagger clockwise. Collinear dots start
+  // nearest-first, keeping the sequence deterministic without changing targets.
+  const order = marker.targets.map((target, index) => {
+    const dx = target.x + target.offset - origin[0]
+    const dy = target.y - origin[1]
+    return { index, angle: (Math.atan2(dy, dx) + Math.PI * 2.5) % (Math.PI * 2), distance: Math.hypot(dx, dy) }
+  }).sort((a, b) => a.angle - b.angle || a.distance - b.distance)
+  const delays = new Array<number>(marker.targets.length)
+  order.forEach(({ index }, rank) => { delays[index] = MARKER_STAGGER_MS * rank / (order.length - 1) })
+  markerDistribution.value = { marker, origin, progress: 0, delays }
   const startedAt = performance.now()
   const distribute = (now: number) => {
     const distribution = markerDistribution.value
     if (!distribution) return
-    const progress = Math.min(1, (now - startedAt) / 200)
+    const progress = Math.min(1, (now - startedAt) / (MARKER_DISTRIBUTION_MS + MARKER_STAGGER_MS))
     markerDistribution.value = { ...distribution, progress }
     if (progress < 1) markerDistributionFrame = requestAnimationFrame(distribute)
     else {
@@ -1250,6 +1326,8 @@ function setReliefEnabled(enabled: boolean) {
 }
 
 function resetMapSettings() {
+  questionRingGroupingGap.value = 0
+  countryMarkersEnabled.value = true
   autoRegionalProjection.value = false
   pendingAutoProjection.value = null
   globalProjectionId.value = 'mercator'
@@ -1589,7 +1667,10 @@ async function setProjection(nextId: MapProjectionId) {
           :copy-offsets="copyOffsets"
         />
         <g v-if="namedQuestionMarkers.length" class="named-question-markers" role="img" :aria-label="t('highlightedCountry')">
-          <circle v-for="marker in namedQuestionMarkers" :key="marker.key" :cx="marker.x" :cy="marker.y" r="9" />
+          <g v-for="marker in namedQuestionMarkers" :key="marker.key">
+            <circle class="named-question-markers__back" :cx="marker.x" :cy="marker.y" :r="marker.radius" />
+            <circle :cx="marker.x" :cy="marker.y" :r="marker.radius" />
+          </g>
         </g>
         <SmallCountryMarkers
           v-if="quizSmallCountryMarkers.length || quizFeedbackMarkers.length || revealedCountryMarkers.length"
@@ -1701,6 +1782,12 @@ async function setProjection(nextId: MapProjectionId) {
         <div class="settings-side-column">
           <section class="settings-section" aria-labelledby="settings-quiz-heading">
             <h3 id="settings-quiz-heading">{{ t('quizSettings') }}</h3>
+            <MapDetailToggle
+              :label="t('countryMarkers')"
+              :description="t('countryMarkersHint')"
+              :model-value="countryMarkersEnabled"
+              @update:model-value="countryMarkersEnabled = $event"
+            />
             <fieldset class="answer-scope-setting" aria-describedby="answer-scope-context answer-scope-hint">
               <legend class="visually-hidden">{{ t('answerSuggestions') }}</legend>
               <p class="settings-card-title" aria-hidden="true">{{ t('answerSuggestions') }}</p>
@@ -1778,6 +1865,9 @@ async function setProjection(nextId: MapProjectionId) {
       <MapDebugPanel
         v-if="debugEnabled && debugMetrics"
         v-bind="debugMetrics"
+        :question-ring-grouping-gap="nameCountryQuiz ? questionRingGroupingGap : undefined"
+        :question-ring-count="nameCountryQuiz ? namedQuestionMarkers.length : undefined"
+        @update:question-ring-grouping-gap="setQuestionRingGroupingGap"
         :disabled="interactionLocked"
         @reset-settings="resetMapSettings"
       />
@@ -2069,7 +2159,8 @@ async function setProjection(nextId: MapProjectionId) {
 .country--quiz-question-related { fill: rgb(190 169 218 / 80%); stroke: #80619e; stroke-width: 1.1; }
 .country--quiz-question { fill: rgb(143 108 183 / 88%); stroke: #593779; stroke-width: 1.5; }
 .small-country-distribution { fill: var(--ui-ink); stroke: var(--ui-surface); stroke-width: 2; pointer-events: none; }
-.named-question-markers { fill: #8f6cb7; stroke: #fff; stroke-width: 2; pointer-events: none; }
+.named-question-markers { fill: none; stroke: #8f6cb7; stroke-width: 2.5; pointer-events: none; }
+.named-question-markers__back { stroke: var(--ui-surface); stroke-width: 4.5; }
 .world-map--naming .country,
 .world-map--naming .country.country--hit-only { pointer-events: none; cursor: grab; }
 

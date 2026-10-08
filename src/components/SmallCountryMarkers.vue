@@ -32,6 +32,16 @@ const displayMarkers = computed(() => [
   ...props.temporaryMarkers.map((marker) => ({ ...marker, temporary: true })),
 ])
 
+const groupAreas = computed(() => props.markers.filter((marker) => marker.targets.length > 1)
+  .map((marker) => ({
+    key: marker.key,
+    x: marker.x,
+    y: marker.y,
+    // Tiny-country bounds are under ten screen pixels. Add breathing room
+    // around the farthest target and keep the outline outside the count badge.
+    radius: Math.max(24, ...marker.targets.map((target) => Math.hypot(target.screenX - marker.x, target.screenY - marker.y) + 8)),
+  })))
+
 const activeMarkerKey = ref<string | null>(null)
 const tooltipText = ref<SVGTextElement | null>(null)
 const measuredTooltipText = ref<{ label: string; width: number } | null>(null)
@@ -85,6 +95,9 @@ function feedbackLabel(marker: SmallCountryFeedbackMarker) {
 
 <template>
   <g class="small-country-markers">
+    <g class="small-country-marker__areas" aria-hidden="true">
+      <circle v-for="area in groupAreas" :key="area.key" :cx="area.x" :cy="area.y" :r="area.radius" />
+    </g>
     <g
       v-for="marker in displayMarkers"
       :key="marker.key"
@@ -134,6 +147,7 @@ function feedbackLabel(marker: SmallCountryFeedbackMarker) {
 <style scoped>
 .small-country-markers { pointer-events: none; }
 .small-country-marker { pointer-events: all; cursor: pointer; outline: none; }
+.small-country-marker__areas { fill: var(--ui-ink); fill-opacity: 0.045; stroke: var(--ui-ink); stroke-opacity: 0.25; stroke-width: 1; pointer-events: none; }
 .small-country-marker__hit { fill: transparent; }
 .small-country-marker__pin {
   fill: #17374b;

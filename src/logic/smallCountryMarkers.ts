@@ -1,4 +1,6 @@
 export interface SmallCountryAnchor {
+  // Distinguishes location cues within one country without adding quiz identities.
+  anchorId?: string
   countryId: string
   unitId: string
   x: number
@@ -42,6 +44,7 @@ export function smallCountryMarkers(
   copyOffsets: readonly number[],
   width: number,
   height: number,
+  groupingDistance = SMALL_COUNTRY_HIT_RADIUS * 2,
 ): SmallCountryMarker[] {
   const targets: SmallCountryTarget[] = []
   for (const anchor of anchors) {
@@ -70,7 +73,7 @@ export function smallCountryMarkers(
       if (Math.hypot(
         targets[first].screenX - targets[second].screenX,
         targets[first].screenY - targets[second].screenY,
-      ) < SMALL_COUNTRY_HIT_RADIUS * 2) parents[root(second)] = root(first)
+      ) < groupingDistance) parents[root(second)] = root(first)
     }
   }
 
@@ -83,7 +86,7 @@ export function smallCountryMarkers(
   }
 
   return [...groups.values()].map((group) => ({
-    key: `${group[0].countryId}:${group[0].offset}`,
+    key: `${group[0].anchorId ?? group[0].countryId}:${group[0].offset}`,
     x: group.reduce((sum, target) => sum + target.screenX, 0) / group.length,
     y: group.reduce((sum, target) => sum + target.screenY, 0) / group.length,
     targets: group,

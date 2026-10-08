@@ -32,7 +32,6 @@ export function useMapZoom(
   height: Ref<number>,
   mapContent: Ref<SVGGElement | null>,
   horizontalWrap: Ref<HorizontalWrap | null>,
-  minimumZoomPoint: Ref<MapPoint | null>,
   viewConstraint: Ref<MapViewConstraint | null>,
   homeView: Ref<MapHomeView | null>,
 ) {
@@ -122,7 +121,14 @@ export function useMapZoom(
       // Bounds already include the selected region's intentional breathing
       // room. They affect navigation, never quiz membership.
       const [[left, top], [right, bottom]] = regionalView.bounds
-      const centerX = Math.max(left, Math.min(right, (width.value / 2 - x) / scale))
+      let requestedCenterX = (width.value / 2 - x) / scale
+      const wrap = horizontalWrap.value
+      if (wrap) {
+        // Regional bounds use one continuous longitude range. Resolve a target
+        // across the date line into that range before clamping it.
+        requestedCenterX += Math.round(((left + right) / 2 - requestedCenterX) / wrap.period) * wrap.period
+      }
+      const centerX = Math.max(left, Math.min(right, requestedCenterX))
       const centerY = Math.max(top, Math.min(bottom, (height.value / 2 - y) / scale))
       return {
         x: width.value / 2 - scale * centerX,
@@ -379,22 +385,11 @@ export function useMapZoom(
 
     const wheelX = pointerX - (pointerX - transform.x) * ratio
     const wheelY = pointerY - (pointerY - transform.y) * ratio
-    const center = minimumZoomPoint.value
-    const settleScale = minimumScale * 1.5
-    if (center && nextScale < settleScale) {
-      // Ease the pointer-anchored zoom toward the region's center before the
-      // minimum is reached, avoiding a final-frame snap across the canvas.
-      const weight = (settleScale - nextScale) / (settleScale - minimumScale)
-      const centeredX = width.value / 2 - nextScale * center[0]
-      const centeredY = height.value / 2 - nextScale * center[1]
-      setTransform(
-        wheelX + (centeredX - wheelX) * weight,
-        wheelY + (centeredY - wheelY) * weight,
-        nextScale,
-      )
-    } else if (nextScale === minimumScale && !viewConstraint.value) {
+    if (nextScale === minimumScale && !viewConstraint.value) {
       setTransform(0, 0, MIN_ZOOM)
     } else {
+      // Regional zoom remains pointer-anchored even near its minimum. The
+      // separate Reset view action is responsible for returning to the region.
       setTransform(wheelX, wheelY, nextScale)
     }
   }

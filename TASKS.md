@@ -145,13 +145,13 @@ Natural Earth's 10m and 50m labels mean 1:10 million and 1:50 million map scales
 
 Status: Deferred. Added: 2026-10-06.
 
-Each quiz mode now preserves a separate round in memory when switching modes, including its region, question order and position, score, submitted answer or skip state, selected component, revealed answers, typed draft, and guess preview. The user requested reload recovery as follow-up work; recording this task does not authorize implementation.
+Recover the active quiz after a browser reload or closing and reopening the app mid-round. Explicitly leaving a quiz or changing its region ends that round; recovery must not restore it later. The user requested browser reload recovery as follow-up work; recording this task does not authorize implementation.
 
 ### Completion criteria
 
 - [ ] Decide persistence lifetime and resume behavior after reload or reopening the app, including whether to offer resume or start fresh.
-- [ ] Persist and restore both quiz rounds with a versioned storage format; validate country and region identities, question order and position, score, and answer states against the current data before resuming.
-- [ ] Handle unavailable storage, malformed or outdated saved rounds, and changes in quiz eligibility without interrupting play; clear the appropriate saved round on restart and respect settings reset behavior.
+- [ ] Persist and restore the active quiz with a versioned storage format, including its mode, region, question order and position, score, submitted answer or skip state, selected component, revealed answers, typed draft, and guess preview. Validate country and region identities and saved state against the current data before resuming.
+- [ ] Handle unavailable storage, malformed or outdated saved rounds, and changes in quiz eligibility without interrupting play; clear the saved round when leaving the quiz, switching quiz modes, changing region, or restarting, and respect settings reset behavior.
 - [ ] Verify both quiz modes, region restoration, wrong answers, skips, completed rounds, bilingual feedback, and keyboard/touch interactions with proportionate automated checks. Leave visual acceptance to the user.
 
 ## TASK-009 — Add contextual tips for quiz shortcuts
