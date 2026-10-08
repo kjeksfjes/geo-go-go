@@ -178,6 +178,19 @@ The user requested an assessment and backlog entry for behavior-aware guidance t
 - [ ] Verify that observed shortcut use, individual dismissal, global opt-out, reloads, language/mode/input-method changes, and unavailable storage all produce predictable behavior without repeated tips.
 - [ ] Verify keyboard focus, touch taps versus pan/pinch, quiz state preservation, and mobile card framing; run proportionate build and automated checks. Leave visual acceptance and threshold tuning to the user.
 
+## TASK-010 — Investigate Firefox pan and zoom performance
+
+Status: Deferred. Added: 2026-10-07.
+
+The user reports performance issues when panning and zooming in Firefox and wants a dedicated investigation later. Firefox version, operating system, hardware, input method, renderer, map detail, layers, and affected modes have not yet been recorded. This backlog entry does not authorize profiling or implementation. Keep the accepted mobile movement behavior in place; earlier Chromium measurements do not establish Firefox performance.
+
+### Completion criteria
+
+- [ ] Record the affected Firefox/device configuration and reproducible pan/zoom sequences, then establish a focused Firefox baseline before choosing changes.
+- [ ] Identify the dominant cost using proportionate measurements of input/camera updates, canvas worker and bitmap handoff, SVG fallback, and browser painting/compositing; distinguish measured causes from hypotheses.
+- [ ] Apply only justified, maintainable improvements, preserving Canvas/SVG consistency, both 50m/10m detail levels, geographic identities, quiz progress and highlights, and accepted mobile behavior.
+- [ ] Compare Firefox before/after behavior and check affected paths in other supported browsers; run the build and proportionate automated checks. Leave visual and perceived-performance acceptance to the user unless explicitly requested otherwise.
+
 ## Audit status
 
 The Korean DMZ's quiz treatment is implemented: its southern half counts as South Korea and its northern half as North Korea, retaining the dividing line while hiding outer DMZ boundaries. Explore presents one dissolved hover, click, and keyboard-focus area with a shared label, subtle outer boundaries, and a separate noninteractive dashed center line. Automated checks cover both detail levels and all projections; visual acceptance remains with the user. All other outstanding audit decisions are deferred under TASK-001, TASK-002, and TASK-003; restoring land coverage is complete for the audited source data. The Egypt–Sudan correction and shared low-detail supplemental exclusions are implemented under TASK-004, awaiting visual acceptance; Bir Tawil’s label and quiz policy are resolved.
