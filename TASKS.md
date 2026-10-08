@@ -145,13 +145,13 @@ Natural Earth's 10m and 50m labels mean 1:10 million and 1:50 million map scales
 
 Status: Deferred. Added: 2026-10-06.
 
-Each quiz mode now preserves a separate round in memory when switching modes, including its region, question order and position, score, submitted answer or skip state, selected component, revealed answers, typed draft, and guess preview. The user requested reload recovery as follow-up work; recording this task does not authorize implementation.
+Recover the active quiz after a browser reload or closing and reopening the app mid-round. Explicitly leaving a quiz or changing its region ends that round; recovery must not restore it later. The user requested browser reload recovery as follow-up work; recording this task does not authorize implementation.
 
 ### Completion criteria
 
 - [ ] Decide persistence lifetime and resume behavior after reload or reopening the app, including whether to offer resume or start fresh.
-- [ ] Persist and restore both quiz rounds with a versioned storage format; validate country and region identities, question order and position, score, and answer states against the current data before resuming.
-- [ ] Handle unavailable storage, malformed or outdated saved rounds, and changes in quiz eligibility without interrupting play; clear the appropriate saved round on restart and respect settings reset behavior.
+- [ ] Persist and restore the active quiz with a versioned storage format, including its mode, region, question order and position, score, submitted answer or skip state, selected component, revealed answers, typed draft, and guess preview. Validate country and region identities and saved state against the current data before resuming.
+- [ ] Handle unavailable storage, malformed or outdated saved rounds, and changes in quiz eligibility without interrupting play; clear the saved round when leaving the quiz, switching quiz modes, changing region, or restarting, and respect settings reset behavior.
 - [ ] Verify both quiz modes, region restoration, wrong answers, skips, completed rounds, bilingual feedback, and keyboard/touch interactions with proportionate automated checks. Leave visual acceptance to the user.
 
 ## TASK-009 — Add contextual tips for quiz shortcuts
@@ -177,6 +177,19 @@ The user requested an assessment and backlog entry for behavior-aware guidance t
 - [ ] Agree initial tip placement, detection thresholds, and frequency limits, then implement the smallest useful set through explicit existing action events.
 - [ ] Verify that observed shortcut use, individual dismissal, global opt-out, reloads, language/mode/input-method changes, and unavailable storage all produce predictable behavior without repeated tips.
 - [ ] Verify keyboard focus, touch taps versus pan/pinch, quiz state preservation, and mobile card framing; run proportionate build and automated checks. Leave visual acceptance and threshold tuning to the user.
+
+## TASK-010 — Investigate Firefox pan and zoom performance
+
+Status: Deferred. Added: 2026-10-07.
+
+The user reports performance issues when panning and zooming in Firefox and wants a dedicated investigation later. Firefox version, operating system, hardware, input method, renderer, map detail, layers, and affected modes have not yet been recorded. This backlog entry does not authorize profiling or implementation. Keep the accepted mobile movement behavior in place; earlier Chromium measurements do not establish Firefox performance.
+
+### Completion criteria
+
+- [ ] Record the affected Firefox/device configuration and reproducible pan/zoom sequences, then establish a focused Firefox baseline before choosing changes.
+- [ ] Identify the dominant cost using proportionate measurements of input/camera updates, canvas worker and bitmap handoff, SVG fallback, and browser painting/compositing; distinguish measured causes from hypotheses.
+- [ ] Apply only justified, maintainable improvements, preserving Canvas/SVG consistency, both 50m/10m detail levels, geographic identities, quiz progress and highlights, and accepted mobile behavior.
+- [ ] Compare Firefox before/after behavior and check affected paths in other supported browsers; run the build and proportionate automated checks. Leave visual and perceived-performance acceptance to the user unless explicitly requested otherwise.
 
 ## Audit status
 

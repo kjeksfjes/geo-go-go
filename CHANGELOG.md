@@ -2,6 +2,30 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.13.0 — Island Signals — 2026-10-08
+
+### Improvements
+
+- Start a fresh round in the selected region whenever entering a quiz. Leaving a quiz ends its round, with confirmation once a question has been answered or skipped, instead of preserving paused rounds and restoring older regions.
+
+- Kept wheel zoom anchored to the pointer near regional minimum zoom, avoiding unintended recentering away from countries such as Federated States of Micronesia.
+
+- Kept regional quiz countries reachable when zooming by expanding navigation limits around their focus points and resolving wrapped positions before clamping, fixing Oceania framing for Marshall Islands and Samoa.
+
+- Merged overlapping Name the country location rings and added a temporary Ring grouping slider with a live ring count in the debug panel for visual tuning.
+
+- Added hollow Name the country location rings around scattered tiny landmasses, such as Kiribati, without revealing country names or creating new quiz identities. Question cues remain available at fitted zoom levels.
+
+- Added a remembered Country markers switch at the top of Quiz settings. Markers stay hidden in the world overview and appear from 2× zoom in global projections or in fitted Regional Equal Area region views, while country shapes remain clickable.
+
+- Matched “Always show” to the font size of the other inline quiz reveal controls.
+
+- Added a desktop and mobile transition that separates numbered groups into small country dots with a clockwise stagger before zooming, with the dots following their countries during the zoom and reduced-motion preferences respected.
+
+- Kept country markers and their tooltips above water-name labels in both map renderers.
+
+- Clarified Find the country markers with numbered zoom groups with faint area circles around their country targets, distinct filled selection dots for individual countries, compact action labels on hover or keyboard focus, and lighter temporary dots that briefly mark newly enlarged countries, then fade away within three seconds.
+
 ## 0.12.0 — Guided Horizons — 2026-10-07
 
 ### Improvements

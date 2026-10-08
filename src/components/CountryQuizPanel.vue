@@ -9,7 +9,6 @@ const CountryAnswerCombobox = defineAsyncComponent(() => import('./CountryAnswer
 const props = defineProps<{
   identify?: boolean
   viewingOutsideRegion?: boolean
-  resumeNotice: string
   wrongAnswerRevealed: boolean
   correctAnswerVisible: boolean
   automaticReveal: boolean
@@ -115,7 +114,6 @@ watch(() => props.question?.id, async (countryId) => {
   <section class="quiz-panel map-overlay__content" :class="[`quiz-panel--${phase}`, { 'quiz-panel--identify': identify, 'quiz-panel--with-flag': showQuestionFlag }]" :aria-label="t(identify ? 'nameCountry' : 'quiz')" @keydown.capture="handleSkipShortcut">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
-        <p v-if="resumeNotice" class="quiz-panel__resume">{{ resumeNotice }}</p>
         <p class="map-overlay__eyebrow">{{ t('regionComplete') }}</p>
         <h2 class="map-overlay__heading">{{ t('finalScore', { score, total }) }}</h2>
       </div>
@@ -143,7 +141,6 @@ watch(() => props.question?.id, async (countryId) => {
         <p class="map-overlay__eyebrow">
           {{ t('questionStatus', { number: questionNumber, total, score, points: t(score === 1 ? 'point' : 'points') }) }}
         </p>
-        <p v-if="resumeNotice" class="quiz-panel__resume" role="status">{{ resumeNotice }}</p>
         <h2 class="map-overlay__heading" ref="questionHeading" tabindex="-1">{{ identify ? t('identifyQuestion') : t('find', { name: countryName(question.id) }) }}</h2>
       </div>
       <CountryAnswerCombobox
@@ -270,7 +267,6 @@ watch(() => props.question?.id, async (countryId) => {
 
 .quiz-panel__message:first-child { grid-column: 1 / -1; }
 
-.quiz-panel__resume { margin: 0 0 0.3rem; color: var(--ui-text); font-size: var(--ui-text-small); }
 
 .quiz-panel__status {
   grid-column: 2;
@@ -332,7 +328,6 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel__text-button--preference {
   white-space: nowrap;
   color: var(--ui-muted);
-  font-size: var(--ui-text-control);
   font-weight: var(--ui-weight);
   text-decoration-color: var(--ui-border-strong);
 }

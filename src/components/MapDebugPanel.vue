@@ -12,6 +12,8 @@ interface VerticalFit {
 
 const props = defineProps<{
   disabled: boolean
+  questionRingGroupingGap?: number
+  questionRingCount?: number
   zoom: number
   countryFocus: string
   center: MapPoint | null
@@ -32,6 +34,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
   'reset-settings': []
+  'update:question-ring-grouping-gap': [value: number]
 }>()
 const copyState = ref<'idle' | 'copied' | 'failed'>('idle')
 const resetState = ref<'idle' | 'reset'>('idle')
@@ -97,6 +100,9 @@ function debugText() {
       `Paths: ${props.paths.result} · ${durationLabel(props.paths.durationMs)} · ${props.paths.unitCount} units`,
       `Path key: ${props.paths.key}`,
     )
+  }
+  if (props.questionRingGroupingGap !== undefined) {
+    lines.push(`Question rings: ${props.questionRingCount ?? 0} · grouping gap ${props.questionRingGroupingGap} px`)
   }
   return lines.join('\n')
 }
@@ -169,6 +175,13 @@ onBeforeUnmount(() => {
         {{ copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : '' }}
       </span>
     </div>
+    <div v-if="questionRingGroupingGap !== undefined" class="map-debug-panel__ring-tuning">
+      <label for="question-ring-grouping">Ring grouping <output>{{ questionRingGroupingGap }} px · {{ questionRingCount ?? 0 }} rings</output></label>
+      <input id="question-ring-grouping" type="range" min="0" max="80" step="2"
+        :value="questionRingGroupingGap" :disabled="disabled" aria-describedby="question-ring-grouping-hint"
+        @input="emit('update:question-ring-grouping-gap', Number(($event.target as HTMLInputElement).value))" />
+      <p id="question-ring-grouping-hint">Increase to combine nearby question rings.</p>
+    </div>
     <dl>
       <dt>Zoom</dt>
       <dd>{{ zoom.toFixed(2) }}×</dd>
@@ -232,6 +245,12 @@ onBeforeUnmount(() => {
   user-select: none;
   backdrop-filter: blur(8px);
 }
+
+.map-debug-panel__ring-tuning { margin: 0.35rem 0 0.6rem; padding: 0.45rem 0; border-block: 1px solid rgb(255 255 255 / 20%); pointer-events: auto; }
+.map-debug-panel__ring-tuning label { display: flex; justify-content: space-between; gap: 0.75rem; }
+.map-debug-panel__ring-tuning input { display: block; width: 100%; margin: 0.4rem 0; accent-color: #bfa9da; }
+.map-debug-panel__ring-tuning p { margin: 0; color: #9fc0ca; }
+.map-debug-panel__ring-tuning input:focus-visible { outline: 2px solid #edf7f8; outline-offset: 2px; }
 
 .map-debug-panel__header {
   position: relative;

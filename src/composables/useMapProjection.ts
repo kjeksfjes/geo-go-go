@@ -7,7 +7,7 @@ import {
 } from 'd3-geo'
 import { geoMiller, geoWinkel3 } from 'd3-geo-projection'
 import { computed, onScopeDispose, shallowRef, watch, type Ref } from 'vue'
-import type { FeatureCollection, LineString, MultiPoint } from 'geojson'
+import type { FeatureCollection, Geometry, LineString, MultiPoint, Polygon } from 'geojson'
 import type { GeographicUnitFeature } from '../types/country'
 import type { GeographicFrame, MapRegion } from '../data/regions'
 import type { BathymetryBand, BathymetryDepth } from '../data/bathymetry'
@@ -522,6 +522,30 @@ export function useMapProjection(
     return projection(point) as MapPoint | undefined
   }
 
+  function questionLandmassAnchors(unit: GeographicUnitFeature, scale: number) {
+    const generator = pathGenerator.value
+    function polygons(geometry: Geometry): Polygon[] {
+      if (geometry.type === 'Polygon') return [geometry]
+      if (geometry.type === 'MultiPolygon') return geometry.coordinates.map((coordinates) => ({ type: 'Polygon', coordinates }))
+      if (geometry.type === 'GeometryCollection') return geometry.geometries.flatMap(polygons)
+      return []
+    }
+    const anchors: Array<{ x: number; y: number; width: number; height: number; radius: number }> = []
+    for (const polygon of polygons(displayFeature(unit).geometry)) {
+      // One recognizable landmass is enough to use the ordinary question fill.
+      // Scattered tiny islands need location cues despite a wide total footprint.
+      if (generator.area(polygon) * scale * scale >= 100) return null
+      const [[x0, y0], [x1, y1]] = generator.bounds(polygon)
+      const [x, y] = generator.centroid(polygon)
+      if (![x, y, x0, y0, x1, y1].every(Number.isFinite)) continue
+      anchors.push({
+        x, y, width: x1 - x0, height: y1 - y0,
+        radius: Math.max(Math.hypot(x - x0, y - y0), Math.hypot(x - x1, y - y0), Math.hypot(x - x0, y - y1), Math.hypot(x - x1, y - y1)),
+      })
+    }
+    return anchors
+  }
+
   function unprojectPoint(point: MapPoint): MapPoint | undefined {
     const projection = pathGenerator.value.projection() as GeoProjection
     return projection.invert?.(point) as MapPoint | undefined
@@ -536,6 +560,7 @@ export function useMapProjection(
     horizontalWrap,
     interactionGeographicPaths,
     projectPoint,
+    questionLandmassAnchors,
     projectionDebug,
     projectionScale,
     reliefClipPath,
