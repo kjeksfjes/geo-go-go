@@ -2,6 +2,18 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Improvements
+
+- Matched “Always show” to the font size of the other inline quiz reveal controls.
+
+- Added a desktop and mobile transition that separates numbered groups into small country dots before zooming, with the dots following their countries during the zoom and reduced-motion preferences respected.
+
+- Kept country markers and their tooltips above water-name labels in both map renderers.
+
+- Clarified Find the country markers with numbered zoom groups, distinct filled selection dots for individual countries, compact action labels on hover or keyboard focus, and lighter temporary dots that briefly mark newly enlarged countries, then fade away within three seconds.
+
 ## 0.12.0 — Guided Horizons — 2026-10-07
 
 ### Improvements

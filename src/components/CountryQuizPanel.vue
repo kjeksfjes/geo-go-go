@@ -332,7 +332,6 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel__text-button--preference {
   white-space: nowrap;
   color: var(--ui-muted);
-  font-size: var(--ui-text-control);
   font-weight: var(--ui-weight);
   text-decoration-color: var(--ui-border-strong);
 }

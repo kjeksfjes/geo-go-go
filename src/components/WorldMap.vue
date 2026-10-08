@@ -665,6 +665,76 @@ const quizSmallCountryMarkers = computed(() =>
     : [],
 )
 
+const zoomTargetHighlights = shallowRef<SmallCountryMarker['targets']>([])
+let pendingZoomTargets: SmallCountryMarker['targets'] = []
+let zoomedMarkerQuestionId: string | null = null
+let zoomHighlightTimer: number | undefined
+const markerDistribution = shallowRef<{ marker: SmallCountryMarker; origin: MapPoint; progress: number } | null>(null)
+let markerDistributionFrame: number | undefined
+let suppressMarkerTransitionTouch = false
+function cancelMarkerDistribution() {
+  if (markerDistributionFrame !== undefined) cancelAnimationFrame(markerDistributionFrame)
+  markerDistributionFrame = undefined
+  markerDistribution.value = null
+  pendingZoomTargets = []
+  zoomedMarkerQuestionId = null
+}
+const displayedQuizSmallCountryMarkers = computed(() => markerDistribution.value
+  ? quizSmallCountryMarkers.value.filter((marker) => marker.key !== markerDistribution.value?.marker.key)
+  : quizSmallCountryMarkers.value)
+const distributingCountryDots = computed(() => {
+  const distribution = markerDistribution.value
+  if (!distribution) return []
+  const progress = 1 - (1 - distribution.progress) ** 3
+  return distribution.marker.targets.map((target) => ({
+    key: `${target.countryId}:${target.offset}`,
+    x: transform.x + transform.scale * (distribution.origin[0] + progress * (target.x + target.offset - distribution.origin[0])),
+    y: transform.y + transform.scale * (distribution.origin[1] + progress * (target.y - distribution.origin[1])),
+  }))
+})
+function clearZoomTargetHighlights() {
+  if (zoomHighlightTimer !== undefined) window.clearTimeout(zoomHighlightTimer)
+  zoomHighlightTimer = undefined
+  zoomTargetHighlights.value = []
+}
+function showZoomTargetHighlights() {
+  if (props.quizMode && !props.nameCountryQuiz && !props.quizComplete && !props.quizSkipped
+    && zoomedMarkerQuestionId === props.quizQuestionId && props.quizAnswerId === null) {
+    clearZoomTargetHighlights()
+    zoomTargetHighlights.value = pendingZoomTargets
+    zoomHighlightTimer = window.setTimeout(clearZoomTargetHighlights, 3000)
+  }
+  pendingZoomTargets = []
+  zoomedMarkerQuestionId = null
+}
+watch([() => props.quizQuestionId, () => props.quizAnswerId, () => props.activeRegion.id, () => props.quizMode, () => props.nameCountryQuiz, () => props.quizSkipped, () => props.quizComplete, projectionId, mapWidth, mapHeight], () => {
+  cancelMarkerDistribution()
+  clearZoomTargetHighlights()
+})
+watch(isAnimating, (animating) => {
+  if (!animating && zoomedMarkerQuestionId !== null) {
+    markerDistribution.value = null
+    showZoomTargetHighlights()
+  }
+})
+watch(isInteracting, (active) => {
+  if (active) clearZoomTargetHighlights()
+})
+const revealedCountryMarkers = computed<SmallCountryMarker[]>(() => {
+  if (isInteracting.value || !props.quizMode || props.nameCountryQuiz || props.quizSkipped || props.quizComplete || props.quizAnswerId !== null) return []
+  // Only countries that no longer need a small-country target get a temporary selection dot.
+  // Still-small countries retain their persistent selection/zoom controls.
+  const stillSmall = new Set(quizSmallCountryMarkers.value.flatMap((marker) => marker.targets
+    .map((target) => `${target.countryId}:${target.offset}`)))
+  return zoomTargetHighlights.value.filter((target) => !stillSmall.has(`${target.countryId}:${target.offset}`))
+    .map((target) => ({
+      key: `revealed:${target.countryId}:${target.offset}`,
+      x: transform.x + transform.scale * (target.x + target.offset),
+      y: transform.y + transform.scale * target.y,
+      targets: [target],
+    })).filter(({ x, y }) => x >= 0 && x <= mapWidth.value && y >= 0 && y <= mapHeight.value)
+})
+
 const namedQuestionMarkers = computed(() => props.nameCountryQuiz && props.quizAnswerId === null && !props.quizSkipped && !props.quizComplete && !isInteracting.value
   ? groupSmallCountryMarkers(
       smallCountryAnchors.value.filter(({ countryId }) => countryId === props.quizQuestionId),
@@ -732,6 +802,7 @@ function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
 }
 
 function resetView() {
+  cancelMarkerDistribution()
   emit('select', null, null)
   focusActiveRegion(true, true)
 }
@@ -804,6 +875,7 @@ async function selectCountry(
   event?: MouseEvent | KeyboardEvent,
   horizontalOffset = 0,
 ) {
+  if (markerDistribution.value) { event?.stopPropagation(); return }
   if (event instanceof MouseEvent && consumeDragClick()) {
     event.stopPropagation()
     return
@@ -935,6 +1007,7 @@ function selectSupplementalArea(sourceId: string, event: MouseEvent | KeyboardEv
 }
 
 function handleWheel(event: WheelEvent) {
+  cancelMarkerDistribution()
   rememberHoverPointer(event)
   if (svg.value) {
     zoomFromWheel(event, svg.value)
@@ -942,7 +1015,7 @@ function handleWheel(event: WheelEvent) {
 }
 
 function handlePointerDown(event: PointerEvent) {
-  if (event.pointerType === 'touch') return
+  if (event.pointerType === 'touch' || markerDistribution.value) return
   rememberHoverPointer(event)
   if (svg.value) startPan(event, svg.value)
 }
@@ -967,6 +1040,12 @@ function handlePointerEnd(event: PointerEvent) {
 
 function handleTouch(event: TouchEvent) {
   if (!svg.value) return
+  if (event.type === 'touchstart' && markerDistribution.value) {
+    // A new gesture can interrupt the transition without turning a repeat tap
+    // into an answer on the country that happened to move beneath the finger.
+    suppressMarkerTransitionTouch = true
+    cancelMarkerDistribution()
+  }
   if (gestureDebugEnabled && gestureRecorder && !isPinching.value && !isDragging.value && event.type === 'touchstart') captureGestureReport()
   const startedAt = gestureDebugEnabled ? performance.now() : 0
   const initial = gestureDebugEnabled ? gestureSample() : null
@@ -985,6 +1064,7 @@ function handleTouch(event: TouchEvent) {
     }
   } else gestureRecorder?.input(handlerMs)
   if (event.type === 'touchcancel') {
+    if (event.touches.length === 0) suppressMarkerTransitionTouch = false
     consumeDragClick()
     return
   }
@@ -999,6 +1079,9 @@ function handleTouch(event: TouchEvent) {
     suppressCompatibilityClick = false
     compatibilityClickTimer = undefined
   }, 700)
+  const suppressTransitionTap = suppressMarkerTransitionTouch
+  if (event.touches.length === 0) suppressMarkerTransitionTouch = false
+  if (suppressTransitionTap) { consumeDragClick(); return }
   const tapTarget = tap?.target
   if (consumeDragClick() || !tap || !(tapTarget instanceof Element) || !tapTarget.isConnected) return
 
@@ -1021,6 +1104,11 @@ function handleTouch(event: TouchEvent) {
 }
 
 function handleMapCaptureClick(event: MouseEvent) {
+  if (markerDistribution.value) {
+    event.preventDefault()
+    event.stopPropagation()
+    return
+  }
   if (!event.isTrusted || !suppressCompatibilityClick) return
   suppressCompatibilityClick = false
   event.preventDefault()
@@ -1073,7 +1161,7 @@ function hoverSmallCountryMarker(marker: SmallCountryMarker | null) {
 
 function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEvent | KeyboardEvent) {
   if (event instanceof MouseEvent && (consumeDragClick() || event.detail > 1)) return
-  if (!canActivateGeographicUnit(interactionState.value)) return
+  if (markerDistribution.value || !canActivateGeographicUnit(interactionState.value)) return
 
   if (marker.targets.length === 1) {
     const target = marker.targets[0]
@@ -1081,6 +1169,35 @@ function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEven
     return
   }
 
+  clearZoomTargetHighlights()
+  hoveredUnit.value = null
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    zoomSmallCountryGroup(marker)
+    return
+  }
+  markerDistribution.value = {
+    marker,
+    origin: [(marker.x - transform.x) / transform.scale, (marker.y - transform.y) / transform.scale],
+    progress: 0,
+  }
+  const startedAt = performance.now()
+  const distribute = (now: number) => {
+    const distribution = markerDistribution.value
+    if (!distribution) return
+    const progress = Math.min(1, (now - startedAt) / 200)
+    markerDistribution.value = { ...distribution, progress }
+    if (progress < 1) markerDistributionFrame = requestAnimationFrame(distribute)
+    else {
+      markerDistributionFrame = undefined
+      zoomSmallCountryGroup(marker)
+    }
+  }
+  markerDistributionFrame = requestAnimationFrame(distribute)
+}
+
+function zoomSmallCountryGroup(marker: SmallCountryMarker) {
+  zoomedMarkerQuestionId = props.quizQuestionId
+  pendingZoomTargets = marker.targets
   const xs = marker.targets.map((target) => target.screenX)
   const ys = marker.targets.map((target) => target.screenY)
   const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1)
@@ -1089,6 +1206,10 @@ function activateSmallCountryMarker(marker: SmallCountryMarker, event: MouseEven
     [(marker.x - transform.x) / transform.scale, (marker.y - transform.y) / transform.scale],
     transform.scale * factor,
   )
+  if (!isAnimating.value) {
+    markerDistribution.value = null
+    showZoomTargetHighlights()
+  }
   restoreHoverUnderPointer()
 }
 
@@ -1164,6 +1285,8 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  cancelMarkerDistribution()
+  clearZoomTargetHighlights()
   if (gestureFrame !== undefined) cancelAnimationFrame(gestureFrame)
   if (gestureSettleTimer !== undefined) window.clearTimeout(gestureSettleTimer)
   if (gestureCopyTimer !== undefined) window.clearTimeout(gestureCopyTimer)
@@ -1456,18 +1579,6 @@ async function setProjection(nextId: MapProjectionId) {
             </g>
           </g>
         </g>
-        <g v-if="namedQuestionMarkers.length" class="named-question-markers" role="img" :aria-label="t('highlightedCountry')">
-          <circle v-for="marker in namedQuestionMarkers" :key="marker.key" :cx="marker.x" :cy="marker.y" r="9" />
-        </g>
-        <SmallCountryMarkers
-          v-if="quizSmallCountryMarkers.length || quizFeedbackMarkers.length"
-          :markers="quizSmallCountryMarkers"
-          :feedback-markers="quizFeedbackMarkers"
-          :always-show-wrong-answer="alwaysShowWrongAnswer"
-          :hide-correct-name="nameCountryQuiz && !correctAnswerVisible"
-          @activate="activateSmallCountryMarker"
-          @hover="hoverSmallCountryMarker"
-        />
         <MarineLabels
           :visible="marineLabelsEnabled && !isInteracting"
           :width="mapWidth"
@@ -1477,6 +1588,24 @@ async function setProjection(nextId: MapProjectionId) {
           :project-point="projectPoint"
           :copy-offsets="copyOffsets"
         />
+        <g v-if="namedQuestionMarkers.length" class="named-question-markers" role="img" :aria-label="t('highlightedCountry')">
+          <circle v-for="marker in namedQuestionMarkers" :key="marker.key" :cx="marker.x" :cy="marker.y" r="9" />
+        </g>
+        <SmallCountryMarkers
+          v-if="quizSmallCountryMarkers.length || quizFeedbackMarkers.length || revealedCountryMarkers.length"
+          :width="mapWidth"
+          :height="mapHeight"
+          :markers="displayedQuizSmallCountryMarkers"
+          :feedback-markers="quizFeedbackMarkers"
+          :temporary-markers="revealedCountryMarkers"
+          :always-show-wrong-answer="alwaysShowWrongAnswer"
+          :hide-correct-name="nameCountryQuiz && !correctAnswerVisible"
+          @activate="activateSmallCountryMarker"
+          @hover="hoverSmallCountryMarker"
+        />
+        <g v-if="distributingCountryDots.length" class="small-country-distribution" aria-hidden="true">
+          <circle v-for="dot in distributingCountryDots" :key="dot.key" :cx="dot.x" :cy="dot.y" r="5" />
+        </g>
       </svg>
 
       <!-- Keep painted highlights in their own SVG. Firefox otherwise keeps a
@@ -1939,6 +2068,7 @@ async function setProjection(nextId: MapProjectionId) {
 
 .country--quiz-question-related { fill: rgb(190 169 218 / 80%); stroke: #80619e; stroke-width: 1.1; }
 .country--quiz-question { fill: rgb(143 108 183 / 88%); stroke: #593779; stroke-width: 1.5; }
+.small-country-distribution { fill: var(--ui-ink); stroke: var(--ui-surface); stroke-width: 2; pointer-events: none; }
 .named-question-markers { fill: #8f6cb7; stroke: #fff; stroke-width: 2; pointer-events: none; }
 .world-map--naming .country,
 .world-map--naming .country.country--hit-only { pointer-events: none; cursor: grab; }
