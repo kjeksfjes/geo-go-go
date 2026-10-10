@@ -140,6 +140,10 @@ const globalProjectionId = ref<MapProjectionId>(
     : projectionId.value !== 'regional-equal-area' ? projectionId.value : 'mercator',
 )
 const pendingAutoProjection = ref<MapProjectionId | null>(null)
+let pendingProportionalTransition = false
+// Hold the displayed geography until the proportional-region switch is blurred.
+const renderedRegion = shallowRef(props.activeRegion)
+const renderedMapUnitIds = shallowRef(props.visibleMapUnitIds)
 const usesMobileMapDefaults = window.matchMedia('(hover: none) and (pointer: coarse)').matches
 const bathymetryEnabled = ref(readStoredBoolean(mapSettingKeys.bathymetry, !usesMobileMapDefaults))
 const reliefEnabled = ref(readStoredBoolean(mapSettingKeys.relief, false))
@@ -185,6 +189,9 @@ const interactionState = computed<MapInteractionState>(() => ({
 const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
+const projectionBlurDuration = ref(280)
+const projectionSnapshot = ref<HTMLElement | null>(null)
+const projectionSnapshotFading = ref(false)
 const debugEnabled = new URLSearchParams(window.location.search).has('debug')
 const gestureDebugEnabled = new URLSearchParams(window.location.search).has('gesture-debug')
 // The user accepted this preview policy on desktop Firefox. Keep it independent
@@ -223,6 +230,14 @@ let lastHoverPointer: { clientX: number; clientY: number } | null = null
 let suppressCompatibilityClick = false
 const interactionLocked = computed(() => props.detailLoading || projectionLoading.value)
 const mapBlurred = computed(() => props.detailBlurred || projectionBlurred.value)
+watch(
+  () => [props.activeRegion, props.visibleMapUnitIds, props.selectedRegionId] as const,
+  ([region, mapUnitIds, selectedId], previous) => {
+    if (autoRegionalProjection.value && (projectionLoading.value || selectedId !== previous?.[2])) return
+    renderedRegion.value = region
+    renderedMapUnitIds.value = mapUnitIds
+  },
+)
 const { width: measuredWidth, height: measuredHeight } = useElementSize(container)
 const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
 const mapHeight = computed(() => Math.max(measuredHeight.value, 280))
@@ -249,8 +264,8 @@ const {
   mapWidth,
   mapHeight,
   projectionId,
-  toRef(props, 'activeRegion'),
-  toRef(props, 'visibleMapUnitIds'),
+  renderedRegion,
+  renderedMapUnitIds,
   bathymetryBands,
   reliefBands,
   toRef(props, 'quizMode'),
@@ -260,9 +275,9 @@ const visibleSupplementalLandPaths = computed(() => props.quizMode
   : supplementalExploreLandPaths.value,
 )
 const regionViewConstraint = computed<MapViewConstraint | null>(() => {
-  if (props.activeRegion.id === 'world') return null
+  if (renderedRegion.value.id === 'world') return null
   if (projectionId.value !== 'regional-equal-area') {
-    const view = props.activeRegion.view
+    const view = renderedRegion.value.view
     const center = view && projectPoint(view.center)
     if (!view || !center) return null
     // Start with the existing regional envelope. Expand it only to the
@@ -275,7 +290,7 @@ const regionViewConstraint = computed<MapViewConstraint | null>(() => {
     let top = center[1] - radiusY, bottom = center[1] + radiusY
     const paddingX = mapWidth.value * 0.25 / view.zoom
     const paddingY = mapHeight.value * 0.25 / view.zoom
-    const regionCountries = quizEntityIdsByRegion.get(props.activeRegion.id)
+    const regionCountries = quizEntityIdsByRegion.get(renderedRegion.value.id)
     const candidatesByCountry = new Map<string, typeof interactionGeographicPaths.value>()
     for (const candidate of interactionGeographicPaths.value) {
       const id = candidate.unit.properties.entityId
@@ -288,7 +303,7 @@ const regionViewConstraint = computed<MapViewConstraint | null>(() => {
       const main = candidates.find(({ unit }) => unit.id === `entity:${id}`)
         ?? candidates.reduce((largest, candidate) => geoArea(candidate.unit) > geoArea(largest.unit) ? candidate : largest)
       const target = selectionFocusTarget(main.unit.id, main.bounds, main.focusPoint,
-        interactionGeographicPaths.value, props.visibleMapUnitIds, 0)
+        interactionGeographicPaths.value, renderedMapUnitIds.value, 0)
       let x = target.focusPoint?.[0] ?? (target.bounds[0][0] + target.bounds[1][0]) / 2
       const y = target.focusPoint?.[1] ?? (target.bounds[0][1] + target.bounds[1][1]) / 2
       if (![x, y].every(Number.isFinite)) continue
@@ -324,14 +339,14 @@ const regionViewConstraint = computed<MapViewConstraint | null>(() => {
 })
 const homeView = computed<MapHomeView | null>(() => {
   if (projectionId.value === 'regional-equal-area') {
-    const view = !usesMobileMapDefaults ? props.activeRegion.regionalDesktopView : undefined
+    const view = !usesMobileMapDefaults ? renderedRegion.value.regionalDesktopView : undefined
     const point = view && projectPoint(view.center)
     return view && point ? { point, scale: view.zoom } : null
   }
 
-  const regionalView = props.activeRegion.view
+  const regionalView = renderedRegion.value.view
   const center = regionalView?.center
-    ?? (usesMobileMapDefaults && props.activeRegion.id === 'world' ? [24, 31] as const : null)
+    ?? (usesMobileMapDefaults && renderedRegion.value.id === 'world' ? [24, 31] as const : null)
   const point = center && projectPoint(center)
   if (!point) return null
   return {
@@ -348,9 +363,9 @@ function isPrimarySelectedExploreUnit(unit: GeographicUnitFeature) {
 }
 
 function isGeographicUnitVisible(unit: GeographicUnitFeature) {
-  const regional = unit.regionalDisplayGeometry?.[props.activeRegion.id]?.geometry
+  const regional = unit.regionalDisplayGeometry?.[renderedRegion.value.id]?.geometry
   if (regional?.type === 'GeometryCollection' && regional.geometries.length === 0) return false
-  return unit.properties.mapUnitIds.some((id) => props.visibleMapUnitIds.has(id))
+  return unit.properties.mapUnitIds.some((id) => renderedMapUnitIds.value.has(id))
 }
 const {
   transform,
@@ -436,7 +451,7 @@ function beginGestureReport(now: number, gesture: DiagnosticMovement, initial = 
     recordedAt: new Date().toISOString(),
     browser: navigator.userAgent,
     viewport: { width: mapWidth.value, height: mapHeight.value, devicePixelRatio: window.devicePixelRatio },
-    map: { renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG', canvasContext: canvasContextKind.value, detail: props.highDetailEnabled ? '10m' : '50m', projection: projectionId.value, region: props.activeRegion.id, mode: props.nameCountryQuiz ? 'name-country' : props.quizMode ? 'find-country' : 'explore', bathymetry: bathymetryEnabled.value, relief: reliefEnabled.value, countryPaths: geographicPaths.value.length, highlightPaths: highlightedGeographicPaths.value.length },
+    map: { renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG', canvasContext: canvasContextKind.value, detail: props.highDetailEnabled ? '10m' : '50m', projection: projectionId.value, region: renderedRegion.value.id, mode: props.nameCountryQuiz ? 'name-country' : props.quizMode ? 'find-country' : 'explore', bathymetry: bathymetryEnabled.value, relief: reliefEnabled.value, countryPaths: geographicPaths.value.length, highlightPaths: highlightedGeographicPaths.value.length },
     renderingPolicy: {
       firefoxPreview: firefoxPreviewEnabled,
       previewPixelRatio: firefoxPreviewEnabled ? 0.75 : null,
@@ -570,7 +585,7 @@ function updateDebugMetrics() {
         selectedPath.bounds,
         selectedPath.focusPoint,
         geographicPaths.value,
-        props.visibleMapUnitIds,
+        renderedMapUnitIds.value,
         0,
       ).bounds
     : null
@@ -594,7 +609,7 @@ function updateDebugMetrics() {
     center,
     regionVerticalFit: verticalFit(regionBounds),
     selectionVerticalFit: verticalFit(selectionBounds),
-    region: regionName(props.activeRegion),
+    region: regionName(renderedRegion.value),
     projection,
     detail: `${props.highDetailEnabled ? '10m' : '50m'}${props.detailLoading ? ' · loading' : ''}`,
     renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG',
@@ -656,7 +671,7 @@ const visibleLandPath = computed(() => geographicPaths.value
   .join(' '))
 const canvasScene = computed<CanvasMapScene>(() => ({
   coordinateKey: projectionId.value === 'regional-equal-area'
-    ? `${projectionId.value}:${props.activeRegion.id}` : projectionId.value,
+    ? `${projectionId.value}:${renderedRegion.value.id}` : projectionId.value,
   spherePath: spherePath.value,
   bathymetry: bathymetryEnabled.value ? bathymetryPaths.value : [],
   contextCountries: contextGeographicPaths.value,
@@ -745,7 +760,7 @@ const smallCountryAnchors = computed<SmallCountryAnchor[]>(() => {
 // Global views need a closer camera before tiny-country helpers become useful.
 const countryMarkersVisible = computed(() => countryMarkersEnabled.value && (
   transform.scale >= COUNTRY_MARKER_MIN_ZOOM
-  || (projectionId.value === 'regional-equal-area' && props.activeRegion.id !== 'world')
+  || (projectionId.value === 'regional-equal-area' && renderedRegion.value.id !== 'world')
 ))
 const quizSmallCountryMarkers = computed(() =>
   countryMarkersVisible.value && props.quizMode && !props.nameCountryQuiz && props.quizAnswerId === null && !props.quizSkipped && !props.quizComplete && !isInteracting.value
@@ -801,7 +816,7 @@ function showZoomTargetHighlights() {
   pendingZoomTargets = []
   zoomedMarkerQuestionId = null
 }
-watch([() => props.quizQuestionId, () => props.quizAnswerId, () => props.activeRegion.id, () => props.quizMode, () => props.nameCountryQuiz, () => props.quizSkipped, () => props.quizComplete, countryMarkersVisible, projectionId, mapWidth, mapHeight], () => {
+watch([() => props.quizQuestionId, () => props.quizAnswerId, () => renderedRegion.value.id, () => props.quizMode, () => props.nameCountryQuiz, () => props.quizSkipped, () => props.quizComplete, countryMarkersVisible, projectionId, mapWidth, mapHeight], () => {
   cancelMarkerDistribution()
   clearZoomTargetHighlights()
 })
@@ -917,7 +932,7 @@ function focusActiveRegion(animated: boolean, zoomOutFirst = false) {
     restoreHoverUnderPointer()
     return
   }
-  const view = props.activeRegion.view
+  const view = renderedRegion.value.view
   if (!view) {
     resetZoom(animated)
     restoreHoverUnderPointer()
@@ -936,27 +951,27 @@ function resetView() {
 }
 
 watch(
-  () => props.activeRegion.id,
-  () => focusActiveRegion(projectionId.value !== 'regional-equal-area'),
+  () => renderedRegion.value.id,
+  () => focusActiveRegion(!autoRegionalProjection.value && projectionId.value !== 'regional-equal-area'),
   { flush: 'post' },
 )
 watch(() => [props.quizMode, props.nameCountryQuiz], ([active]) => {
   hoveredUnit.value = null
-  if (active) focusActiveRegion(true, true)
+  if (active) focusActiveRegion(!autoRegionalProjection.value, true)
 }, { flush: 'post' })
-watch([() => props.activeRegion.id, () => props.geographicUnits], () => {
+watch([() => renderedRegion.value.id, () => props.geographicUnits], () => {
   hoveredUnit.value = null
 })
 watch([() => props.quizQuestionId, () => props.quizAnswerId], () => {
   hoveredUnit.value = null
 })
 watch(
-  () => [props.nameCountryQuiz, props.quizViewingGuess, props.quizQuestionId, props.quizComplete, props.activeRegion.id, props.geographicUnits, props.detailLoading, projectionId.value, mapWidth.value, mapHeight.value],
+  () => [props.nameCountryQuiz, props.quizViewingGuess, props.quizQuestionId, props.quizComplete, renderedRegion.value.id, props.geographicUnits, props.detailLoading, projectionId.value, mapWidth.value, mapHeight.value],
   async () => {
-    if (!props.nameCountryQuiz || props.quizComplete || !props.quizQuestionId || props.detailLoading) return
+    if ((autoRegionalProjection.value && projectionLoading.value) || !props.nameCountryQuiz || props.quizComplete || !props.quizQuestionId || props.detailLoading) return
     await nextTick()
     const targetId = props.quizViewingGuess ? props.quizAnswerId : props.quizQuestionId
-    if (props.nameCountryQuiz && !props.quizComplete && targetId && !props.detailLoading) focusCountry(targetId)
+    if (!(autoRegionalProjection.value && projectionLoading.value) && props.nameCountryQuiz && !props.quizComplete && targetId && !props.detailLoading) focusCountry(targetId)
   },
   { flush: 'post' },
 )
@@ -1037,7 +1052,7 @@ async function selectCountry(
     detailed?.bounds ?? bounds,
     detailed?.focusPoint ?? focusPoint,
     geographicPaths.value,
-    props.visibleMapUnitIds,
+    renderedMapUnitIds.value,
     horizontalOffset,
   )
   zoomToBounds(
@@ -1066,7 +1081,7 @@ async function focusCountry(countryId: string) {
     main.bounds,
     main.focusPoint,
     geographicPaths.value,
-    props.visibleMapUnitIds,
+    renderedMapUnitIds.value,
     0,
   )
   zoomToBounds(
@@ -1409,6 +1424,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  projectionSnapshot.value?.replaceChildren()
   cancelMarkerDistribution()
   clearZoomTargetHighlights()
   if (gestureFrame !== undefined) cancelAnimationFrame(gestureFrame)
@@ -1424,6 +1440,7 @@ onBeforeUnmount(() => {
 // Automatic changes follow the selected region, not temporary quiz-guess framing.
 // Queue the latest request while detail/projection work is busy.
 watch([() => props.selectedRegionId, autoRegionalProjection], ([regionId, enabled], previous) => {
+  pendingProportionalTransition = previous !== undefined && (enabled || previous[1] === true)
   if (enabled) {
     writeStoredValue(mapSettingKeys.globalProjection, globalProjectionId.value)
     pendingAutoProjection.value = regionId === 'world' ? globalProjectionId.value : 'regional-equal-area'
@@ -1436,7 +1453,7 @@ watch([() => props.selectedRegionId, autoRegionalProjection], ([regionId, enable
 watch([pendingAutoProjection, interactionLocked], ([nextId, locked]) => {
   if (nextId === null || locked) return
   pendingAutoProjection.value = null
-  void setProjection(nextId)
+  void setProjection(nextId, pendingProportionalTransition)
 }, { immediate: true, flush: 'post' })
 
 function selectProjection(nextId: MapProjectionId) {
@@ -1450,15 +1467,55 @@ function selectProjection(nextId: MapProjectionId) {
   void setProjection(nextId)
 }
 
-async function setProjection(nextId: MapProjectionId) {
-  if (nextId === projectionId.value || interactionLocked.value) return
+function retainProjectionSnapshot() {
+  const source = container.value
+  const target = projectionSnapshot.value
+  if (!source || !target) return
+  const viewport = source.getBoundingClientRect()
+  const snapshot = document.createElement('canvas')
+  // The snapshot is only shown under blur: viewport-sized pixels are sufficient,
+  // without retaining the renderer's much larger overscanned backing buffers.
+  snapshot.width = Math.ceil(viewport.width)
+  snapshot.height = Math.ceil(viewport.height)
+  snapshot.style.cssText = 'position:absolute;inset:0;width:100%;height:100%'
+  const context = snapshot.getContext('2d')
+  if (!context) return
+  for (const canvas of source.querySelectorAll<HTMLCanvasElement>('.canvas-map-layer canvas')) {
+    if (canvas.style.opacity !== '1') continue
+    const bounds = canvas.getBoundingClientRect()
+    context.drawImage(canvas, bounds.left - viewport.left, bounds.top - viewport.top, bounds.width, bounds.height)
+  }
+  const layers: Element[] = [snapshot]
+  for (const svg of source.querySelectorAll<SVGSVGElement>(':scope > .world-map, :scope > .map-highlights')) {
+    const copy = svg.cloneNode(true) as SVGSVGElement
+    // Canvas supplies the land; its invisible hit paths need not be retained.
+    copy.querySelectorAll('.country--hit-only').forEach((path) => path.remove())
+    // Keep the old relief clip independent from the replacement projection.
+    for (const clip of copy.querySelectorAll('clipPath[id]')) {
+      const id = clip.id
+      clip.id = `${id}-snapshot`
+      copy.querySelectorAll('[clip-path]').forEach((element) => {
+        if (element.getAttribute('clip-path') === `url(#${id})`) {
+          element.setAttribute('clip-path', `url(#${clip.id})`)
+        }
+      })
+    }
+    layers.push(copy)
+  }
+  target.replaceChildren(...layers)
+}
 
-  if (!props.highDetailEnabled || hasCachedPaths(props.geographicUnits, nextId)) {
+async function setProjection(nextId: MapProjectionId, proportionalTransition = false) {
+  if (interactionLocked.value || (nextId === projectionId.value && !proportionalTransition)) return
+
+  if (!proportionalTransition && (!props.highDetailEnabled || hasCachedPaths(props.geographicUnits, nextId))) {
     projectionId.value = nextId
     return
   }
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const blurDuration = proportionalTransition ? 120 : 280
+  projectionBlurDuration.value = blurDuration
   projectionLoading.value = true
   projectionBlurred.value = true
   try {
@@ -1466,23 +1523,47 @@ async function setProjection(nextId: MapProjectionId) {
     // before projecting the detailed atlas on the main thread.
     await nextTick()
     await afterPaint()
+    const loaderShownAt = performance.now()
     // The filter needs time to become visibly blurred before synchronous work
     // blocks the main thread.
-    if (!reducedMotion) await wait(280)
+    if (!reducedMotion) await wait(blurDuration)
+    if (proportionalTransition && !reducedMotion) {
+      retainProjectionSnapshot()
+    }
+    renderedRegion.value = props.activeRegion
+    renderedMapUnitIds.value = props.visibleMapUnitIds
     projectionId.value = nextId
     await nextTick()
+    if (proportionalTransition) focusActiveRegion(false)
+    await nextTick()
     await afterPaint()
+    if (projectionSnapshot.value?.hasChildNodes()) {
+      projectionSnapshotFading.value = true
+      await nextTick()
+      await afterPaint()
+      await wait(1900)
+      projectionSnapshot.value.replaceChildren()
+      projectionSnapshotFading.value = false
+    }
     // Updating an existing SVG can take another frame to rasterize. Keep the
     // newly projected paths blurred long enough to appear before deblurring.
-    if (!reducedMotion) await wait(160)
+    if (proportionalTransition) {
+      const remaining = 2000 - (performance.now() - loaderShownAt)
+      if (remaining > 0) await wait(remaining)
+    } else if (!reducedMotion) {
+      await wait(160)
+    }
   } finally {
+    projectionSnapshot.value?.replaceChildren()
+    projectionSnapshotFading.value = false
     projectionBlurred.value = false
     if (!reducedMotion) {
       await nextTick()
       await afterPaint()
-      await wait(280)
+      await wait(blurDuration)
     }
     projectionLoading.value = false
+    projectionBlurDuration.value = 280
   }
 }
 </script>
@@ -1619,7 +1700,7 @@ async function setProjection(nextId: MapProjectionId) {
             :key="offset"
             v-show="copyOffsets.includes(offset)"
             class="countries"
-            v-memo="[firefoxPreviewEnabled ? copyOffsets : null, paintedGeographicPaths, wrappedGeographicPaths, interactionState, visibleMapUnitIds, activeRegion, locale, canvasRendererActive, correctAnswerVisible, alwaysShowWrongAnswer, quizViewingGuess]"
+            v-memo="[firefoxPreviewEnabled ? copyOffsets : null, paintedGeographicPaths, wrappedGeographicPaths, interactionState, renderedMapUnitIds, renderedRegion, locale, canvasRendererActive, correctAnswerVisible, alwaysShowWrongAnswer, quizViewingGuess]"
             :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             :aria-hidden="offset !== 0"
           >
@@ -1794,6 +1875,8 @@ async function setProjection(nextId: MapProjectionId) {
         </g>
       </svg>
 
+      <div ref="projectionSnapshot" class="map-projection-snapshot" :class="{ 'map-projection-snapshot--fading': projectionSnapshotFading }" aria-hidden="true" inert />
+
       <div v-show="settingsOpen" id="map-settings-panel" class="map-settings-panel" role="region" :aria-label="t('mapSettings')">
         <div class="map-settings-language">
           <span>{{ t('language') }}</span>
@@ -1926,9 +2009,10 @@ async function setProjection(nextId: MapProjectionId) {
     <div
       v-if="interactionLocked"
       class="map-loading-overlay"
+      :style="{ '--map-blur-duration': `${projectionBlurDuration}ms` }"
       :class="{ 'map-loading-overlay--blurred': mapBlurred }"
     >
-      <LoadingIndicator v-if="mapBlurred" :label="t('loadingMap')" />
+      <LoadingIndicator v-if="mapBlurred" :label="t(projectionLoading ? 'loadingProjection' : 'loadingMap')" />
     </div>
   </div>
 </template>
@@ -1987,11 +2071,29 @@ async function setProjection(nextId: MapProjectionId) {
   place-items: center;
   cursor: default;
   backdrop-filter: blur(0);
-  transition: backdrop-filter 280ms ease;
+  transition: backdrop-filter var(--map-blur-duration, 280ms) ease;
 }
 
 .map-loading-overlay--blurred {
   backdrop-filter: blur(5px);
+}
+
+.map-projection-snapshot {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: clip;
+  background: var(--map-ocean);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 1900ms ease;
+}
+
+.map-projection-snapshot:empty { display: none; }
+.map-projection-snapshot--fading { opacity: 0; }
+
+.map-loading-overlay :deep(.loading-indicator) {
+  position: relative;
 }
 
 .map-sphere {
@@ -2540,6 +2642,8 @@ async function setProjection(nextId: MapProjectionId) {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .map-projection-snapshot,
+  .map-loading-overlay,
   .world-map,
   .country {
     transition: none;
