@@ -68,7 +68,7 @@ const messages = {
     mapPerformanceHint: 'These options may reduce performance on mobile or less powerful devices.',
     interactiveMap: 'Interactive world map', resetView: 'Reset view',
     fastZoomPreview: 'Fast zoom preview', touchPanPreview: 'Pan preview', normalZoom: 'Normal zoom', restoringZoomDetail: 'Restoring detail', svgZoom: 'SVG renderer',
-    copyLastGesture: 'Copy last pinch or pan report', noGestureReport: 'Pinch or pan the map first to record a report', gestureCopied: 'Gesture report copied', gestureCopyFailed: 'Copy failed — tap to retry',
+    copyLastGesture: 'Copy last map movement report', noGestureReport: 'Pan, zoom or frame a country first to record a report', gestureCopied: 'Gesture report copied', gestureCopyFailed: 'Copy failed — tap to retry',
     mapHint: 'Scroll to zoom · Drag to move', continueHint: 'Click map or press Space to continue',
     loadingMap: 'Loading detailed map…', selectedCountry: 'Selected country', selectedArea: 'Selected area',
     mapCode: 'Map code · {code}', chooseCountry: 'Choose a country on the map',

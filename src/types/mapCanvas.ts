@@ -30,6 +30,7 @@ export type CanvasWorkerRequest =
       width: number
       height: number
       pixelRatio: number
+      movementPreview?: boolean
       overscan: number
       camera: CanvasCamera
       wrapOffset: number | null
@@ -45,6 +46,7 @@ export interface CanvasWorkerFrame {
   height: number
   overscan: number
   pixelRatio: number
+  movementPreview?: boolean
   timings?: { drawMs: number; exportMs: number }
   bitmap: ImageBitmap
 }

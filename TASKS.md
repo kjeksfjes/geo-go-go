@@ -180,16 +180,17 @@ The user requested an assessment and backlog entry for behavior-aware guidance t
 
 ## TASK-010 — Investigate Firefox pan and zoom performance
 
-Status: Deferred. Added: 2026-10-07.
+Status: Current desktop revision accepted for commit; final device regression checks pending. Added: 2026-10-07. Updated: 2026-10-10.
 
-The user reports performance issues when panning and zooming in Firefox and wants a dedicated investigation later. Firefox version, operating system, hardware, input method, renderer, map detail, layers, and affected modes have not yet been recorded. This backlog entry does not authorize profiling or implementation. Keep the accepted mobile movement behavior in place; earlier Chromium measurements do not establish Firefox performance.
+The user found Firefox movement acceptable in the border-free trial, then clarified that country borders should remain visible during movement. The revised preview restores those borders; after restricting the remaining shared movement changes to Firefox, the user reports improvement and requests a commit. The measurements, profiler findings, hypotheses, and accepted tradeoffs are recorded in [the Firefox investigation](docs/firefox-pan-zoom-performance-audit.md). The revised policy is enabled automatically on desktop Firefox, with wider lower-density cached movement previews, early pan refresh, bounded detail reuse across zoom/animation/pan transitions, retained wrapped hit geometry, visible country and highlight outlines, and full-quality restoration at rest. Both detail levels and Canvas/SVG highlight presentation share the policy; Chrome and touch-first rendering policies are preserved. The experiment flags are removed, while desktop/mobile diagnostics remain available through gesture-debug. The user will perform the final check without experiment flags; the restored-border version requires a performance check before this task can be completed.
 
 ### Completion criteria
 
-- [ ] Record the affected Firefox/device configuration and reproducible pan/zoom sequences, then establish a focused Firefox baseline before choosing changes.
-- [ ] Identify the dominant cost using proportionate measurements of input/camera updates, canvas worker and bitmap handoff, SVG fallback, and browser painting/compositing; distinguish measured causes from hypotheses.
-- [ ] Apply only justified, maintainable improvements, preserving Canvas/SVG consistency, both 50m/10m detail levels, geographic identities, quiz progress and highlights, and accepted mobile behavior.
-- [ ] Compare Firefox before/after behavior and check affected paths in other supported browsers; run the build and proportionate automated checks. Leave visual and perceived-performance acceptance to the user unless explicitly requested otherwise.
+- [x] Collect desktop movement reports for Firefox pan, wheel zoom, and automatic framing/Reset view sequences, establishing a focused baseline before choosing changes.
+- [x] Identify measured worker stroke, SVG mounting, and rendering-transition costs; distinguish evidence from hypotheses about individual stalls.
+- [x] Apply maintainable improvements while preserving geographic identities, quiz highlights, full hit geometry, both detail levels, Canvas/SVG consistency, and accepted mobile policies.
+- [x] Run npm run build and whitespace checks after default activation and cleanup.
+- [ ] Complete the user's final browser check of default Firefox activation and a brief Chrome/iPhone regression check. Then mark this task complete.
 
 ## Audit status
 
