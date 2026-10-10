@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { geoArea, geoDistance } from 'd3-geo'
 import packageInfo from '../../package.json'
-import { createGestureDiagnostics, type GestureWorkerEvent } from '../logic/gestureDiagnostics'
+import { createGestureDiagnostics, type GestureWorkerEvent, type GestureWheelInput } from '../logic/gestureDiagnostics'
 import { copyText } from '../utils/copyText'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
@@ -187,6 +187,10 @@ const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const debugEnabled = new URLSearchParams(window.location.search).has('debug')
 const gestureDebugEnabled = new URLSearchParams(window.location.search).has('gesture-debug')
+// The user accepted this preview policy on desktop Firefox. Keep it independent
+// of diagnostics and preserve the existing policies on other browsers/devices.
+const firefoxPreviewEnabled = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  && /Firefox\/\d/.test(navigator.userAgent)
 interface MapDebugVerticalFit {
   span: number
   topGap: number
@@ -374,6 +378,7 @@ const {
   horizontalWrap,
   regionViewConstraint,
   homeView,
+  firefoxPreviewEnabled,
 )
 
 const gestureDiagnosticsActive = ref(false)
@@ -388,11 +393,26 @@ let gestureLongTasksAvailable = false
 const gestureLongTasksSupported = typeof PerformanceObserver !== 'undefined'
   && PerformanceObserver.supportedEntryTypes?.includes('longtask') === true
 
+type DiagnosticMovement = 'pinch' | 'pan' | 'wheel' | 'animation'
+let diagnosticInput: { startedAt: number; initial: ReturnType<typeof gestureSample>; source: 'touch' | 'pointer' | 'wheel'; cancelled: boolean } | null = null
+
+function withGestureInput<T>(source: 'touch' | 'pointer' | 'wheel', action: () => T, cancelled = false, wheel?: GestureWheelInput): T {
+  if (!gestureDebugEnabled) return action()
+  const startedAt = performance.now()
+  diagnosticInput = { startedAt, initial: gestureSample(), source, cancelled }
+  try { return action() } finally {
+    gestureRecorder?.input(performance.now() - startedAt, wheel)
+    diagnosticInput = null
+  }
+}
+
 function gestureSample() {
   return { scale: transform.scale, x: transform.x, y: transform.y, canvas: canvasRendererActive.value, preview: fastTouchZoomPreview.value }
 }
 
 function captureGestureReport() {
+  if (gestureFrame !== undefined) cancelAnimationFrame(gestureFrame)
+  gestureFrame = undefined
   if (gestureSettleTimer !== undefined) window.clearTimeout(gestureSettleTimer)
   gestureSettleTimer = undefined
   for (const entry of gestureLongTaskObserver?.takeRecords() ?? []) gestureRecorder?.longTask(entry.startTime, entry.duration)
@@ -406,17 +426,28 @@ function captureGestureReport() {
   gestureDiagnosticsActive.value = false
 }
 
-function beginGestureReport(now: number, gesture: 'pinch' | 'pan', initial = gestureSample()) {
+function beginGestureReport(now: number, gesture: DiagnosticMovement, initial = gestureSample()) {
   captureGestureReport()
   gestureCopyState.value = 'idle'
   gestureRecorder = createGestureDiagnostics({
     appVersion: packageInfo.version,
     gesture,
+    inputSource: gesture === 'animation' ? 'automatic' : diagnosticInput?.source ?? (gesture === 'wheel' ? 'wheel' : 'touch'),
     recordedAt: new Date().toISOString(),
     browser: navigator.userAgent,
     viewport: { width: mapWidth.value, height: mapHeight.value, devicePixelRatio: window.devicePixelRatio },
     map: { renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG', canvasContext: canvasContextKind.value, detail: props.highDetailEnabled ? '10m' : '50m', projection: projectionId.value, region: props.activeRegion.id, mode: props.nameCountryQuiz ? 'name-country' : props.quizMode ? 'find-country' : 'explore', bathymetry: bathymetryEnabled.value, relief: reliefEnabled.value, countryPaths: geographicPaths.value.length, highlightPaths: highlightedGeographicPaths.value.length },
-    experiment: { adaptiveTouchPreview: true, coverageBridge: true, bathymetryPanPreviewDensity: 0.75, immediateBufferSwap: true, memoizedCountryGeometry: true },
+    renderingPolicy: {
+      firefoxPreview: firefoxPreviewEnabled,
+      previewPixelRatio: firefoxPreviewEnabled ? 0.75 : null,
+      previewOverscan: firefoxPreviewEnabled ? 3 : null,
+      panRefreshMargin: firefoxPreviewEnabled ? 0.3 : 0.08,
+      zoomPreviewMaxMagnification: firefoxPreviewEnabled ? 3.5 : 2,
+      zoomPreviewReuseWindowMs: firefoxPreviewEnabled ? 1000 : null,
+      omitMovingBorders: false,
+      omitMovingHighlightStrokes: false,
+      retainedWrappedHitCopies: firefoxPreviewEnabled,
+    },
   }, now, initial)
   gestureDiagnosticsActive.value = true
   gestureLongTasksAvailable = false
@@ -448,6 +479,19 @@ function endGestureReport(now: number, cancelled = false) {
   gestureSettleTimer = window.setTimeout(captureGestureReport, 300)
 }
 
+const diagnosticMovement = computed<DiagnosticMovement | null>(() =>
+  isPinching.value ? 'pinch' : isDragging.value ? 'pan' : isWheeling.value ? 'wheel' : isAnimating.value ? 'animation' : null,
+)
+watch(diagnosticMovement, (movement, previous) => {
+  if (!gestureDebugEnabled || movement === previous) return
+  const now = performance.now()
+  if (previous) {
+    if (diagnosticInput) gestureRecorder?.input(now - diagnosticInput.startedAt)
+    endGestureReport(now, diagnosticInput?.cancelled ?? movement !== null)
+  }
+  if (movement) beginGestureReport(diagnosticInput?.startedAt ?? now, movement, diagnosticInput?.initial ?? gestureSample())
+}, { flush: 'sync' })
+
 function recordGestureRender(event: GestureWorkerEvent) { gestureRecorder?.worker(event) }
 
 // Record every edge, including changes that occur between sampled RAF callbacks.
@@ -456,7 +500,7 @@ watch(canvasRendererActive, (active) => gestureRecorder?.transition('renderer', 
 
 async function copyLastGesture() {
   if (!lastGestureReport.value || gestureDiagnosticsActive.value) return
-  const text = `Geo Go Go — last ${lastGestureReport.value.gesture === 'pan' ? 'pan' : 'pinch'}\n${JSON.stringify(lastGestureReport.value, null, 2)}`
+  const text = `Geo Go Go — last ${String(lastGestureReport.value.gesture)}\n${JSON.stringify(lastGestureReport.value, null, 2)}`
   gestureCopyState.value = await copyText(text) ? 'copied' : 'failed'
   if (gestureCopyTimer !== undefined) window.clearTimeout(gestureCopyTimer)
   gestureCopyTimer = window.setTimeout(() => { gestureCopyState.value = 'idle'; gestureCopyTimer = undefined }, 1600)
@@ -653,6 +697,20 @@ const copyOffsets = computed<number[]>((previous) => {
   }
   // Camera movement usually leaves the displayed copies unchanged. Reuse
   // their identity so child layers do not update just for a fresh array.
+  return previous?.length === offsets.length && offsets.every((offset, index) => offset === previous[index])
+    ? previous : offsets
+})
+
+// Keep wrapped hit geometry mounted in desktop Firefox. Revealing
+// a cached copy avoids parsing a new set of 10m paths mid-zoom or at a seam.
+const hitCopyOffsets = computed<number[]>((previous) => {
+  const wrap = horizontalWrap.value
+  if (!firefoxPreviewEnabled || !wrap) return copyOffsets.value
+  const count = Math.max(1, Math.ceil(mapWidth.value / (2 * wrap.period)))
+  const offsets = [0,
+    ...Array.from({ length: count }, (_, index) => -(index + 1) * wrap.period),
+    ...Array.from({ length: count }, (_, index) => (index + 1) * wrap.period),
+  ]
   return previous?.length === offsets.length && offsets.every((offset, index) => offset === previous[index])
     ? previous : offsets
 })
@@ -1077,23 +1135,27 @@ function selectSupplementalArea(sourceId: string, event: MouseEvent | KeyboardEv
 }
 
 function handleWheel(event: WheelEvent) {
-  cancelMarkerDistribution()
-  rememberHoverPointer(event)
-  if (svg.value) {
-    zoomFromWheel(event, svg.value)
-  }
+  withGestureInput('wheel', () => {
+    cancelMarkerDistribution()
+    rememberHoverPointer(event)
+    if (svg.value) zoomFromWheel(event, svg.value)
+  }, false, { deltaY: event.deltaY, deltaMode: event.deltaMode })
 }
 
 function handlePointerDown(event: PointerEvent) {
   if (event.pointerType === 'touch' || markerDistribution.value) return
-  rememberHoverPointer(event)
-  if (svg.value) startPan(event, svg.value)
+  withGestureInput('pointer', () => {
+    rememberHoverPointer(event)
+    if (svg.value) startPan(event, svg.value)
+  })
 }
 
 function handlePointerMove(event: PointerEvent) {
   if (event.pointerType === 'touch') return
-  rememberHoverPointer(event)
-  movePan(event)
+  withGestureInput('pointer', () => {
+    rememberHoverPointer(event)
+    movePan(event)
+  })
 }
 
 function handlePointerLeave(event: PointerEvent) {
@@ -1105,7 +1167,7 @@ function handlePointerLeave(event: PointerEvent) {
 function handlePointerEnd(event: PointerEvent) {
   if (event.pointerType === 'touch') return
   if (!svg.value) return
-  endPan(event, svg.value)
+  withGestureInput('pointer', () => endPan(event, svg.value!), event.type === 'pointercancel')
 }
 
 function handleTouch(event: TouchEvent) {
@@ -1116,23 +1178,7 @@ function handleTouch(event: TouchEvent) {
     suppressMarkerTransitionTouch = true
     cancelMarkerDistribution()
   }
-  if (gestureDebugEnabled && gestureRecorder && !isPinching.value && !isDragging.value && event.type === 'touchstart') captureGestureReport()
-  const startedAt = gestureDebugEnabled ? performance.now() : 0
-  const initial = gestureDebugEnabled ? gestureSample() : null
-  const previousGesture = isPinching.value ? 'pinch' : isDragging.value ? 'pan' : null
-  const tap = updateTouches(event, svg.value)
-  const currentGesture = isPinching.value ? 'pinch' : isDragging.value ? 'pan' : null
-  const handlerMs = gestureDebugEnabled ? performance.now() - startedAt : 0
-  if (gestureDebugEnabled && previousGesture !== currentGesture) {
-    if (previousGesture) {
-      gestureRecorder?.input(handlerMs)
-      endGestureReport(performance.now(), event.type === 'touchcancel')
-    }
-    if (currentGesture) {
-      beginGestureReport(startedAt, currentGesture, currentGesture === 'pan' && initial ? initial : gestureSample())
-      gestureRecorder?.input(handlerMs)
-    }
-  } else gestureRecorder?.input(handlerMs)
+  const tap = withGestureInput('touch', () => updateTouches(event, svg.value!), event.type === 'touchcancel')
   if (event.type === 'touchcancel') {
     if (event.touches.length === 0) suppressMarkerTransitionTouch = false
     consumeDragClick()
@@ -1468,6 +1514,10 @@ async function setProjection(nextId: MapProjectionId) {
         :scene="canvasScene"
         :camera="transform"
         :interacting="isInteracting"
+        :panning="isDragging"
+        :wheel-zooming="isWheeling"
+        :animating="isAnimating"
+        :firefox-preview="firefoxPreviewEnabled"
         :touch-zooming="usesMobileMapDefaults && isPinching"
         :animated-zooming="usesMobileMapDefaults && isAnimating"
         :touch-panning="usesMobileMapDefaults && isDragging"
@@ -1565,10 +1615,11 @@ async function setProjection(nextId: MapProjectionId) {
           <!-- Geometry and answer state change independently of the camera.
                Keep this expensive path loop cached during ordinary movement. -->
           <g
-            v-for="offset in copyOffsets"
+            v-for="offset in hitCopyOffsets"
             :key="offset"
+            v-show="copyOffsets.includes(offset)"
             class="countries"
-            v-memo="[paintedGeographicPaths, wrappedGeographicPaths, interactionState, visibleMapUnitIds, activeRegion, locale, canvasRendererActive, correctAnswerVisible, alwaysShowWrongAnswer, quizViewingGuess]"
+            v-memo="[firefoxPreviewEnabled ? copyOffsets : null, paintedGeographicPaths, wrappedGeographicPaths, interactionState, visibleMapUnitIds, activeRegion, locale, canvasRendererActive, correctAnswerVisible, alwaysShowWrongAnswer, quizViewingGuess]"
             :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
             :aria-hidden="offset !== 0"
           >
@@ -1849,7 +1900,7 @@ async function setProjection(nextId: MapProjectionId) {
         </button>
       </div>
       <button
-        v-if="gestureDebugEnabled && usesMobileMapDefaults"
+        v-if="gestureDebugEnabled"
         type="button"
         class="touch-zoom-preview-status"
         :disabled="!lastGestureReport || gestureDiagnosticsActive"
@@ -2409,7 +2460,7 @@ async function setProjection(nextId: MapProjectionId) {
   font: inherit;
 }
 
-/* Temporary visible feedback for the mobile preview experiment. */
+/* Opt-in movement diagnostics, available on desktop and mobile. */
 .touch-zoom-preview-status {
   position: absolute;
   z-index: 4;

@@ -215,6 +215,7 @@ workerScope.onmessage = (event) => {
     overscan,
     pixelRatio,
     bitmap,
+    movementPreview: message.movementPreview ?? false,
     timings: { drawMs: drawFinished - renderStarted, exportMs: exportFinished - drawFinished },
   }
   workerScope.postMessage(frame, [frame.bitmap])

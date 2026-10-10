@@ -2,6 +2,14 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.14.0 — Fox Trot — 2026-10-10
+
+### Improvements
+
+- Improved desktop Firefox pan, wheel zoom, and automatic camera framing with wider cached movement previews, earlier refreshes, and smoother transitions between gestures. Country borders and quiz highlights remain visible during movement; full-density detail returns at rest. Chrome and mobile retain their existing rendering policies.
+- Apply any remaining Firefox wheel movement before ending a wheel burst, avoiding delayed camera changes after the interaction has finished.
+- Extended the opt-in gesture-debug copy button and movement recording to desktop mouse pans, wheel zooms, and automatic camera animations, alongside existing touch gestures. Reports identify input source and movement kind and retain the existing bounded, local-only timing and renderer diagnostics.
+
 ## 0.13.0 — Island Signals — 2026-10-08
 
 ### Improvements

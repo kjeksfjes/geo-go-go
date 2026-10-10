@@ -34,6 +34,7 @@ export function useMapZoom(
   horizontalWrap: Ref<HorizontalWrap | null>,
   viewConstraint: Ref<MapViewConstraint | null>,
   homeView: Ref<MapHomeView | null>,
+  flushWheelOnIdle = false,
 ) {
   const transform = reactive({ x: 0, y: 0, scale: 1 })
   const isDragging = ref(false)
@@ -399,6 +400,12 @@ export function useMapZoom(
     isWheeling.value = true
     if (wheelEndTimer !== undefined) window.clearTimeout(wheelEndTimer)
     wheelEndTimer = window.setTimeout(() => {
+      // Firefox can defer RAF beyond the input idle timeout. Apply any remaining
+      // wheel delta before ending movement or restoring full-quality rendering.
+      if (flushWheelOnIdle && pendingWheel) {
+        if (wheelFrame !== undefined) cancelAnimationFrame(wheelFrame)
+        applyPendingWheel()
+      }
       isWheeling.value = false
       wheelEndTimer = undefined
     }, 140)

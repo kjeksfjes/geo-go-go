@@ -10,6 +10,10 @@ const props = defineProps<{
   scene: CanvasMapScene
   camera: Readonly<CanvasCamera>
   interacting: boolean
+  panning: boolean
+  wheelZooming: boolean
+  animating: boolean
+  firefoxPreview: boolean
   touchZooming: boolean
   animatedZooming: boolean
   touchPanning: boolean
@@ -33,6 +37,11 @@ const settledCanvas = ref<HTMLCanvasElement | null>(null)
 const overscan = 1.8
 // Touch pans need more translation runway while a replacement is in flight.
 const touchPanOverscan = 3
+// Firefox movement needs enough runway for fast drags and expanding zooms.
+const firefoxPreviewOverscan = 3
+const firefoxPreviewDensity = 0.75
+const firefoxPreviewMaximumScale = 3.5
+const firefoxPreviewReuseWindow = 1000
 // At minimum zoom, the camera can move by 65% of the viewport in either
 // direction. Keep a complete map snapshot available for fast zoom-outs.
 const overviewOverscan = 2.4
@@ -49,11 +58,19 @@ let pending = false
 let refreshAfterPending = false
 let forceAfterPending = false
 let settleTimer: number | undefined
+let restorationDeadline: number | undefined
+let pendingSettledCamera: { camera: CanvasCamera; width: number; height: number; version: number } | null = null
+let wheelStartedAt = -Infinity
+let wheelEndedAt = -Infinity
+let animationStartedAt = -Infinity
+let animationEndedAt = -Infinity
 let visibleIndex = 0
 let hasShownDetail = false
 let ready = false
 let configuredCoordinates: { key: string; width: number; height: number } | null = null
 type Snapshot = {
+  installedAt: number
+  movementPreview?: boolean
   camera: CanvasCamera
   width: number
   height: number
@@ -63,6 +80,7 @@ type Snapshot = {
   requestId: number
   purpose: CanvasWorkerFrame['purpose']
 }
+let panCarry: { snapshot: Snapshot; ratio: number; until: number } | null = null
 let currentShownIndex = -1
 let reportedDisplayedFrame: Snapshot | null = null
 let reportedProxy = false
@@ -134,6 +152,51 @@ function coversViewport(index: number) {
     && frame.y + frame.ratio * frame.height >= props.height - tolerance
 }
 
+function detailMagnificationLimit(index: number) {
+  if (!props.firefoxPreview) return maximumFrameScale
+  const snapshot = snapshots[index]
+  const now = performance.now()
+  if (props.firefoxPreview && props.panning && previewBridge
+    && snapshot?.version === sceneVersion && panCarry?.snapshot === snapshot && now <= panCarry.until) {
+    const frame = presentation(index)
+    // Carry only the already visible magnification, never zoom further during pan.
+    if (frame && frame.ratio <= panCarry.ratio + 0.000001) return panCarry.ratio + 0.000001
+  }
+  const wheelWindow = props.wheelZooming
+    ? now - wheelStartedAt <= firefoxPreviewReuseWindow || (!!snapshot && now - snapshot.installedAt <= firefoxPreviewReuseWindow)
+    : !props.interacting && now - wheelEndedAt <= firefoxPreviewReuseWindow
+  const animationWindow = props.animating
+    ? now - animationStartedAt <= firefoxPreviewReuseWindow || (!!snapshot && now - snapshot.installedAt <= firefoxPreviewReuseWindow)
+    : !props.interacting && now - animationEndedAt <= firefoxPreviewReuseWindow
+  // Scene-valid primed crops bridge wheel and automatic zooms, including the
+  // brief restoration window. The overview keeps its independent 2× guard.
+  return props.firefoxPreview && (wheelWindow || animationWindow)
+    && !props.panning && previewBridge && snapshot?.movementPreview
+    && snapshot.version === sceneVersion ? firefoxPreviewMaximumScale : maximumFrameScale
+}
+
+function recordFallback() {
+  if (!props.diagnosticsActive) return
+  const fallbackCandidates = [visibleIndex, 1 - visibleIndex, settledIndex, overviewIndex].map((index) => {
+    const snapshot = snapshots[index]
+    const frame = presentation(index)
+    const scaleLimit = index === overviewIndex ? maximumFrameScale
+      : index === settledIndex ? (previewBridge ? (bridgeFromPinch && !props.touchPanning && !props.animatedZooming ? null : maximumFrameScale) : 1.35)
+        : detailMagnificationLimit(index)
+    return {
+      buffer: index === visibleIndex ? 'detail-front' : index === 1 - visibleIndex ? 'detail-back' : index === settledIndex ? 'settled' : 'overview',
+      available: !!snapshot && !!frame,
+      eligible: index === overviewIndex ? hasShownDetail : index === 1 - visibleIndex ? !!(props.firefoxPreview && previewActive && props.interacting && snapshot?.movementPreview) : true,
+      coversViewport: coversViewport(index),
+      displayScale: frame?.ratio ?? null,
+      scaleLimit,
+      overScaleLimit: !!frame && scaleLimit !== null && frame.ratio > scaleLimit,
+      bordersOmitted: false,
+    }
+  })
+  recordRender('fallback', { version: sceneVersion, requestId, purpose: 'fallback', pixelRatio: 0 }, { fallbackCandidates })
+}
+
 function updateVisibility() {
   // The sharp frame has no overscan, so prefer it at its exact resting
   // camera. It can also bridge a small zoom-in if it still covers the view.
@@ -144,12 +207,23 @@ function updateVisibility() {
   const detail = presentation(visibleIndex)
   let shownIndex = !props.interacting && matchesCurrentCamera(snapshots[settledIndex])
     ? settledIndex
-    : detail && detail.ratio <= maximumFrameScale && coversViewport(visibleIndex)
+    : detail && detail.ratio <= detailMagnificationLimit(visibleIndex) && coversViewport(visibleIndex)
       ? visibleIndex
       : settled && settled.ratio <= 1.35 && coversViewport(settledIndex)
         ? settledIndex
         : hasShownDetail && overview && overview.ratio <= maximumFrameScale && coversViewport(overviewIndex)
           ? overviewIndex : -1
+  // Keep a usable moving crop ahead of late full-density restoration buffers
+  // when another drag begins. Do not blank the map if no such crop exists yet.
+  if (props.firefoxPreview && previewActive && props.interacting) {
+    for (const index of [visibleIndex, 1 - visibleIndex]) {
+      const frame = presentation(index)
+      if (snapshots[index]?.movementPreview && frame && frame.ratio <= detailMagnificationLimit(index) && coversViewport(index)) {
+        shownIndex = index
+        break
+      }
+    }
+  }
   if (shownIndex === -1 && previewBridge) {
     let bestDensity = -Infinity
     for (const index of [visibleIndex, settledIndex, overviewIndex]) {
@@ -157,16 +231,18 @@ function updateVisibility() {
       const frame = presentation(index)
       const snapshot = snapshots[index]
       if (!frame || !snapshot || !coversViewport(index)) continue
-      // Large magnification is a fast-pinch compromise, never a pan preview.
-      if ((index === overviewIndex || !bridgeFromPinch || props.touchPanning || props.animatedZooming)
-        && frame.ratio > maximumFrameScale) continue
+      // The overview always retains its 2× guard. A recent lower-density detail
+      // can bridge desktop wheel bursts; physical pinch behavior is unchanged.
+      if (index === overviewIndex && frame.ratio > maximumFrameScale) continue
+      if ((!bridgeFromPinch || props.touchPanning || props.animatedZooming)
+        && frame.ratio > detailMagnificationLimit(index)) continue
       const density = snapshot.pixelRatio / frame.ratio
       if (density > bestDensity) { bestDensity = density; shownIndex = index }
     }
   }
   const shownSnapshot = snapshots[shownIndex]
   const shownPresentation = presentation(shownIndex)
-  const sharp = shownSnapshot && shownPresentation
+  const sharp = shownSnapshot && !shownSnapshot.movementPreview && shownPresentation
     && shownSnapshot.pixelRatio >= pixelRatio() / 1.1 && Math.abs(shownPresentation.ratio - 1) <= 0.01
   if (previewBridge && !previewActive && sharp) previewBridge = false
   showingProxy = shownIndex !== -1 && previewBridge && !sharp
@@ -187,6 +263,7 @@ function updateVisibility() {
   }
   const nextReady = shownIndex !== -1
   if (nextReady !== ready) {
+    if (!nextReady) recordFallback()
     ready = nextReady
     emit('ready-change', ready)
   }
@@ -195,7 +272,9 @@ function updateVisibility() {
 function needsRefresh() {
   const frame = presentation(visibleIndex)
   if (!frame) return true
-  const margin = props.touchPanning ? 0.45 : 0.08
+  // Request Firefox pan replacements early enough to bridge worker latency.
+  // Keep the existing touch and other desktop refresh margins.
+  const margin = props.touchPanning ? 0.45 : props.firefoxPreview && props.panning ? 0.3 : 0.08
   const marginX = props.width * margin
   const marginY = props.height * margin
   return frame.ratio > 1.35 || frame.ratio < 0.8
@@ -204,12 +283,20 @@ function needsRefresh() {
     || frame.y + frame.ratio * frame.height < props.height + marginY
 }
 
-function recordRender(stage: GestureWorkerEvent['stage'], frame: { version: number; requestId: number; purpose: string; pixelRatio: number; timings?: CanvasWorkerFrame['timings'] }, display: { proxy?: boolean; displayScale?: number; mainWork?: GestureWorkerEvent['mainWork'] } = {}) {
+function recordRender(stage: GestureWorkerEvent['stage'], frame: { version: number; requestId: number; purpose: string; pixelRatio: number; overscan?: number; movementPreview?: boolean; timings?: CanvasWorkerFrame['timings'] }, display: { proxy?: boolean; displayScale?: number; mainWork?: GestureWorkerEvent['mainWork']; fallbackCandidates?: GestureWorkerEvent['fallbackCandidates'] } = {}) {
   if (!props.diagnosticsActive) return
-  emit('render-diagnostic', { stage, key: `${frame.version}:${frame.purpose}:${frame.requestId}`, purpose: frame.purpose, pixelRatio: frame.pixelRatio, at: performance.now(), workerDrawMs: frame.timings?.drawMs, workerExportMs: frame.timings?.exportMs, ...display })
+  emit('render-diagnostic', { stage, key: `${frame.version}:${frame.purpose}:${frame.requestId}`, purpose: frame.purpose, pixelRatio: frame.pixelRatio, overscan: frame.overscan, omitBorders: false, at: performance.now(), workerDrawMs: frame.timings?.drawMs, workerExportMs: frame.timings?.exportMs, ...display })
 }
 
 function requestFrame(force = false) {
+  // In Firefox, retain the lower-density moving crop for the next drag.
+  // Restore only the settled viewport after the existing quiet interval, rather
+  // than queueing an expensive full-density crop and a settled draw on every release.
+  if (props.firefoxPreview && !props.interacting
+    && snapshots[visibleIndex]?.movementPreview && snapshots[visibleIndex]?.version === sceneVersion) {
+    scheduleSettledFrame()
+    return
+  }
   if (!worker || !canvasA.value || !canvasB.value || sceneVersion === 0) return
   if (pending) {
     refreshAfterPending = true
@@ -218,18 +305,26 @@ function requestFrame(force = false) {
   }
   pending = true
   requestId += 1
-  const imageOverscan = props.touchPanning || props.animatedZooming ? touchPanOverscan : overscan
+  const primeZoomPreview = props.firefoxPreview && !props.interacting
+    && snapshots[visibleIndex]?.version !== sceneVersion
+  if (primeZoomPreview) previewBridge = true
+  const firefoxPreviewRequest = props.firefoxPreview && (previewActive || primeZoomPreview)
+  const imageOverscan = firefoxPreviewRequest ? firefoxPreviewOverscan
+    : props.touchPanning || props.animatedZooming ? touchPanOverscan : overscan
   const previewDensity = props.touchPanning && props.scene.bathymetry.length > 0
     ? touchPanBathymetryPreviewPixelRatio : touchZoomPreviewPixelRatio
   const message: CanvasWorkerRequest = {
     type: 'render',
     purpose: 'detail',
+    movementPreview: props.firefoxPreview && (primeZoomPreview || (previewActive && props.interacting)),
     version: sceneVersion,
     requestId,
     width: props.width,
     height: props.height,
-    pixelRatio: previewActive && (props.touchZooming || props.touchPanning || props.animatedZooming)
-      ? Math.min(previewDensity, pixelRatio(imageOverscan)) : pixelRatio(imageOverscan),
+    pixelRatio: firefoxPreviewRequest
+      ? Math.min(firefoxPreviewDensity, pixelRatio(imageOverscan))
+      : previewActive && (props.touchZooming || props.touchPanning || props.animatedZooming)
+        ? Math.min(previewDensity, pixelRatio(imageOverscan)) : pixelRatio(imageOverscan),
     overscan: imageOverscan,
     camera: currentCamera(),
     wrapOffset: props.wrapOffset,
@@ -260,12 +355,13 @@ function scheduleSettledFrame() {
   if (settleTimer !== undefined) window.clearTimeout(settleTimer)
   settleTimer = undefined
   // On small viewports the moving frame is already at its target resolution.
-  const needsQualityRestore = () => (snapshots[visibleIndex]?.pixelRatio ?? pixelRatio()) < pixelRatio(1) / 1.1
+  const needsQualityRestore = () => !!snapshots[visibleIndex]?.movementPreview || (snapshots[visibleIndex]?.pixelRatio ?? pixelRatio()) < pixelRatio(1) / 1.1
   if (props.interacting || (!needsQualityRestore() && pixelRatio(1) <= pixelRatio() * 1.1)) return
   settleTimer = window.setTimeout(() => {
     settleTimer = undefined
     if (!worker || props.interacting || matchesCurrentCamera(snapshots[settledIndex])) return
     if (!needsQualityRestore() && pixelRatio(1) <= pixelRatio() * 1.1) return
+    if (props.firefoxPreview && pendingSettledCamera?.version === sceneVersion && matchesCurrentCamera(pendingSettledCamera)) return
     settledRequestId += 1
     const message: CanvasWorkerRequest = {
       type: 'render',
@@ -279,9 +375,11 @@ function scheduleSettledFrame() {
       camera: currentCamera(),
       wrapOffset: props.wrapOffset,
     }
+    pendingSettledCamera = { camera: message.camera, width: message.width, height: message.height, version: message.version }
     recordRender('requested', message)
     worker.postMessage(message)
-  }, settleDelay)
+  }, props.firefoxPreview && restorationDeadline !== undefined
+    ? Math.max(0, restorationDeadline - performance.now()) : settleDelay)
 }
 
 function paintBitmap(index: number, frame: CanvasWorkerFrame, activateDetail = false) {
@@ -304,12 +402,13 @@ function paintBitmap(index: number, frame: CanvasWorkerFrame, activateDetail = f
     frame.bitmap.close()
   }
   const transferFinished = props.diagnosticsActive ? performance.now() : 0
-  snapshots[index] = { camera: frame.camera, width: frame.width, height: frame.height, overscan: frame.overscan, pixelRatio: frame.pixelRatio, version: frame.version, requestId: frame.requestId, purpose: frame.purpose }
+  snapshots[index] = { installedAt: performance.now(), movementPreview: frame.movementPreview ?? false, camera: frame.camera, width: frame.width, height: frame.height, overscan: frame.overscan, pixelRatio: frame.pixelRatio, version: frame.version, requestId: frame.requestId, purpose: frame.purpose }
   element.style.width = `${frame.overscan * 100}%`
   element.style.height = `${frame.overscan * 100}%`
   // Installing and selecting the hidden buffer in one task prevents the old
   // frame from triggering SVG fallback while an already-ready bitmap waits.
   if (activateDetail && coversViewport(index)) {
+    panCarry = null
     visibleIndex = index
     hasShownDetail = true
   }
@@ -323,11 +422,24 @@ function paintBitmap(index: number, frame: CanvasWorkerFrame, activateDetail = f
 
 function receiveFrame(frame: CanvasWorkerFrame) {
   recordRender('received', frame)
+  if (frame.purpose === 'settled' && frame.requestId === settledRequestId) pendingSettledCamera = null
   if (frame.version !== sceneVersion
     || (frame.purpose === 'detail' && frame.requestId !== requestId)
     || (frame.purpose === 'settled' && frame.requestId !== settledRequestId)) {
     recordRender('discarded', frame)
     frame.bitmap.close()
+    return
+  }
+  if (frame.purpose === 'detail' && props.firefoxPreview && previewActive && props.interacting
+    && !frame.movementPreview) {
+    // A full-quality request from the previous release must not displace the
+    // cached moving preview or force an expensive raster handoff during the gesture.
+    recordRender('discarded', frame)
+    frame.bitmap.close()
+    pending = false
+    refreshAfterPending = false
+    forceAfterPending = false
+    requestFrame(true)
     return
   }
   if (frame.purpose === 'overview') {
@@ -366,6 +478,9 @@ function receiveFrame(frame: CanvasWorkerFrame) {
 }
 
 function configureScene() {
+  panCarry = null
+  restorationDeadline = undefined
+  pendingSettledCamera = null
   if (!worker || canvases().some((canvas) => !canvas)) return
   const keepFrontFrame = ready && coversViewport(visibleIndex) && configuredCoordinates?.key === props.scene.coordinateKey
     && configuredCoordinates.width === props.width && configuredCoordinates.height === props.height
@@ -411,6 +526,7 @@ function setPreview(active: boolean) {
 watch(() => props.diagnosticsActive, (active) => {
   reportedDisplayedFrame = null
   const shown = snapshots[currentShownIndex]
+  if (active && !shown) recordFallback()
   if (active && shown) {
     recordRender('displayed', shown, { proxy: showingProxy, displayScale: presentation(currentShownIndex)?.ratio })
     reportedDisplayedFrame = shown
@@ -444,7 +560,39 @@ watch(() => props.wrapOffset, () => {
   requestFrame(true)
   scheduleSettledFrame()
 })
+watch(() => props.panning, (active) => {
+  panCarry = null
+  if (!active || !props.firefoxPreview) return
+  const now = performance.now()
+  if (!props.wheelZooming && now - wheelEndedAt > firefoxPreviewReuseWindow && !props.animating && now - animationEndedAt > firefoxPreviewReuseWindow) return
+  // Restored settled quality may hide the wheel crop just before the drag.
+  // Reuse that crop too, if it still covers the new view at the current scale.
+  for (const index of new Set([currentShownIndex, visibleIndex, 1 - visibleIndex])) {
+    const snapshot = snapshots[index]
+    const frame = presentation(index)
+    if (snapshot?.movementPreview && snapshot.version === sceneVersion && frame
+      && frame.ratio > maximumFrameScale && frame.ratio <= firefoxPreviewMaximumScale && coversViewport(index)) {
+      panCarry = { snapshot, ratio: frame.ratio, until: now + firefoxPreviewReuseWindow }
+      break
+    }
+  }
+}, { flush: 'sync' })
+
+watch(() => props.animating, (active, previous) => {
+  if (active) animationStartedAt = performance.now()
+  else if (previous) animationEndedAt = performance.now()
+}, { flush: 'sync' })
+watch(() => props.wheelZooming, (active, previous) => {
+  if (active) wheelStartedAt = performance.now()
+  else if (previous) wheelEndedAt = performance.now()
+}, { flush: 'sync' })
 watch(() => props.interacting, (active) => {
+  if (props.firefoxPreview) {
+    restorationDeadline = active ? undefined : performance.now() + settleDelay
+  }
+  // Reduce Firefox raster work throughout movement and restore quality after
+  // the settled quiet interval. Other desktop and touch policies stay intact.
+  if (props.firefoxPreview) setPreview(active)
   updateVisibility()
   if (!active) requestFrame()
   scheduleSettledFrame()
