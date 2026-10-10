@@ -1,6 +1,6 @@
 # Firefox pan and zoom investigation
 
-Status: The user accepts the current desktop revision for commit; release and further device checks are not requested. Recorded: 2026-10-10. Browser testing is performed by the user.
+Status: Final 3× / 0.75-density version accepted by the user for release 0.14.0 — Fox Trot. Recorded: 2026-10-10. Browser testing is performed by the user.
 
 The experiment flags described in the historical entries below have been removed. The current bordered-preview policy is automatic on desktop Firefox; gesture-debug remains available for optional diagnostics.
 
@@ -133,3 +133,21 @@ The user reports degraded appearance in Chrome as well as Firefox. A source comp
 The remaining shared changes to pending-settled-request deduplication and wheel-idle flushing are restricted to the Firefox policy. Additional camera-copy dependencies in the country memo loop are likewise active only for Firefox; non-Firefox magnification evaluation immediately returns its released 2× guard. This restores those non-Firefox code paths to their previous policy without claiming that any one of them caused the appearance problem. Browser verification remains with the user.
 
 The user reports that the latest revision is better and requests a commit. The latest build and whitespace checks passed. This is user-reported desktop acceptance; no agent browser testing or fresh iPhone acceptance is claimed. The work is saved on the feature branch without merging, pushing, or releasing.
+
+## Sharper Firefox preview trial
+
+After committing the bordered preview, the user requested a quality comparison closer to Chrome. The Firefox moving/primed preview density cap is raised from 0.5 to 0.75. At the reported 1687 × 937 viewport, this increases linear raster resolution by 50% and bitmap pixels by 125%; the existing 4096-pixel size cap can limit the increase on larger viewports. The 3× crop, refresh margins, magnification/carry limits, visible borders and SVG highlights, and settled quality remain unchanged. Chrome and mobile policies are unaffected. Diagnostic previewPixelRatio records the new density cap; frame sourceDensity reports the actual size-limited density.
+
+This is a quality/performance trial, not a claim of Chrome-equivalent movement quality or speed. Both browsers already transform cached rasters during movement and restore full-density rendering at rest; Firefox has a deliberately lower moving density and wider crop. The user will compare ordinary pan, wheel zoom, Reset view, and Russia framing, with gesture-debug available only if a lag needs diagnosing. No agent browser testing was performed, and this trial remains uncommitted.
+
+## Smaller, sharper Firefox crop trial
+
+The user reports improvement at 0.75 density and requests a trial closer to Chrome’s movement quality. The Firefox moving/primed crop is reduced from 3× to 2× and its density cap raised from 0.75 to 1.2. At the reported 1687 × 937 viewport, both settings fit within the existing 4096-pixel dimension cap: visible-map linear resolution increases by 60%, while bitmap pixel count increases by approximately 14%. The margin outside each viewport edge falls from one viewport width/height to half, so fast movement can exhaust coverage sooner.
+
+Refresh timing, scene and coverage checks, zoom/pan carry limits, visible borders, and settled restoration remain unchanged. Diagnostics identify the new 2× / 1.2 policy and actual displayed source density. Chrome and mobile policies remain unchanged. The user will compare sharpness and responsiveness during fast pans, wheel zoom, Reset view, and Russia framing. No agent browser testing was performed; the trial remains uncommitted.
+
+The user rejects the 2× / 1.2 trial because it introduces too much lag. The previous 3× / 0.75 preview is restored, including matching diagnostic metadata. No additional performance investigation or quality trial is started. The restored settings already passed the build before this trial; whitespace checks pass after rollback. Browser testing remains with the user, and the 0.75 quality adjustment remains uncommitted.
+
+## Final release acceptance
+
+The user accepts the restored 3× / 0.75 preview, requests confirmation of Chrome/mobile isolation, then authorizes committing, releasing, and publishing. Source verification confirms that the new movement quality, refresh, reuse, pending-restoration, and wheel-idle policies are gated to desktop Firefox with a fine pointer and hover. Chrome/mobile retain their released policies; the shared worker draws the same borders and geometry, with added preview metadata only. No fresh agent browser or iPhone testing is claimed. TASK-010 is completed on this user acceptance and source verification. Release preparation uses 0.14.0 — Fox Trot; further quality/performance trials are deferred unless requested.

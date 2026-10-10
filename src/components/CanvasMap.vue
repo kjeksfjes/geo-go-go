@@ -39,7 +39,7 @@ const overscan = 1.8
 const touchPanOverscan = 3
 // Firefox movement needs enough runway for fast drags and expanding zooms.
 const firefoxPreviewOverscan = 3
-const firefoxPreviewDensity = 0.5
+const firefoxPreviewDensity = 0.75
 const firefoxPreviewMaximumScale = 3.5
 const firefoxPreviewReuseWindow = 1000
 // At minimum zoom, the camera can move by 65% of the viewport in either

@@ -2,7 +2,7 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
-## Unreleased
+## 0.14.0 — Fox Trot — 2026-10-10
 
 ### Improvements
 

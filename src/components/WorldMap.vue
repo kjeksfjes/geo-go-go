@@ -439,7 +439,7 @@ function beginGestureReport(now: number, gesture: DiagnosticMovement, initial = 
     map: { renderer: canvasRendererActive.value ? 'Canvas worker' : 'SVG', canvasContext: canvasContextKind.value, detail: props.highDetailEnabled ? '10m' : '50m', projection: projectionId.value, region: props.activeRegion.id, mode: props.nameCountryQuiz ? 'name-country' : props.quizMode ? 'find-country' : 'explore', bathymetry: bathymetryEnabled.value, relief: reliefEnabled.value, countryPaths: geographicPaths.value.length, highlightPaths: highlightedGeographicPaths.value.length },
     renderingPolicy: {
       firefoxPreview: firefoxPreviewEnabled,
-      previewPixelRatio: firefoxPreviewEnabled ? 0.5 : null,
+      previewPixelRatio: firefoxPreviewEnabled ? 0.75 : null,
       previewOverscan: firefoxPreviewEnabled ? 3 : null,
       panRefreshMargin: firefoxPreviewEnabled ? 0.3 : 0.08,
       zoomPreviewMaxMagnification: firefoxPreviewEnabled ? 3.5 : 2,

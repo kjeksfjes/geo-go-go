@@ -180,9 +180,9 @@ The user requested an assessment and backlog entry for behavior-aware guidance t
 
 ## TASK-010 — Investigate Firefox pan and zoom performance
 
-Status: Current desktop revision accepted for commit; final device regression checks pending. Added: 2026-10-07. Updated: 2026-10-10.
+Status: Completed — accepted by the user for release. Added: 2026-10-07. Completed: 2026-10-10.
 
-The user found Firefox movement acceptable in the border-free trial, then clarified that country borders should remain visible during movement. The revised preview restores those borders; after restricting the remaining shared movement changes to Firefox, the user reports improvement and requests a commit. The measurements, profiler findings, hypotheses, and accepted tradeoffs are recorded in [the Firefox investigation](docs/firefox-pan-zoom-performance-audit.md). The revised policy is enabled automatically on desktop Firefox, with wider lower-density cached movement previews, early pan refresh, bounded detail reuse across zoom/animation/pan transitions, retained wrapped hit geometry, visible country and highlight outlines, and full-quality restoration at rest. Both detail levels and Canvas/SVG highlight presentation share the policy; Chrome and touch-first rendering policies are preserved. The experiment flags are removed, while desktop/mobile diagnostics remain available through gesture-debug. The user will perform the final check without experiment flags; the restored-border version requires a performance check before this task can be completed.
+The user found Firefox movement acceptable in the border-free trial, then clarified that country borders should remain visible during movement. The revised preview restores those borders; after restricting the remaining shared movement changes to Firefox, the user reports improvement and requests a commit. The measurements, profiler findings, hypotheses, and accepted tradeoffs are recorded in [the Firefox investigation](docs/firefox-pan-zoom-performance-audit.md). The revised policy is enabled automatically on desktop Firefox, with wider lower-density cached movement previews, early pan refresh, bounded detail reuse across zoom/animation/pan transitions, retained wrapped hit geometry, visible country and highlight outlines, and full-quality restoration at rest. Both detail levels and Canvas/SVG highlight presentation share the policy; Chrome and touch-first rendering policies are preserved. The experiment flags are removed, while desktop/mobile diagnostics remain available through gesture-debug. The user accepts the final 3× / 0.75-density version and authorizes release. Chrome and mobile policy isolation was rechecked against the released source; no fresh agent browser or iPhone testing is claimed. Further performance tuning is deferred unless requested.
 
 ### Completion criteria
 
@@ -190,7 +190,7 @@ The user found Firefox movement acceptable in the border-free trial, then clarif
 - [x] Identify measured worker stroke, SVG mounting, and rendering-transition costs; distinguish evidence from hypotheses about individual stalls.
 - [x] Apply maintainable improvements while preserving geographic identities, quiz highlights, full hit geometry, both detail levels, Canvas/SVG consistency, and accepted mobile policies.
 - [x] Run npm run build and whitespace checks after default activation and cleanup.
-- [ ] Complete the user's final browser check of default Firefox activation and a brief Chrome/iPhone regression check. Then mark this task complete.
+- [x] Obtain the user's acceptance of the final desktop Firefox version and verify that the new policies remain gated away from Chrome/mobile. Fresh iPhone browser testing was not performed; the user authorized release after source verification.
 
 ## Audit status
 
