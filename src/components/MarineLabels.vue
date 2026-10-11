@@ -145,7 +145,7 @@ function updateLabels() {
   const labelLevel = Math.min(9.9, 1 + 1.5 * Math.log2(effectiveScale))
   const baseFont = Math.max(12, Math.min(17, props.width / 65))
   const fontSize = `${baseFont}px`
-  // Measure curved names with their actual font, case and spacing.
+  // Measure every name with its actual font, case and spacing.
   // Batch these reads before placement writes, and only after gestures settle.
   if (measurementGroup) measurementGroup.style.fontSize = fontSize
   const styleKey = `${fontSize}:${locale.value}`
@@ -154,9 +154,10 @@ function updateLabels() {
     measurementWidths.clear()
   }
   for (const label of projectedLabels.value) {
-    if (!label.guide || labelLevel < label.minLabel || measurementWidths.has(label.id)) continue
+    if ((!label.guide && labelLevel < label.minLabel) || measurementWidths.has(label.id)) continue
     const element = measurements.get(label.id)
-    const length = element?.getComputedTextLength()
+    const length = element ? Math.max(...Array.from(element.children,
+      (line) => (line as SVGTextContentElement).getComputedTextLength())) : 0
     if (length) measurementWidths.set(label.id, length)
   }
   const candidates: Candidate[] = []
@@ -172,19 +173,27 @@ function updateLabels() {
       elements.push(element)
       const isOcean = label.kind === 'ocean'
       const baseFontPixels = baseFont * (isOcean ? 1 : label.rank <= 2 ? 0.84 : 0.77)
-      const longestLine = Math.max(...label.lines.map((line) => line.length))
-      const baseTextWidth = label.guide ? measurementWidths.get(label.id)
-        : longestLine * (baseFontPixels * 0.55 + (isOcean ? 2.2 : 1))
+      const baseTextWidth = measurementWidths.get(label.id)
       if (!baseTextWidth) continue
+      const x = props.transform.x + scale * (label.x + offset)
+      const y = props.transform.y + scale * label.y
       // Let names grow with their water body. Only constrain growth when the
       // guide or screen cannot accommodate it; fixed pixel sizes made names
       // look progressively smaller and flattened their curves on zoom-in.
-      const entryScale = Math.max(1, Math.pow(2, (label.minLabel - 1) / 1.5))
+      // Guide-backed names can appear before their old source zoom threshold.
+      // Let cartographic importance guide growth too, so major seas are not
+      // stuck at their smallest type size despite a broad visible corridor.
+      const growthLevel = label.guide ? Math.min(label.minLabel, 2 + label.rank * 0.5) : label.minLabel
+      const entryScale = Math.max(1, Math.pow(2, (growthLevel - 1) / 1.5))
       const paddedWidth = baseTextWidth + baseFontPixels * 2
       const screenSpace = Math.min(props.width - 20, props.height - 70) * 0.8
       const guideSpace = label.guideLengths ? label.guideLengths.at(-1)! * scale * 0.85 : Infinity
-      const fontFactor = Math.min(2.5, Math.max(1, effectiveScale / entryScale),
-        screenSpace / paddedWidth, guideSpace / paddedWidth)
+      const anchorSpace = label.guide ? Infinity : Math.max(0, Math.min(x - 10, props.width - 10 - x) * 2)
+      // On narrow screens, cap type by the viewport as well as guide length.
+      // Desktop keeps the accepted 2.5× cap; mobile cannot fill the map with it.
+      const responsiveFontCap = Math.max(baseFontPixels, Math.min(props.width, props.height) / 20)
+      const fontFactor = Math.min(2.5, responsiveFontCap / baseFontPixels, Math.max(1, effectiveScale / entryScale),
+        screenSpace / paddedWidth, guideSpace / paddedWidth, anchorSpace / paddedWidth)
       if (fontFactor < 1) continue
       let fontPixels = baseFontPixels * fontFactor
       const textWidth = baseTextWidth * fontFactor
@@ -192,8 +201,6 @@ function updateLabels() {
       const halfHeight = fontPixels * (label.lines.length > 1 ? 1.2 : 0.7)
       const labelFont = `${fontPixels}px`
       if (element.style.fontSize !== labelFont) element.style.fontSize = labelFont
-      const x = props.transform.x + scale * (label.x + offset)
-      const y = props.transform.y + scale * label.y
       let box: Candidate['box']
       if (label.guide && label.guideLengths) {
         // Project the growing label into screen coordinates to retain crisp
@@ -202,7 +209,10 @@ function updateLabels() {
         if (!path) continue
         let guide: MapPoint[] | undefined
         const alternatives = label.readableGuide && label.readableLengths
-          ? [{ points: label.readableGuide, lengths: label.readableLengths }, { points: label.guide, lengths: label.guideLengths }]
+          // Keep the preferred reading direction stable across zoom levels.
+          // If it cannot fit even at the starting size, hide rather than flip
+          // back to the original steep axis.
+          ? [{ points: label.readableGuide, lengths: label.readableLengths }]
           : [{ points: label.guide, lengths: label.guideLengths }]
         for (const alternative of alternatives) {
           const availableFactor = Math.min(fontFactor, alternative.lengths.at(-1)! * scale * 0.85 / paddedWidth)
@@ -240,7 +250,9 @@ function updateLabels() {
         for (const line of Array.from(element.children)) line.setAttribute('x', String(x))
         box = [x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight]
       }
-      const eligible = labelLevel >= label.minLabel
+      // A water guide already proves whether there is enough room at this
+      // projection and zoom. Source zoom metadata must not hide a fitting name.
+      const eligible = (label.guide !== undefined || labelLevel >= label.minLabel)
         && box[0] >= 10 && box[2] <= props.width - 10
         && box[1] >= 58 && box[3] <= props.height - 12
 
@@ -304,12 +316,16 @@ onBeforeUnmount(() => {
   <g v-show="visible" class="marine-labels" aria-hidden="true">
     <g :ref="(element) => { measurementGroup = element as SVGGElement | undefined }" visibility="hidden">
       <text
-        v-for="label in projectedLabels.filter((label) => label.guide)"
+        v-for="label in projectedLabels"
         :key="label.id"
         :ref="(element) => assignMeasurement(element, label.id)"
         class="marine-label"
         :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
-      >{{ label.kind === 'ocean' ? label.displayName.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : label.displayName }}</text>
+      >
+        <tspan v-for="(line, index) in label.lines" :key="index" x="0" :dy="index > 0 ? '1.35em' : undefined">
+          {{ label.kind === 'ocean' ? line.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : line }}
+        </tspan>
+      </text>
     </g>
     <defs>
       <template v-for="offset in copyOffsets" :key="offset">
