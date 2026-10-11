@@ -430,6 +430,25 @@ const gestureLongTasksSupported = typeof PerformanceObserver !== 'undefined'
 
 type DiagnosticMovement = 'pinch' | 'pan' | 'wheel' | 'animation'
 let diagnosticInput: { startedAt: number; initial: ReturnType<typeof gestureSample>; source: 'touch' | 'pointer' | 'wheel'; cancelled: boolean } | null = null
+let pendingPanStartup: {
+  downAt: number
+  timings: {
+    pointerDownEventAgeMs: number | null
+    pointerDownHandlerMs: number | null
+    pointerDownToFirstMoveMs: number | null
+    firstMoveEventAgeMs: number | null
+    pointerDownToDragStartMs: number | null
+    dragStartHandlerMs: number | null
+    pointerDownToFirstTransformMs: number | null
+    pointerDownToFirstRafMs: number | null
+  }
+} | null = null
+
+function inputEventAge(event: PointerEvent, now: number) {
+  const age = now - event.timeStamp
+  // Accept only a compatible monotonic event timestamp, not an epoch clock.
+  return age >= 0 && age < 60_000 ? Math.round(age * 100) / 100 : null
+}
 
 function withGestureInput<T>(source: 'touch' | 'pointer' | 'wheel', action: () => T, cancelled = false, wheel?: GestureWheelInput): T {
   if (!gestureDebugEnabled) return action()
@@ -464,9 +483,12 @@ function captureGestureReport() {
 function beginGestureReport(now: number, gesture: DiagnosticMovement, initial = gestureSample()) {
   captureGestureReport()
   gestureCopyState.value = 'idle'
+  const startup = gesture === 'pan' && diagnosticInput?.source === 'pointer' ? pendingPanStartup : null
+  if (startup) startup.timings.pointerDownToDragStartMs = Math.round((now - startup.downAt) * 100) / 100
   gestureRecorder = createGestureDiagnostics({
     appVersion: packageInfo.version,
     gesture,
+    panStartup: startup?.timings,
     inputSource: gesture === 'animation' ? 'automatic' : diagnosticInput?.source ?? (gesture === 'wheel' ? 'wheel' : 'touch'),
     recordedAt: new Date().toISOString(),
     browser: navigator.userAgent,
@@ -499,6 +521,9 @@ function beginGestureReport(now: number, gesture: DiagnosticMovement, initial = 
     }
   }
   const sample = (time: number) => {
+    if (startup && startup.timings.pointerDownToFirstRafMs === null) {
+      startup.timings.pointerDownToFirstRafMs = Math.round((performance.now() - startup.downAt) * 100) / 100
+    }
     gestureRecorder?.frame(time, gestureSample())
     gestureFrame = requestAnimationFrame(sample)
   }
@@ -1192,18 +1217,47 @@ function handleWheel(event: WheelEvent) {
 
 function handlePointerDown(event: PointerEvent) {
   if (event.pointerType === 'touch' || markerDistribution.value) return
+  const startedAt = gestureDebugEnabled ? performance.now() : 0
+  if (gestureDebugEnabled) pendingPanStartup = event.button === 0 ? {
+    downAt: startedAt,
+    timings: {
+      pointerDownEventAgeMs: inputEventAge(event, startedAt),
+      pointerDownHandlerMs: null,
+      pointerDownToFirstMoveMs: null,
+      firstMoveEventAgeMs: null,
+      pointerDownToDragStartMs: null,
+      dragStartHandlerMs: null,
+      pointerDownToFirstTransformMs: null,
+      pointerDownToFirstRafMs: null,
+    },
+  } : null
   withGestureInput('pointer', () => {
     rememberHoverPointer(event)
     if (svg.value) startPan(event, svg.value)
   })
+  if (pendingPanStartup) pendingPanStartup.timings.pointerDownHandlerMs = Math.round((performance.now() - startedAt) * 100) / 100
 }
 
 function handlePointerMove(event: PointerEvent) {
   if (event.pointerType === 'touch') return
+  const startup = gestureDebugEnabled ? pendingPanStartup : null
+  const startedAt = startup ? performance.now() : 0
+  const before = startup && startup.timings.pointerDownToFirstTransformMs === null ? gestureSample() : null
+  if (startup && startup.timings.pointerDownToFirstMoveMs === null) {
+    startup.timings.pointerDownToFirstMoveMs = Math.round((startedAt - startup.downAt) * 100) / 100
+    startup.timings.firstMoveEventAgeMs = inputEventAge(event, startedAt)
+  }
   withGestureInput('pointer', () => {
     rememberHoverPointer(event)
     movePan(event)
   })
+  if (startup && isDragging.value) {
+    const now = performance.now()
+    if (startup.timings.dragStartHandlerMs === null) startup.timings.dragStartHandlerMs = Math.round((now - startedAt) * 100) / 100
+    if (before && (transform.x !== before.x || transform.y !== before.y)) {
+      startup.timings.pointerDownToFirstTransformMs = Math.round((now - startup.downAt) * 100) / 100
+    }
+  }
 }
 
 function handlePointerLeave(event: PointerEvent) {
@@ -1216,6 +1270,7 @@ function handlePointerEnd(event: PointerEvent) {
   if (event.pointerType === 'touch') return
   if (!svg.value) return
   withGestureInput('pointer', () => endPan(event, svg.value!), event.type === 'pointercancel')
+  pendingPanStartup = null
 }
 
 function handleTouch(event: TouchEvent) {
@@ -1824,6 +1879,7 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
           :projection-scale="projectionScale"
           :project-point="projectPoint"
           :copy-offsets="copyOffsets"
+          :wrap-period="horizontalWrap?.period ?? null"
         />
         <g v-if="namedQuestionMarkers.length" class="named-question-markers" role="img" :aria-label="t('highlightedCountry')">
           <g v-for="marker in namedQuestionMarkers" :key="marker.key">

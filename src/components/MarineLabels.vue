@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, useId, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
+import { marineLabelPaths } from '../data/marineLabelPaths'
+import { visibleLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
 import { locale } from '../i18n'
 import type { MapPoint } from '../composables/useMapZoom'
 
@@ -12,6 +14,7 @@ const props = defineProps<{
   projectionScale: number
   projectPoint: (point: MapPoint) => MapPoint | undefined
   copyOffsets: readonly number[]
+  wrapPeriod: number | null
 }>()
 
 interface ProjectedLabel extends MarineLabel {
@@ -19,10 +22,40 @@ interface ProjectedLabel extends MarineLabel {
   y: number
   lines: string[]
   displayName: string
+  guide?: MapPoint[]
+  guideLengths?: number[]
+  guideCenter?: number
+  readableGuide?: MapPoint[]
+  readableLengths?: number[]
 }
 
 const groups = new Map<number, SVGGElement>()
+const paths = new Map<string, SVGPathElement>()
+const measurements = new Map<string, SVGTextElement>()
+const measurementWidths = new Map<string, number>()
+let measurementStyle = ''
+let measurementGroup: SVGGElement | undefined
+const pathPrefix = useId()
+const sampledGuides = new Map(Object.entries(marineLabelPaths)
+  .map(([id, { points }]) => [id, sampleLabelGuide(points)]))
+const readableGuides = new Map(Object.entries(marineLabelPaths)
+  .flatMap(([id, { readablePoints }]) => readablePoints ? [[id, sampleLabelGuide(readablePoints)] as const] : []))
 let updateFrame: number | undefined
+
+function labelPathId(id: string, offset: number) {
+  return `${pathPrefix}-${id}-${offset}`
+}
+
+function assignPath(element: unknown, id: string, offset: number) {
+  const key = labelPathId(id, offset)
+  if (element) paths.set(key, element as SVGPathElement)
+  else paths.delete(key)
+}
+
+function assignMeasurement(element: unknown, id: string) {
+  if (element) measurements.set(id, element as SVGTextElement)
+  else measurements.delete(id)
+}
 
 function assignGroup(element: unknown, offset: number) {
   if (element) groups.set(offset, element as SVGGElement)
@@ -46,16 +79,43 @@ function labelLines(name: string, kind: string) {
   return [name]
 }
 
+function projectGuide(source?: readonly MapPoint[], offset: MapPoint = [0, 0]): MapPoint[] | undefined {
+  const shifted = offset[0] !== 0 || offset[1] !== 0
+  // Taper placement nudges towards fixed corridor ends near the coast.
+  const guide = source?.map(([x, y], index) => {
+    const weight = shifted ? Math.sin(Math.PI * index / (source.length - 1)) ** 2 : 0
+    return props.projectPoint([x + offset[0] * weight, y + offset[1] * weight])
+  })
+  // Keep date-line corridors continuous beside their wrapped map copies.
+  if (guide && props.wrapPeriod) {
+    for (let index = 1; index < guide.length; index++) {
+      const previous = guide[index - 1], point = guide[index]
+      if (previous && point) point[0] += Math.round((previous[0] - point[0]) / props.wrapPeriod) * props.wrapPeriod
+    }
+  }
+  return guide?.every((point, index) => point?.every(Number.isFinite)
+    && (props.wrapPeriod || index === 0 || Math.abs(point[0] - guide[index - 1]![0]!) < props.width / 2))
+    ? guide as MapPoint[] : undefined
+}
+
 const projectedLabels = computed<ProjectedLabel[]>(() => marineLabels.flatMap((label) => {
-  const point = props.projectPoint(label.point)
+  const offset = marineLabelPaths[label.id]?.offset ?? [0, 0]
+  const point = props.projectPoint([label.point[0] + offset[0], label.point[1] + offset[1]])
   if (!point || !point.every(Number.isFinite)) return []
   const displayName = locale.value === 'nb' ? label.nameNb : label.name
+  const validGuide = projectGuide(sampledGuides.get(label.id), offset)
+  const readableGuide = projectGuide(readableGuides.get(label.id), offset)
   return [{
     ...label,
     x: point[0],
     y: point[1],
     displayName,
-    lines: labelLines(displayName, label.kind),
+    lines: validGuide ? [displayName] : labelLines(displayName, label.kind),
+    guide: validGuide,
+    guideLengths: validGuide ? labelGuideLengths(validGuide) : undefined,
+    guideCenter: marineLabelPaths[label.id]?.center,
+    readableGuide,
+    readableLengths: readableGuide ? labelGuideLengths(readableGuide) : undefined,
   }]
 }))
 
@@ -85,6 +145,20 @@ function updateLabels() {
   const labelLevel = Math.min(9.9, 1 + 1.5 * Math.log2(effectiveScale))
   const baseFont = Math.max(12, Math.min(17, props.width / 65))
   const fontSize = `${baseFont}px`
+  // Measure curved names with their actual font, case and spacing.
+  // Batch these reads before placement writes, and only after gestures settle.
+  if (measurementGroup) measurementGroup.style.fontSize = fontSize
+  const styleKey = `${fontSize}:${locale.value}`
+  if (styleKey !== measurementStyle) {
+    measurementStyle = styleKey
+    measurementWidths.clear()
+  }
+  for (const label of projectedLabels.value) {
+    if (!label.guide || labelLevel < label.minLabel || measurementWidths.has(label.id)) continue
+    const element = measurements.get(label.id)
+    const length = element?.getComputedTextLength()
+    if (length) measurementWidths.set(label.id, length)
+  }
   const candidates: Candidate[] = []
   const elements: SVGElement[] = []
   for (const offset of props.copyOffsets) {
@@ -97,20 +171,76 @@ function updateLabels() {
       if (!element) continue
       elements.push(element)
       const isOcean = label.kind === 'ocean'
-      const fontPixels = baseFont * (isOcean ? 1 : label.rank <= 2 ? 0.84 : 0.77)
+      const baseFontPixels = baseFont * (isOcean ? 1 : label.rank <= 2 ? 0.84 : 0.77)
       const longestLine = Math.max(...label.lines.map((line) => line.length))
-      const halfWidth = longestLine * (fontPixels * 0.55 + (isOcean ? 2.2 : 1)) / 2
-      const halfHeight = label.lines.length > 1 ? baseFont * 1.2 : fontPixels * 0.7
+      const baseTextWidth = label.guide ? measurementWidths.get(label.id)
+        : longestLine * (baseFontPixels * 0.55 + (isOcean ? 2.2 : 1))
+      if (!baseTextWidth) continue
+      // Let names grow with their water body. Only constrain growth when the
+      // guide or screen cannot accommodate it; fixed pixel sizes made names
+      // look progressively smaller and flattened their curves on zoom-in.
+      const entryScale = Math.max(1, Math.pow(2, (label.minLabel - 1) / 1.5))
+      const paddedWidth = baseTextWidth + baseFontPixels * 2
+      const screenSpace = Math.min(props.width - 20, props.height - 70) * 0.8
+      const guideSpace = label.guideLengths ? label.guideLengths.at(-1)! * scale * 0.85 : Infinity
+      const fontFactor = Math.min(2.5, Math.max(1, effectiveScale / entryScale),
+        screenSpace / paddedWidth, guideSpace / paddedWidth)
+      if (fontFactor < 1) continue
+      let fontPixels = baseFontPixels * fontFactor
+      const textWidth = baseTextWidth * fontFactor
+      const halfWidth = textWidth / 2
+      const halfHeight = fontPixels * (label.lines.length > 1 ? 1.2 : 0.7)
+      const labelFont = `${fontPixels}px`
+      if (element.style.fontSize !== labelFont) element.style.fontSize = labelFont
       const x = props.transform.x + scale * (label.x + offset)
       const y = props.transform.y + scale * label.y
-      // Keep text in viewport coordinates, outside the scaled map group.
-      // Firefox can otherwise soften labels while zooming the SVG scene.
-      element.setAttribute('x', String(x))
-      element.setAttribute('y', String(y))
-      for (const line of Array.from(element.children)) line.setAttribute('x', String(x))
-      const box: Candidate['box'] = [x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight]
+      let box: Candidate['box']
+      if (label.guide && label.guideLengths) {
+        // Project the growing label into screen coordinates to retain crisp
+        // glyphs while keeping its geographic curve until space limits it.
+        const path = paths.get(labelPathId(label.id, offset))
+        if (!path) continue
+        let guide: MapPoint[] | undefined
+        const alternatives = label.readableGuide && label.readableLengths
+          ? [{ points: label.readableGuide, lengths: label.readableLengths }, { points: label.guide, lengths: label.guideLengths }]
+          : [{ points: label.guide, lengths: label.guideLengths }]
+        for (const alternative of alternatives) {
+          const availableFactor = Math.min(fontFactor, alternative.lengths.at(-1)! * scale * 0.85 / paddedWidth)
+          if (availableFactor < 1) continue
+          for (const factor of [availableFactor, Math.max(1, availableFactor * 0.75), 1]) {
+            const size = baseFontPixels * factor
+            const viewport: [number, number, number, number] = [
+              (10 + size - props.transform.x) / scale - offset,
+              (58 + size - props.transform.y) / scale,
+              (props.width - 10 - size - props.transform.x) / scale - offset,
+              (props.height - 12 - size - props.transform.y) / scale,
+            ]
+            guide = visibleLabelGuide(alternative.points, alternative.lengths, paddedWidth * factor / scale,
+              viewport, label.guideCenter)
+            if (guide) { fontPixels = size; break }
+          }
+          if (guide) break
+        }
+        if (!guide) continue
+        element.style.fontSize = `${fontPixels}px`
+        const screenPoints = guide.map(([x, y]) => [
+          props.transform.x + scale * (x + offset),
+          props.transform.y + scale * y,
+        ] as MapPoint)
+        path.setAttribute('d', screenPoints.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x},${y}`).join(''))
+        const xs = screenPoints.map(([x]) => x)
+        const ys = screenPoints.map(([, y]) => y)
+        box = [Math.min(...xs) - fontPixels, Math.min(...ys) - fontPixels,
+          Math.max(...xs) + fontPixels, Math.max(...ys) + fontPixels]
+      } else {
+        // Keep text in viewport coordinates, outside the scaled map group.
+        // Firefox can otherwise soften labels while zooming the SVG scene.
+        element.setAttribute('x', String(x))
+        element.setAttribute('y', String(y))
+        for (const line of Array.from(element.children)) line.setAttribute('x', String(x))
+        box = [x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight]
+      }
       const eligible = labelLevel >= label.minLabel
-        && labelLevel <= label.maxLabel
         && box[0] >= 10 && box[2] <= props.width - 10
         && box[1] >= 58 && box[3] <= props.height - 12
 
@@ -155,14 +285,42 @@ watch(
   scheduleUpdate,
   { flush: 'post' },
 )
-onMounted(scheduleUpdate)
+function refreshFontMeasurements() {
+  measurementWidths.clear()
+  scheduleUpdate()
+}
+
+onMounted(() => {
+  scheduleUpdate()
+  document.fonts.addEventListener('loadingdone', refreshFontMeasurements)
+})
 onBeforeUnmount(() => {
+  document.fonts.removeEventListener('loadingdone', refreshFontMeasurements)
   if (updateFrame !== undefined) cancelAnimationFrame(updateFrame)
 })
 </script>
 
 <template>
   <g v-show="visible" class="marine-labels" aria-hidden="true">
+    <g :ref="(element) => { measurementGroup = element as SVGGElement | undefined }" visibility="hidden">
+      <text
+        v-for="label in projectedLabels.filter((label) => label.guide)"
+        :key="label.id"
+        :ref="(element) => assignMeasurement(element, label.id)"
+        class="marine-label"
+        :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
+      >{{ label.kind === 'ocean' ? label.displayName.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : label.displayName }}</text>
+    </g>
+    <defs>
+      <template v-for="offset in copyOffsets" :key="offset">
+        <path
+          v-for="label in projectedLabels.filter((label) => label.guide)"
+          :id="labelPathId(label.id, offset)"
+          :key="label.id"
+          :ref="(element) => assignPath(element, label.id, offset)"
+        />
+      </template>
+    </defs>
     <g
       v-for="offset in copyOffsets"
       :key="offset"
@@ -175,8 +333,11 @@ onBeforeUnmount(() => {
         :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
         style="display: none"
       >
+        <textPath v-if="label.guide" :href="`#${labelPathId(label.id, offset)}`" startOffset="50%">
+          {{ label.kind === 'ocean' ? label.displayName.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : label.displayName }}
+        </textPath>
         <tspan
-          v-for="(line, index) in label.lines"
+          v-for="(line, index) in label.guide ? [] : label.lines"
           :key="index"
           :dy="index === 0 && label.lines.length > 1 ? '-0.55em' : index > 0 ? '1.35em' : undefined"
         >{{ label.kind === 'ocean' ? line.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : line }}</tspan>
@@ -194,7 +355,8 @@ onBeforeUnmount(() => {
 .marine-label {
   fill: #24465a;
   fill-opacity: 0.74;
-  font-family: var(--ui-font);
+  font-family: var(--map-font-water);
+  font-style: italic;
   font-size: 0.84em;
   font-weight: var(--ui-weight);
   letter-spacing: 0.11em;
@@ -204,7 +366,7 @@ onBeforeUnmount(() => {
 
 .marine-label--ocean {
   font-size: 1em;
-  font-weight: var(--ui-weight-large);
+  font-weight: 600;
   letter-spacing: 0.25em;
 }
 

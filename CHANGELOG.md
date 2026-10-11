@@ -2,6 +2,16 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Improvements
+
+- Use self-hosted EB Garamond Italic for water names, with weight 600 for large ocean names.
+- Nudge Seram Sea, Dampier Strait, and White Sea slightly south, and Red Sea slightly east.
+- Extend opt-in mouse-pan diagnostics with startup timings from pointer-down through the first move, drag threshold, camera change, and RAF callback, including handler durations and event timestamp ages.
+- Place water names along prepared guides following sea shapes, curving where natural and retaining straight guides or original anchors where appropriate. Refined placements include Arctic Ocean, Mediterranean Sea, Red Sea, Gulf of Alaska, Caspian Sea, Persian Gulf, Gulf of Mexico, Caribbean Sea, and Black Sea. Check placement after movement settles.
+- Let water names grow moderately with zoom, capped at 2.5× their starting text size. Move names along the visible water corridor and reduce their size when needed before hiding them. Prefer less vertical guides when prepared water-only alternatives have enough room; retain narrow-sea alignment otherwise.
+
 ## 0.16.0 — Southern Reach — 2026-10-11
 
 ### Improvements

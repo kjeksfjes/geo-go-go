@@ -14,6 +14,8 @@ Use the character of a modern pocket atlas: warm paper, dark ink, restrained cor
 
 The initial Georgia variant was accepted as a direction. The final heading treatment uses self-hosted Bricolage Grotesque at weight 600 and width 84 for the brand. Explore country names and quiz headings share card-heading tokens at weight 400 and width 100, with a 22px desktop size ceiling and the existing smaller mobile size. The font uses its real variable width applied through `font-stretch` and automatic optical sizing. The desktop tagline uses the shared Geist UI family at weight 400 and 10px, with 0.15em letter spacing. UI text, controls, and other uppercase captions use self-hosted Geist at weight 480 for small text and compact controls, and weight 380 for larger body text and answer inputs. Font provenance and original licenses are recorded beside the assets. `font-display: swap` retains readable fallback text while local fonts load.
 
+Water names now use self-hosted EB Garamond Italic from Google Fonts, with Latin and Latin Extended subsets and the original OFL license stored alongside the assets. The visible labels and hidden measurement text share the same family; cached text widths refresh when fonts finish loading. The italic water-label typography has been accepted by the user; large ocean names use weight 600.
+
 ## Shared roles
 
 Canonical UI tokens live in `src/styles.css`. Components consume the same roles rather than selecting new near-equivalent literal values.
