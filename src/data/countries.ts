@@ -1,6 +1,7 @@
 import flagCountries from 'flag-icons/country.json'
 import displayNames from './country-names.json'
 import { geoArea, geoContains } from 'd3-geo'
+import { loadDetailedBackgroundLand } from './backgroundLand'
 import baseMapUnits from './ne-map-units-50m.json'
 import baseRegionalGeometry from './regional-display-50m.json'
 import baseCombinedGeometry from './combined-geographic-units-50m.json'
@@ -382,6 +383,7 @@ export function loadDetailedGeographicUnits() {
     import('./meaningful-subunits-10m.json'),
     import('./quiz-merged-geometries-10m.json'),
     import('./supplemental-country-geometries-10m.json'),
+    loadDetailedBackgroundLand(),
   ])
     .then(([
       { default: detailed },

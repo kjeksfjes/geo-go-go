@@ -34,6 +34,7 @@ export function useMapZoom(
   horizontalWrap: Ref<HorizontalWrap | null>,
   viewConstraint: Ref<MapViewConstraint | null>,
   homeView: Ref<MapHomeView | null>,
+  worldVerticalBounds: Ref<[number, number]>,
   flushWheelOnIdle = false,
 ) {
   const transform = reactive({ x: 0, y: 0, scale: 1 })
@@ -138,12 +139,17 @@ export function useMapZoom(
       }
     }
 
-    // Permit empty space beyond the projected edges without losing the map.
+    // Permit horizontal breathing room without losing the map.
     const visibleFraction = 1 - MAX_EMPTY_VIEWPORT_FRACTION
     const minX = width.value * (visibleFraction - scale)
     const maxX = width.value * MAX_EMPTY_VIEWPORT_FRACTION
-    const minY = height.value * (visibleFraction - scale)
-    const maxY = height.value * MAX_EMPTY_VIEWPORT_FRACTION
+    // Reach the southern land edge, but never drag it above the viewport
+    // bottom. Recompute at each scale to prevent empty space on zoom-out.
+    // Preserve the overview's existing margin when the land is shorter.
+    const [top, bottom] = worldVerticalBounds.value
+    const minY = Math.min(0, height.value - scale * bottom)
+    // Stop at the projected north edge, retaining only the overview's margin.
+    const maxY = Math.max(0, top) - scale * top
 
     const wrap = horizontalWrap.value
     if (wrap) {
@@ -157,10 +163,7 @@ export function useMapZoom(
 
     return {
       x,
-      // At the fully zoomed-out world view there is no useful vertical area
-      // to reveal. Keep the map centered while still allowing Mercator's
-      // horizontal wrap to move at minimum zoom.
-      y: scale <= MIN_ZOOM ? 0 : Math.max(minY, Math.min(maxY, y)),
+      y: Math.max(minY, Math.min(maxY, y)),
       scale,
     }
   }
@@ -386,13 +389,9 @@ export function useMapZoom(
 
     const wheelX = pointerX - (pointerX - transform.x) * ratio
     const wheelY = pointerY - (pointerY - transform.y) * ratio
-    if (nextScale === minimumScale && !viewConstraint.value) {
-      setTransform(0, 0, MIN_ZOOM)
-    } else {
-      // Regional zoom remains pointer-anchored even near its minimum. The
-      // separate Reset view action is responsible for returning to the region.
-      setTransform(wheelX, wheelY, nextScale)
-    }
+    // Keep zoom pointer-anchored through the minimum scale. Returning to the
+    // starting position belongs to the separate Reset view action.
+    setTransform(wheelX, wheelY, nextScale)
   }
 
   function zoomFromWheel(event: WheelEvent, svg: SVGSVGElement) {

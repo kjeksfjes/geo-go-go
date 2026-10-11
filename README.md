@@ -89,6 +89,8 @@ Natural Earth does not split Russia's European and Asian territory into map unit
 
 The detailed layer is matched back to 50m map-unit IDs, so switching resolution cannot change the selectable unit set. Detailed geometries pass a spherical-area sanity check; malformed features fall back to the safe 1:50m unit.
 
+Antarctica is imported separately as non-interactive background land at both detail levels, outside the country and quiz datasets. `scripts/import-background-land.py` extracts its map unit from the [Natural Earth 5.1.1 GeoJSON sources](https://github.com/nvkelso/natural-earth-vector/tree/v5.1.1/geojson): pass `ne_50m_admin_0_map_units.geojson` and `ne_10m_admin_0_map_units.geojson` to regenerate `background-land-50m.json` and `background-land-10m.json`. High-detail background geometry loads with the existing detailed atlas. The current projection fitting and region camera policies remain based on selectable geography.
+
 ## Architecture at a glance
 
 Data flows from geographic units and quiz identities through a D3 projection into a painted map and a separate interaction layer. The map reports clicks back to the app; the app owns selection and quiz state.

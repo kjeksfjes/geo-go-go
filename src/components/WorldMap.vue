@@ -53,6 +53,7 @@ import {
   type MapInteractionState,
 } from '../logic/mapInteraction'
 import { selectionFocusTarget } from '../logic/mapFocus'
+import { wrappedMapPath } from '../logic/wrappedMapPath'
 import { mergeQuestionMarkerRings } from '../logic/questionMarkerRings'
 import {
   smallCountryMarkers as groupSmallCountryMarkers,
@@ -256,6 +257,7 @@ const { width: measuredWidth, height: measuredHeight } = useElementSize(containe
 const mapWidth = computed(() => Math.max(measuredWidth.value, 320))
 const mapHeight = computed(() => Math.max(measuredHeight.value, 280))
 const {
+  backgroundLandPaths,
   bathymetryPaths,
   contextGeographicPaths,
   disputedBoundaryPaths,
@@ -273,6 +275,7 @@ const {
   supplementalLandPaths,
   supplementalExploreLandPaths,
   unprojectPoint,
+  worldVerticalBounds,
 } = useMapProjection(
   toRef(props, 'geographicUnits'),
   mapWidth,
@@ -407,6 +410,7 @@ const {
   horizontalWrap,
   regionViewConstraint,
   homeView,
+  worldVerticalBounds,
   firefoxPreviewEnabled,
 )
 
@@ -684,6 +688,7 @@ const highlightedGeographicPaths = computed(() => paintedGeographicPaths.value
 const visibleLandPath = computed(() => geographicPaths.value
   .filter(({ unit }) => isGeographicUnitVisible(unit))
   .map(({ path }) => path)
+  .concat(backgroundLandPaths.value.map(({ path }) => path))
   .join(' '))
 const canvasScene = computed<CanvasMapScene>(() => ({
   coordinateKey: projectionId.value === 'regional-equal-area'
@@ -693,12 +698,15 @@ const canvasScene = computed<CanvasMapScene>(() => ({
   contextCountries: contextGeographicPaths.value,
   relief: reliefEnabled.value ? reliefPaths.value : [],
   reliefClipPath: reliefEnabled.value ? reliefClipPath.value : '',
-  countries: geographicPaths.value
-    .filter(({ unit }) => isGeographicUnitVisible(unit))
-    .map(({ unit, path, outlinePath, divisionPath, displayBounds }) => ({
-      path, outlinePath, divisionPath, bounds: displayBounds,
-      internalBoundary: !!unit.divisionGeometry,
-    })),
+  countries: [
+    ...geographicPaths.value
+      .filter(({ unit }) => isGeographicUnitVisible(unit))
+      .map(({ unit, path, outlinePath, divisionPath, displayBounds }) => ({
+        path, outlinePath, divisionPath, bounds: displayBounds,
+        internalBoundary: !!unit.divisionGeometry,
+      })),
+    ...backgroundLandPaths.value.map(({ path, outlinePath, bounds }) => ({ path, outlinePath, bounds })),
+  ],
 }))
 const canvasWrapOffset = computed(() => horizontalWrap.value?.period ?? null)
 
@@ -731,6 +739,12 @@ const copyOffsets = computed<number[]>((previous) => {
   return previous?.length === offsets.length && offsets.every((offset, index) => offset === previous[index])
     ? previous : offsets
 })
+
+const wrappedSpherePath = computed(() => wrappedMapPath(spherePath.value, copyOffsets.value))
+const wrappedBathymetryPaths = computed(() => bathymetryPaths.value.map((band) => ({
+  depth: band.depth,
+  path: wrappedMapPath(band.path, copyOffsets.value),
+})))
 
 // Keep wrapped hit geometry mounted in desktop Firefox. Revealing
 // a cached copy avoids parsing a new set of 10m paths mid-zoom or at a seam.
@@ -1664,26 +1678,18 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
             </clipPath>
           </defs>
           <path
-            v-for="offset in canvasRendererActive ? [] : copyOffsets"
-            :key="`sphere-${offset}`"
+            v-if="!canvasRendererActive"
             class="map-sphere"
-            :d="spherePath"
-            :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
+            :d="wrappedSpherePath"
           />
           <g v-if="bathymetryEnabled && !canvasRendererActive" class="bathymetry" aria-hidden="true">
-            <g
-              v-for="offset in copyOffsets"
-              :key="offset"
-              :transform="offset === 0 ? undefined : `translate(${offset} 0)`"
-            >
-              <path
-                v-for="band in bathymetryPaths"
-                :key="band.depth"
-                class="bathymetry__band"
-                :class="`bathymetry__band--${band.depth}`"
-                :d="band.path"
-              />
-            </g>
+            <path
+              v-for="band in wrappedBathymetryPaths"
+              :key="band.depth"
+              class="bathymetry__band"
+              :class="`bathymetry__band--${band.depth}`"
+              :d="band.path"
+            />
           </g>
           <g v-if="!canvasRendererActive && contextGeographicPaths.length" class="context-land" aria-hidden="true">
             <g
@@ -1712,6 +1718,7 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
                 :d="band.path"
               />
             </g>
+            <path v-for="area in backgroundLandPaths" :key="area.id" :d="area.outlinePath ?? area.path" class="background-land-outline" />
           </g>
           <!-- Geometry and answer state change independently of the camera.
                Keep this expensive path loop cached during ordinary movement. -->
@@ -1864,6 +1871,14 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
               class="country country--visual"
               :class="geographicUnitClasses(unit)"
               :style="(detailedGeographicPathById.get(unit.id)?.outlinePath ?? outlinePath) !== undefined ? { stroke: 'none' } : undefined"
+            />
+            <path
+              v-for="{ unit, outlinePath } in highlightedGeographicPaths"
+              :key="`outline-${unit.id}`"
+              :d="detailedGeographicPathById.get(unit.id)?.outlinePath ?? outlinePath"
+              class="country-outline"
+              :class="geographicUnitClasses(unit)"
+              style="fill: none"
             />
             <path
               v-for="{ unit, divisionPath } in highlightedGeographicPaths.filter(({ unit }) => !!unit.divisionGeometry)"
@@ -2204,6 +2219,14 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
   fill: var(--map-land);
 }
 
+.background-land-outline {
+  fill: none;
+  stroke: var(--map-border);
+  stroke-width: 0.85;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
 .terrain--relief .terrain__land {
   fill: var(--map-relief-land);
 }
@@ -2378,7 +2401,7 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .world-map:not(.world-map--quiz) .country:not(.country--selected, .country--related):hover {
+  .world-map:not(.world-map--quiz) .country:not(.country--selected, .country--related, .country--hit-only):hover {
     fill: rgb(247 192 122 / 82%);
   }
 
