@@ -41,6 +41,7 @@ import { supplementalAreaInfoByDisplayId } from '../data/supplementalLand'
 import { quizMergedSourceIds } from '../data/quizMap'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { mapScaleBar, scaleUnitSystems, type ScaleUnitSystem } from '../logic/mapScale'
+import type { QuizTipAction } from '../logic/quizTips'
 import { quizCountryIds } from '../data/quizCountries'
 import {
   backgroundClickAction,
@@ -95,6 +96,7 @@ const props = defineProps<{
   detailBlurred: boolean
   highDetailEnabled: boolean
   settingsOpen: boolean
+  quizTipsEnabled: boolean
   locale: Locale
   activeRegion: MapRegion
   selectedRegionId: MapRegionId
@@ -119,6 +121,10 @@ const emit = defineEmits<{
   select: [countryId: string | null, geographicUnitId: string | null]
   'land-select': [id: string | null]
   'quiz-next': []
+  'tip-action': [action: QuizTipAction]
+  'quiz-tips-enabled-change': [enabled: boolean]
+  'quiz-tips-reset': []
+  'view-busy-change': [busy: boolean]
   'focus-answer': []
   'detail-change': [enabled: boolean, pathsCached: boolean]
   'locale-change': [locale: Locale]
@@ -190,6 +196,14 @@ const highlightRevision = ref(0)
 const projectionLoading = ref(false)
 const projectionBlurred = ref(false)
 const projectionBlurDuration = ref(280)
+const tipsResetConfirmed = ref(false)
+let tipsResetTimer: number | undefined
+function resetQuizTips() {
+  emit('quiz-tips-reset')
+  tipsResetConfirmed.value = true
+  if (tipsResetTimer !== undefined) window.clearTimeout(tipsResetTimer)
+  tipsResetTimer = window.setTimeout(() => { tipsResetConfirmed.value = false }, 3000)
+}
 const projectionSnapshot = ref<HTMLElement | null>(null)
 const projectionSnapshotFading = ref(false)
 const debugEnabled = new URLSearchParams(window.location.search).has('debug')
@@ -395,6 +409,8 @@ const {
   homeView,
   firefoxPreviewEnabled,
 )
+
+watch([interactionLocked, isInteracting], ([locked, moving]) => emit('view-busy-change', locked || moving), { immediate: true })
 
 const gestureDiagnosticsActive = ref(false)
 const lastGestureReport = shallowRef<Record<string, unknown> | null>(null)
@@ -1124,7 +1140,10 @@ function handleMapClick(event: MouseEvent) {
   }
   if (props.quizAnswerId === null && !props.quizSkipped) return
   if (consumeDragClick()) return
-  if (backgroundClickAction(event.detail, interactionState.value) === 'next') emit('quiz-next')
+  if (backgroundClickAction(event.detail, interactionState.value) === 'next') {
+    emit('tip-action', 'map-next')
+    emit('quiz-next')
+  }
 }
 
 function supplementalAreaName(sourceId: string) {
@@ -1424,6 +1443,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (tipsResetTimer !== undefined) window.clearTimeout(tipsResetTimer)
   projectionSnapshot.value?.replaceChildren()
   cancelMarkerDistribution()
   clearZoomTargetHighlights()
@@ -1916,6 +1936,18 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
         <div class="settings-side-column">
           <section class="settings-section" aria-labelledby="settings-quiz-heading">
             <h3 id="settings-quiz-heading">{{ t('quizSettings') }}</h3>
+            <div class="quiz-tips-setting">
+              <MapDetailToggle
+                :label="t('quizTips')"
+                :model-value="quizTipsEnabled"
+                @update:model-value="emit('quiz-tips-enabled-change', $event)"
+              />
+              <p class="settings-hint">
+                {{ t('quizTipsHint') }}
+                <button class="quiz-tips-reset" type="button" :title="t('tipResetHint')" @click="resetQuizTips">{{ t('tipReset') }}</button>
+                <span class="quiz-tips-reset-status" role="status">{{ tipsResetConfirmed ? `✓ ${t('tipResetDone')}` : '' }}</span>
+              </p>
+            </div>
             <MapDetailToggle
               :label="t('countryMarkers')"
               :description="t('countryMarkersHint')"
@@ -2495,6 +2527,37 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
 .answer-scope-choices span { display: block; padding: 0.55rem 0.25rem; border-radius: var(--ui-radius-small); color: var(--ui-text); font-size: var(--ui-text-control); font-weight: var(--ui-weight); }
 .answer-scope-choices input:checked + span { background: var(--ui-ink); color: #fff; }
 .answer-scope-choices input:focus-visible + span { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
+
+.quiz-tips-setting {
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-control);
+}
+.quiz-tips-setting :deep(.detail-toggle) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.quiz-tips-setting .settings-hint {
+  margin: 0;
+  padding: 0 var(--ui-space-3) var(--ui-space-2);
+}
+
+.quiz-tips-reset {
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  color: var(--ui-text);
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+.quiz-tips-reset:hover { color: var(--ui-ink); }
+.quiz-tips-reset:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }
+.quiz-tips-reset-status { margin-inline-start: 0.35rem; color: var(--ui-success); }
 
 .map-settings-panel {
   position: absolute;

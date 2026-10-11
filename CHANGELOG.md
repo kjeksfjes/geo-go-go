@@ -2,10 +2,11 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
-## Unreleased
+## 0.15.0 — Quiet Compass — 2026-10-11
 
 ### Improvements
 
+- Added optional contextual quiz tips for touch and keyboard shortcuts and automatic answer reveal, triggered by repeated actions on separate questions. Tips stay nonmodal, remember explicit dismissals, and offer a global opt-out in Quiz settings. Clear per-hint rules count three successive relevant actions, reset on shortcut use, prioritize recent actions, and space hints by at least 20 seconds and three completed questions.
 - Switch proportional-region views under a blurred map with a centered loader shown for at least two seconds, without animated panning or zooming. Crossfade the previous blurred map over the new view to soften the change.
 
 ## 0.14.0 — Fox Trot — 2026-10-10

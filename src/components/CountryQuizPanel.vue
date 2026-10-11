@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
+import type { QuizTipAction } from '../logic/quizTips'
 import type { QuizPhase } from '../composables/useCountryQuiz'
 import type { CountryInfo, GeographicComponentInfo } from '../types/country'
 import { componentName, countryName, t } from '../i18n'
@@ -24,6 +25,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  'tip-action': [action: QuizTipAction]
   answer: [countryId: string]
   skip: []
   'reveal-correct-answer': []
@@ -35,11 +37,21 @@ const emit = defineEmits<{
   'show-guess': []
   'update:alwaysShowWrongAnswer': [value: boolean]
 }>()
+let lastPointerType = 'mouse'
+function nextQuestion(event: MouseEvent) {
+  emit('tip-action', event.detail === 0 ? 'next-keyboard' : lastPointerType === 'touch' ? 'next-touch' : 'next-pointer')
+  emit('next')
+}
+function skipFromButton() { emit('tip-action', 'skip-button'); emit('skip') }
+
 const answerDraft = defineModel<string>('answerDraft', { required: true })
 const answerInput = ref<{ focusInput: () => void } | null>(null)
 
 function focusAnswer() {
-  if (props.identify && props.phase === 'question') answerInput.value?.focusInput()
+  if (props.identify && props.phase === 'question' && answerInput.value) {
+    answerInput.value.focusInput()
+    emit('tip-action', 'map-focus')
+  }
 }
 
 defineExpose({ focusAnswer })
@@ -53,12 +65,14 @@ function handleSkipShortcut(event: KeyboardEvent) {
   event.preventDefault()
   event.stopPropagation()
   document.documentElement.dataset.inputModality = 'keyboard'
+  emit('tip-action', 'skip-shortcut')
   emit('skip')
 }
 
 const automaticRevealButton = ref<HTMLButtonElement | null>(null)
 const namedAnswerRevealButton = ref<HTMLButtonElement | null>(null)
 async function revealNamedAnswer() {
+  emit('tip-action', 'reveal-answer')
   emit('reveal-correct-answer')
   if (document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
@@ -67,6 +81,7 @@ async function revealNamedAnswer() {
 
 async function toggleAutomaticReveal() {
   const enabled = !props.automaticReveal
+  if (enabled) emit('tip-action', 'automatic-reveal-answer')
   emit('update:automaticReveal', enabled)
   if (enabled || document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
@@ -82,6 +97,7 @@ const showQuestionFlag = computed(() => !props.identify || (props.phase === 'ans
 const showWrongAnswer = computed(() => props.alwaysShowWrongAnswer || props.wrongAnswerRevealed)
 
 async function revealAnswer() {
+  emit('tip-action', 'reveal-clicked')
   emit('reveal-wrong-answer')
   if (document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
@@ -90,6 +106,7 @@ async function revealAnswer() {
 
 async function toggleAlwaysShow() {
   const enabled = !props.alwaysShowWrongAnswer
+  if (enabled) emit('tip-action', 'automatic-reveal-clicked')
   emit('update:alwaysShowWrongAnswer', enabled)
   if (enabled || document.documentElement.dataset.inputModality !== 'keyboard') return
   await nextTick()
@@ -111,7 +128,7 @@ watch(() => props.question?.id, async (countryId) => {
 </script>
 
 <template>
-  <section class="quiz-panel map-overlay__content" :class="[`quiz-panel--${phase}`, { 'quiz-panel--identify': identify, 'quiz-panel--with-flag': showQuestionFlag }]" :aria-label="t(identify ? 'nameCountry' : 'quiz')" @keydown.capture="handleSkipShortcut">
+  <section data-quiz-tip="panel" tabindex="-1" @pointerdown.capture="lastPointerType = $event.pointerType" class="quiz-panel map-overlay__content" :class="[`quiz-panel--${phase}`, { 'quiz-panel--identify': identify, 'quiz-panel--with-flag': showQuestionFlag }]" :aria-label="t(identify ? 'nameCountry' : 'quiz')" @keydown.capture="handleSkipShortcut">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
         <p class="map-overlay__eyebrow">{{ t('regionComplete') }}</p>
@@ -153,6 +170,7 @@ watch(() => props.question?.id, async (countryId) => {
         :answer-id="phase === 'answered' ? answer?.id ?? null : null"
         :correct="isCorrect"
         @answer="emit('answer', $event)"
+        @tip-action="emit('tip-action', $event)"
       />
       <div class="quiz-panel__status" aria-live="polite">
         <p v-if="phase === 'question'" class="quiz-panel__hint">
@@ -175,7 +193,7 @@ watch(() => props.question?.id, async (countryId) => {
                   <strong class="quiz-panel__correct-name">{{ countryName(question.id) }}</strong>
                 </span>
               </span>
-              <button ref="automaticRevealButton" class="quiz-panel__text-button quiz-panel__text-button--preference" type="button" :aria-pressed="automaticReveal" :aria-label="t('alwaysRevealAnswers')" @click="toggleAutomaticReveal">
+              <button ref="automaticRevealButton" data-quiz-tip="automatic" class="quiz-panel__text-button quiz-panel__text-button--preference" type="button" :aria-pressed="automaticReveal" :aria-label="t('alwaysRevealAnswers')" @click="toggleAutomaticReveal">
                 {{ t('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !automaticReveal }" aria-hidden="true">✓</span>
               </button>
             </template>
@@ -188,7 +206,7 @@ watch(() => props.question?.id, async (countryId) => {
             <template v-if="showWrongAnswer">
               <span>{{ t('youClickedBefore') }}<strong>{{ countryName(answer.id) }}</strong><span v-if="answerComponent"> · {{ componentName(answerComponent) }}</span>{{ t('youClickedAfter') }}</span>
               <button
-                ref="alwaysShowButton"
+                ref="alwaysShowButton" data-quiz-tip="automatic"
                 class="quiz-panel__text-button quiz-panel__text-button--preference"
                 type="button"
                 :aria-pressed="alwaysShowWrongAnswer"
@@ -206,7 +224,7 @@ watch(() => props.question?.id, async (countryId) => {
       <p v-if="viewingOutsideRegion" class="quiz-panel__view-hint" aria-live="polite">{{ t('viewingOutsideGuess') }}</p>
       <div class="quiz-panel__actions">
         <button class="quiz-panel__text-button quiz-panel__restart" type="button" @click="emit('restart')">{{ t('restartQuiz') }}</button>
-        <button v-if="identify && phase === 'question'" class="quiz-panel__button quiz-panel__button--secondary" type="button" aria-keyshortcuts="Control+Enter Meta+Enter" :aria-label="t('skipQuestion')" @click="emit('skip')">
+        <button v-if="identify && phase === 'question'" class="quiz-panel__button quiz-panel__button--secondary" type="button" aria-keyshortcuts="Control+Enter Meta+Enter" :aria-label="t('skipQuestion')" @click="skipFromButton">
           {{ t('skipQuestion') }} <kbd class="quiz-panel__shortcut" aria-hidden="true">{{ skipKeyHint }}</kbd>
         </button>
         <button
@@ -229,14 +247,14 @@ watch(() => props.question?.id, async (countryId) => {
         </button>
         <button
           v-if="phase === 'answered' || phase === 'skipped' || !identify"
-          ref="nextButton"
+          ref="nextButton" data-quiz-tip="next"
           class="quiz-panel__button"
           :class="{ 'quiz-panel__button--reserved': phase === 'question' }"
           type="button"
           :disabled="phase === 'question'"
           :aria-hidden="phase === 'question'"
           :tabindex="phase === 'question' ? -1 : 0"
-          @click="emit('next')"
+          @click="nextQuestion"
         >
           {{ questionNumber === total ? t('seeResults') : t('nextCountry') }}
         </button>

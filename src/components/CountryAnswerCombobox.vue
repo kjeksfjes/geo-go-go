@@ -6,10 +6,26 @@ import {
 } from 'reka-ui'
 import { countryName, locale, t } from '../i18n'
 import { countryInfoById } from '../data/countries'
+import type { QuizTipAction } from '../logic/quizTips'
 import { filterCountrySuggestions, normalizeCountrySearch } from '../logic/countrySuggestions'
 
 const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean }>()
-const emit = defineEmits<{ answer: [countryId: string] }>()
+const emit = defineEmits<{ answer: [countryId: string]; 'tip-action': [action: QuizTipAction] }>()
+let selectionMethod: 'keyboard' | 'pointer' = 'keyboard'
+let selectionPointerType = 'mouse'
+function recordKeys(event: KeyboardEvent) {
+  selectionMethod = 'keyboard'
+  if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) emit('tip-action', 'typed')
+}
+function recordSuggestionPointer(event: PointerEvent) {
+  selectionMethod = 'pointer'
+  selectionPointerType = event.pointerType
+}
+function handleFieldPointer(event: PointerEvent) {
+  selectionMethod = 'pointer'
+  selectionPointerType = event.pointerType
+  if (event.pointerType === 'touch') emit('tip-action', 'field-touch')
+}
 const root = ref<HTMLElement | null>(null)
 const inputId = `country-answer-${useId()}`
 const search = defineModel<string>('search', { required: true })
@@ -21,6 +37,10 @@ const suggestions = computed(() => filterCountrySuggestions(
 function selectCountry(value: unknown) {
   if (!normalizeCountrySearch(search.value) || typeof value !== 'string' || !props.countryIds.includes(value)) return
   open.value = false
+  emit('tip-action', selectionMethod === 'keyboard' ? 'answer-keyboard' : 'answer-pointer')
+  if (selectionMethod === 'pointer' && selectionPointerType === 'touch') {
+    emit('tip-action', 'answer-touch')
+  }
   emit('answer', value)
 }
 
@@ -44,7 +64,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="country-answer">
+  <div ref="root" class="country-answer" @keydown.capture="recordKeys">
     <label :for="inputId" class="country-answer__label">{{ t('yourGuess') }}</label>
     <div v-if="answerId" class="country-answer__anchor" :class="correct ? 'country-answer__anchor--correct' : 'country-answer__anchor--wrong'">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -79,6 +99,7 @@ onMounted(() => {
         </svg>
         <ComboboxInput
           :id="inputId"
+          @pointerdown="handleFieldPointer"
           v-model="search"
           class="country-answer__input"
           data-1p-ignore
@@ -94,7 +115,7 @@ onMounted(() => {
         />
       </ComboboxAnchor>
       <ComboboxPortal>
-        <ComboboxContent class="country-suggestions" position="popper" :side-offset="6" :collision-padding="12" :aria-label="t('countrySuggestions')">
+        <ComboboxContent @pointerdown.capture="recordSuggestionPointer" @keydown.capture="recordKeys" class="country-suggestions" position="popper" :side-offset="6" :collision-padding="12" :aria-label="t('countrySuggestions')">
           <ComboboxViewport class="country-suggestions__viewport">
             <ComboboxEmpty class="country-suggestions__empty">{{ t('noCountryMatches') }}</ComboboxEmpty>
             <ComboboxItem v-for="option in suggestions" :key="option.id" :value="option.id" :text-value="option.name" class="country-suggestions__item">
