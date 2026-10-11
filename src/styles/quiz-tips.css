@@ -1,0 +1,68 @@
+.quiz-tip-anchor { display: none; }
+.geo-quiz-tip {
+  position: relative;
+  z-index: 100;
+  box-sizing: border-box;
+  width: min(310px, calc(100vw - 32px));
+  max-height: min(calc(100dvh - 32px), var(--reka-popover-content-available-height));
+  overflow-y: auto;
+  padding: 1.1rem;
+  color: var(--ui-ink);
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-panel);
+  box-shadow: var(--ui-shadow-panel);
+  font-family: var(--ui-font);
+}
+.geo-quiz-tip-title {
+  margin: 0;
+  padding-right: 1.5rem;
+  font-family: var(--ui-font-display);
+  font-size: 20px;
+  font-weight: var(--ui-weight-card-heading);
+  line-height: 1.25;
+}
+.geo-quiz-tip-description {
+  margin: 0.65rem 0 0;
+  font-size: var(--ui-text-body);
+  font-weight: var(--ui-weight-large);
+  line-height: 1.55;
+}
+.geo-quiz-tip-description strong { font-weight: var(--ui-weight-emphasis); }
+.geo-quiz-tip-actions {
+  display: flex;
+  margin-top: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.geo-quiz-tip-done, .geo-quiz-tip-disable {
+  min-height: var(--ui-control-height);
+  padding: 0.55rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-control);
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-body);
+  font-weight: var(--ui-weight-large);
+  cursor: pointer;
+}
+.geo-quiz-tip-done { color: #fff; background: var(--ui-ink); }
+.geo-quiz-tip-disable { color: var(--ui-text); background: var(--ui-paper); border-color: var(--ui-border); }
+.geo-quiz-tip-disable:hover { color: var(--ui-ink); background: var(--ui-hover); }
+.geo-quiz-tip-done:hover { background: var(--ui-focus); }
+.geo-quiz-tip-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-radius-panel);
+  color: var(--ui-muted);
+  background: transparent;
+  font: 22px var(--ui-font);
+  cursor: pointer;
+}
+.geo-quiz-tip-close:hover { color: var(--ui-ink); }
+.geo-quiz-tip button:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }

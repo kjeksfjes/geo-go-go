@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import RegionSelector from './components/RegionSelector.vue'
 import WorldMap from './components/WorldMap.vue'
+import { useQuizTips } from './composables/useQuizTips'
 import { useHelpTour } from './composables/useHelpTour'
 import { useCountryQuiz } from './composables/useCountryQuiz'
 import { quizCountryIds } from './data/quizCountries'
@@ -27,6 +28,8 @@ import { clearStoredValues, readStoredBoolean, readStoredValue, writeStoredValue
 import { locale, regionName, resetLocale, setLocale, t } from './i18n'
 import { isCountryLevelSelection } from './data/mapSelection'
 import { supplementalAreaInfoById } from './data/supplementalLand'
+
+const QuizTipPopover = defineAsyncComponent(() => import('./components/QuizTipPopover.vue'))
 
 const selectedCountryId = ref<string | null>(null)
 const selectedGeographicUnitId = ref<string | null>(null)
@@ -54,6 +57,8 @@ const highDetailPreferred = readStoredBoolean(highDetailPreferenceKey, false)
 const detailLoading = ref(false)
 const detailBlurred = ref(false)
 const settingsOpen = ref(false)
+const mapViewBusy = ref(false)
+const tipInputMethod = ref<'touch' | 'mouse' | 'keyboard'>(window.matchMedia('(hover: none) and (pointer: coarse)').matches ? 'touch' : 'mouse')
 const { invitationVisible, active: helpActive, loading: helpLoading, error: helpError,
   start: startHelp, dismissInvitation, resetInvitation } = useHelpTour()
 function dismissHelpInvitation() {
@@ -84,6 +89,7 @@ function readAutomaticAnswerReveal() {
 }
 
 function setAutomaticAnswerReveal(value: boolean) {
+  if (value) quizTips.record('automatic-reveal-answer')
   if (mode.value === 'name-country' && ['answered', 'skipped'].includes(quizPhase.value)) correctAnswerRevealed.value = value
   automaticAnswerReveal.value = value
   writeStoredValue(automaticAnswerRevealKey, value)
@@ -103,6 +109,7 @@ function readWrongAnswerPreference() {
 }
 
 function setAlwaysShowWrongAnswer(value: boolean) {
+  if (value) quizTips.record('automatic-reveal-clicked')
   if (mode.value === 'find-country' && quizPhase.value === 'answered') wrongAnswerRevealed.value = value
   alwaysShowWrongAnswer.value = value
   try { localStorage.setItem(wrongAnswerPreferenceKey, String(value)) } catch { /* The setting still works for this session. */ }
@@ -110,6 +117,7 @@ function setAlwaysShowWrongAnswer(value: boolean) {
 
 function resetSettings() {
   clearStoredValues('geo-go-go.')
+  quizTips.reset()
   resetInvitation()
   resetLocale()
   setAlwaysShowWrongAnswer(false)
@@ -174,6 +182,33 @@ const outsideQuizGuess = computed(() => showingQuizGuess.value && !!quizAnswerId
 const displayedRegion = computed(() => outsideQuizGuess.value ? regionById.get('world')! : activeRegion.value)
 const displayedMapUnitIds = computed(() => outsideQuizGuess.value ? mapUnitIdsByRegion.get('world')! : visibleMapUnitIds.value)
 
+const quizTips = useQuizTips(computed(() => ({
+  mode: mode.value,
+  phase: quizPhase.value,
+  question: `${mode.value}:${activeRegionId.value}:${quizQuestionNumber.value}:${quizQuestionId.value}`,
+  busy: detailLoading.value || mapViewBusy.value || helpActive.value || helpLoading.value || settingsOpen.value || invitationVisible.value,
+  input: tipInputMethod.value,
+  automaticReveal: mode.value === 'name-country' ? automaticAnswerReveal.value : alwaysShowWrongAnswer.value,
+  nextCountryVisible: ['answered', 'skipped'].includes(quizPhase.value) && quizQuestionNumber.value < quizTotal.value,
+  revealOpportunity: ['answered', 'skipped'].includes(quizPhase.value) && quizAnswerId.value !== quizQuestionId.value,
+  answerRevealVisible: mode.value === 'name-country'
+    ? ['answered', 'skipped'].includes(quizPhase.value) && quizAnswerId.value !== quizQuestionId.value && correctAnswerVisible.value
+    : quizPhase.value === 'answered' && quizAnswerId.value !== quizQuestionId.value && wrongAnswerRevealed.value,
+})))
+
+function handleTipPointer(event: PointerEvent) {
+  if (event.target instanceof Element && event.target.closest('.geo-quiz-tip')) return
+  tipInputMethod.value = event.pointerType === 'touch' ? 'touch' : 'mouse'
+}
+function handleTipKey(event: KeyboardEvent) {
+  if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return
+  if (event.target instanceof Element && event.target.closest('.geo-quiz-tip')) return
+  // Software keyboard input must not turn touch tips into desktop shortcuts.
+  if (tipInputMethod.value === 'touch' && window.matchMedia('(pointer: coarse)').matches
+    && event.target instanceof HTMLInputElement) return
+  tipInputMethod.value = 'keyboard'
+}
+
 const quizAnswerComponent = computed(() => {
   if (quizPhase.value !== 'answered' || isCountryLevelSelection(quizAnswerId.value, selectedGeographicUnitId.value)) return null
   const unit = selectedGeographicUnitId.value
@@ -190,6 +225,7 @@ const hasUnfinishedQuizProgress = computed(() =>
 )
 
 function startRegionalQuiz() {
+  quizTips.startRound()
   answerDraft.value = ''
   wrongAnswerRevealed.value = false
   correctAnswerRevealed.value = false
@@ -218,7 +254,10 @@ function handleMapSelection(countryId: string | null, geographicUnitId: string |
   selectedLandAreaId.value = null
   selectedGeographicUnitId.value = geographicUnitId
   if (mode.value === 'find-country') {
-    if (countryId) answerQuiz(countryId)
+    if (countryId) {
+      if (tipInputMethod.value === 'keyboard') quizTips.record('keyboard-play')
+      answerQuiz(countryId)
+    }
   } else {
     selectedCountryId.value = countryId
   }
@@ -238,6 +277,7 @@ function answerNamedCountry(countryId: string) {
 }
 
 function advanceQuizQuestion() {
+  quizTips.record('advance')
   selectedGeographicUnitId.value = null
   nextQuizQuestion()
 }
@@ -291,6 +331,7 @@ function handleQuizShortcut(event: KeyboardEvent) {
   ) return
 
   event.preventDefault()
+  quizTips.record('space-next')
   advanceQuizQuestion()
 }
 
@@ -306,12 +347,16 @@ function handleEscape(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  document.addEventListener('pointerdown', handleTipPointer, true)
+  document.addEventListener('keydown', handleTipKey, true)
   document.addEventListener('keydown', handleQuizShortcut)
   document.addEventListener('keydown', handleEscape)
   document.addEventListener('pointerdown', handleSettingsPointerDown)
   if (highDetailPreferred) void setHighDetail(true, false)
 })
 onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', handleTipPointer, true)
+  document.removeEventListener('keydown', handleTipKey, true)
   document.removeEventListener('keydown', handleQuizShortcut)
   document.removeEventListener('keydown', handleEscape)
   document.removeEventListener('pointerdown', handleSettingsPointerDown)
@@ -479,6 +524,11 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         :detail-blurred="detailBlurred"
         :high-detail-enabled="highDetailEnabled"
         :settings-open="settingsOpen"
+        :quiz-tips-enabled="quizTips.enabled.value"
+        @quiz-tips-enabled-change="quizTips.setEnabled"
+        @quiz-tips-reset="quizTips.reset"
+        @view-busy-change="mapViewBusy = $event"
+        @tip-action="quizTips.record"
         :locale="locale"
         :active-region="displayedRegion"
         :selected-region-id="activeRegionId"
@@ -528,6 +578,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
             :score="quizScore"
             :question-number="quizQuestionNumber"
             :total="quizTotal"
+            @tip-action="quizTips.record"
             @answer="answerNamedCountry"
             @skip="skipNamedCountry"
             @reveal-correct-answer="revealCurrentCorrectAnswer"
@@ -547,5 +598,13 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         </div>
       </div>
     </section>
+    <QuizTipPopover
+      v-if="quizTips.tip.value"
+      :anchor="quizTips.tip.value.anchor"
+      :description="quizTips.description.value"
+      @close="quizTips.close"
+      @dismiss="quizTips.dismiss"
+      @disable="quizTips.setEnabled(false)"
+    />
   </main>
 </template>

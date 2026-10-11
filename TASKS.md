@@ -156,27 +156,38 @@ Recover the active quiz after a browser reload or closing and reopening the app 
 
 ## TASK-009 — Add contextual tips for quiz shortcuts
 
-Status: Deferred. Added: 2026-10-06.
+Status: Completed — accepted by the user for release 0.15.0 — Quiet Compass. Added: 2026-10-06. Completed: 2026-10-11.
 
-The user requested an assessment and backlog entry for behavior-aware guidance that helps users discover existing interaction shortcuts. Prefer a small inline **Tip / Tips** near the relevant quiz control over an interrupting “Did you know?” popup. Choosing the explicit input field or Next button is valid behavior; guidance should offer an alternative without suggesting that the user is doing something wrong. This entry records the proposal and does not authorize implementation.
+Six hint families use the existing Reka UI popover with shared pocket-atlas styling, English/Norwegian text, explicit close controls, and no automatic focus changes or outside-click dismissal. Trigger rules live together in `src/logic/quizTips.ts`; input, quiz phase, and visible-control checks live in `src/composables/useQuizTips.ts`. There is one continuation family with map/keyboard wording chosen from the current question’s input. Suggestion selection has independent desktop-arrow and touch-Go/Enter variants, sharing presentation and priority while retaining separate sequences and dismissals. Recording a task does not authorize additional work beyond the accepted scope.
 
-### Proposed interaction
+### Trigger rules
 
-- Detect repeated eligible actions that suggest an undiscovered shortcut, such as repeatedly tapping the answer field on touch devices, selecting suggestions with a pointer during otherwise keyboard-based answering, or repeatedly using Next without using map-tap or keyboard progression. Count deliberate actions through existing interaction handlers; do not infer intent from inactivity, answer accuracy, or raw pointer movement.
-- Show one relevant tip at a time after a conservative threshold, initially around three eligible opportunities, rather than on the first question. Display it at a natural transition, never while the user is typing, choosing a suggestion, dragging, pinching, or while controls are locked. Limit interruptions across tips with at most one new tip per round; tune thresholds and placement through the user's acceptance.
-- Suggested touch guidance: “Tap the map to start typing” for unanswered Name the country questions, and “Tap the map to continue” after an answer or skip. Guidance must describe the actual interactive map area, not claim that tapping anywhere on the screen advances.
-- Suggested keyboard guidance: “Use ↓ to choose a suggestion, then Enter to answer,” “Press Space to continue” when focus is outside text/control elements, and optionally the platform-appropriate Cmd/Ctrl+Enter skip shortcut. Do not suggest that arbitrary typed text submits an answer without selecting a valid country.
-- Choose tips from the current quiz mode, phase, available controls, and observed input method; suppress keyboard-only guidance during touch use and avoid relying only on screen width or an OS string. Re-evaluate eligibility when modes or input methods change.
-- Retire a tip once its shortcut has been used successfully, even if it was never displayed. Dismissing an individual tip prevents it from appearing again across sessions on that browser/device. **No more tips / Ingen flere tips** disables all proactive tips persistently. Do not treat a timeout, tapping elsewhere, or switching modes as dismissal.
-- Keep tips nonmodal and visually secondary, with accessible dismissal controls and no focus stealing or repeated live announcements. They must not obscure the map, change the answer, advance a question, affect scoring, or compete with feedback and mobile keyboard space. If a tip changes the card's height, preserve the existing mobile framing behavior.
-- Store only stable tip identifiers, learned/dismissed state, and the global opt-out locally; transient detection counters can remain in memory. No analytics service, external transmission, polling, or dependency is needed. Respect unavailable storage during the session. Consider one explicit way to re-enable/reset tips in Help or settings without adding multiple per-tip settings; decide how this relates to Reset settings.
+All hints require three successive relevant actions on distinct questions in the current round. “Successive” means successive eligible opportunities, not necessarily consecutive questions. Repeated clicks in one question count once. Shortcut use resets the corresponding sequence and pending hint; it does not permanently hide guidance. Explicit “Got it” dismissals and the global “No more tips” preference remain remembered. The two automatic-reveal hints have independent state.
+
+| Hint | Counted action | Sequence reset | Display opportunity |
+| --- | --- | --- | --- |
+| Map-tap typing | Direct touch focus of the Name answer field | Successful map-tap focus | A subsequent unanswered Name question, with keyboard closed |
+| Suggestion keyboard selection | Hardware typing followed by pointer selection of a country suggestion | Keyboard selection, or pointer selection without hardware typing | Feedback after that pointer selection |
+| Suggestion Go/Enter selection | Touch selection of a suggestion after typing | Successful Go/Enter selection on touch | Feedback after that touch selection, with the keyboard closed; wording explains that Go/Enter selects the highlighted country |
+| Continuation | Pointer activation of Next | Map or keyboard continuation | Feedback with Next country visible; wording follows keyboard/mouse/touch use |
+| Skip shortcut | Desktop Skip button activation | Keyboard skip | Feedback after a button skip; ordinary answers between skips are irrelevant |
+| Correct-answer reveal | Manual Show answer on a wrong/skipped Name question | Advancing past a relevant answer without revealing it, or changing its automatic-reveal setting | Revealed correct answer with Always show visible; correct guesses between wrong/skipped questions are irrelevant |
+| Clicked-name reveal | Manual What did I click? on a wrong Find answer | Advancing past a relevant wrong answer without revealing it, or changing its automatic-reveal setting | Revealed clicked name with Always show visible; correct guesses are irrelevant |
+
+### Scheduling and lifecycle
+
+Only one tip is visible. Eligible pending tips are ranked by the most recent triggering action; ties prefer reveal settings, Skip, suggestion selection, continuation, then map-tap typing. Other qualifying tips remain pending for the current round, but must receive another applicable display opportunity before showing after cooldown. Round changes, shortcut use, setting changes, and explicit dismissals clear the corresponding pending state. No popup appears merely because a timer expires.
+
+After closing a tip, both a 20-second global cooldown and three further completed questions must pass before another can appear. Restarting or changing region/mode does not bypass this session cooldown. Each hint appears at most once per round. New tips are evaluated after the UI updates, without an additional inactivity debounce. They wait during typing, suggestion selection, map movement/loading, settings, and Help; an open tip remains readable through outside clicks and question changes until explicitly closed or the round ends. Counts, pending tips, and cooldown stay in memory; only dismissed IDs and global opt-out are saved. Earlier inferred learning is not carried forward as permanent suppression.
+
+Quiz settings provide an enable switch and an inline Reset tips action with a short localized confirmation. Reset tips clears only guidance state; Reset settings also resets guidance. The user tested the desktop and mobile hint flows, iterated on presentation, wording, and trigger timing, then accepted the final behavior and authorized release. No agent browser testing was performed.
 
 ### Completion criteria
 
-- [ ] Verify each proposed shortcut and its exact eligibility before writing English and Norwegian guidance; remove tips for behavior that is not actually supported.
-- [ ] Agree initial tip placement, detection thresholds, and frequency limits, then implement the smallest useful set through explicit existing action events.
-- [ ] Verify that observed shortcut use, individual dismissal, global opt-out, reloads, language/mode/input-method changes, and unavailable storage all produce predictable behavior without repeated tips.
-- [ ] Verify keyboard focus, touch taps versus pan/pinch, quiz state preservation, and mobile card framing; run proportionate build and automated checks. Leave visual acceptance and threshold tuning to the user.
+- [x] Define explicit triggers, relevant opportunities, reset conditions, display context, priority, and shared cooldown before implementing the consolidated policy.
+- [x] Integrate action events without changing quiz answers, scoring, keyboard shortcuts, map gestures, or regional membership; retain explicit dismissal, opt-out, reset, and bilingual presentation.
+- [x] Run the build/type and whitespace checks, plus one focused policy check for successive actions, resets, arbitration, cooldown gates, freshness, round changes, and stored dismissal migration.
+- [x] Obtain the user’s acceptance of the final hint behavior and presentation after desktop/mobile testing and wording iterations; the user authorized release.
 
 ## TASK-010 — Investigate Firefox pan and zoom performance
 
