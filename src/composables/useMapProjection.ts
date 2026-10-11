@@ -14,6 +14,8 @@ import type { BathymetryBand, BathymetryDepth } from '../data/bathymetry'
 import type { ReliefBand, ReliefElevation } from '../data/relief'
 import type { MapBounds, MapPoint } from './useMapZoom'
 import { projectedUnitFocus } from '../logic/mapFocus'
+import { dateLineOutline } from '../logic/mapOutlines'
+import { backgroundLand, backgroundLandForDetail } from '../data/backgroundLand'
 import { supplementalLand, supplementalExploreLand, type SupplementalExploreFeature } from '../data/supplementalLand'
 import { quizGeographicUnits } from '../data/quizMap'
 import disputedBoundaries from '../data/disputed-boundaries.json'
@@ -135,7 +137,7 @@ export function useMapProjection(
   const projectionDebug = shallowRef<ProjectionDebugState | null>(null)
   const supplementalPathCache = new Map<string, {
     sizeKey: string
-    paths: Array<{ id: string; name: string; path: string; divisionPath?: string; bounds: MapBounds }>
+    paths: Array<{ id: string; name: string; path: string; outlinePath?: string; divisionPath?: string; bounds: MapBounds }>
   }>()
   const regionsWithDisplayGeometry = new Set(
     fittingUnits.flatMap((unit) => Object.keys(unit.regionalDisplayGeometry ?? {})),
@@ -198,6 +200,12 @@ export function useMapProjection(
     return geoPath(projection)
   })
 
+  function projectOutline(geometry: Geometry, explicitOutline?: Geometry): string | undefined {
+    const wraps = projectionId.value === 'mercator' || projectionId.value === 'miller'
+    const outline = explicitOutline ?? (wraps ? dateLineOutline(geometry) : undefined)
+    return outline ? pathGenerator.value(outline) ?? '' : undefined
+  }
+
   function projectedGeographicPaths(source: GeographicUnitFeature[], trackDebug = false, regionId: string = activeRegion.value.id, quizVariant = quizMode?.value ?? false): ProjectedGeographicUnit[] {
     const startedAt = trackDebug ? performance.now() : 0
     const id = projectionId.value
@@ -235,7 +243,7 @@ export function useMapProjection(
         return [{
           unit,
           path: generator(displayUnit) ?? '',
-          outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? '' : undefined,
+          outlinePath: projectOutline(displayUnit.geometry, regionalDisplay?.outline ?? unit.outlineGeometry),
           divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? '' : undefined,
           ...projectedUnitFocus(generator, displayUnit, width.value),
         }]
@@ -257,7 +265,7 @@ export function useMapProjection(
       basePaths = displaySource.map((unit) => ({
         unit,
         path: generator(unit) ?? '',
-        outlinePath: unit.outlineGeometry ? generator(unit.outlineGeometry) ?? '' : undefined,
+        outlinePath: projectOutline(unit.geometry, unit.outlineGeometry),
         divisionPath: unit.divisionGeometry ? generator(unit.divisionGeometry) ?? '' : undefined,
         ...projectedUnitFocus(generator, unit, width.value),
       }))
@@ -275,7 +283,7 @@ export function useMapProjection(
         return {
           unit: projected.unit,
           path: generator(displayUnit) ?? '',
-          outlinePath: generator(regionalDisplay.outline) ?? '',
+          outlinePath: projectOutline(displayUnit.geometry, regionalDisplay.outline),
           divisionPath: generator(regionalDisplay.division) ?? '',
           ...projectedUnitFocus(generator, displayUnit, width.value),
         }
@@ -302,8 +310,7 @@ export function useMapProjection(
       return {
         unit,
         path: generator(displayUnit) ?? '',
-        outlinePath: regionalDisplay ? generator(regionalDisplay.outline) ?? ''
-          : unit.outlineGeometry ? generator(unit.outlineGeometry) ?? '' : undefined,
+        outlinePath: projectOutline(displayUnit.geometry, regionalDisplay?.outline ?? unit.outlineGeometry),
         divisionPath: regionalDisplay ? generator(regionalDisplay.division) ?? ''
           : unit.divisionGeometry ? generator(unit.divisionGeometry) ?? '' : undefined,
         ...focus,
@@ -427,12 +434,27 @@ export function useMapProjection(
       id: unit.id,
       name: unit.properties.sourceName,
       path: generator(unit) ?? '',
+      outlinePath: projectOutline(unit.geometry),
       divisionPath: unit.divisionGeometry ? generator(unit.divisionGeometry) ?? '' : undefined,
       bounds: generator.bounds(unit),
     })).filter(({ path, bounds }) => path && bounds.flat().every(Number.isFinite))
     supplementalPathCache.set(key, { sizeKey, paths })
     return paths
   }
+  const backgroundLandPaths = computed(() => {
+    const highDetail = geographicUnits.value !== fittingUnits
+    return projectSupplementalLand(backgroundLandForDetail(highDetail), highDetail ? 'background-10m' : 'background-50m')
+  })
+  // Navigation uses stable base geometry so loading detail cannot move the
+  // limits. Background land extends navigation without changing fit. At the
+  // north edge include the polar ocean within the projected sphere.
+  const worldVerticalBounds = computed<[number, number]>(() => [
+    pathGenerator.value.bounds({ type: 'Sphere' })[0][1],
+    Math.max(
+      ...interactionGeographicPaths.value.map(({ displayBounds }) => displayBounds[1][1]).filter(Number.isFinite),
+      ...projectSupplementalLand(backgroundLand, 'background-50m').map(({ bounds }) => bounds[1][1]),
+    ),
+  ])
   const supplementalLandPaths = computed(() => projectSupplementalLand(supplementalLand, 'source'))
   const supplementalExploreLandPaths = computed(() => projectSupplementalLand(supplementalExploreLand, 'explore'))
 
@@ -490,6 +512,7 @@ export function useMapProjection(
     const path = fittingUnits
       .filter((unit) => unit.properties.mapUnitIds.some((id) => visibleMapUnitIds.value.has(id)))
       .map((unit) => generator(displayFeature(unit)) ?? '')
+      .concat(backgroundLand.map((unit) => generator(unit) ?? ''))
       .join(' ')
     reliefClipPathCache.set(key, { sizeKey, path })
     return path
@@ -552,6 +575,7 @@ export function useMapProjection(
   }
 
   return {
+    backgroundLandPaths,
     bathymetryPaths,
     contextGeographicPaths,
     disputedBoundaryPaths,
@@ -569,5 +593,6 @@ export function useMapProjection(
     supplementalLandPaths,
     supplementalExploreLandPaths,
     unprojectPoint,
+    worldVerticalBounds,
   }
 }

@@ -2,6 +2,18 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.16.0 — Southern Reach — 2026-10-11
+
+### Improvements
+
+- Restored Antarctica as non-interactive background land in both map detail levels and renderers, without adding country selection, quiz answers, or region membership.
+- Allow panning south to Antarctica’s projected bottom edge while preventing a gap below it when zooming out; preserve the world overview framing.
+- Keep the map position within its pan limits when reaching minimum zoom instead of resetting the view.
+- Limit downward panning to the map’s projected northern edge to avoid a large empty area above it.
+- Hide artificial date-line borders on wrapped Mercator and Miller maps, including Russia and Antarctica, while keeping real coastlines and country outlines.
+- Keep hover colouring consistent across wrapped map copies by leaving Canvas hit areas unpainted.
+- Fill wrapped ocean and bathymetry copies together to remove the thin antialiasing seam between them.
+
 ## 0.15.0 — Quiet Compass — 2026-10-11
 
 ### Improvements

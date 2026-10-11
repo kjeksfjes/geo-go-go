@@ -23,6 +23,21 @@ let scene: PreparedScene | null = null
 let surface: OffscreenCanvas | null = null
 
 let pathCache = new Map<string, Path2D>()
+const wrappedFillCache = new WeakMap<Path2D, { key: string; path: Path2D }>()
+
+function wrappedFill(path: Path2D, offsets: number[]): Path2D {
+  if (offsets.length === 1 && offsets[0] === 0) return path
+  const key = offsets.join(',')
+  const cached = wrappedFillCache.get(path)
+  if (cached?.key === key) return cached.path
+  const combined = new Path2D()
+  for (const offset of offsets) {
+    combined.addPath(path, new DOMMatrix().translate(offset, 0))
+  }
+  // Keep only the current copy layout for each reusable source path.
+  wrappedFillCache.set(path, { key, path: combined })
+  return combined
+}
 
 function prepare(source: CanvasMapScene): PreparedScene {
   // Retain only the latest scene's paths. Mode/detail changes can reuse
@@ -73,27 +88,18 @@ function drawScene(
     countries: prepared.countries.filter(({ bounds }) => intersectsViewport(bounds, offset, viewport)),
     contextCountries: prepared.contextCountries.filter(({ bounds }) => intersectsViewport(bounds, offset, viewport)),
   }))
-  for (const offset of offsets) {
-    context.save()
-    context.translate(offset, 0)
-    if (prepared.sphere) {
-      context.fillStyle = prepared.bathymetry.length
-        ? mapPalette.bathymetrySurface
-        : mapPalette.ocean
-      context.fill(prepared.sphere)
-    }
-    context.restore()
+  if (prepared.sphere) {
+    context.fillStyle = prepared.bathymetry.length
+      ? mapPalette.bathymetrySurface
+      : mapPalette.ocean
+    context.fill(wrappedFill(prepared.sphere, offsets))
   }
 
-  for (const offset of offsets) {
-    context.save()
-    context.translate(offset, 0)
-    for (const band of prepared.bathymetry) {
-      if (!band.path) continue
-      context.fillStyle = mapPalette.bathymetry[band.depth] ?? mapPalette.bathymetry[7000]
-      context.fill(band.path)
-    }
-    context.restore()
+  // One fill per depth band avoids separate antialiased edges at the wrap.
+  for (const band of prepared.bathymetry) {
+    if (!band.path) continue
+    context.fillStyle = mapPalette.bathymetry[band.depth] ?? mapPalette.bathymetry[7000]
+    context.fill(wrappedFill(band.path, offsets))
   }
 
   for (const { offset, contextCountries, countries } of visibleCountries) {
