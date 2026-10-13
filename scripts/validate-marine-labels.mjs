@@ -48,11 +48,19 @@ for (const id of generatedById.keys()) {
 
 for (const [id, guide] of Object.entries(guides)) {
   if (!generatedById.has(id)) errors.push(`Guide has no marine label: ${id}`)
+  if (!Number.isFinite(guide.sizeScale) || guide.sizeScale <= 0) errors.push(`Invalid geographic size tier: ${id}`)
   for (const points of [guide.points, ...(guide.readablePoints ? [guide.readablePoints] : [])]) {
     if (!Array.isArray(points) || points.length < 3 || !points.every((point) =>
       Array.isArray(point) && point.length === 2 && point.every(Number.isFinite)
       && Math.abs(point[1]) <= 90,
     )) errors.push(`Invalid geographic guide: ${id}`)
+  }
+  if (guide.layout === 'horizontal') {
+    const validPoint = (point) => Array.isArray(point) && point.length === 2 && point.every(Number.isFinite)
+    if (!validPoint(guide.anchor) || !Array.isArray(guide.bounds) || guide.bounds.length !== 2
+      || !guide.bounds.every(validPoint)
+      || ![0, 1].every((axis) => guide.bounds[0][axis] < guide.anchor[axis]
+        && guide.anchor[axis] < guide.bounds[1][axis])) errors.push(`Invalid horizontal water placement: ${id}`)
   }
 }
 

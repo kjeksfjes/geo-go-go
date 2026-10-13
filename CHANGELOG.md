@@ -2,6 +2,15 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.18.0 — Coastal Lettering — 2026-10-13
+
+### Improvements
+
+- Scale water names directly with the map, including mobile world views, instead of resizing names to fit the zoomed viewport. Keep partly visible names geographically anchored and clip them at the map edges; collision checks use the visible portion.
+- Prefer centered horizontal, balanced two-line names in broad waters, and meaningful curves or angles along directional water corridors. Refine placement for the Mediterranean, Red Sea, Persian Gulf, Foxe Basin, and northern seas.
+- Base sea-label size tiers on geographic water area, keeping similarly sized seas comparable and avoiding polar projection exaggeration. Retain prepared water-space limits for coastline clearance.
+- Prepare placement decisions offline against both detail levels, keeping runtime layout compact. Hide narrow waters without a prepared placement rather than enlarging names across land.
+
 ## 0.17.0 — Atlas Tides — 2026-10-13
 
 ### Improvements

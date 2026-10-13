@@ -4,6 +4,7 @@
 // are added to the live label layout. Requires existing dev dependencies only.
 import { readFileSync, writeFileSync } from 'node:fs'
 import ts from 'typescript'
+import { geoArea } from 'd3-geo'
 
 if (process.argv.length !== 3) throw new Error('Expected the marine GeoJSON source path')
 const source = JSON.parse(readFileSync(process.argv[2], 'utf8'))
@@ -77,7 +78,7 @@ function marinePolygons(geometry, anchor) {
   }))))
 }
 
-function guideFor(geometry, anchor) {
+function guideFor(geometry, anchor, resolution = 28) {
   const marine = marinePolygons(geometry, anchor)
   const water = (x, y) => marine.some((polygon) => contains(polygon, x, y)) && !onLand(x, y)
   const left = Math.min(...marine.map(({ bounds }) => bounds[0]))
@@ -85,8 +86,8 @@ function guideFor(geometry, anchor) {
   const right = Math.max(...marine.map(({ bounds }) => bounds[2]))
   const bottom = Math.max(...marine.map(({ bounds }) => bounds[3]))
   const samples = []
-  for (let x = 0; x < 28; x++) for (let y = 0; y < 28; y++) {
-    const point = [left + (right - left) * (x + 0.5) / 28, top + (bottom - top) * (y + 0.5) / 28]
+  for (let x = 0; x < resolution; x++) for (let y = 0; y < resolution; y++) {
+    const point = [left + (right - left) * (x + 0.5) / resolution, top + (bottom - top) * (y + 0.5) / resolution]
     if (water(...point)) samples.push(point)
   }
   if (samples.length < 8) return undefined
@@ -160,18 +161,84 @@ function readableGuide(points, geometry, anchor) {
   return undefined
 }
 
+function horizontalPlacement(geometry, anchor, points) {
+  const marine = marinePolygons(geometry, anchor)
+  const water = (x, y) => marine.some((polygon) => contains(polygon, x, y)) && !onLand(x, y)
+  const left = Math.min(...marine.map(({ bounds }) => bounds[0]))
+  const bottom = Math.min(...marine.map(({ bounds }) => bounds[1]))
+  const right = Math.max(...marine.map(({ bounds }) => bounds[2]))
+  const top = Math.max(...marine.map(({ bounds }) => bounds[3]))
+  const count = 24
+  const dx = (right - left) / count, dy = (top - bottom) / count
+  // Find an interior rectangle, including islands and coastline margins.
+  // This work happens once during data preparation, never while panning.
+  const cells = Array.from({ length: count }, (_, row) => Array.from({ length: count }, (_, column) =>
+    [0, 0.5, 1].every((u) => [0, 0.5, 1].every((v) => water(left + (column + u) * dx, bottom + (row + v) * dy))),
+  ))
+  const cosine = Math.max(0.15, Math.cos(anchor[1] * Math.PI / 180))
+  const centers = cells.flatMap((row, y) => row.flatMap((inside, x) => inside
+    ? [[(x + 0.5) * dx * cosine, (y + 0.5) * dy]] : []))
+  if (centers.length < 4) return undefined
+  const mean = [0, 1].map((axis) => centers.reduce((sum, point) => sum + point[axis], 0) / centers.length)
+  let xx = 0, yy = 0, xy = 0
+  for (const point of centers) {
+    const x = point[0] - mean[0], y = point[1] - mean[1]
+    xx += x * x; yy += y * y; xy += x * y
+  }
+  const spread = Math.hypot(xx - yy, 2 * xy)
+  // An elongated water body has a meaningful direction even if a small
+  // horizontal rectangle happens to fit inside its wider end.
+  if (Math.sqrt((xx + yy + spread) / Math.max(1e-9, xx + yy - spread)) > 1.55) return undefined
+  const guideLength = points ? sampleLabelGuide(points).reduce((sum, point, index, guide) => index
+    ? sum + Math.hypot((point[0] - guide[index - 1][0]) * cosine, point[1] - guide[index - 1][1]) : sum, 0) : 0
+  let best
+  for (let first = 0; first < count; first++) {
+    const columns = Array(count).fill(true)
+    for (let last = first; last < count; last++) {
+      for (let column = 0; column < count; column++) columns[column] &&= cells[last][column]
+      let start = 0
+      for (let end = 0; end <= count; end++) {
+        if (end < count && columns[end]) continue
+        const width = (end - start) * dx * cosine, height = (last - first + 1) * dy
+        const ratio = width / height
+        if (ratio >= 0.8 && ratio <= 4 && width >= guideLength * 0.45 && height >= guideLength * 0.22) {
+          const score = width * height
+          if (!best || score > best.score) best = { start, end, first, last, score }
+        }
+        start = end + 1
+      }
+    }
+  }
+  if (!best) return undefined
+  const bounds = [[left + best.start * dx, bottom + best.first * dy],
+    [left + best.end * dx, bottom + (best.last + 1) * dy]]
+  const center = [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2]
+  return { layout: 'horizontal', anchor: center, bounds }
+}
+
 const byId = new Map(source.features.map((feature) => [`ne:${feature.properties.ne_id}`, feature]))
 const guides = {}
 for (const label of labels) {
   const feature = byId.get(label.id)
   if (!feature) continue // Oceans keep their explicit cartographic placements.
   const points = authored[label.id]?.points ?? guideFor(feature.geometry, label.point)
-  if (points) {
+    ?? guideFor(feature.geometry, label.point, 80)
+  const horizontal = !authored[label.id] ? horizontalPlacement(feature.geometry, label.point, points) : undefined
+  if (points || horizontal) {
     const round = (points) => points.map((point) => point.map((coordinate) => Number(coordinate.toFixed(6))))
-    const readable = readableGuide(points, feature.geometry, label.point)
-    guides[label.id] = { points: round(points), ...(readable ? { readablePoints: round(readable) } : {}) }
+    const guide = points ?? [horizontal.bounds[0], horizontal.anchor, horizontal.bounds[1]]
+    const readable = !horizontal ? readableGuide(guide, feature.geometry, label.point) : undefined
+    // Use geographic area, not Mercator's exaggerated polar footprint or
+    // label length. Nearby waters of comparable size share a typography tier.
+    const area = geoArea(feature) * 6371 ** 2
+    const sizeScale = area < 100000 ? 0.4 : area < 300000 ? 0.55 : area < 500000 ? 0.65
+      : area < 1000000 ? 0.8 : area < 2000000 ? 1 : area < 5000000 ? 1.2 : 1.4
+    guides[label.id] = { points: round(guide), ...(readable ? { readablePoints: round(readable) } : {}),
+      sizeScale,
+      ...(horizontal ? { ...horizontal, anchor: round([horizontal.anchor])[0], bounds: round(horizontal.bounds) } : {}) }
   }
 }
 const output = new URL('../src/data/marine-label-paths.json', import.meta.url)
 writeFileSync(output, JSON.stringify(guides) + '\n')
-console.log(`Prepared ${Object.keys(guides).length} water-only guides; ${labels.filter((label) => byId.has(label.id) && !guides[label.id]).length} labels retain their original anchors.`)
+console.log(`Prepared ${Object.keys(guides).length} water-only guides; ${labels.filter((label) => byId.has(label.id) && !guides[label.id]).length} waters have no prepared placement and remain hidden.`)
+console.log(`${Object.values(guides).filter((guide) => guide.layout === 'horizontal').length} broad waters use horizontal interior placements.`)
