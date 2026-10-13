@@ -181,6 +181,8 @@ watch(marineLabelsEnabled, (value) => writeStoredValue(mapSettingKeys.marineLabe
 watch(scaleBarEnabled, (value) => writeStoredValue(mapSettingKeys.scaleBar, value))
 watch(scaleUnits, (value) => writeStoredValue(mapSettingKeys.scaleUnits, value))
 const reliefClipId = `relief-land-${useId()}`
+const waterNamePointerPressed = ref(false)
+let waterNamePointerId: number | null = null
 const hoveredUnit = ref<{ id: string; entityId: string } | null>(null)
 const interactionState = computed<MapInteractionState>(() => ({
   selectedCountryId: props.selectedCountryId,
@@ -1215,8 +1217,21 @@ function handleWheel(event: WheelEvent) {
   }, false, { deltaY: event.deltaY, deltaMode: event.deltaMode })
 }
 
+function clearWaterNamePress() {
+  waterNamePointerId = null
+  waterNamePointerPressed.value = false
+}
+
+function releaseWaterNamePress(event: PointerEvent) {
+  if (event.pointerId === waterNamePointerId) clearWaterNamePress()
+}
+
 function handlePointerDown(event: PointerEvent) {
   if (event.pointerType === 'touch' || markerDistribution.value) return
+  if (event.button === 0) {
+    waterNamePointerId = event.pointerId
+    waterNamePointerPressed.value = true
+  }
   const startedAt = gestureDebugEnabled ? performance.now() : 0
   if (gestureDebugEnabled) pendingPanStartup = event.button === 0 ? {
     downAt: startedAt,
@@ -1499,6 +1514,10 @@ function requestDetailChange(enabled: boolean) {
 }
 
 onMounted(async () => {
+  // A press can end outside the map before pointer capture begins.
+  window.addEventListener('pointerup', releaseWaterNamePress, true)
+  window.addEventListener('pointercancel', releaseWaterNamePress, true)
+  window.addEventListener('blur', clearWaterNamePress)
   if (debugEnabled) {
     updateDebugMetrics()
     debugTimer = window.setInterval(updateDebugMetrics, 125)
@@ -1512,6 +1531,9 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('pointerup', releaseWaterNamePress, true)
+  window.removeEventListener('pointercancel', releaseWaterNamePress, true)
+  window.removeEventListener('blur', clearWaterNamePress)
   if (tipsResetTimer !== undefined) window.clearTimeout(tipsResetTimer)
   projectionSnapshot.value?.replaceChildren()
   cancelMarkerDistribution()
@@ -1871,16 +1893,6 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
             </g>
           </g>
         </g>
-        <MarineLabels
-          :visible="marineLabelsEnabled && !isInteracting"
-          :width="mapWidth"
-          :height="mapHeight"
-          :transform="transform"
-          :projection-scale="projectionScale"
-          :project-point="projectPoint"
-          :copy-offsets="copyOffsets"
-          :wrap-period="horizontalWrap?.period ?? null"
-        />
         <g v-if="namedQuestionMarkers.length" class="named-question-markers" role="img" :aria-label="t('highlightedCountry')">
           <g v-for="marker in namedQuestionMarkers" :key="marker.key">
             <circle class="named-question-markers__back" :cx="marker.x" :cy="marker.y" :r="marker.radius" />
@@ -1902,6 +1914,27 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
         <g v-if="distributingCountryDots.length" class="small-country-distribution" aria-hidden="true">
           <circle v-for="dot in distributingCountryDots" :key="dot.key" :cx="dot.x" :cy="dot.y" r="5" />
         </g>
+      </svg>
+
+      <!-- Labels have independent SVG layout; hiding text for movement must
+           not alter the interactive map's descendant geometry. Reuse the
+           overlay class so projection snapshots retain the label layer. -->
+      <svg
+        v-if="marineLabelsEnabled && !quizMode"
+        class="map-highlights map-water-labels"
+        :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
+        aria-hidden="true"
+      >
+        <MarineLabels
+          :visible="marineLabelsEnabled && !quizMode && !waterNamePointerPressed && !isInteracting"
+          :width="mapWidth"
+          :height="mapHeight"
+          :transform="transform"
+          :projection-scale="projectionScale"
+          :project-point="projectPoint"
+          :copy-offsets="copyOffsets"
+          :wrap-period="horizontalWrap?.period ?? null"
+        />
       </svg>
 
       <!-- Keep painted highlights in their own SVG. Firefox otherwise keeps a
@@ -1987,7 +2020,13 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
             />
             <MapDetailToggle :label="t('bathymetry')" :loading="bathymetryLoading" :disabled="interactionLocked" :model-value="bathymetryEnabled" @update:model-value="setBathymetryEnabled" />
             <MapDetailToggle :label="t('relief')" :loading="reliefLoading" :disabled="interactionLocked" :model-value="reliefEnabled" @update:model-value="setReliefEnabled" />
-            <MapDetailToggle :label="t('waterNames')" :disabled="interactionLocked" :model-value="marineLabelsEnabled" @update:model-value="marineLabelsEnabled = $event" />
+            <MapDetailToggle
+              :label="t('waterNames')"
+              :description="quizMode ? t('waterNamesQuizHint') : undefined"
+              :disabled="interactionLocked || quizMode"
+              :model-value="marineLabelsEnabled && !quizMode"
+              @update:model-value="marineLabelsEnabled = $event"
+            />
             <p id="settings-layer-performance-hint" class="settings-hint">{{ t('mapPerformanceHint') }}</p>
           </div>
           <MapDetailToggle
@@ -2164,6 +2203,10 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.map-water-labels {
+  z-index: 2;
 }
 
 .map-loading-overlay {

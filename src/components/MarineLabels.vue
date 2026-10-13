@@ -313,7 +313,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <g v-show="visible" class="marine-labels" aria-hidden="true">
+  <!-- Preserve SVG text layout while hidden for gestures. The separate
+       overlay remains noninteractive even when its opacity is zero. -->
+  <g :opacity="visible ? 1 : 0" class="marine-labels" aria-hidden="true">
     <g :ref="(element) => { measurementGroup = element as SVGGElement | undefined }" visibility="hidden">
       <text
         v-for="label in projectedLabels"

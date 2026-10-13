@@ -95,6 +95,8 @@ Antarctica is imported separately as non-interactive background land at both det
 
 ## Architecture at a glance
 
+Water names draw in their own noninteractive SVG overlay. Mouse-down and map movement hide that overlay with opacity, keeping its text layout outside the interactive map's SVG. The overlay is removed when Water names is disabled or either quiz mode is active; Explore retains the saved preference.
+
 Water labels use compact geographic guides prepared from Natural Earth 5.1.1 marine polygons by `scripts/import-marine-label-paths.mjs`, with authored refinements in `src/data/marineLabelPaths.ts`. Pass the pinned `ne_10m_geography_marine_polys.geojson` to regenerate the guides. The importer follows each water body's main direction and interior cross-sections, checking sampled guides against land at both map detail levels. Awkward shapes retain their original label anchors; broad straight corridors retain straight text. Only the small guides ship to the browser, where text metrics are cached and layout runs after gestures settle.
 
 Data flows from geographic units and quiz identities through a D3 projection into a painted map and a separate interaction layer. The map reports clicks back to the app; the app owns selection and quiz state.
