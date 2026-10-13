@@ -2,6 +2,19 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Improvements
+
+- Size water labels relative to the map and scale them directly with zoom, using smaller starting sizes and prepared water corridors rather than resizing text to the zoomed viewport.
+- Use centered horizontal, two-line English names for Greenland Sea, Norwegian Sea, and Barents Sea within prepared open-water bounds and with extra coastline margins.
+- Extend the Mediterranean Sea guide through the central basin and use the Red Sea's central spine at a smaller fixed size instead of its shallower angled alternative.
+- Reassess the marine catalogue during data preparation: prefer centered horizontal, balanced two-line labels in broad water interiors while preserving meaningful directions and curves in elongated waters. Increase the Persian Gulf label's share of its curved corridor.
+- Hide narrow waters without a prepared placement rather than enlarging names across land around an unverified point anchor.
+- Reserve horizontal layouts for broadly rounded waters; keep directional waters on their geographic corridors. Let names fill more of those corridors and use the same preferred size regardless of source rank, while retaining authored narrow-water size limits.
+- Base sea-label size tiers on geographic water area rather than projected corridor length, keeping similarly sized seas comparable and reducing polar size exaggeration. Give Foxe Basin a roomier horizontal, two-line placement.
+- Normalize starting label sizes to the fitted map scale, so a narrow mobile world view does not retain desktop-sized ocean text; subsequent zoom still scales names with the map.
+
 ## 0.17.0 — Atlas Tides — 2026-10-13
 
 ### Improvements

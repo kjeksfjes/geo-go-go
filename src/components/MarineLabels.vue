@@ -27,6 +27,10 @@ interface ProjectedLabel extends MarineLabel {
   guideCenter?: number
   readableGuide?: MapPoint[]
   readableLengths?: number[]
+  waterBounds?: [MapPoint, MapPoint]
+  fontSize?: number
+  spanFraction?: number
+  sizeScale?: number
 }
 
 const groups = new Map<number, SVGGElement>()
@@ -62,7 +66,16 @@ function assignGroup(element: unknown, offset: number) {
   else groups.delete(offset)
 }
 
-function labelLines(name: string, kind: string) {
+function labelLines(name: string, kind: string, horizontal = false) {
+  if (horizontal && name.includes(' ')) {
+    const words = name.split(' ')
+    let split = 1
+    for (let index = 2; index < words.length; index++) {
+      const difference = (at: number) => Math.abs(words.slice(0, at).join(' ').length - words.slice(at).join(' ').length)
+      if (difference(index) < difference(split)) split = index
+    }
+    return [words.slice(0, split).join(' '), words.slice(split).join(' ')]
+  }
   const deliberateBreaks: Record<string, string[]> = {
     Atlanterhavet: ['Atlanter-', 'havet'],
     Stillehavet: ['Stille-', 'havet'],
@@ -99,23 +112,38 @@ function projectGuide(source?: readonly MapPoint[], offset: MapPoint = [0, 0]): 
 }
 
 const projectedLabels = computed<ProjectedLabel[]>(() => marineLabels.flatMap((label) => {
-  const offset = marineLabelPaths[label.id]?.offset ?? [0, 0]
-  const point = props.projectPoint([label.point[0] + offset[0], label.point[1] + offset[1]])
+  const placement = marineLabelPaths[label.id]
+  // An unverified point anchor cannot keep enlarged text off nearby land.
+  if (!placement && label.kind !== 'ocean') return []
+  const offset = placement?.offset ?? [0, 0]
+  const anchor = placement?.anchor ?? label.point
+  const point = props.projectPoint([anchor[0] + offset[0], anchor[1] + offset[1]])
   if (!point || !point.every(Number.isFinite)) return []
   const displayName = locale.value === 'nb' ? label.nameNb : label.name
-  const validGuide = projectGuide(sampledGuides.get(label.id), offset)
-  const readableGuide = projectGuide(readableGuides.get(label.id), offset)
+  const horizontal = placement?.layout === 'horizontal'
+  const validGuide = horizontal ? undefined : projectGuide(sampledGuides.get(label.id), offset)
+  const readableGuide = horizontal ? undefined : projectGuide(readableGuides.get(label.id), offset)
+  const corners = placement?.bounds?.flatMap(([x]) => placement.bounds!.map(([, y]) =>
+    props.projectPoint([x, y]),
+  ))
+  const waterBounds: [MapPoint, MapPoint] | undefined = corners?.every((point) => point?.every(Number.isFinite))
+    ? [[Math.min(...corners.map((point) => point![0])), Math.min(...corners.map((point) => point![1]))],
+      [Math.max(...corners.map((point) => point![0])), Math.max(...corners.map((point) => point![1]))]] : undefined
   return [{
     ...label,
     x: point[0],
     y: point[1],
     displayName,
-    lines: validGuide ? [displayName] : labelLines(displayName, label.kind),
+    lines: validGuide ? [displayName] : labelLines(displayName, label.kind, horizontal),
     guide: validGuide,
     guideLengths: validGuide ? labelGuideLengths(validGuide) : undefined,
     guideCenter: marineLabelPaths[label.id]?.center,
     readableGuide,
     readableLengths: readableGuide ? labelGuideLengths(readableGuide) : undefined,
+    waterBounds,
+    fontSize: placement?.fontSize,
+    spanFraction: placement?.spanFraction,
+    sizeScale: placement?.sizeScale,
   }]
 }))
 
@@ -144,6 +172,9 @@ function updateLabels() {
   const effectiveScale = Math.max(1, props.projectionScale * scale)
   const labelLevel = Math.min(9.9, 1 + 1.5 * Math.log2(effectiveScale))
   const baseFont = Math.max(12, Math.min(17, props.width / 65))
+  // Normalize typography to the fitted geography, not the screen's font
+  // floor. A narrow viewport fits a smaller world before camera zoom begins.
+  const mapTypographyScale = props.projectionScale * props.width / 1600
   const fontSize = `${baseFont}px`
   // Measure every name with its actual font, case and spacing.
   // Batch these reads before placement writes, and only after gestures settle.
@@ -154,7 +185,7 @@ function updateLabels() {
     measurementWidths.clear()
   }
   for (const label of projectedLabels.value) {
-    if ((!label.guide && labelLevel < label.minLabel) || measurementWidths.has(label.id)) continue
+    if ((!label.guide && !label.waterBounds && labelLevel < label.minLabel) || measurementWidths.has(label.id)) continue
     const element = measurements.get(label.id)
     const length = element ? Math.max(...Array.from(element.children,
       (line) => (line as SVGTextContentElement).getComputedTextLength())) : 0
@@ -177,25 +208,27 @@ function updateLabels() {
       if (!baseTextWidth) continue
       const x = props.transform.x + scale * (label.x + offset)
       const y = props.transform.y + scale * label.y
-      // Let names grow with their water body. Only constrain growth when the
-      // guide or screen cannot accommodate it; fixed pixel sizes made names
-      // look progressively smaller and flattened their curves on zoom-in.
-      // Guide-backed names can appear before their old source zoom threshold.
-      // Let cartographic importance guide growth too, so major seas are not
-      // stuck at their smallest type size despite a broad visible corridor.
-      const growthLevel = label.guide ? Math.min(label.minLabel, 2 + label.rank * 0.5) : label.minLabel
-      const entryScale = Math.max(1, Math.pow(2, (growthLevel - 1) / 1.5))
+      // Choose a size in the unzoomed map, then scale it exactly with the
+      // geography. Fit the whole water corridor, never the zoomed viewport.
+      // Geographic area sets the hierarchy without polar projection inflation.
+      // Prepared water space remains the upper limit for coastline clearance.
+      const areaSize = label.sizeScale !== undefined ? 17 * 0.6 * label.sizeScale : 20
+      const preferredSize = Math.min(label.fontSize ?? Infinity, areaSize) * mapTypographyScale
       const paddedWidth = baseTextWidth + baseFontPixels * 2
-      const screenSpace = Math.min(props.width - 20, props.height - 70) * 0.8
-      const guideSpace = label.guideLengths ? label.guideLengths.at(-1)! * scale * 0.85 : Infinity
-      const anchorSpace = label.guide ? Infinity : Math.max(0, Math.min(x - 10, props.width - 10 - x) * 2)
-      // On narrow screens, cap type by the viewport as well as guide length.
-      // Desktop keeps the accepted 2.5× cap; mobile cannot fill the map with it.
-      const responsiveFontCap = Math.max(baseFontPixels, Math.min(props.width, props.height) / 20)
-      const fontFactor = Math.min(2.5, responsiveFontCap / baseFontPixels, Math.max(1, effectiveScale / entryScale),
-        screenSpace / paddedWidth, guideSpace / paddedWidth, anchorSpace / paddedWidth)
-      if (fontFactor < 1) continue
-      let fontPixels = baseFontPixels * fontFactor
+      const corridorLengths = label.readableLengths ?? label.guideLengths
+      const corridorSpace = corridorLengths
+        ? (corridorLengths[corridorLengths.length - 1] ?? 0) * (label.spanFraction ?? 0.85)
+        : label.waterBounds
+          ? (label.waterBounds[1][0] - label.waterBounds[0][0]) * 0.85
+          : (props.width - 20) * 0.8
+      const heightFactor = label.waterBounds
+        ? (label.waterBounds[1][1] - label.waterBounds[0][1]) * 0.7
+          / (baseFontPixels * (label.lines.length > 1 ? 3.4 : 2.4))
+        : Infinity
+      const mapFontFactor = Math.min(preferredSize / baseFontPixels, corridorSpace / paddedWidth, heightFactor)
+      const fontFactor = mapFontFactor * scale
+      const fontPixels = baseFontPixels * fontFactor
+      if (fontPixels < (isOcean ? 4 : 10)) continue
       const textWidth = baseTextWidth * fontFactor
       const halfWidth = textWidth / 2
       const halfHeight = fontPixels * (label.lines.length > 1 ? 1.2 : 0.7)
@@ -203,34 +236,21 @@ function updateLabels() {
       if (element.style.fontSize !== labelFont) element.style.fontSize = labelFont
       let box: Candidate['box']
       if (label.guide && label.guideLengths) {
-        // Project the growing label into screen coordinates to retain crisp
-        // glyphs while keeping its geographic curve until space limits it.
+        // Project the map-scaled label into screen coordinates, keeping its
+        // geographic guide and clipping placement to available screen space.
         const path = paths.get(labelPathId(label.id, offset))
         if (!path) continue
-        let guide: MapPoint[] | undefined
-        const alternatives = label.readableGuide && label.readableLengths
-          // Keep the preferred reading direction stable across zoom levels.
-          // If it cannot fit even at the starting size, hide rather than flip
-          // back to the original steep axis.
-          ? [{ points: label.readableGuide, lengths: label.readableLengths }]
-          : [{ points: label.guide, lengths: label.guideLengths }]
-        for (const alternative of alternatives) {
-          const availableFactor = Math.min(fontFactor, alternative.lengths.at(-1)! * scale * 0.85 / paddedWidth)
-          if (availableFactor < 1) continue
-          for (const factor of [availableFactor, Math.max(1, availableFactor * 0.75), 1]) {
-            const size = baseFontPixels * factor
-            const viewport: [number, number, number, number] = [
-              (10 + size - props.transform.x) / scale - offset,
-              (58 + size - props.transform.y) / scale,
-              (props.width - 10 - size - props.transform.x) / scale - offset,
-              (props.height - 12 - size - props.transform.y) / scale,
-            ]
-            guide = visibleLabelGuide(alternative.points, alternative.lengths, paddedWidth * factor / scale,
-              viewport, label.guideCenter)
-            if (guide) { fontPixels = size; break }
-          }
-          if (guide) break
-        }
+        const source = label.readableGuide && label.readableLengths
+          ? { points: label.readableGuide, lengths: label.readableLengths }
+          : { points: label.guide, lengths: label.guideLengths }
+        const viewport: [number, number, number, number] = [
+          (10 + fontPixels - props.transform.x) / scale - offset,
+          (58 + fontPixels - props.transform.y) / scale,
+          (props.width - 10 - fontPixels - props.transform.x) / scale - offset,
+          (props.height - 12 - fontPixels - props.transform.y) / scale,
+        ]
+        const guide = visibleLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
+          viewport, label.guideCenter)
         if (!guide) continue
         element.style.fontSize = `${fontPixels}px`
         const screenPoints = guide.map(([x, y]) => [
@@ -250,9 +270,17 @@ function updateLabels() {
         for (const line of Array.from(element.children)) line.setAttribute('x', String(x))
         box = [x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight]
       }
-      // A water guide already proves whether there is enough room at this
+      if (label.waterBounds) {
+        const [[left, top], [right, bottom]] = label.waterBounds
+        const coastMargin = Math.max(10, fontPixels / 2)
+        if (box[0] < props.transform.x + scale * (left + offset) + coastMargin
+          || box[2] > props.transform.x + scale * (right + offset) - coastMargin
+          || box[1] < props.transform.y + scale * top + coastMargin
+          || box[3] > props.transform.y + scale * bottom - coastMargin) continue
+      }
+      // Prepared water space proves whether there is enough room at this
       // projection and zoom. Source zoom metadata must not hide a fitting name.
-      const eligible = (label.guide !== undefined || labelLevel >= label.minLabel)
+      const eligible = (label.guide !== undefined || label.waterBounds !== undefined || labelLevel >= label.minLabel)
         && box[0] >= 10 && box[2] <= props.width - 10
         && box[1] >= 58 && box[3] <= props.height - 12
 
