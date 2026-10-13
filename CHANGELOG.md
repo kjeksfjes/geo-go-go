@@ -2,18 +2,14 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
-## Unreleased
+## 0.18.0 — Coastal Lettering — 2026-10-13
 
 ### Improvements
 
-- Size water labels relative to the map and scale them directly with zoom, using smaller starting sizes and prepared water corridors rather than resizing text to the zoomed viewport.
-- Use centered horizontal, two-line English names for Greenland Sea, Norwegian Sea, and Barents Sea within prepared open-water bounds and with extra coastline margins.
-- Extend the Mediterranean Sea guide through the central basin and use the Red Sea's central spine at a smaller fixed size instead of its shallower angled alternative.
-- Reassess the marine catalogue during data preparation: prefer centered horizontal, balanced two-line labels in broad water interiors while preserving meaningful directions and curves in elongated waters. Increase the Persian Gulf label's share of its curved corridor.
-- Hide narrow waters without a prepared placement rather than enlarging names across land around an unverified point anchor.
-- Reserve horizontal layouts for broadly rounded waters; keep directional waters on their geographic corridors. Let names fill more of those corridors and use the same preferred size regardless of source rank, while retaining authored narrow-water size limits.
-- Base sea-label size tiers on geographic water area rather than projected corridor length, keeping similarly sized seas comparable and reducing polar size exaggeration. Give Foxe Basin a roomier horizontal, two-line placement.
-- Normalize starting label sizes to the fitted map scale, so a narrow mobile world view does not retain desktop-sized ocean text; subsequent zoom still scales names with the map.
+- Scale water names directly with the map, including mobile world views, instead of resizing names to fit the zoomed viewport. Keep partly visible names geographically anchored and clip them at the map edges; collision checks use the visible portion.
+- Prefer centered horizontal, balanced two-line names in broad waters, and meaningful curves or angles along directional water corridors. Refine placement for the Mediterranean, Red Sea, Persian Gulf, Foxe Basin, and northern seas.
+- Base sea-label size tiers on geographic water area, keeping similarly sized seas comparable and avoiding polar projection exaggeration. Retain prepared water-space limits for coastline clearance.
+- Prepare placement decisions offline against both detail levels, keeping runtime layout compact. Hide narrow waters without a prepared placement rather than enlarging names across land.
 
 ## 0.17.0 — Atlas Tides — 2026-10-13
 

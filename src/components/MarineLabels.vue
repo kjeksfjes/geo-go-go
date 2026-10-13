@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, useId, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { marineLabelPaths } from '../data/marineLabelPaths'
-import { visibleLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
+import { centeredLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
 import { locale } from '../i18n'
 import type { MapPoint } from '../composables/useMapZoom'
 
@@ -236,21 +236,15 @@ function updateLabels() {
       if (element.style.fontSize !== labelFont) element.style.fontSize = labelFont
       let box: Candidate['box']
       if (label.guide && label.guideLengths) {
-        // Project the map-scaled label into screen coordinates, keeping its
-        // geographic guide and clipping placement to available screen space.
+        // Keep the label at its geographic center even when only part of it
+        // is in view. The map container clips the rendered text at its edges.
         const path = paths.get(labelPathId(label.id, offset))
         if (!path) continue
         const source = label.readableGuide && label.readableLengths
           ? { points: label.readableGuide, lengths: label.readableLengths }
           : { points: label.guide, lengths: label.guideLengths }
-        const viewport: [number, number, number, number] = [
-          (10 + fontPixels - props.transform.x) / scale - offset,
-          (58 + fontPixels - props.transform.y) / scale,
-          (props.width - 10 - fontPixels - props.transform.x) / scale - offset,
-          (props.height - 12 - fontPixels - props.transform.y) / scale,
-        ]
-        const guide = visibleLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
-          viewport, label.guideCenter)
+        const guide = centeredLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
+          label.guideCenter)
         if (!guide) continue
         element.style.fontSize = `${fontPixels}px`
         const screenPoints = guide.map(([x, y]) => [
@@ -280,11 +274,13 @@ function updateLabels() {
       }
       // Prepared water space proves whether there is enough room at this
       // projection and zoom. Source zoom metadata must not hide a fitting name.
+      const visibleBox: Candidate['box'] = [Math.max(0, box[0]), Math.max(0, box[1]),
+        Math.min(props.width, box[2]), Math.min(props.height, box[3])]
       const eligible = (label.guide !== undefined || label.waterBounds !== undefined || labelLevel >= label.minLabel)
-        && box[0] >= 10 && box[2] <= props.width - 10
-        && box[1] >= 58 && box[3] <= props.height - 12
+        && visibleBox[0] < visibleBox[2] && visibleBox[1] < visibleBox[3]
 
-      if (eligible) candidates.push({ element, rank: label.rank, box })
+      // Offscreen portions must not suppress another name that is in view.
+      if (eligible) candidates.push({ element, rank: label.rank, box: visibleBox })
     }
   }
 
