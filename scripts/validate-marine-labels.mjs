@@ -7,6 +7,9 @@ const reviewFile = JSON.parse(
   await readFile(new URL('./marine-label-names.json', import.meta.url), 'utf8'),
 )
 const reviewed = reviewFile.labels
+const guides = JSON.parse(
+  await readFile(new URL('../src/data/marine-label-paths.json', import.meta.url), 'utf8'),
+)
 const errors = []
 const generatedById = new Map()
 
@@ -43,9 +46,19 @@ for (const id of generatedById.keys()) {
   }
 }
 
+for (const [id, guide] of Object.entries(guides)) {
+  if (!generatedById.has(id)) errors.push(`Guide has no marine label: ${id}`)
+  for (const points of [guide.points, ...(guide.readablePoints ? [guide.readablePoints] : [])]) {
+    if (!Array.isArray(points) || points.length < 3 || !points.every((point) =>
+      Array.isArray(point) && point.length === 2 && point.every(Number.isFinite)
+      && Math.abs(point[1]) <= 90,
+    )) errors.push(`Invalid geographic guide: ${id}`)
+  }
+}
+
 if (errors.length > 0) {
   console.error(errors.join('\n'))
   process.exitCode = 1
 } else {
-  console.log(`Validated ${generated.length} reviewed marine labels`)
+  console.log(`Validated ${generated.length} reviewed marine labels and ${Object.keys(guides).length} placement guides`)
 }

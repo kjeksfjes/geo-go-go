@@ -2,6 +2,17 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.17.0 — Atlas Tides — 2026-10-13
+
+### Improvements
+
+- Give water names an atlas-style treatment with self-hosted EB Garamond Italic and weight 600 for large ocean names. Most sea names follow prepared geographic guides, with gentle curves where natural and refined placement for narrow or awkward waters.
+- Measure actual text widths, grow names moderately with zoom, and fit them to available screen space. Keep large ocean names straightforward, let fitting sea names appear without imported minimum zoom cutoffs, and keep preferred reading directions stable when zooming.
+- Refine guides and placement for Chesapeake Bay, Yucatán Channel, Strait of Magellan, Drake Passage, Foxe Basin, Seram Sea, Dampier Strait, White Sea, and Red Sea.
+- Hide all water names in both quiz modes to avoid revealing country answers. Explore restores the saved Water names preference; Quiz settings explain why the switch is disabled.
+- Give water names a separate SVG overlay and hide it with opacity on mouse-down and during movement, preserving label layout outside the interactive map. Restore names after release when the map is idle, including releases outside the map.
+- Extend opt-in mouse-pan diagnostics with startup timings from pointer-down through the first move, drag threshold, camera change, and RAF callback, including handler durations and event timestamp ages.
+
 ## 0.16.0 — Southern Reach — 2026-10-11
 
 ### Improvements
