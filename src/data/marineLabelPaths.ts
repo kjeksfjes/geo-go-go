@@ -22,6 +22,11 @@ const offsets: Record<string, MapPoint> = {
 }
 const authored: Record<string, MarineLabelPath> = {
   'ocean:arctic': { points: [[-12, 81.8], [10, 82.4], [42, 82]] },
+  'ne:1159120667': {
+    points: [[-66.309971, 29.270907], [-59.523372, 27.875263], [-53.291683, 26.593733]],
+    layout: 'horizontal', anchor: [-61.874564, 30.719271],
+    bounds: [[-69.803618, 24.784435], [-53.94551, 36.654108]], readablePoints: undefined,
+  },
   'ne:1159115321': {
     points: [[5, 38.5], [10.8, 37.6], [14.3, 35.9], [21, 34.5], [28, 33.9]],
     center: 0.6, fontSize: 18, readablePoints: undefined,

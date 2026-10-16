@@ -2,6 +2,16 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Improvements
+
+- Move Sargasso Sea slightly northwest and Atlantic Ocean slightly east to separate their labels.
+- Break Norwegian “Sargassohavet” over two lines so the shifted label fits its prepared water bounds.
+- Move Sargasso Sea's prepared water bounds with its authored northwest placement so the Norwegian text is not rejected against its previous location.
+- Add an opt-in `?water-label-debug` diagnostic that highlights overlapping letter bounds and lists likely water-name collisions in the current viewport without hiding labels. Measurements run only in diagnostic mode after map movement settles.
+- Keep water names independently visible instead of suppressing them when another name overlaps, including seas within larger oceans such as the Sargasso Sea. Preserve map-edge clipping and prepared coastline bounds.
+
 ## 0.18.0 — Coastal Lettering — 2026-10-13
 
 ### Improvements
