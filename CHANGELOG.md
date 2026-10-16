@@ -6,6 +6,8 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Apply 47 documented Norwegian water names, including Øst-Koreabukta, Molukksjøen, Jenisejbukta, and Mecklenburgbukta; retain unresolved names pending further review.
+
 - Move Sargasso Sea slightly northwest and Atlantic Ocean slightly east to separate their labels.
 - Break Norwegian “Sargassohavet” over two lines so the shifted label fits its prepared water bounds.
 - Move Sargasso Sea's prepared water bounds with its authored northwest placement so the Norwegian text is not rejected against its previous location.
