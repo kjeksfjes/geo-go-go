@@ -1388,10 +1388,23 @@ function handleMapCaptureClick(event: MouseEvent) {
     event.stopPropagation()
     return
   }
-  if (!event.isTrusted || !suppressCompatibilityClick) return
-  suppressCompatibilityClick = false
-  event.preventDefault()
-  event.stopPropagation()
+  if (event.isTrusted && suppressCompatibilityClick) {
+    suppressCompatibilityClick = false
+    event.preventDefault()
+    event.stopPropagation()
+    return
+  }
+  // Water names, editor handles, and panel controls live in separate overlays.
+  // A real click on the map itself therefore deselects the edited water name.
+  if (waterEditorEnabled && !props.quizMode) {
+    if (consumeDragClick()) {
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+    waterEditorSelectedId.value = ''
+    waterEditorWarning.value = ''
+  }
 }
 
 function clearHoveredUnit(id: string) {
