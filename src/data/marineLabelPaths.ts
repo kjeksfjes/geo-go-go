@@ -14,6 +14,8 @@ export interface MarineLabelPath {
   fontSize?: number
   spanFraction?: number
   sizeScale?: number
+  textScale?: number
+  rotation?: number
 }
 const offsets: Record<string, MapPoint> = {
   'ne:1159116897': [0, -0.15], // Seram Sea: slightly south.

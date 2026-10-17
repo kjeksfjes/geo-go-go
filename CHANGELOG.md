@@ -4,6 +4,10 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ## Unreleased
 
+### Improvements
+
+- Add a local development water-name editor with live map previews, movable/rotatable placements, editable curve points, text sizing, horizontal/stacked layout, undo/redo, saved drafts, and JSON import/export for review and integration.
+
 ### Security
 
 - Update the transitive `source-map-js` dependency to fix a denial-of-service vulnerability when build tooling processes malicious source maps (GHSA-68fv-2mgg-jv7q).

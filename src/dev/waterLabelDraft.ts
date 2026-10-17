@@ -1,0 +1,141 @@
+import type { MarineLabelPath } from '../data/marineLabelPaths'
+import type { MapPoint } from '../composables/useMapZoom'
+
+export type Placements = Record<string, MarineLabelPath>
+export interface WaterLabelDraft {
+  format: 'geo-go-go-water-label-edits'
+  version: 1
+  baseVersion: string
+  originals: Placements
+  placements: Placements
+}
+
+export function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) }
+
+const point = (value: unknown): value is MapPoint => Array.isArray(value) && value.length === 2
+  && value.every(Number.isFinite) && Math.abs(value[0]) <= 720 && Math.abs(value[1]) <= 90
+const fields = new Set(['points', 'readablePoints', 'center', 'offset', 'layout', 'anchor', 'bounds',
+  'fontSize', 'spanFraction', 'sizeScale', 'textScale', 'rotation'])
+
+export function validPlacement(input: unknown): input is MarineLabelPath {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return false
+  const value = input as Record<string, unknown>
+  if (Object.keys(value).some(key => !fields.has(key))) return false
+  for (const key of ['points', 'readablePoints']) {
+    const points = value[key]
+    if (key === 'readablePoints' && points === undefined) continue
+    if (!Array.isArray(points) || points.length < 3 || points.length > 128 || !points.every(point)) return false
+  }
+  for (const key of ['anchor', 'offset']) if (value[key] !== undefined && !point(value[key])) return false
+  if (value.layout !== undefined && value.layout !== 'horizontal') return false
+  if (value.bounds !== undefined) {
+    if (!Array.isArray(value.bounds) || value.bounds.length !== 2 || !value.bounds.every(point)
+      || ![0, 1].every(axis => (value.bounds as MapPoint[])[0]![axis]! < (value.bounds as MapPoint[])[1]![axis]!)) return false
+  }
+  if (value.layout === 'horizontal' && (!point(value.anchor) || !Array.isArray(value.bounds))) return false
+  const ranges: Record<string, [number, number]> = {
+    center: [0, 1], spanFraction: [0.05, 1], fontSize: [0.01, 1000],
+    sizeScale: [0.001, 1000], textScale: [0.1, 10], rotation: [-180, 180],
+  }
+  for (const [key, [min, max]] of Object.entries(ranges)) {
+    const number = value[key]
+    if (number !== undefined && (typeof number !== 'number' || !Number.isFinite(number) || number < min || number > max)) return false
+  }
+  return true
+}
+
+export function readDraft(text: string, baseline: Placements, ids: ReadonlySet<string>): WaterLabelDraft {
+  if (text.length > 2_000_000) throw new Error('This file is too large for a water-label draft.')
+  const value = JSON.parse(text)
+  if (value?.format !== 'geo-go-go-water-label-edits' || value.version !== 1
+    || typeof value.baseVersion !== 'string' || value.baseVersion.length > 40) throw new Error('Unsupported water-label draft.')
+  for (const key of ['placements', 'originals'] as const) {
+    const entries = value[key]
+    if (!entries || typeof entries !== 'object' || Array.isArray(entries)
+      || Object.keys(entries).length > ids.size) throw new Error('Invalid placement collection.')
+    for (const [id, placement] of Object.entries(entries)) {
+      if (!ids.has(id) || !validPlacement(placement)) throw new Error(`Invalid placement: ${id}`)
+    }
+  }
+  if (Object.keys(value.originals).length !== Object.keys(value.placements).length) throw new Error('Draft originals do not match its edits.')
+  for (const id of Object.keys(value.placements)) {
+    if (!Object.hasOwn(value.originals, id)) throw new Error(`Missing original placement: ${id}`)
+    if (!samePlacement(value.originals[id], baseline[id]!)) {
+      throw new Error(`The source placement for ${id} has changed. Keep this export and ask for its edits to be reconciled.`)
+    }
+  }
+  return clone(value)
+}
+
+export function samePlacement(a: MarineLabelPath, b: MarineLabelPath): boolean {
+  const ordered = (value: MarineLabelPath) => Object.fromEntries(Object.entries(clone(value)).sort(([a], [b]) => a.localeCompare(b)))
+  return JSON.stringify(ordered(a)) === JSON.stringify(ordered(b))
+}
+
+export function makeDraft(placements: Placements, baseline: Placements, version: string): WaterLabelDraft {
+  const originals = Object.fromEntries(Object.keys(placements).map(id => [id, baseline[id]!]))
+  return clone({ format: 'geo-go-go-water-label-edits', version: 1, baseVersion: version, originals, placements })
+}
+
+// Existing nudges taper over the sampled curve. Bake them into editable nodes
+// once, so the handles and the rendered path share the same geographic shape.
+export function editablePlacement(source: MarineLabelPath): MarineLabelPath {
+  const value = clone(source)
+  if (value.offset) {
+    const offset = value.offset
+    const nudge = (points: MapPoint[]) => points.map(([x, y], index) => {
+      const weight = Math.sin(Math.PI * index / (points.length - 1)) ** 2
+      return [x + offset[0] * weight, y + offset[1] * weight] as MapPoint
+    })
+    value.points = nudge(value.points)
+    if (value.readablePoints) value.readablePoints = nudge(value.readablePoints)
+    if (value.anchor) value.anchor = [value.anchor[0] + offset[0], value.anchor[1] + offset[1]]
+    if (value.bounds) value.bounds = value.bounds.map(([x, y]) => [x + offset[0], y + offset[1]]) as [MapPoint, MapPoint]
+    delete value.offset
+  }
+  return value
+}
+
+export function placementPivot(value: MarineLabelPath): MapPoint {
+  if (value.layout === 'horizontal' && value.anchor) return value.anchor
+  const points = value.readablePoints ?? value.points
+  return points[Math.floor(points.length / 2)]!
+}
+
+export function mapPlacement(source: MarineLabelPath, map: (point: MapPoint) => MapPoint | undefined): MarineLabelPath | null {
+  const value = editablePlacement(source)
+  let invalid = false
+  const move = (p: MapPoint) => {
+    const next = map(p)
+    if (!next || !point(next)) { invalid = true; return p }
+    return next.map(number => Math.round(number * 1e8) / 1e8) as MapPoint
+  }
+  value.points = value.points.map(move)
+  if (value.readablePoints) value.readablePoints = value.readablePoints.map(move)
+  if (value.anchor) value.anchor = move(value.anchor)
+  if (value.bounds) {
+    const [[x0, y0], [x1, y1]] = value.bounds
+    const corners = [[x0, y0], [x0, y1], [x1, y0], [x1, y1]].map(p => move(p as MapPoint))
+    value.bounds = [[Math.min(...corners.map(p => p[0])), Math.min(...corners.map(p => p[1]))],
+      [Math.max(...corners.map(p => p[0])), Math.max(...corners.map(p => p[1]))]]
+  }
+  return !invalid && validPlacement(value) ? value : null
+}
+
+export function createHistory<T>(initial: T) {
+  let values = [clone(initial)]
+  let index = 0
+  return {
+    get canUndo() { return index > 0 },
+    get canRedo() { return index < values.length - 1 },
+    push(value: T) {
+      if (JSON.stringify(value) === JSON.stringify(values[index])) return
+      values = values.slice(0, index + 1)
+      values.push(clone(value))
+      if (values.length > 100) values.shift()
+      index = values.length - 1
+    },
+    undo() { index = Math.max(0, index - 1); return clone(values[index]!) },
+    redo() { index = Math.min(values.length - 1, index + 1); return clone(values[index]!) },
+  }
+}

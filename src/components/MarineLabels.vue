@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, useId, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
-import { marineLabelPaths } from '../data/marineLabelPaths'
+import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
 import { centeredLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
 import { locale } from '../i18n'
 import type { MapPoint } from '../composables/useMapZoom'
@@ -15,7 +15,11 @@ const props = defineProps<{
   projectPoint: (point: MapPoint) => MapPoint | undefined
   copyOffsets: readonly number[]
   wrapPeriod: number | null
+  placements?: Record<string, MarineLabelPath>
+  editing?: boolean
 }>()
+const emit = defineEmits<{ select: [id: string] }>()
+const placements = computed(() => props.placements ?? marineLabelPaths)
 
 interface ProjectedLabel extends MarineLabel {
   x: number
@@ -31,6 +35,8 @@ interface ProjectedLabel extends MarineLabel {
   fontSize?: number
   spanFraction?: number
   sizeScale?: number
+  textScale?: number
+  rotation?: number
 }
 
 const groups = new Map<number, SVGGElement>()
@@ -40,10 +46,10 @@ const measurementWidths = new Map<string, number>()
 let measurementStyle = ''
 let measurementGroup: SVGGElement | undefined
 const pathPrefix = useId()
-const sampledGuides = new Map(Object.entries(marineLabelPaths)
-  .map(([id, { points }]) => [id, sampleLabelGuide(points)]))
-const readableGuides = new Map(Object.entries(marineLabelPaths)
-  .flatMap(([id, { readablePoints }]) => readablePoints ? [[id, sampleLabelGuide(readablePoints)] as const] : []))
+const sampledGuides = computed(() => new Map(Object.entries(placements.value)
+  .map(([id, { points }]) => [id, sampleLabelGuide(points)])))
+const readableGuides = computed(() => new Map(Object.entries(placements.value)
+  .flatMap(([id, { readablePoints }]) => readablePoints ? [[id, sampleLabelGuide(readablePoints)] as const] : [])))
 let updateFrame: number | undefined
 
 function labelPathId(id: string, offset: number) {
@@ -113,7 +119,7 @@ function projectGuide(source?: readonly MapPoint[], offset: MapPoint = [0, 0]): 
 }
 
 const projectedLabels = computed<ProjectedLabel[]>(() => marineLabels.flatMap((label) => {
-  const placement = marineLabelPaths[label.id]
+  const placement = placements.value[label.id]
   // An unverified point anchor cannot keep enlarged text off nearby land.
   if (!placement && label.kind !== 'ocean') return []
   const offset = placement?.offset ?? [0, 0]
@@ -122,8 +128,8 @@ const projectedLabels = computed<ProjectedLabel[]>(() => marineLabels.flatMap((l
   if (!point || !point.every(Number.isFinite)) return []
   const displayName = locale.value === 'nb' ? label.nameNb : label.name
   const horizontal = placement?.layout === 'horizontal'
-  const validGuide = horizontal ? undefined : projectGuide(sampledGuides.get(label.id), offset)
-  const readableGuide = horizontal ? undefined : projectGuide(readableGuides.get(label.id), offset)
+  const validGuide = horizontal ? undefined : projectGuide(sampledGuides.value.get(label.id), offset)
+  const readableGuide = horizontal ? undefined : projectGuide(readableGuides.value.get(label.id), offset)
   const corners = placement?.bounds?.flatMap(([x]) => placement.bounds!.map(([, y]) =>
     props.projectPoint([x, y]),
   ))
@@ -138,13 +144,15 @@ const projectedLabels = computed<ProjectedLabel[]>(() => marineLabels.flatMap((l
     lines: validGuide ? [displayName] : labelLines(displayName, label.kind, horizontal),
     guide: validGuide,
     guideLengths: validGuide ? labelGuideLengths(validGuide) : undefined,
-    guideCenter: marineLabelPaths[label.id]?.center,
+    guideCenter: placement?.center,
     readableGuide,
     readableLengths: readableGuide ? labelGuideLengths(readableGuide) : undefined,
     waterBounds,
     fontSize: placement?.fontSize,
     spanFraction: placement?.spanFraction,
     sizeScale: placement?.sizeScale,
+    textScale: placement?.textScale,
+    rotation: placement?.rotation,
   }]
 }))
 
@@ -206,7 +214,7 @@ function updateLabels() {
       // Geographic area sets the hierarchy without polar projection inflation.
       // Prepared water space remains the upper limit for coastline clearance.
       const areaSize = label.sizeScale !== undefined ? 17 * 0.6 * label.sizeScale : 20
-      const preferredSize = Math.min(label.fontSize ?? Infinity, areaSize) * mapTypographyScale
+      const preferredSize = Math.min(label.fontSize ?? Infinity, areaSize) * mapTypographyScale * (label.textScale ?? 1)
       const paddedWidth = baseTextWidth + baseFontPixels * 2
       const corridorLengths = label.readableLengths ?? label.guideLengths
       const corridorSpace = corridorLengths
@@ -218,7 +226,17 @@ function updateLabels() {
         ? (label.waterBounds[1][1] - label.waterBounds[0][1]) * 0.7
           / (baseFontPixels * (label.lines.length > 1 ? 3.4 : 2.4))
         : Infinity
-      const mapFontFactor = Math.min(preferredSize / baseFontPixels, corridorSpace / paddedWidth, heightFactor)
+      let rotationFactor = Infinity
+      if (label.rotation && label.waterBounds) {
+        const angle = label.rotation * Math.PI / 180
+        const cosine = Math.abs(Math.cos(angle)), sine = Math.abs(Math.sin(angle))
+        const height = baseFontPixels * (label.lines.length > 1 ? 3.4 : 2.4)
+        rotationFactor = Math.min(
+          (label.waterBounds[1][0] - label.waterBounds[0][0]) * 0.7 / (paddedWidth * cosine + height * sine),
+          (label.waterBounds[1][1] - label.waterBounds[0][1]) * 0.7 / (paddedWidth * sine + height * cosine),
+        )
+      }
+      const mapFontFactor = Math.min(preferredSize / baseFontPixels, corridorSpace / paddedWidth, heightFactor, rotationFactor)
       const fontFactor = mapFontFactor * scale
       const fontPixels = baseFontPixels * fontFactor
       if (fontPixels < (isOcean ? 4 : 10)) continue
@@ -227,6 +245,7 @@ function updateLabels() {
       const halfHeight = fontPixels * (label.lines.length > 1 ? 1.2 : 0.7)
       const labelFont = `${fontPixels}px`
       if (element.style.fontSize !== labelFont) element.style.fontSize = labelFont
+      element.removeAttribute('transform')
       let box: LabelBox
       if (label.guide && label.guideLengths) {
         // Keep the label at its geographic center even when only part of it
@@ -256,6 +275,13 @@ function updateLabels() {
         element.setAttribute('y', String(y))
         for (const line of Array.from(element.children)) line.setAttribute('x', String(x))
         box = [x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight]
+        if (label.rotation) {
+          element.setAttribute('transform', `rotate(${label.rotation} ${x} ${y})`)
+          const radians = label.rotation * Math.PI / 180
+          const dx = Math.abs(halfWidth * Math.cos(radians)) + Math.abs(halfHeight * Math.sin(radians))
+          const dy = Math.abs(halfWidth * Math.sin(radians)) + Math.abs(halfHeight * Math.cos(radians))
+          box = [x - dx, y - dy, x + dx, y + dy]
+        }
       }
       if (label.waterBounds) {
         const [[left, top], [right, bottom]] = label.waterBounds
@@ -323,7 +349,7 @@ onBeforeUnmount(() => {
 <template>
   <!-- Preserve SVG text layout while hidden for gestures. The separate
        overlay remains noninteractive even when its opacity is zero. -->
-  <g :opacity="visible ? 1 : 0" class="marine-labels" aria-hidden="true">
+  <g :opacity="visible ? 1 : 0" class="marine-labels" :class="{ 'marine-labels--editing': editing }" aria-hidden="true">
     <g :ref="(element) => { measurementGroup = element as SVGGElement | undefined }" visibility="hidden">
       <text
         v-for="label in projectedLabels"
@@ -358,6 +384,7 @@ onBeforeUnmount(() => {
         class="marine-label"
         :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
         style="display: none"
+        @pointerdown.stop.prevent="editing && emit('select', label.id)"
       >
         <textPath v-if="label.guide" :href="`#${labelPathId(label.id, offset)}`" startOffset="50%">
           {{ label.kind === 'ocean' ? label.displayName.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : label.displayName }}
@@ -389,6 +416,8 @@ onBeforeUnmount(() => {
   text-anchor: middle;
   dominant-baseline: middle;
 }
+
+.marine-labels--editing .marine-label { pointer-events: visiblePainted; cursor: pointer; }
 
 .marine-label--ocean {
   font-size: 1em;
