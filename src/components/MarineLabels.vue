@@ -388,7 +388,9 @@ watch(
     props.transform.x, props.transform.y, props.transform.scale,
     props.width, props.height, props.projectionScale,
     props.copyOffsets, projectedLabels.value,
-    props.editing, props.editingLabelId,
+    // Switching copies keeps the water ID, but still needs a draw pass after
+    // Vue patches the text nodes' initial display styles and selection state.
+    props.editing, props.editingLabelId, props.editingPlacementIndex,
   ],
   scheduleUpdate,
   { flush: 'post' },
