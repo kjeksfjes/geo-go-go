@@ -2,36 +2,22 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
-## Unreleased
+## 0.22.0 — Waterline Workshop — 2026-10-18
 
 ### Improvements
 
+- Add a local development water-name editor with draggable placements and curve points, rotation, font sizes, letter spacing, horizontal/stacked layouts, bilingual wording and manual line breaks, undo/redo, browser autosave, and portable draft import/export.
+- Save validated water-name edits directly to the maintained project file through the local development server, with atomic writes and conflict checks. Editing and project-save tools stay out of production builds.
+- Add and remove names, repeat a name in multiple independently positioned placements, or split it into bilingual text parts. Share typography across placements and highlight approximate Natural Earth water boundaries as geographic guidance.
+- Align curved names to the left, center, or right of their paths; preserve older saved positions until changed. Let edited endpoints follow their neighboring curves automatically.
+- Integrate the user’s water-name placements, sizes, spacing, and English/Norwegian text refinements, including separate North and South Atlantic Ocean names.
 - Give map cards larger flags, full-width quiz feedback beneath the header, and compact country details beneath the name; scale flags for narrow screens.
 
-- Lift water names by 0.1em relative to their optical center, keeping the correction proportional to font size and consistent across desktop and mobile.
-- Align water-label baselines explicitly using the font's measured ink x-height, including curved and stacked labels, to reduce mobile Safari versus desktop placement differences.
-- Measure spaced water labels from rendered character positions and bounds to avoid Safari clipping names when its SVG text-length API omits letter spacing.
-- Choose left, center, or right alignment for curved water names instead of a percentage slider, preserving older saved positions until an alignment is chosen; let edited curve endpoints follow neighboring points automatically without fixed handles.
-- Honor the text-center percentage near curved water-label path endpoints, including duplicate placements and text shorter than the path; extend the baseline instead of shifting the name inward.
-- Give each water name multiple independently positioned placements, with repeatable full names or bilingual text parts, shared font size and letter spacing, and support throughout the editor, drafts, and direct project saves.
-- Keep water names visible when switching between placements of the same name, and refresh the selected placement's size and warnings.
-- Save water-name editor changes directly to the maintained project file through the local development server, with validated atomic writes, conflict checks, and continued editing from the saved baseline; keep browser autosave and portable exports.
-- Allow clearing saved horizontal/stacked text overrides to restore automatic wrapping.
-- Integrate the user’s water-label edits across 90 active placements and 17 display-text overrides, replacing the combined Atlantic label with North and South Atlantic Ocean names in English and Norwegian.
-- Recognize the fully integrated saved water-label draft and reopen the editor on the updated map with a local backup; keep unmatched drafts in recovery so additional edits cannot be lost.
-- Add a local development water-name editor with live map previews, movable/rotatable placements, editable curve points, text sizing, horizontal/stacked layout, undo/redo, saved drafts, and JSON import/export for review and integration.
-- Add and remove bilingual water names in editor drafts, restore removed catalog names, and use separate North/South Atlantic and Pacific boundary references for new names; preserve these changes in undo/redo and exports while retaining compatibility with older drafts.
-- Edit English and Norwegian water-name wording and optional horizontal/stacked text with explicit line breaks and hyphens; keep curved text on one line and preserve wrapping choices in saved drafts and layout switches.
-- Highlight the selected water body's approximate Natural Earth boundary in the local editor, with a fixed geographic area independent of label layout and placement and a toggle for clean previews; keep the polygon data out of production builds.
-- Remove horizontal/stacked frame outlines and frame-size controls from the editor; use the fixed water-boundary highlight as geographic guidance.
-- Stop hidden preparation rectangles from hiding explicitly resized water names, including deselected labels and normal previews.
-- Replace the editor's text-size multiplier with an explicit reference font size so equal values give equal letter size across names; show the current pixel size, allow restoring automatic sizing, and preserve existing drafts.
-- Add a live font-size slider from 0.1 to 20, with the numeric input retaining its wider range and one undo step per slider adjustment.
-- Control each water name's letter spacing with a slider, numeric input, and default reset; preserve its font size and measure the adjusted spacing in both curved and stacked layouts.
-- Fix curved water names disappearing at certain font sizes because rounding errors incorrectly rejected their extended text paths.
-- Preserve the displayed font size when moving, rotating, switching layout, or reshaping a water name, including the first move of an ocean label that previously triggered automatic shrinking.
-- Keep the selected water name visible while editing below the normal visibility cutoff or outside its fitting frame, explain these limits in the panel, and prevent rounding errors from hiding text fitted to the full path.
-- Fix disappearing text after switching from horizontal/stacked layout back to a path, refresh measurements when line breaks change, and make text sizing independent of automatic fitting limits.
+### Fixes
+
+- Prevent water names from disappearing when resizing, changing layout, or switching duplicate placements; preserve their reference font size while moving and reshaping them.
+- Measure rendered letter spacing to prevent Safari from clipping curved names, and use explicit font-relative baseline alignment for more consistent mobile and desktop placement.
+- Preserve recoverable browser drafts after source changes, recognize the previously integrated draft, and allow clearing saved stacked text to restore automatic wrapping.
 
 ### Security
 
