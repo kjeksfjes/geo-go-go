@@ -614,7 +614,6 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
 }
 
 @media (max-width: 680px) {
-  .header-actions > .language-selector { display: none; }
   .map-overlay { top: 0.5rem; left: 0.5rem; width: min(390px, calc(100% - 1rem)); }
   .map-overlay__card { border-radius: var(--ui-radius-panel); }
   .map-overlay__content { padding: var(--ui-space-3); }
@@ -649,8 +648,9 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
 }
 .help-invitation p { margin: 0 0 var(--ui-space-3); }
 .help-invitation .help-invitation__return { color: var(--ui-muted); font-size: var(--ui-text-control); }
-.help-invitation > div { display: flex; gap: var(--ui-space-2); }
-.help-invitation button {
+.help-invitation .language-selector { margin-bottom: var(--ui-space-3); }
+.help-invitation__actions { display: flex; gap: var(--ui-space-2); }
+.help-invitation__actions button {
   min-height: var(--ui-control-height);
   padding: 0.4rem 0.65rem;
   border: 1px solid var(--ui-border);
@@ -661,4 +661,4 @@ html[data-input-modality='keyboard'] .projection-control:has(.vue3-treeselect__i
   font-size: var(--ui-text-control);
   cursor: pointer;
 }
-.help-invitation button:first-child { background: var(--ui-ink); color: var(--ui-paper); }
+.help-invitation__actions button:first-child { background: var(--ui-ink); color: var(--ui-paper); }

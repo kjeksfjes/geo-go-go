@@ -18,6 +18,9 @@ for (const label of generated) {
     errors.push(`Duplicate generated label id: ${label.id}`)
   }
   generatedById.set(label.id, label)
+  if (label.kind !== 'ocean' && !guides[label.id]) {
+    errors.push(`${label.id} (${label.name}) has no prepared water-label placement`)
+  }
   if (typeof label.nameNb !== 'string' || label.nameNb.trim() === '') {
     errors.push(`${label.id} lacks an explicit Norwegian Bokmål display name`)
   }

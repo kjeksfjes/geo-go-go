@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, shallowRef, useId, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, useId, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { marineLabelPaths } from '../data/marineLabelPaths'
 import { centeredLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
@@ -40,10 +40,6 @@ const measurementWidths = new Map<string, number>()
 let measurementStyle = ''
 let measurementGroup: SVGGElement | undefined
 const pathPrefix = useId()
-const collisionDebug = new URLSearchParams(window.location.search).has('water-label-debug')
-const collisionReport = shallowRef<{ pairs: string[]; boxes: LabelBox[]; unmeasured: string[] }>({
-  pairs: [], boxes: [], unmeasured: [],
-})
 const sampledGuides = new Map(Object.entries(marineLabelPaths)
   .map(([id, { points }]) => [id, sampleLabelGuide(points)]))
 const readableGuides = new Map(Object.entries(marineLabelPaths)
@@ -159,62 +155,6 @@ function setVisible(element: SVGElement, visible: boolean) {
 
 type LabelBox = [number, number, number, number]
 
-function boxesIntersect(a: LabelBox, b: LabelBox) {
-  return a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1]
-}
-
-function updateCollisionReport(labels: Array<{ element: SVGTextElement; name: string }>) {
-  // Diagnostic reads run only after placement settles and only with the URL
-  // flag. Normal map use never measures individual characters.
-  const viewport: LabelBox = [0, 0, props.width, props.height]
-  const unmeasured = new Set<string>()
-  const candidates = labels.flatMap((label) => {
-    try {
-      const bounds = label.element.getBBox()
-      const box: LabelBox = [bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height]
-      return boxesIntersect(box, viewport) ? [{ ...label, box, letters: undefined as LabelBox[] | undefined }] : []
-    } catch {
-      unmeasured.add(label.name)
-      return []
-    }
-  })
-  function lettersFor(label: typeof candidates[number]) {
-    if (label.letters) return label.letters
-    label.letters = []
-    try {
-      const text = Array.from(label.element.children, (child) => child.textContent?.trim() ?? '').join('')
-      for (let index = 0; index < label.element.getNumberOfChars(); index++) {
-        if (/\s/.test(text[index] ?? '')) continue
-        const bounds = label.element.getExtentOfChar(index)
-        const box: LabelBox = [Math.max(0, bounds.x), Math.max(0, bounds.y),
-          Math.min(props.width, bounds.x + bounds.width), Math.min(props.height, bounds.y + bounds.height)]
-        if (box[0] < box[2] && box[1] < box[3]) label.letters.push(box)
-      }
-    } catch {
-      unmeasured.add(label.name)
-      label.letters = []
-    }
-    return label.letters
-  }
-  const pairs = new Set<string>()
-  const boxes = new Map<string, LabelBox>()
-  for (let first = 0; first < candidates.length; first++) {
-    const a = candidates[first]!
-    for (let second = first + 1; second < candidates.length; second++) {
-      const b = candidates[second]!
-      if (!boxesIntersect(a.box, b.box)) continue
-      let touching = false
-      for (const x of lettersFor(a)) for (const y of lettersFor(b)) {
-        if (!boxesIntersect(x, y)) continue
-        touching = true
-        for (const box of [x, y]) boxes.set(box.join(','), box)
-      }
-      if (touching) pairs.add([a.name, b.name].sort().join(' ↔ '))
-    }
-  }
-  collisionReport.value = { pairs: [...pairs].sort(), boxes: [...boxes.values()], unmeasured: [...unmeasured].sort() }
-}
-
 function updateLabels() {
   updateFrame = undefined
   if (!props.visible) return
@@ -245,7 +185,6 @@ function updateLabels() {
     if (length) measurementWidths.set(label.id, length)
   }
   const visible = new Set<SVGElement>()
-  const diagnosticLabels: Array<{ element: SVGTextElement; name: string }> = []
   const elements: SVGElement[] = []
   for (const offset of props.copyOffsets) {
     const group = groups.get(offset)
@@ -335,15 +274,11 @@ function updateLabels() {
 
       // Ocean and sea names may share water. Keep each eligible name visible
       // independently instead of letting another label's box suppress it.
-      if (eligible) {
-        visible.add(element)
-        if (collisionDebug) diagnosticLabels.push({ element: element as SVGTextElement, name: label.displayName })
-      }
+      if (eligible) visible.add(element)
     }
   }
 
   for (const element of elements) setVisible(element, visible.has(element))
-  if (collisionDebug) updateCollisionReport(diagnosticLabels)
 }
 
 function scheduleUpdate() {
@@ -435,49 +370,9 @@ onBeforeUnmount(() => {
       </text>
     </g>
   </g>
-  <g v-if="collisionDebug && visible" class="water-label-diagnostics">
-    <rect
-      v-for="(box, index) in collisionReport.boxes" :key="index"
-      :x="box[0]" :y="box[1]" :width="box[2] - box[0]" :height="box[3] - box[1]"
-      fill="#e51c4640" stroke="#ba1238" stroke-width="1"
-    />
-    <foreignObject x="8" y="8" :width="Math.max(0, Math.min(420, width - 16))" :height="Math.max(0, Math.min(240, height - 16))">
-      <div class="water-label-report" @pointerdown.stop @click.stop @dblclick.stop @wheel.stop @touchstart.stop @touchmove.stop>
-        <strong>Water-name collisions: {{ collisionReport.pairs.length }}</strong>
-        <p>Letter bounds overlap; this flags likely touching, not exact ink contact. Updates when the map settles.</p>
-        <ul v-if="collisionReport.pairs.length">
-          <li v-for="pair in collisionReport.pairs" :key="pair">{{ pair }}</li>
-        </ul>
-        <p v-else>No letter-bound overlaps detected in view.</p>
-        <p v-if="collisionReport.unmeasured.length">Could not measure: {{ collisionReport.unmeasured.join(', ') }}</p>
-      </div>
-    </foreignObject>
-  </g>
 </template>
 
 <style scoped>
-.water-label-diagnostics {
-  pointer-events: none;
-}
-
-.water-label-report {
-  box-sizing: border-box;
-  max-height: 100%;
-  overflow: auto;
-  padding: 10px;
-  border: 1px solid #ba1238;
-  border-radius: 8px;
-  background: #fffdf5f2;
-  color: #193943;
-  font: 13px/1.4 system-ui, sans-serif;
-  pointer-events: auto;
-  user-select: text;
-}
-
-.water-label-report p, .water-label-report ul {
-  margin: 6px 0 0;
-}
-
 .marine-labels {
   pointer-events: none;
   user-select: none;

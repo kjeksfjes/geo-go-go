@@ -2,6 +2,24 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.20.0 — Waterways Revealed — 2026-10-17
+
+### Improvements
+
+- Refine smaller water labels: center the Magellan curve, straighten and enlarge Marmara, reposition and enlarge Taiwan, extend the Bosporus baseline, stack Korea Strait west of Tsushima, and enlarge Cook Strait.
+
+- Give Sea of Japan a stronger S-curve, reverse the Laccadive Sea bend, and enlarge Boknafjord along a longer curved water corridor.
+
+- Give Sognefjord a gentle bend that rises through its middle and flattens toward the east; refine the restored Trondheimsfjord and Gulf of Ob baselines to follow their water corridors.
+
+- Restore placements for all 15 previously hidden water names, following narrow passages and fjords with prepared geographic guides. Let their names use the available path length instead of restrictive coast-width font caps, accepting some coastline contact for readability. Check that every imported water label has a prepared placement.
+
+- Keep language switching visible in the mobile header and add English/Norsk choices to the introductory help invitation.
+
+- Simplify the first three guide steps in Norwegian and English, including the touch navigation equivalent.
+
+- Remove the temporary water-label collision debug flag and overlay.
+
 ## 0.19.0 — Northern Names — 2026-10-17
 
 ### Improvements
