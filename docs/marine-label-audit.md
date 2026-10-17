@@ -2,6 +2,8 @@
 
 Audit date: 2026-09-28
 
+Follow-up: the [2026-10-17 Norwegian audit](marine-label-norwegian-follow-up.md) found confirmed omissions among the 136 identical values. The results below describe the original review and should not be read as proof that every retained English name lacks an established Norwegian form.
+
 ## Scope and policy
 
 All 279 marine labels shipped by the application were reviewed, including the five manually positioned oceans and 274 labels imported from Natural Earth. The reviewed values are stored by stable label identifier in `scripts/marine-label-names.json`; `scripts/import-marine-labels.py` combines them with Natural Earth geometry to generate `src/data/marine-labels.json`.

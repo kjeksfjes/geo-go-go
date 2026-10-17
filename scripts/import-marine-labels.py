@@ -28,7 +28,7 @@ KINDS = {"sea", "gulf", "bay", "strait", "sound", "channel", "fjord", "inlet"}
 OCEANS = (
     ("arctic", (0, 78)),
     ("pacific", (-148, -5)),
-    ("atlantic", (-42, 25)),
+    ("atlantic", (-40, 25)),
     ("indian", (79, -22)),
     ("southern", (0, -55)),
 )

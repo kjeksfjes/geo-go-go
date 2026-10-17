@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "policy": "Every shipped marine label has an explicit reviewed English and Norwegian Bokmål display name. Established Norwegian exonyms are preferred; otherwise the authoritative international or local form is retained. For politically disputed names, established Western European conventions are used conservatively and the dispute is documented.",
+  "policy": "Every shipped marine label has an explicit reviewed English and Norwegian Bokmål display name. Established Norwegian water names are preferred. For remaining untranslated names, use a documented Norwegian proper-name stem where available, otherwise retain the source stem, and combine it with a Norwegian water term. Constructed forms are identified in the audit; existing foreign forms supported as Norwegian usage may be retained. For politically disputed names, established Western European conventions are used conservatively and the dispute is documented.",
   "labels": {
     "ocean:arctic": {
       "name": "Arctic Ocean",
@@ -173,7 +173,7 @@
     "ne:1159116059": {
       "sourceName": "Bay of Campeche",
       "name": "Bay of Campeche",
-      "nameNb": "Bay of Campeche"
+      "nameNb": "Campechebukta"
     },
     "ne:1159116169": {
       "sourceName": "Bellingshausen Sea",
@@ -373,7 +373,7 @@
     "ne:1159117105": {
       "sourceName": "Balearic Sea",
       "name": "Balearic Sea",
-      "nameNb": "Balearic Sea"
+      "nameNb": "Det baleariske hav"
     },
     "ne:1159116797": {
       "sourceName": "Bay of Fundy",
@@ -408,8 +408,8 @@
     "ne:1159116897": {
       "sourceName": "Ceram Sea",
       "name": "Seram Sea",
-      "nameNb": "Seram Sea",
-      "note": "Modernized Ceram to Seram in line with current Indonesian usage; no established Norwegian exonym was verified."
+      "nameNb": "Seramsjøen",
+      "note": "English display modernized from Ceram to Seram; Norwegian Seramsjøen is documented in SNL."
     },
     "ne:1159117043": {
       "sourceName": "Chesapeake Bay",
@@ -430,7 +430,7 @@
     "ne:1159117185": {
       "sourceName": "Gulf of Kutch",
       "name": "Gulf of Kachchh",
-      "nameNb": "Gulf of Kachchh",
+      "nameNb": "Kutchbukta",
       "note": "Uses the contemporary Indian government spelling Kachchh rather than Kutch."
     },
     "ne:1159116571": {
@@ -441,7 +441,7 @@
     "ne:1159117021": {
       "sourceName": "Gulf of Maine",
       "name": "Gulf of Maine",
-      "nameNb": "Gulf of Maine"
+      "nameNb": "Mainegulfen"
     },
     "ne:1159117135": {
       "sourceName": "Gulf of Mannar",
@@ -451,7 +451,7 @@
     "ne:1159117203": {
       "sourceName": "Gulf of Panama",
       "name": "Gulf of Panama",
-      "nameNb": "Gulf of Panama"
+      "nameNb": "Panamabukta"
     },
     "ne:1159116715": {
       "sourceName": "Gulf of Saint Lawrence",
@@ -487,8 +487,8 @@
     "ne:1159116731": {
       "sourceName": "Molucca Sea",
       "name": "Maluku Sea",
-      "nameNb": "Maluku Sea",
-      "note": "Uses Indonesian Maluku rather than the older English Molucca; no established Norwegian exonym was verified."
+      "nameNb": "Molukksjøen",
+      "note": "English display uses Indonesian Maluku rather than older Molucca; Norwegian Molukksjøen is documented by the Bokmål Wikipedia language link."
     },
     "ne:1159116661": {
       "sourceName": "Northwest Passage",
@@ -503,12 +503,13 @@
     "ne:1159117077": {
       "sourceName": "San Jorge Gulf",
       "name": "San Jorge Gulf",
-      "nameNb": "San Jorge Gulf"
+      "nameNb": "Sankt Georg-bukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159115921": {
       "sourceName": "Sea of the Hebrides",
       "name": "Sea of the Hebrides",
-      "nameNb": "Sea of the Hebrides"
+      "nameNb": "Hebridhavet"
     },
     "ne:1159116927": {
       "sourceName": "Seto Inland Sea",
@@ -518,7 +519,7 @@
     "ne:1159117159": {
       "sourceName": "Shelikhov Gulf",
       "name": "Shelikhov Gulf",
-      "nameNb": "Shelikhov Gulf"
+      "nameNb": "Sjelikovbukta"
     },
     "ne:1159116861": {
       "sourceName": "Singapore Strait",
@@ -560,7 +561,7 @@
     "ne:1159117247": {
       "sourceName": "Viscount Melville Sound",
       "name": "Viscount Melville Sound",
-      "nameNb": "Viscount Melville Sound"
+      "nameNb": "Viscount Melville-sundet"
     },
     "ne:1159118573": {
       "sourceName": "Bahía Blanca",
@@ -611,12 +612,12 @@
     "ne:1159117615": {
       "sourceName": "Cumberland Sound",
       "name": "Cumberland Sound",
-      "nameNb": "Cumberland Sound"
+      "nameNb": "Cumberlandsundet"
     },
     "ne:1159118715": {
       "sourceName": "Davis Sea",
       "name": "Davis Sea",
-      "nameNb": "Davis Sea"
+      "nameNb": "Davishavet"
     },
     "ne:1159117651": {
       "sourceName": "Disko Bay",
@@ -626,12 +627,12 @@
     "ne:1159117409": {
       "sourceName": "Dixon Entrance",
       "name": "Dixon Entrance",
-      "nameNb": "Dixon Entrance"
+      "nameNb": "Dixonstredet"
     },
     "ne:1159118247": {
       "sourceName": "East Korea Bay",
       "name": "East Korea Bay",
-      "nameNb": "East Korea Bay"
+      "nameNb": "Øst-Koreabukta"
     },
     "ne:1159117337": {
       "sourceName": "East Siberian Sea",
@@ -646,17 +647,18 @@
     "ne:1159117633": {
       "sourceName": "Frobisher Bay",
       "name": "Frobisher Bay",
-      "nameNb": "Frobisher Bay"
+      "nameNb": "Frobisherbukten"
     },
     "ne:1159118321": {
       "sourceName": "Geographe Bay",
       "name": "Geographe Bay",
-      "nameNb": "Geographe Bay"
+      "nameNb": "Geographebukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118871": {
       "sourceName": "Gulf St Vincent",
       "name": "Gulf St Vincent",
-      "nameNb": "Gulf St Vincent"
+      "nameNb": "St. Vincent-bukta"
     },
     "ne:1159118085": {
       "sourceName": "Gulf of Boothia",
@@ -666,7 +668,7 @@
     "ne:1159117489": {
       "sourceName": "Gulf of Corcovado",
       "name": "Gulf of Corcovado",
-      "nameNb": "Gulf of Corcovado"
+      "nameNb": "Corcovadobukta"
     },
     "ne:1159117973": {
       "sourceName": "Gulf of Gabès",
@@ -676,23 +678,24 @@
     "ne:1159118151": {
       "sourceName": "Gulf of Guayaquil",
       "name": "Gulf of Guayaquil",
-      "nameNb": "Gulf of Guayaquil"
+      "nameNb": "Guayaquilbukta"
     },
     "ne:1159117827": {
       "sourceName": "Gulf of Khambhat",
       "name": "Gulf of Khambhat",
-      "nameNb": "Gulf of Khambhat"
+      "nameNb": "Khambhatbukta"
     },
     "ne:1159118975": {
       "sourceName": "Gulf of Martaban",
       "name": "Gulf of Mottama",
-      "nameNb": "Gulf of Mottama",
+      "nameNb": "Mottamabukta",
       "note": "Myanmar authorities use Gulf of Mottama; Gulf of Martaban is the former English name."
     },
     "ne:1159118175": {
       "sourceName": "Gulf of Masirah",
       "name": "Gulf of Masirah",
-      "nameNb": "Gulf of Masirah"
+      "nameNb": "Masirahbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118329": {
       "sourceName": "Gulf of Papua",
@@ -722,18 +725,19 @@
     "ne:1159118783": {
       "sourceName": "Hangzhouwan",
       "name": "Hangzhou Bay",
-      "nameNb": "Hangzhou Bay",
-      "note": "Uses the contemporary English form Hangzhou Bay rather than the joined romanization Hangzhouwan; no established Norwegian exonym was verified."
+      "nameNb": "Hangzhoubukta",
+      "note": "English display uses Hangzhou Bay rather than joined romanization Hangzhouwan; Norwegian Hangzhoubukta is documented in SNL."
     },
     "ne:1159118959": {
       "sourceName": "Joseph Bonaparte Gulf",
       "name": "Joseph Bonaparte Gulf",
-      "nameNb": "Joseph Bonaparte Gulf"
+      "nameNb": "Joseph Bonaparte-bukta"
     },
     "ne:1159118817": {
       "sourceName": "Kamchatka Gulf",
       "name": "Kamchatka Gulf",
-      "nameNb": "Kamchatka Gulf"
+      "nameNb": "Kamtsjatkabukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118099": {
       "sourceName": "Kane Basin",
@@ -743,7 +747,8 @@
     "ne:1159118803": {
       "sourceName": "Karaginsky Gulf",
       "name": "Karaginsky Gulf",
-      "nameNb": "Karaginsky Gulf"
+      "nameNb": "Karaginskijbukta",
+      "note": "Norwegian form documented by a Nynorsk language link. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117819": {
       "sourceName": "Kattegat",
@@ -753,18 +758,19 @@
     "ne:1159118029": {
       "sourceName": "Kotzebue Sound",
       "name": "Kotzebue Sound",
-      "nameNb": "Kotzebue Sound",
-      "note": "Kotzebue Sound is the official NOAA and Alaska government form; no established Norwegian exonym was verified."
+      "nameNb": "Kotzebuesundet",
+      "note": "English display retains the official NOAA and Alaska government form; Språkrådet lists Norwegian Kotzebuesundet and Kotzebuestredet."
     },
     "ne:1159117867": {
       "sourceName": "Kronotsky Gulf",
       "name": "Kronotsky Gulf",
-      "nameNb": "Kronotsky Gulf"
+      "nameNb": "Kronotskybukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118231": {
       "sourceName": "La Pérouse Strait",
       "name": "La Pérouse Strait",
-      "nameNb": "La Pérouse Strait"
+      "nameNb": "La Pérousestredet"
     },
     "ne:1159118439": {
       "sourceName": "Ligurian Sea",
@@ -774,27 +780,29 @@
     "ne:1159117355": {
       "sourceName": "Lincoln Sea",
       "name": "Lincoln Sea",
-      "nameNb": "Lincoln Sea"
+      "nameNb": "Lincolnhavet"
     },
     "ne:1159118743": {
       "sourceName": "Lützow-Holm Bay",
       "name": "Lützow-Holm Bay",
-      "nameNb": "Lützow-Holm Bay"
+      "nameNb": "Lützow-Holmbukta"
     },
     "ne:1159117427": {
       "sourceName": "M'Clure Strait",
       "name": "M'Clure Strait",
-      "nameNb": "M'Clure Strait"
+      "nameNb": "McCluresundet",
+      "note": "Norwegian form documented by a Nynorsk language link. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117989": {
       "sourceName": "Mackenzie Bay",
       "name": "Mackenzie Bay",
-      "nameNb": "Mackenzie Bay"
+      "nameNb": "Mackenziebukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118905": {
       "sourceName": "Maputo Bay",
       "name": "Maputo Bay",
-      "nameNb": "Maputo Bay"
+      "nameNb": "Maputobukta"
     },
     "ne:1159118651": {
       "sourceName": "Marguerite Bay",
@@ -814,12 +822,14 @@
     "ne:1159118351": {
       "sourceName": "Olenyok Gulf",
       "name": "Olenyok Gulf",
-      "nameNb": "Olenyok Gulf"
+      "nameNb": "Olenjokbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118705": {
       "sourceName": "Porpoise Bay",
       "name": "Porpoise Bay",
-      "nameNb": "Porpoise Bay"
+      "nameNb": "Porpoisebukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118669": {
       "sourceName": "Prydz Bay",
@@ -834,12 +844,14 @@
     "ne:1159118989": {
       "sourceName": "Sakhalin Gulf",
       "name": "Sakhalin Gulf",
-      "nameNb": "Sakhalin Gulf"
+      "nameNb": "Sakhalinbukta",
+      "note": "Norwegian form documented by a Nynorsk language link. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117475": {
       "sourceName": "San Matías Gulf",
       "name": "San Matías Gulf",
-      "nameNb": "San Matías Gulf"
+      "nameNb": "San Matías-bukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119013": {
       "sourceName": "Scoresby Sound",
@@ -871,7 +883,8 @@
     "ne:1159118925": {
       "sourceName": "St. Helena Bay",
       "name": "St. Helena Bay",
-      "nameNb": "St. Helena Bay"
+      "nameNb": "Sankt Helena-bukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117683": {
       "sourceName": "Storfjorden",
@@ -881,7 +894,8 @@
     "ne:1159117531": {
       "sourceName": "Sulzberger Bay",
       "name": "Sulzberger Bay",
-      "nameNb": "Sulzberger Bay"
+      "nameNb": "Sulzbergerbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118303": {
       "sourceName": "Torres Strait",
@@ -891,13 +905,13 @@
     "ne:1159117901": {
       "sourceName": "Uchiura Bay",
       "name": "Uchiura Bay",
-      "nameNb": "Uchiura Bay"
+      "nameNb": "Uchiurabukta"
     },
     "ne:1159117883": {
       "sourceName": "Uda Gulf",
       "name": "Uda Bay",
-      "nameNb": "Uda Bay",
-      "note": "Uses the current English form Uda Bay found in Natural Earth’s primary name and Wikidata identity."
+      "nameNb": "Udabukta",
+      "note": "English display uses Uda Bay, matching Natural Earth’s primary name and Wikidata identity. Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117697": {
       "sourceName": "Vestfjorden",
@@ -907,34 +921,37 @@
     "ne:1159117771": {
       "sourceName": "Vilkitsky Strait",
       "name": "Vilkitsky Strait",
-      "nameNb": "Vilkitsky Strait"
+      "nameNb": "Vilkitskijstredet"
     },
     "ne:1159118683": {
       "sourceName": "Vincennes Bay",
       "name": "Vincennes Bay",
-      "nameNb": "Vincennes Bay"
+      "nameNb": "Vincennesbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117505": {
       "sourceName": "Wrigley Gulf",
       "name": "Wrigley Gulf",
-      "nameNb": "Wrigley Gulf"
+      "nameNb": "Wrigleybukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118193": {
       "sourceName": "Yana Bay",
       "name": "Yana Bay",
-      "nameNb": "Yana Bay",
+      "nameNb": "Janabukta",
       "kind": "bay",
-      "note": "Classified as a bay to match the verified water-body designation."
+      "note": "Classified as a bay to match the verified water-body designation. Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117301": {
       "sourceName": "Yucatán Channel",
       "name": "Yucatán Channel",
-      "nameNb": "Yucatán Channel"
+      "nameNb": "Yucatánkanalen"
     },
     "ne:1159119047": {
       "sourceName": "Chaunskaya Bay",
       "name": "Chaunskaya Bay",
-      "nameNb": "Chaunskaya Bay"
+      "nameNb": "Tsjaunskajabukta",
+      "note": "Norwegian form documented by a Nynorsk language link. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119235": {
       "sourceName": "Denmark Strait",
@@ -949,7 +966,7 @@
     "ne:1159120779": {
       "sourceName": "Gulf of Anadyr",
       "name": "Gulf of Anadyr",
-      "nameNb": "Gulf of Anadyr"
+      "nameNb": "Anadyrbukta"
     },
     "ne:1159119119": {
       "sourceName": "Gulf of Ob",
@@ -969,7 +986,8 @@
     "ne:1159119075": {
       "sourceName": "Khatanga Gulf",
       "name": "Khatanga Gulf",
-      "nameNb": "Khatanga Gulf"
+      "nameNb": "Khatangabukta",
+      "note": "Norwegian form documented by a Nynorsk language link. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119037": {
       "sourceName": "Saint Lawrence River",
@@ -980,7 +998,8 @@
     "ne:1159120759": {
       "sourceName": "Salish Sea",
       "name": "Salish Sea",
-      "nameNb": "Salish Sea"
+      "nameNb": "Salishhavet",
+      "note": "Norwegian form documented by a Nynorsk language link. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119181": {
       "sourceName": "Sea of Marmara",
@@ -995,7 +1014,7 @@
     "ne:1159119141": {
       "sourceName": "Yenisei Gulf",
       "name": "Yenisei Gulf",
-      "nameNb": "Yenisei Gulf"
+      "nameNb": "Jenisejbukta"
     },
     "ne:1159119313": {
       "sourceName": "Albemarle Sound",
@@ -1010,7 +1029,8 @@
     "ne:1159118761": {
       "sourceName": "Antongil Bay",
       "name": "Antongil Bay",
-      "nameNb": "Antongil Bay"
+      "nameNb": "Antongilbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118853": {
       "sourceName": "Bab-el-Mandeb",
@@ -1020,12 +1040,12 @@
     "ne:1159120073": {
       "sourceName": "Bali Sea",
       "name": "Bali Sea",
-      "nameNb": "Bali Sea"
+      "nameNb": "Balisjøen"
     },
     "ne:1159120643": {
       "sourceName": "Bay of Mecklenburg",
       "name": "Bay of Mecklenburg",
-      "nameNb": "Bay of Mecklenburg"
+      "nameNb": "Mecklenburgbukta"
     },
     "ne:1159117597": {
       "sourceName": "Baía de São Marcos",
@@ -1035,14 +1055,14 @@
     "ne:1159120253": {
       "sourceName": "Bohol Sea",
       "name": "Bohol Sea",
-      "nameNb": "Bohol Sea"
+      "nameNb": "Mindanaosjøen"
     },
     "ne:1159120217": {
       "sourceName": "Buli Bay",
       "name": "Buli Bay",
-      "nameNb": "Buli Bay",
+      "nameNb": "Bulibukta",
       "kind": "bay",
-      "note": "Classified as a bay to match the verified water-body designation."
+      "note": "Classified as a bay to match the verified water-body designation. Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118281": {
       "sourceName": "Cook Strait",
@@ -1057,7 +1077,8 @@
     "ne:1159119511": {
       "sourceName": "Darnley Bay",
       "name": "Darnley Bay",
-      "nameNb": "Darnley Bay"
+      "nameNb": "Darnleybukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120091": {
       "sourceName": "Davao Gulf",
@@ -1067,17 +1088,19 @@
     "ne:1159119271": {
       "sourceName": "Delaware Bay",
       "name": "Delaware Bay",
-      "nameNb": "Delaware Bay"
+      "nameNb": "Delawarebukten"
     },
     "ne:1159118213": {
       "sourceName": "Dmitry Laptev Strait",
       "name": "Dmitry Laptev Strait",
-      "nameNb": "Dmitry Laptev Strait"
+      "nameNb": "Dmitrij Laptev-stredet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119813": {
       "sourceName": "Eclipse Sound",
       "name": "Eclipse Sound",
-      "nameNb": "Eclipse Sound"
+      "nameNb": "Eclipsesundet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120167": {
       "sourceName": "Flores Sea",
@@ -1087,12 +1110,13 @@
     "ne:1159117391": {
       "sourceName": "Franklin Bay",
       "name": "Franklin Bay",
-      "nameNb": "Franklin Bay"
+      "nameNb": "Franklinbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119761": {
       "sourceName": "Fury and Hecla Strait",
       "name": "Fury and Hecla Strait",
-      "nameNb": "Fury and Hecla Strait"
+      "nameNb": "Fury og Heclastredet"
     },
     "ne:1159119885": {
       "sourceName": "George VI Sound",
@@ -1112,12 +1136,14 @@
     "ne:1159118877": {
       "sourceName": "Gulf of Urabá",
       "name": "Gulf of Urabá",
-      "nameNb": "Gulf of Urabá"
+      "nameNb": "Urabábukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119663": {
       "sourceName": "Hadley Bay",
       "name": "Hadley Bay",
-      "nameNb": "Hadley Bay"
+      "nameNb": "Hadleybukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119831": {
       "sourceName": "Hall Basin",
@@ -1127,7 +1153,7 @@
     "ne:1159120109": {
       "sourceName": "Halmahera Sea",
       "name": "Halmahera Sea",
-      "nameNb": "Halmahera Sea"
+      "nameNb": "Halmaherasjøen"
     },
     "ne:1159117665": {
       "sourceName": "Hamilton Inlet",
@@ -1144,7 +1170,7 @@
     "ne:1159117755": {
       "sourceName": "Kara Strait",
       "name": "Kara Strait",
-      "nameNb": "Kara Strait"
+      "nameNb": "Karastredet"
     },
     "ne:1159120519": {
       "sourceName": "Kennedy Channel",
@@ -1154,7 +1180,8 @@
     "ne:1159119625": {
       "sourceName": "Liddon Gulf",
       "name": "Liddon Gulf",
-      "nameNb": "Liddon Gulf"
+      "nameNb": "Liddonbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119293": {
       "sourceName": "Long Island Sound",
@@ -1164,7 +1191,8 @@
     "ne:1159117463": {
       "sourceName": "Marajó Bay",
       "name": "Marajó Bay",
-      "nameNb": "Marajó Bay"
+      "nameNb": "Marajóbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119247": {
       "sourceName": "Massachusetts Bay",
@@ -1174,12 +1202,13 @@
     "ne:1159120705": {
       "sourceName": "Monterey Bay",
       "name": "Monterey Bay",
-      "nameNb": "Monterey Bay"
+      "nameNb": "Montereybukta"
     },
     "ne:1159120493": {
       "sourceName": "Murchison Sound",
       "name": "Murchison Sound",
-      "nameNb": "Murchison Sound"
+      "nameNb": "Murchisonsundet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117845": {
       "sourceName": "Palk Strait",
@@ -1189,17 +1218,19 @@
     "ne:1159119327": {
       "sourceName": "Pamlico Sound",
       "name": "Pamlico Sound",
-      "nameNb": "Pamlico Sound"
+      "nameNb": "Pamlicosundet"
     },
     "ne:1159119867": {
       "sourceName": "Peacock Sound",
       "name": "Peacock Sound",
-      "nameNb": "Peacock Sound"
+      "nameNb": "Peacocksundet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119599": {
       "sourceName": "Prince Albert Sound",
       "name": "Prince Albert Sound",
-      "nameNb": "Prince Albert Sound"
+      "nameNb": "Prins Albert-sundet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159118537": {
       "sourceName": "Prince William Sound",
@@ -1209,7 +1240,7 @@
     "ne:1159119555": {
       "sourceName": "Prince of Wales Strait",
       "name": "Prince of Wales Strait",
-      "nameNb": "Prince of Wales Strait"
+      "nameNb": "Prince of Wales-stredet"
     },
     "ne:1159118261": {
       "sourceName": "Qiongzhou Strait",
@@ -1219,7 +1250,8 @@
     "ne:1159116679": {
       "sourceName": "Queen Charlotte Sound",
       "name": "Queen Charlotte Sound",
-      "nameNb": "Queen Charlotte Sound"
+      "nameNb": "Dronning Charlotte-sundet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120685": {
       "sourceName": "San Francisco Bay",
@@ -1229,12 +1261,13 @@
     "ne:1159120417": {
       "sourceName": "Savu Sea",
       "name": "Savu Sea",
-      "nameNb": "Savu Sea"
+      "nameNb": "Savusjøen"
     },
     "ne:1159120183": {
       "sourceName": "Sibuyan Sea",
       "name": "Sibuyan Sea",
-      "nameNb": "Sibuyan Sea"
+      "nameNb": "Sibuyanhavet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159117781": {
       "sourceName": "Sognefjord",
@@ -1264,8 +1297,8 @@
     "ne:1159119849": {
       "sourceName": "Uummannaq fjord",
       "name": "Uummannaq Fjord",
-      "nameNb": "Uummannaq Fjord",
-      "note": "Capitalizes the generic feature term in the English and Norwegian display name."
+      "nameNb": "Uummannaqfjorden",
+      "note": "English display capitalizes Fjord; Norwegian display joins the stem with lowercase fjorden. Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120609": {
       "sourceName": "Øresund",
@@ -1275,14 +1308,15 @@
     "ne:1159119417": {
       "sourceName": "Baird Inlet",
       "name": "Baird Inlet",
-      "nameNb": "Baird Inlet"
+      "nameNb": "Bairdbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119669": {
       "sourceName": "Bathurst Inlet",
       "name": "Bathurst Inlet",
-      "nameNb": "Bathurst Inlet",
+      "nameNb": "Bathurstbukta",
       "kind": "inlet",
-      "note": "Classified as an inlet to match the verified water-body designation."
+      "note": "Classified as an inlet to match the verified water-body designation. Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120573": {
       "sourceName": "Canal do Sul",
@@ -1292,17 +1326,20 @@
     "ne:1159120451": {
       "sourceName": "Cordova Bay",
       "name": "Cordova Bay",
-      "nameNb": "Cordova Bay"
+      "nameNb": "Cordovabukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120201": {
       "sourceName": "Dampier Strait",
       "name": "Dampier Strait",
-      "nameNb": "Dampier Strait"
+      "nameNb": "Dampierstredet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119707": {
       "sourceName": "Goldsmith Channel",
       "name": "Goldsmith Channel",
-      "nameNb": "Goldsmith Channel"
+      "nameNb": "Goldsmithkanalen",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120055": {
       "sourceName": "Guba Gusinaya",
@@ -1312,26 +1349,27 @@
     "ne:1159119925": {
       "sourceName": "Inútil Bay",
       "name": "Inútil Bay",
-      "nameNb": "Inútil Bay"
+      "nameNb": "Inútilbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120235": {
       "sourceName": "Kao Bay",
       "name": "Kao Bay",
-      "nameNb": "Kao Bay",
+      "nameNb": "Kaobukta",
       "kind": "bay",
-      "note": "Classified as a bay to match the verified water-body designation."
+      "note": "Classified as a bay to match the verified water-body designation. Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120015": {
       "sourceName": "Matochkin Strait",
       "name": "Matochkin Strait",
-      "nameNb": "Matochkin Strait"
+      "nameNb": "Matotsjkin Sjar"
     },
     "ne:1159119565": {
       "sourceName": "Minto Inlet",
       "name": "Minto Inlet",
-      "nameNb": "Minto Inlet",
+      "nameNb": "Mintobukta",
       "kind": "inlet",
-      "note": "Classified as an inlet to match the verified water-body designation."
+      "note": "Classified as an inlet to match the verified water-body designation. Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119407": {
       "sourceName": "Queen Charlotte Strait",
@@ -1341,14 +1379,15 @@
     "ne:1159119583": {
       "sourceName": "Richard Collinson Inlet",
       "name": "Richard Collinson Inlet",
-      "nameNb": "Richard Collinson Inlet",
+      "nameNb": "Richard Collinson-bukta",
       "kind": "inlet",
-      "note": "Classified as an inlet to match the verified water-body designation."
+      "note": "Classified as an inlet to match the verified water-body designation. Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120501": {
       "sourceName": "Robeson Channel",
       "name": "Robeson Channel",
-      "nameNb": "Robeson Channel"
+      "nameNb": "Robesonkanalen",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120335": {
       "sourceName": "Samar Sea",
@@ -1368,37 +1407,44 @@
     "ne:1159119727": {
       "sourceName": "Sherman Basin",
       "name": "Sherman Basin",
-      "nameNb": "Sherman Basin"
+      "nameNb": "Shermanbassenget",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119367": {
       "sourceName": "Smith Sound",
       "name": "Smith Sound",
-      "nameNb": "Smith Sound"
+      "nameNb": "Smithsundet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120353": {
       "sourceName": "Tayabas Bay",
       "name": "Tayabas Bay",
-      "nameNb": "Tayabas Bay"
+      "nameNb": "Tayabasbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120401": {
       "sourceName": "Visayan Sea",
       "name": "Visayan Sea",
-      "nameNb": "Visayan Sea"
+      "nameNb": "Visayahavet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119745": {
       "sourceName": "Wager Bay",
       "name": "Wager Bay",
-      "nameNb": "Wager Bay"
+      "nameNb": "Wagerbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159119635": {
       "sourceName": "Wynniatt Bay",
       "name": "Wynniatt Bay",
-      "nameNb": "Wynniatt Bay"
+      "nameNb": "Wynniattbukta",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120135": {
       "sourceName": "Bali Strait",
       "name": "Bali Strait",
-      "nameNb": "Bali Strait"
+      "nameNb": "Balistredet",
+      "note": "Norwegian display constructed from the reviewed proper-name stem and water term, as authorized by the user; not an attested full-name exonym. See docs/marine-label-norwegian-review.json."
     },
     "ne:1159120555": {
       "sourceName": "Canal Perigoso",
@@ -1413,17 +1459,17 @@
     "ne:1159120375": {
       "sourceName": "Leyte Gulf",
       "name": "Leyte Gulf",
-      "nameNb": "Leyte Gulf"
+      "nameNb": "Leytebukta"
     },
     "ne:1159120315": {
       "sourceName": "Ragay Gulf",
       "name": "Ragay Gulf",
-      "nameNb": "Ragay Gulf"
+      "nameNb": "Ragaybukta"
     },
     "ne:1159120289": {
       "sourceName": "Surigao Strait",
       "name": "Surigao Strait",
-      "nameNb": "Surigao Strait"
+      "nameNb": "Surigaostredet"
     }
   }
 }

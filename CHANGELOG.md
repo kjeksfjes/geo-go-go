@@ -2,6 +2,15 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.19.0 — Northern Names — 2026-10-17
+
+### Improvements
+
+- Update 101 Norwegian water names: apply 47 documented alternatives, then localize 54 remaining labels using reviewed Norwegian proper-name stems and water terms. Keep constructed forms and their evidence distinct in the audit.
+- Keep water names visible independently when they overlap, including seas within larger oceans. Preserve geographic placement and map-edge clipping.
+- Separate Sargasso Sea and Atlantic Ocean labels, and let Norwegian Sargassohavet break over two lines within its shifted water bounds.
+- Add an opt-in `?water-label-debug` diagnostic that marks overlapping letter bounds and lists likely collisions after map movement settles.
+
 ## 0.18.0 — Coastal Lettering — 2026-10-13
 
 ### Improvements
