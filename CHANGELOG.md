@@ -9,6 +9,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 - Add a local development water-name editor with live map previews, movable/rotatable placements, editable curve points, text sizing, horizontal/stacked layout, undo/redo, saved drafts, and JSON import/export for review and integration.
 - Highlight the selected water body's approximate Natural Earth boundary in the local editor, with a fixed geographic area independent of label layout and placement and a toggle for clean previews; keep the polygon data out of production builds.
 - Remove horizontal/stacked frame outlines and frame-size controls from the editor; use the fixed water-boundary highlight as geographic guidance.
+- Stop hidden preparation rectangles from hiding explicitly resized water names, including deselected labels and normal previews.
 - Keep the selected water name visible while editing below the normal visibility cutoff or outside its fitting frame, explain these limits in the panel, and prevent rounding errors from hiding text fitted to the full path.
 - Fix disappearing text after switching from horizontal/stacked layout back to a path, refresh measurements when line breaks change, and make text sizing independent of automatic fitting limits.
 

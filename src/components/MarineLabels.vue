@@ -306,7 +306,10 @@ function updateLabels() {
           box = [x - dx, y - dy, x + dx, y + dy]
         }
       }
-      if (label.waterBounds) {
+      // An explicit size is an authored override, not a request to refit or
+      // hide the text inside the old preparation rectangle. Apply this in
+      // normal preview too, independent of selection and editor handles.
+      if (label.waterBounds && label.textScale === undefined) {
         const [[left, top], [right, bottom]] = label.waterBounds
         const coastMargin = Math.max(10, fontPixels / 2)
         const outsideFrame = box[0] < props.transform.x + scale * (left + offset) + coastMargin
