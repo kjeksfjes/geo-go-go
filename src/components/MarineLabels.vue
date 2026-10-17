@@ -211,7 +211,7 @@ function updateLabels() {
   // Use ink metrics: SVG getBBox() includes the font's full text cell even
   // for "x", so its height is not the x-height and would push names downward.
   // Alphabetic baselines plus an explicit offset behave consistently on paths
-  // and horizontal text. Lift the optical center by 0.2 of each label's size.
+  // and horizontal text. Lift the optical center by 0.1 of each label's size.
   if (baselineContext === undefined) baselineContext = document.createElement('canvas').getContext('2d')
   let xHeightEm = 0.4
   const baselineSample = measurementGroup?.querySelector('.marine-label:not(.marine-label--ocean)')
@@ -222,7 +222,7 @@ function updateLabels() {
     const metrics = baselineContext.measureText('x')
     xHeightEm = (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) / 100 || xHeightEm
   }
-  const baselineOffsetEm = xHeightEm / 2 - 0.2
+  const baselineOffsetEm = xHeightEm / 2 - 0.1
   const styleKey = `${fontSize}:${locale.value}`
   if (styleKey !== measurementStyle) {
     measurementStyle = styleKey
