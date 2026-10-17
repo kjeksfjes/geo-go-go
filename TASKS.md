@@ -2,6 +2,20 @@
 
 Lightweight backlog for deferred work. Keep stable task IDs and update each task's status as work progresses; recording a task does not authorize starting it automatically. No task-management dependency is required for now.
 
+## TASK-011 — Consider optional repository and deployment security hardening
+
+Status: Deferred by the user. Added: 2026-10-17.
+
+The security audit found no exposed credentials or identified visitor-facing exploit path. The user authorized updating the vulnerable `source-map-js` dependency and deferred the remaining recommendations. These are optional safeguards rather than urgent fixes; assess maintenance cost and solo-development friction before implementation. Recording this task does not authorize changing repository settings or workflows.
+
+### Deferred recommendations
+
+- [ ] Separate build and deployment jobs so dependency installation and build scripts do not receive `pages: write` or `id-token: write`; reserve those permissions for deployment.
+- [ ] Pin GitHub Actions to verified commit SHAs, or assess workflow dependency locking, while keeping versions readable and updates maintainable.
+- [ ] Consider Dependabot security updates and modest npm/GitHub Actions update PRs, with manual dependency checks as an alternative and no automatic merging.
+- [ ] Consider protecting `main` with pull requests and a successful build, without requiring another person's approval for solo development.
+- [ ] Assess a Content Security Policy compatible with the app's styles, assets, and map worker; verify any subsequently authorized policy before publication.
+
 ## TASK-005 — Profile and optimize high-detail map initialization
 
 Status: First optimization implemented and measured; awaiting device acceptance. Priority: High. Added: 2026-10-02. Updated: 2026-10-05.

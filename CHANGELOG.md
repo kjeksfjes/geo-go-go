@@ -2,6 +2,12 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Security
+
+- Update the transitive `source-map-js` dependency to fix a denial-of-service vulnerability when build tooling processes malicious source maps (GHSA-68fv-2mgg-jv7q).
+
 ## 0.21.0 — Shared Horizons — 2026-10-17
 
 ### Improvements
