@@ -411,7 +411,7 @@ onBeforeUnmount(() => {
         v-for="label in projectedLabels"
         :key="label.id"
         class="marine-label"
-        :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
+        :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3, 'marine-label--horizontal': !label.guide }"
         style="display: none"
         @pointerdown.stop.prevent="editing && emit('select', label.id)"
       >
@@ -447,6 +447,7 @@ onBeforeUnmount(() => {
 }
 
 .marine-labels--editing .marine-label { pointer-events: visiblePainted; cursor: pointer; }
+.marine-labels--editing .marine-label--horizontal { cursor: default; }
 
 .marine-label--ocean {
   font-size: 1em;
