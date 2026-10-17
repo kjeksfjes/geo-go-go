@@ -1,6 +1,6 @@
 import type { MarineLabelPath } from '../data/marineLabelPaths'
 import type { MapPoint } from '../composables/useMapZoom'
-import type { MarineLabel } from '../data/marineLabels'
+import type { MarineLabel, MarineLabelText } from '../data/marineLabels'
 
 export type Placements = Record<string, MarineLabelPath>
 export interface CustomWaterLabel extends MarineLabel { boundaryId?: string }
@@ -11,12 +11,13 @@ export const oceanPartNames: Record<string, string> = {
 export const waterKinds = ['ocean', 'sea', 'gulf', 'bay', 'strait', 'sound', 'channel', 'fjord', 'inlet']
 export interface WaterLabelDraft {
   format: 'geo-go-go-water-label-edits'
-  version: 2
+  version: 3
   baseVersion: string
   originals: Placements
   placements: Placements
   customLabels: Record<string, CustomWaterLabel>
   hiddenIds: string[]
+  labelText: Record<string, MarineLabelText>
 }
 
 export function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) }
@@ -65,10 +66,21 @@ export function validPlacement(input: unknown): input is MarineLabelPath {
   return true
 }
 
+export function validLabelText(input: unknown): input is MarineLabelText {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return false
+  return Object.entries(input).every(([key, text]) => {
+    if (typeof text !== 'string' || !text.trim()) return false
+    if (key === 'name' || key === 'nameNb') return text.length <= 120 && !/[\r\n]/.test(text)
+    if (key !== 'stackedText' && key !== 'stackedTextNb') return false
+    const lines = text.split('\n')
+    return text.length <= 240 && !text.includes('\r') && lines.length <= 4 && lines.every(line => line.trim())
+  })
+}
+
 export function readDraft(text: string, baseline: Placements, ids: ReadonlySet<string>): WaterLabelDraft {
   if (text.length > 2_000_000) throw new Error('This file is too large for a water-label draft.')
   const value = JSON.parse(text)
-  if (value?.format !== 'geo-go-go-water-label-edits' || ![1, 2].includes(value.version)
+  if (value?.format !== 'geo-go-go-water-label-edits' || ![1, 2, 3].includes(value.version)
     || typeof value.baseVersion !== 'string' || value.baseVersion.length > 40) throw new Error('Unsupported water-label draft.')
   const customLabels = value.version === 1 ? {} : value.customLabels
   const hiddenIds = value.version === 1 ? [] : value.hiddenIds
@@ -91,6 +103,12 @@ export function readDraft(text: string, baseline: Placements, ids: ReadonlySet<s
   }
   if (!Array.isArray(hiddenIds) || hiddenIds.length > ids.size || new Set(hiddenIds).size !== hiddenIds.length
     || !hiddenIds.every(id => typeof id === 'string' && ids.has(id))) throw new Error('Invalid removed-name collection.')
+  const labelText = value.version < 3 ? {} : value.labelText
+  if (!labelText || typeof labelText !== 'object' || Array.isArray(labelText)
+    || Object.keys(labelText).length > knownIds.size
+    || Object.entries(labelText).some(([id, text]) => !knownIds.has(id) || !validLabelText(text))) {
+    throw new Error('Invalid water-name text edits.')
+  }
   for (const key of ['placements', 'originals'] as const) {
     const entries = value[key]
     if (!entries || typeof entries !== 'object' || Array.isArray(entries)
@@ -109,8 +127,8 @@ export function readDraft(text: string, baseline: Placements, ids: ReadonlySet<s
       throw new Error(`The source placement for ${id} has changed. Keep this export and ask for its edits to be reconciled.`)
     }
   }
-  return clone({ format: value.format, version: 2, baseVersion: value.baseVersion,
-    originals: value.originals, placements: value.placements, customLabels, hiddenIds })
+  return clone({ format: value.format, version: 3, baseVersion: value.baseVersion,
+    originals: value.originals, placements: value.placements, customLabels, hiddenIds, labelText })
 }
 
 export function samePlacement(a: MarineLabelPath, b: MarineLabelPath): boolean {
@@ -119,9 +137,9 @@ export function samePlacement(a: MarineLabelPath, b: MarineLabelPath): boolean {
 }
 
 export function makeDraft(placements: Placements, baseline: Placements, version: string,
-  customLabels: Record<string, CustomWaterLabel> = {}, hiddenIds: string[] = []): WaterLabelDraft {
+  customLabels: Record<string, CustomWaterLabel> = {}, hiddenIds: string[] = [], labelText: Record<string, MarineLabelText> = {}): WaterLabelDraft {
   const originals = Object.fromEntries(Object.keys(placements).filter(id => Object.hasOwn(baseline, id)).map(id => [id, baseline[id]!]))
-  return clone({ format: 'geo-go-go-water-label-edits', version: 2, baseVersion: version, originals, placements, customLabels, hiddenIds })
+  return clone({ format: 'geo-go-go-water-label-edits', version: 3, baseVersion: version, originals, placements, customLabels, hiddenIds, labelText })
 }
 
 // Existing nudges taper over the sampled curve. Bake them into editable nodes

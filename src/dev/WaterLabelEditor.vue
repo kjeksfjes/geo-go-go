@@ -4,12 +4,12 @@ import packageInfo from '../../package.json'
 import type { Geometry } from 'geojson'
 import { geoCentroid } from 'd3-geo'
 import waterBoundaries from './water-boundaries.json'
-import { marineLabels, type MarineLabel } from '../data/marineLabels'
+import { marineLabels, type MarineLabel, type MarineLabelText } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
 import type { MapPoint } from '../composables/useMapZoom'
 import { sampleLabelGuide } from '../logic/marineLabelLayout'
 import { normalizeCountrySearch } from '../logic/countrySuggestions'
-import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, oceanPartNames, placementPivot, preservePlacementFontSize, readDraft, samePlacement, validPlacement, waterKinds, type CustomWaterLabel, type Placements } from './waterLabelDraft'
+import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, oceanPartNames, placementPivot, preservePlacementFontSize, readDraft, samePlacement, validLabelText, validPlacement, waterKinds, type CustomWaterLabel, type Placements } from './waterLabelDraft'
 
 const props = defineProps<{
   width: number
@@ -46,6 +46,7 @@ const baseline: Placements = Object.fromEntries(marineLabels.map(label => {
 const edits = shallowRef<Placements>({})
 const customLabels = shallowRef<Record<string, CustomWaterLabel>>({})
 const hiddenIds = shallowRef<string[]>([])
+const labelText = shallowRef<Record<string, MarineLabelText>>({})
 const status = ref('')
 const storageError = ref(false)
 const storageConflict = ref(false)
@@ -59,17 +60,18 @@ try {
     catch (error) { recovery.value = saved; status.value = String((error as Error).message) }
   }
 } catch { storageError.value = true }
-function snapshot() { return { placements: edits.value, customLabels: customLabels.value, hiddenIds: hiddenIds.value } }
+function snapshot() { return { placements: edits.value, customLabels: customLabels.value, hiddenIds: hiddenIds.value, labelText: labelText.value } }
 function restoreSnapshot(value: ReturnType<typeof snapshot>) {
-  edits.value = value.placements; customLabels.value = value.customLabels; hiddenIds.value = value.hiddenIds
+  edits.value = value.placements; customLabels.value = value.customLabels; hiddenIds.value = value.hiddenIds; labelText.value = value.labelText
 }
 const history = createHistory(snapshot())
 const historyRevision = ref(0)
 const canUndo = computed(() => { void historyRevision.value; return history.canUndo })
 const canRedo = computed(() => { void historyRevision.value; return history.canRedo })
 const placements = computed(() => ({ ...marineLabelPaths, ...edits.value }))
-const changedIds = computed(() => [...new Set([...Object.keys(edits.value), ...hiddenIds.value])])
-const allLabels = computed<MarineLabel[]>(() => [...marineLabels, ...Object.values(customLabels.value)])
+const changedIds = computed(() => [...new Set([...Object.keys(edits.value), ...Object.keys(labelText.value), ...hiddenIds.value])])
+const allLabels = computed<MarineLabel[]>(() => [...marineLabels, ...Object.values(customLabels.value)]
+  .map(label => ({ ...label, ...labelText.value[label.id] })))
 const selectedLabel = computed(() => allLabels.value.find(label => label.id === selectedId.value))
 const selected = computed(() => {
   const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
@@ -136,7 +138,7 @@ function save() {
     storageError.value = false
   } catch { storageError.value = true }
 }
-function currentDraft() { return makeDraft(edits.value, baseline, packageInfo.version, customLabels.value, hiddenIds.value) }
+function currentDraft() { return makeDraft(edits.value, baseline, packageInfo.version, customLabels.value, hiddenIds.value, labelText.value) }
 function commit() {
   history.push(snapshot())
   historyRevision.value++
@@ -162,6 +164,7 @@ function resetLabel() {
   const next = { ...edits.value }
   delete next[selectedId.value]
   edits.value = next
+  const text = { ...labelText.value }; delete text[selectedId.value]; labelText.value = text
   selectedNode.value = 0
   commit()
 }
@@ -172,6 +175,7 @@ function removeName() {
     const names = { ...customLabels.value }, placements = { ...edits.value }
     delete names[id]; delete placements[id]
     customLabels.value = names; edits.value = placements
+    const text = { ...labelText.value }; delete text[id]; labelText.value = text
   } else hiddenIds.value = [...new Set([...hiddenIds.value, id])]
   selectedId.value = ''
   commit()
@@ -240,6 +244,29 @@ function setFontSize(event: Event, completed = true) {
   delete value.textScale
   update(value)
   if (completed) commit()
+}
+function setLabelText(key: keyof MarineLabelText, event: Event) {
+  if (editLocked.value) return
+  const id = selectedId.value
+  const original = customLabels.value[id] ?? marineLabels.find(label => label.id === id)
+  if (!original) return
+  const input = event.target as HTMLInputElement | HTMLTextAreaElement
+  const text = input.value.replace(/\r\n?/g, '\n').split('\n').map(line => line.trim()).join('\n').trim()
+  const next = { ...labelText.value[id] }
+  if ((!text && (key === 'stackedText' || key === 'stackedTextNb')) || text === original[key]) delete next[key]
+  else next[key] = text
+  if (!validLabelText(next)) {
+    status.value = 'Names need one line (up to 120 characters); stacked text allows up to four nonempty lines (240 characters total).'
+    return
+  }
+  const source = edits.value[id] ?? baseline[id]
+  if (source) update(preserveSize(source))
+  const changes = { ...labelText.value }
+  if (Object.keys(next).length) changes[id] = next
+  else delete changes[id]
+  labelText.value = changes
+  status.value = ''
+  commit()
 }
 function automaticFontSize() {
   const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
@@ -523,7 +550,7 @@ onBeforeUnmount(() => {
           <label class="water-editor-check"><input v-model="changedOnly" type="checkbox" /> Changed names only</label>
           <label class="water-editor-check"><input v-model="showRemoved" type="checkbox" /> Show removed names</label>
           <select class="water-editor-results" size="4" aria-label="Water names" :value="selectedId" @change="choose(($event.target as HTMLSelectElement).value)">
-            <option v-for="label in results" :key="label.id" :value="label.id">{{ hiddenIds.includes(label.id) ? 'Removed · ' : customLabels[label.id] ? 'Added · ' : edits[label.id] ? '● ' : '' }}{{ label.name }} / {{ label.nameNb }}</option>
+            <option v-for="label in results" :key="label.id" :value="label.id">{{ hiddenIds.includes(label.id) ? 'Removed · ' : customLabels[label.id] ? 'Added · ' : edits[label.id] || labelText[label.id] ? '● ' : '' }}{{ label.name }} / {{ label.nameNb }}</option>
           </select>
           <p v-if="!results.length">No matching names.</p>
           <template v-if="selected && selectedLabel">
@@ -533,11 +560,16 @@ onBeforeUnmount(() => {
             <p v-if="warning" class="water-editor-warning" role="status">{{ warning }}</p>
             <div class="water-editor-actions">
               <button type="button" :disabled="disabled" @click="focus">Find on map</button>
-              <button v-if="!customLabels[selectedId]" type="button" :disabled="editLocked || !edits[selectedId]" @click="resetLabel">Reset this name</button>
+              <button v-if="!customLabels[selectedId]" type="button" :disabled="editLocked || (!edits[selectedId] && !labelText[selectedId])" @click="resetLabel">Reset this name</button>
               <button v-if="hiddenIds.includes(selectedId)" type="button" :disabled="disabled || previewOriginal" @click="restoreName">Restore name</button>
               <button v-else type="button" :disabled="disabled || previewOriginal" @click="removeName">Remove name</button>
             </div>
             <fieldset :disabled="editLocked">
+              <label>English name<input :value="selectedLabel.name" maxlength="120" @change="setLabelText('name', $event)" /></label>
+              <label>Norwegian name<input :value="selectedLabel.nameNb" maxlength="120" @change="setLabelText('nameNb', $event)" /></label>
+              <label>English horizontal/stacked text<textarea :value="selectedLabel.stackedText ?? ''" rows="2" maxlength="240" placeholder="Leave empty for automatic wrapping" @change="setLabelText('stackedText', $event)" /></label>
+              <label>Norwegian horizontal/stacked text<textarea :value="selectedLabel.stackedTextNb ?? ''" rows="2" maxlength="240" placeholder="Leave empty for automatic wrapping" @change="setLabelText('stackedTextNb', $event)" /></label>
+              <p class="water-editor-hint">Use Enter for line breaks and type any dash explicitly (up to four lines). Empty stacked text uses automatic wrapping. Text along path always uses the single-line name; stacked text is kept when switching layouts.</p>
               <label>Layout<select :value="selected.layout ?? 'curve'" @change="layout"><option value="curve">Text along path</option><option value="horizontal">Horizontal / stacked</option></select></label>
               <label>Font size<input type="number" min="0.000001" max="1000" step="0.1"
                 :value="selected.textSize ?? (fontSize?.id === selectedId ? Number(fontSize.size.toFixed(6)) : undefined)"
@@ -586,10 +618,10 @@ header { justify-content: space-between; }
 .water-editor-add { display: grid; gap: 8px; padding: 9px; border: 1px solid var(--ui-border); border-radius: 6px; }
 fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 label { display: grid; gap: 3px; }
-input:not([type=checkbox]), select { width: 100%; min-width: 0; box-sizing: border-box; }
-input, select, button { color: inherit; font: inherit; accent-color: #276c8e; }
-input { -webkit-user-select: text; user-select: text; }
-input:not([type=range]), select, button { padding: 5px 7px; border: 1px solid var(--ui-border); border-radius: 5px; background: var(--ui-panel, white); }
+input:not([type=checkbox]), select, textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+input, select, textarea, button { color: inherit; font: inherit; accent-color: #276c8e; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+input:not([type=range]), select, textarea, button { padding: 5px 7px; border: 1px solid var(--ui-border); border-radius: 5px; background: var(--ui-panel, white); }
 button { cursor: pointer; }
 button:disabled, fieldset:disabled { opacity: 0.5; }
 button:disabled { cursor: default; }

@@ -136,6 +136,7 @@ const projectedLabels = computed<ProjectedLabel[]>(() => (props.labels ?? marine
   if (!point || !point.every(Number.isFinite)) return []
   const displayName = locale.value === 'nb' ? label.nameNb : label.name
   const horizontal = placement?.layout === 'horizontal'
+  const stackedText = locale.value === 'nb' ? label.stackedTextNb : label.stackedText
   const validGuide = horizontal ? undefined : projectGuide(sampledGuides.value.get(label.id), offset)
   const readableGuide = horizontal ? undefined : projectGuide(readableGuides.value.get(label.id), offset)
   const corners = placement?.bounds?.flatMap(([x]) => placement.bounds!.map(([, y]) =>
@@ -149,7 +150,7 @@ const projectedLabels = computed<ProjectedLabel[]>(() => (props.labels ?? marine
     x: point[0],
     y: point[1],
     displayName,
-    lines: validGuide ? [displayName] : labelLines(displayName, label.kind, horizontal),
+    lines: validGuide ? [displayName] : horizontal && stackedText ? stackedText.split('\n') : labelLines(displayName, label.kind, horizontal),
     guide: validGuide,
     guideLengths: validGuide ? labelGuideLengths(validGuide) : undefined,
     guideCenter: placement?.center,
@@ -241,13 +242,13 @@ function updateLabels() {
           : (props.width - 20) * 0.8
       const heightFactor = label.waterBounds
         ? (label.waterBounds[1][1] - label.waterBounds[0][1]) * 0.7
-          / (baseFontPixels * (label.lines.length > 1 ? 3.4 : 2.4))
+          / (baseFontPixels * (label.lines.length > 1 ? 3.4 + (label.lines.length - 2) * 1.35 : 2.4))
         : Infinity
       let rotationFactor = Infinity
       if (label.rotation && label.waterBounds) {
         const angle = label.rotation * Math.PI / 180
         const cosine = Math.abs(Math.cos(angle)), sine = Math.abs(Math.sin(angle))
-        const height = baseFontPixels * (label.lines.length > 1 ? 3.4 : 2.4)
+        const height = baseFontPixels * (label.lines.length > 1 ? 3.4 + (label.lines.length - 2) * 1.35 : 2.4)
         rotationFactor = Math.min(
           (label.waterBounds[1][0] - label.waterBounds[0][0]) * 0.7 / (paddedWidth * cosine + height * sine),
           (label.waterBounds[1][1] - label.waterBounds[0][1]) * 0.7 / (paddedWidth * sine + height * cosine),
@@ -272,7 +273,7 @@ function updateLabels() {
       }
       const textWidth = baseTextWidth * fontFactor
       const halfWidth = textWidth / 2
-      const halfHeight = fontPixels * (label.lines.length > 1 ? 1.2 : 0.7)
+      const halfHeight = fontPixels * (label.lines.length > 1 ? 1.2 + (label.lines.length - 2) * 0.675 : 0.7)
       const labelFont = `${fontPixels}px`
       if (element.style.fontSize !== labelFont) element.style.fontSize = labelFont
       element.removeAttribute('transform')
@@ -438,7 +439,7 @@ onBeforeUnmount(() => {
         <tspan
           v-for="(line, index) in label.guide ? [] : label.lines"
           :key="index"
-          :dy="index === 0 && label.lines.length > 1 ? '-0.55em' : index > 0 ? '1.35em' : undefined"
+          :dy="index === 0 && label.lines.length > 1 ? `${-0.55 - (label.lines.length - 2) * 0.675}em` : index > 0 ? '1.35em' : undefined"
         >{{ label.kind === 'ocean' ? line.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : line }}</tspan>
       </text>
     </g>
