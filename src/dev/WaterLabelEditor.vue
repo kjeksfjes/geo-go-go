@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import packageInfo from '../../package.json'
+import type { Geometry } from 'geojson'
+import waterBoundaries from './water-boundaries.json'
 import { marineLabels } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
 import type { MapPoint } from '../composables/useMapZoom'
@@ -13,6 +15,7 @@ const props = defineProps<{
   height: number
   transform: Readonly<{ x: number; y: number; scale: number }>
   projectPoint: (point: MapPoint) => MapPoint | undefined
+  projectGeometry: (geometry: Geometry) => string
   unprojectPoint: (point: MapPoint) => MapPoint | undefined
   wrapPeriod: number | null
   copyOffsets: readonly number[]
@@ -76,6 +79,13 @@ const results = computed(() => {
 })
 const collapsed = ref(false)
 const showHandles = ref(true)
+const showWaterArea = ref(true)
+const boundaries = waterBoundaries.boundaries as unknown as Record<string, Geometry>
+// Source geometry is independent of the editable placement and its fitting box.
+const boundaryPath = computed(() => {
+  const geometry = boundaries[selectedId.value]
+  return geometry ? props.projectGeometry(geometry) : ''
+})
 const previewOriginal = ref(false)
 const selectedNode = ref(0)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -345,6 +355,12 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="water-editor" @keydown.stop @pointerdown.stop @click.stop @dblclick.stop @wheel.stop @touchstart.stop @touchmove.stop @selectstart.stop @contextmenu.stop>
+    <svg v-if="showWaterArea && boundaryPath && !recovery" class="water-editor-boundary" :viewBox="`0 0 ${width} ${height}`" aria-hidden="true">
+      <g :transform="`translate(${transform.x} ${transform.y}) scale(${transform.scale})`">
+        <path v-for="offset in copyOffsets" :key="offset" :d="boundaryPath"
+          :transform="offset ? `translate(${offset} 0)` : undefined" vector-effect="non-scaling-stroke" />
+      </g>
+    </svg>
     <svg v-if="showHandles && !previewOriginal && !recovery && selected" ref="overlay" class="water-editor-overlay"
       :viewBox="`0 0 ${width} ${height}`" aria-label="Water label path editor"
       @pointermove="moveDrag" @pointerup="finishDrag" @pointercancel="cancelDrag" @lostpointercapture="finishDrag">
@@ -387,6 +403,7 @@ onBeforeUnmount(() => {
           </div>
           <label class="water-editor-check"><input v-model="previewOriginal" type="checkbox" /> Compare with original placements</label>
           <label class="water-editor-check"><input v-model="showHandles" type="checkbox" /> Show editing handles</label>
+          <label class="water-editor-check"><input v-model="showWaterArea" type="checkbox" /> Show approximate water boundary</label>
           <label>Find a water name<input v-model="query" type="search" placeholder="English, Norwegian, or ID" /></label>
           <label class="water-editor-check"><input v-model="changedOnly" type="checkbox" /> Changed names only</label>
           <select class="water-editor-results" size="4" aria-label="Water names" :value="selectedId" @change="choose(($event.target as HTMLSelectElement).value)">
@@ -395,6 +412,7 @@ onBeforeUnmount(() => {
           <p v-if="!results.length">No matching names.</p>
           <template v-if="selected && selectedLabel">
             <div class="water-editor-selection"><strong>{{ selectedLabel.name }}</strong><span>{{ selectedLabel.nameNb }} · {{ selectedLabel.id }}</span></div>
+            <p v-if="showWaterArea" class="water-editor-hint">Purple area: Natural Earth's approximate marine extent. It stays fixed as you edit; it is guidance, not a placement restriction. The blue rectangle is the editable text-fitting frame.</p>
             <p v-if="warning" class="water-editor-warning" role="status">{{ warning }}</p>
             <div class="water-editor-actions"><button type="button" :disabled="disabled" @click="focus">Find on map</button><button type="button" :disabled="editLocked || !edits[selectedId]" @click="resetLabel">Reset this name</button></div>
             <fieldset :disabled="editLocked">
@@ -428,6 +446,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .water-editor { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
 .water-editor-overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+.water-editor-boundary { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.water-editor-boundary path { fill: #7357b8; fill-opacity: 0.12; stroke: #6342a4; stroke-opacity: 0.8; stroke-width: 1.5; stroke-dasharray: 5 3; }
 .water-editor-panel { position: absolute; top: 12px; right: 12px; width: min(310px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; padding: 12px; color: var(--ui-ink); background: var(--ui-paper); border: 1px solid var(--ui-border); border-radius: 12px; box-shadow: var(--ui-shadow-panel); pointer-events: auto; font: 12px/1.45 var(--ui-font-body, sans-serif); }
 header, .water-editor-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
 header { justify-content: space-between; }

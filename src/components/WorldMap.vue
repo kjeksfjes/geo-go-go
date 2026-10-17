@@ -279,6 +279,7 @@ const {
   horizontalWrap,
   interactionGeographicPaths,
   projectPoint,
+  projectGeometry,
   questionLandmassAnchors,
   projectionDebug,
   projectionScale,
@@ -2256,6 +2257,7 @@ if (import.meta.hot) {
         v-model:selected-id="waterEditorSelectedId"
         :width="mapWidth" :height="mapHeight" :transform="transform"
         :project-point="projectPoint" :unproject-point="unprojectPoint"
+        :project-geometry="projectGeometry"
         :wrap-period="horizontalWrap?.period ?? null" :copy-offsets="copyOffsets"
         :disabled="interactionLocked || isInteracting"
         :warning="waterEditorWarning"
