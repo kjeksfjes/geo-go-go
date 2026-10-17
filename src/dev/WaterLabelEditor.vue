@@ -21,6 +21,7 @@ const props = defineProps<{
   copyOffsets: readonly number[]
   disabled: boolean
   warning: string
+  fontSize: { id: string; size: number; pixels: number } | null
 }>()
 const selectedId = defineModel<string>('selectedId', { required: true })
 const emit = defineEmits<{
@@ -135,9 +136,31 @@ function resetLabel() {
   commit()
 }
 function number(event: Event) { return Number((event.target as HTMLInputElement).value) }
-function field(key: 'textScale' | 'center' | 'spanFraction', event: Event) {
+function field(key: 'center' | 'spanFraction', event: Event) {
   const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
   if (source) update({ ...clone(source), [key]: number(event) })
+}
+
+function setFontSize(event: Event) {
+  const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
+  if (!source) return
+  const input = event.target as HTMLInputElement
+  const size = input.value.trim() ? Number(input.value) : NaN
+  if (!Number.isFinite(size) || size < 0.01 || size > 1000) {
+    status.value = 'Enter a font size between 0.01 and 1000.'
+    return
+  }
+  const value = clone(source)
+  value.textSize = size
+  delete value.textScale
+  update(value); commit()
+}
+function automaticFontSize() {
+  const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
+  if (!source) return
+  const value = clone(source)
+  delete value.textSize; delete value.textScale
+  update(value); commit()
 }
 
 function project(point: MapPoint, referenceX?: number): MapPoint | undefined {
@@ -409,13 +432,19 @@ onBeforeUnmount(() => {
             <div class="water-editor-actions"><button type="button" :disabled="disabled" @click="focus">Find on map</button><button type="button" :disabled="editLocked || !edits[selectedId]" @click="resetLabel">Reset this name</button></div>
             <fieldset :disabled="editLocked">
               <label>Layout<select :value="selected.layout ?? 'curve'" @change="layout"><option value="curve">Text along path</option><option value="horizontal">Horizontal / stacked</option></select></label>
-              <label>Text size ×{{ (selected.textScale ?? 1).toFixed(2) }}<input type="range" min="0.1" max="5" step="0.05" :value="selected.textScale ?? 1" @input="field('textScale', $event)" @change="commit" /></label>
-              <p class="water-editor-hint">Text size scales independently. Larger curved text can extend beyond the path's ends.</p>
+              <label>Font size<input type="number" min="0.01" max="1000" step="0.1"
+                :value="selected.textSize ?? (fontSize?.id === selectedId ? Number(fontSize.size.toFixed(3)) : undefined)"
+                placeholder="Enter size" @change="setFontSize" /></label>
+              <div class="water-editor-actions">
+                <button type="button" :disabled="selected.textSize === undefined && selected.textScale === undefined" @click="automaticFontSize">Automatic size</button>
+                <span v-if="fontSize?.id === selectedId && !previewOriginal">Currently {{ fontSize.pixels.toFixed(1) }} px</span>
+              </div>
+              <p class="water-editor-hint">Equal values give equal font size in the same view. The number is font pixels on a 1600px-wide reference map; zoom changes the current pixel size. Larger curved text can extend beyond the path's ends.</p>
               <div class="water-editor-actions"><span>Rotate</span><button v-for="angle in [-10, -1, 1, 10]" :key="angle" type="button" @click="transformGeometry(angle)">{{ angle > 0 ? '+' : '' }}{{ angle }}°</button></div>
               <template v-if="selected.layout !== 'horizontal'">
                 <div class="water-editor-actions"><span>Path size</span><button type="button" @click="transformGeometry(0, 0.9)">−10%</button><button type="button" @click="transformGeometry(0, 1.1)">+10%</button></div>
                 <label>Text position along path {{ Math.round((selected.center ?? 0.5) * 100) }}%<input type="range" min="0" max="1" step="0.01" :value="selected.center ?? 0.5" @input="field('center', $event)" @change="commit" /></label>
-                <label>Use {{ Math.round((selected.spanFraction ?? 0.85) * 100) }}% of path<input type="range" min="0.05" max="1" step="0.01" :value="selected.spanFraction ?? 0.85" @input="field('spanFraction', $event)" @change="commit" /></label>
+                <label v-if="selected.textSize === undefined">Auto-size path use {{ Math.round((selected.spanFraction ?? 0.85) * 100) }}%<input type="range" min="0.05" max="1" step="0.01" :value="selected.spanFraction ?? 0.85" @input="field('spanFraction', $event)" @change="commit" /></label>
                 <label>Path point<select v-model.number="selectedNode"><option v-for="(_, i) in selected.points" :key="i" :value="i">Point {{ i + 1 }}</option></select></label>
                 <div class="water-editor-coordinates">
                   <label>Longitude<input type="number" step="0.001" :value="selected.points[selectedNode]?.[0]" @change="editNode(0, $event)" /></label>

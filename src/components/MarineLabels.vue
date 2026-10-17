@@ -19,7 +19,11 @@ const props = defineProps<{
   editing?: boolean
   editingLabelId?: string
 }>()
-const emit = defineEmits<{ select: [id: string]; 'editing-warning': [message: string] }>()
+const emit = defineEmits<{
+  select: [id: string]
+  'editing-warning': [message: string]
+  'editing-size': [size: { id: string; size: number; pixels: number }]
+}>()
 const placements = computed(() => props.placements ?? marineLabelPaths)
 
 interface ProjectedLabel extends MarineLabel {
@@ -37,6 +41,7 @@ interface ProjectedLabel extends MarineLabel {
   spanFraction?: number
   sizeScale?: number
   textScale?: number
+  textSize?: number
   rotation?: number
 }
 
@@ -154,6 +159,7 @@ const projectedLabels = computed<ProjectedLabel[]>(() => marineLabels.flatMap((l
     spanFraction: placement?.spanFraction,
     sizeScale: placement?.sizeScale,
     textScale: placement?.textScale,
+    textSize: placement?.textSize,
     rotation: placement?.rotation,
   }]
 }))
@@ -246,11 +252,18 @@ function updateLabels() {
           (label.waterBounds[1][1] - label.waterBounds[0][1]) * 0.7 / (paddedWidth * sine + height * cosine),
         )
       }
-      const mapFontFactor = Math.min(preferredSize / baseFontPixels, corridorSpace / paddedWidth, heightFactor, rotationFactor)
-        * (label.textScale ?? 1)
-      const fontFactor = mapFontFactor * scale
-      const fontPixels = baseFontPixels * fontFactor
+      const mapFontFactor = label.textSize !== undefined
+        ? label.textSize * mapTypographyScale / baseFontPixels
+        : Math.min(preferredSize / baseFontPixels, corridorSpace / paddedWidth, heightFactor, rotationFactor)
+          * (label.textScale ?? 1)
+      const fontPixels = label.textSize !== undefined
+        ? label.textSize * mapTypographyScale * scale
+        : baseFontPixels * mapFontFactor * scale
+      const fontFactor = fontPixels / baseFontPixels
       const selectedForEditing = props.editingLabelId === label.id
+      if (selectedForEditing) emit('editing-size', {
+        id: label.id, size: label.textSize ?? fontPixels / scale / mapTypographyScale, pixels: fontPixels,
+      })
       const keepVisible = props.editing && selectedForEditing
       if (fontPixels < (isOcean ? 4 : 10)) {
         if (selectedForEditing) editingWarning = 'Below the normal map visibility cutoff at this zoom. Zoom in or increase text size; hiding handles shows the normal map preview.'
@@ -309,7 +322,7 @@ function updateLabels() {
       // An explicit size is an authored override, not a request to refit or
       // hide the text inside the old preparation rectangle. Apply this in
       // normal preview too, independent of selection and editor handles.
-      if (label.waterBounds && label.textScale === undefined) {
+      if (label.waterBounds && label.textScale === undefined && label.textSize === undefined) {
         const [[left, top], [right, bottom]] = label.waterBounds
         const coastMargin = Math.max(10, fontPixels / 2)
         const outsideFrame = box[0] < props.transform.x + scale * (left + offset) + coastMargin

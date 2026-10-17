@@ -15,6 +15,8 @@ export interface MarineLabelPath {
   spanFraction?: number
   sizeScale?: number
   textScale?: number
+  // Font pixels at the shared 1600px-wide, projection-scale-1 reference view.
+  textSize?: number
   rotation?: number
 }
 const offsets: Record<string, MapPoint> = {

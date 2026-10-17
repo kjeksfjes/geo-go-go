@@ -176,6 +176,7 @@ const waterEditorPlacements = shallowRef<Record<string, MarineLabelPath> | undef
 const waterEditorSelectedId = ref('')
 const waterEditorEditing = ref(false)
 const waterEditorWarning = ref('')
+const waterEditorFontSize = shallowRef<{ id: string; size: number; pixels: number } | null>(null)
 const canvasReady = ref(false)
 const canvasContextKind = ref('unavailable')
 const fastTouchZoomPreview = ref(false)
@@ -2046,6 +2047,7 @@ if (import.meta.hot) {
           :editing-label-id="waterEditorEnabled && waterEditorPlacements ? waterEditorSelectedId : undefined"
           @select="waterEditorSelectedId = $event"
           @editing-warning="waterEditorWarning = $event"
+          @editing-size="waterEditorFontSize = $event"
         />
       </svg>
 
@@ -2261,6 +2263,7 @@ if (import.meta.hot) {
         :wrap-period="horizontalWrap?.period ?? null" :copy-offsets="copyOffsets"
         :disabled="interactionLocked || isInteracting"
         :warning="waterEditorWarning"
+        :font-size="waterEditorFontSize"
         @preview="waterEditorPlacements = $event" @editing="waterEditorEditing = $event"
         @focus="focusWaterEditor"
       />
