@@ -2,6 +2,16 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Improvements
+
+- Keep language switching visible in the mobile header and add English/Norsk choices to the introductory help invitation.
+
+- Simplify the first three guide steps in Norwegian and English, including the touch navigation equivalent.
+
+- Remove the temporary water-label collision debug flag and overlay.
+
 ## 0.19.0 — Northern Names — 2026-10-17
 
 ### Improvements

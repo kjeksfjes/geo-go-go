@@ -484,8 +484,8 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
           {{ t('help') }}
         </button>
         <div class="language-selector" role="group" :aria-label="t('language')">
-          <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="setLocale('en')">EN</button>
-          <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="setLocale('nb')">NO</button>
+          <button type="button" :aria-pressed="locale === 'en'" aria-label="English" lang="en" @click="setLocale('en')">EN</button>
+          <button type="button" :aria-pressed="locale === 'nb'" aria-label="Norsk" lang="nb" @click="setLocale('nb')">NO</button>
         </div>
         <button
           class="settings-button"
@@ -503,10 +503,14 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         </button>
       </div>
       <aside v-if="invitationVisible" class="help-invitation" :aria-label="t('help')">
+        <div class="language-selector" role="group" :aria-label="t('language')">
+          <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="setLocale('en')">English</button>
+          <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="setLocale('nb')">Norsk</button>
+        </div>
         <p>{{ t('helpInvitation') }}</p>
         <p class="help-invitation__return">{{ t('helpReturn') }}</p>
         <p v-if="helpError" role="status">{{ t('helpLoadError') }}</p>
-        <div>
+        <div class="help-invitation__actions">
           <button type="button" :disabled="helpLoading || detailLoading" @click="openHelp">{{ t('helpStart') }}</button>
           <button type="button" @click="dismissHelpInvitation">{{ t('helpDismiss') }}</button>
         </div>
