@@ -6,6 +6,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Position the first letter along curved paths instead of requiring a centered-text interpretation, preserving older saved positions until adjusted; let edited curve endpoints follow neighboring points automatically without fixed handles.
 - Honor the text-center percentage near curved water-label path endpoints, including duplicate placements and text shorter than the path; extend the baseline instead of shifting the name inward.
 - Give each water name multiple independently positioned placements, with repeatable full names or bilingual text parts, shared font size and letter spacing, and support throughout the editor, drafts, and direct project saves.
 - Keep water names visible when switching between placements of the same name, and refresh the selected placement's size and warnings.

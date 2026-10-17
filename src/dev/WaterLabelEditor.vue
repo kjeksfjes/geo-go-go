@@ -251,9 +251,13 @@ function number(event: Event) { return Number((event.target as HTMLInputElement)
 function preserveSize(placement: MarineLabelPath) {
   return preservePlacementFontSize(placement, props.fontSize?.id === selectedId.value && props.fontSize.placementIndex === placementIndex.value ? props.fontSize.size : undefined)
 }
-function field(key: 'center' | 'spanFraction', event: Event) {
+function field(key: 'textPosition' | 'spanFraction', event: Event) {
   const source = selected.value
-  if (source) update({ ...clone(source), [key]: number(event) })
+  if (source) {
+    const value = { ...clone(source), [key]: number(event) }
+    if (key === 'textPosition') delete value.center
+    update(value)
+  }
 }
 
 function setFontSize(event: Event, completed = true) {
@@ -345,7 +349,7 @@ function screen(point: MapPoint): MapPoint | undefined {
 }
 const nodes = computed(() => selected.value?.points.map(screen) ?? [])
 const guidePath = computed(() => {
-  const points = selected.value && sampleLabelGuide(selected.value.points).map(screen)
+  const points = selected.value && sampleLabelGuide(selected.value.points, selected.value.curve).map(screen)
   if (!points || points.some(p => !p)) return ''
   return points.map((p, i) => `${i ? 'L' : 'M'}${p![0]},${p![1]}`).join(' ')
 })
@@ -446,12 +450,21 @@ function layout(event: Event) {
     }
   } else {
     delete value.layout; delete value.anchor; delete value.bounds; delete value.rotation
+    value.curve = 'natural'
   }
+  update(value); commit()
+}
+function setNaturalCurve(event: Event) {
+  if (!selected.value) return
+  const value = preserveSize(selected.value)
+  if ((event.target as HTMLInputElement).checked) value.curve = 'natural'
+  else delete value.curve
   update(value); commit()
 }
 function editNode(axis: number, event: Event) {
   if (!selected.value?.points[selectedNode.value]) return
   const value = preserveSize(selected.value)
+  value.curve = 'natural'
   value.points[selectedNode.value]![axis] = number(event)
   update(value); commit()
 }
@@ -460,6 +473,7 @@ function addNode() {
   const value = preserveSize(selected.value)
   const index = Math.min(selectedNode.value, value.points.length - 2)
   const a = value.points[index]!, b = value.points[index + 1]!
+  value.curve = 'natural'
   value.points.splice(index + 1, 0, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2])
   selectedNode.value = index + 1
   update(value); commit()
@@ -467,6 +481,7 @@ function addNode() {
 function removeNode() {
   if (!selected.value || selected.value.points.length <= 3) return
   const value = preserveSize(selected.value)
+  value.curve = 'natural'
   value.points.splice(selectedNode.value, 1)
   selectedNode.value = Math.min(selectedNode.value, value.points.length - 1)
   update(value); commit()
@@ -502,7 +517,7 @@ function moveDrag(event: PointerEvent) {
     const value = clone(drag.placement)
     const p = inverse([(current[0] - props.transform.x) / props.transform.scale - drag.offset,
       (current[1] - props.transform.y) / props.transform.scale], value.points[drag.index]!)
-    if (p) { value.points[drag.index] = p; update(value) }
+    if (p) { value.curve = 'natural'; value.points[drag.index] = p; update(value) }
   }
 }
 function finishDrag(event?: PointerEvent) {
@@ -732,8 +747,10 @@ onBeforeUnmount(() => {
               <div class="water-editor-actions"><span>Rotate</span><button v-for="angle in [-10, -1, 1, 10]" :key="angle" type="button" @click="transformGeometry(angle)">{{ angle > 0 ? '+' : '' }}{{ angle }}°</button></div>
               <template v-if="selected.layout !== 'horizontal'">
                 <div class="water-editor-actions"><span>Path size</span><button type="button" @click="transformGeometry(0, 0.9)">−10%</button><button type="button" @click="transformGeometry(0, 1.1)">+10%</button></div>
-                <label>Text center along path {{ Math.round((selected.center ?? 0.5) * 100) }}%<input type="range" min="0" max="1" step="0.01" :value="selected.center ?? 0.5" @input="field('center', $event)" @change="commit" /></label>
-                <p class="water-editor-hint">0% centers the text at the first path point; 100% at the last. Text may extend beyond either end.</p>
+                <label>First letter along path {{ selected.textPosition === undefined ? '(not set)' : `${Math.round(selected.textPosition * 100)}%` }}<input type="range" min="0" max="1" step="0.01" :value="selected.textPosition ?? 0" @input="field('textPosition', $event)" @change="commit" /></label>
+                <p class="water-editor-hint">0% starts the first letter at the left-hand end; 100% at the other end. Text can continue past the endpoint. Existing centered positions stay unchanged until this slider is adjusted.</p>
+                <label class="water-editor-check"><input type="checkbox" :checked="selected.curve === 'natural'" @change="setNaturalCurve" /> Automatic endpoint tangents</label>
+                <p class="water-editor-hint">Endpoint tangents follow the neighboring curve automatically. Enabled when editing path points or switching to a curved layout.</p>
                 <label v-if="selected.textSize === undefined">Auto-size path use {{ Math.round((selected.spanFraction ?? 0.85) * 100) }}%<input type="range" min="0.05" max="1" step="0.01" :value="selected.spanFraction ?? 0.85" @input="field('spanFraction', $event)" @change="commit" /></label>
                 <label>Path point<select v-model.number="selectedNode"><option v-for="(_, i) in selected.points" :key="i" :value="i">Point {{ i + 1 }}</option></select></label>
                 <div class="water-editor-coordinates">

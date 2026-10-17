@@ -7,6 +7,8 @@ import overrides from './marine-label-overrides.json'
 export interface MarineLabelPath {
   points: MapPoint[]
   center?: number
+  textPosition?: number
+  curve?: 'natural'
   readablePoints?: MapPoint[]
   offset?: MapPoint
   layout?: 'horizontal'

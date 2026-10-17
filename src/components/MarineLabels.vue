@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, useId, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
-import { extendedLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
+import { extendedLabelGuide, labelGuideLengths, sampleLabelGuide, startAlignedLabelGuide } from '../logic/marineLabelLayout'
 import { waterLabelPlacements, waterLabelPlacementId } from '../logic/marineLabelPlacements'
 import { locale } from '../i18n'
 import type { MapPoint } from '../composables/useMapZoom'
@@ -39,6 +39,7 @@ interface ProjectedLabel extends MarineLabel {
   guide?: MapPoint[]
   guideLengths?: number[]
   guideCenter?: number
+  guideTextPosition?: number
   readableGuide?: MapPoint[]
   readableLengths?: number[]
   waterBounds?: [MapPoint, MapPoint]
@@ -67,9 +68,9 @@ const labelPlacements = computed(() => (props.labels ?? marineLabels).flatMap(la
   }))
 }))
 const sampledGuides = computed(() => new Map(labelPlacements.value.flatMap(({ placement, key }) =>
-  placement ? [[key, sampleLabelGuide(placement.points)] as const] : [])))
+  placement ? [[key, sampleLabelGuide(placement.points, placement.curve)] as const] : [])))
 const readableGuides = computed(() => new Map(labelPlacements.value.flatMap(({ placement, key }) =>
-  placement?.readablePoints ? [[key, sampleLabelGuide(placement.readablePoints)] as const] : [])))
+  placement?.readablePoints ? [[key, sampleLabelGuide(placement.readablePoints, placement.curve)] as const] : [])))
 let updateFrame: number | undefined
 
 function labelPathId(id: string, offset: number) {
@@ -167,6 +168,7 @@ const projectedLabels = computed<ProjectedLabel[]>(() => labelPlacements.value.f
     guide: validGuide,
     guideLengths: validGuide ? labelGuideLengths(validGuide) : undefined,
     guideCenter: placement?.center,
+    guideTextPosition: placement?.textPosition,
     readableGuide,
     readableLengths: readableGuide ? labelGuideLengths(readableGuide) : undefined,
     waterBounds,
@@ -305,8 +307,10 @@ function updateLabels() {
         const source = label.readableGuide && label.readableLengths
           ? { points: label.readableGuide, lengths: label.readableLengths }
           : { points: label.guide, lengths: label.guideLengths }
-        const guide = extendedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
-          label.guideCenter)
+        const guide = label.guideTextPosition === undefined
+          ? extendedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale, label.guideCenter)
+          : startAlignedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
+            textWidth / scale, label.guideTextPosition)
         if (!guide) {
           if (selectedForEditing) editingWarning = 'The path has no usable length for this text. Extend the path or undo the last adjustment.'
           continue

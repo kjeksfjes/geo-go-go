@@ -47,12 +47,13 @@ export function preservePlacementFontSize(source: MarineLabelPath, currentSize: 
 const point = (value: unknown): value is MapPoint => Array.isArray(value) && value.length === 2
   && value.every(Number.isFinite) && Math.abs(value[0]) <= 720 && Math.abs(value[1]) <= 90
 const fields = new Set(['points', 'readablePoints', 'center', 'offset', 'layout', 'anchor', 'bounds',
-  'fontSize', 'spanFraction', 'sizeScale', 'textScale', 'textSize', 'letterSpacing', 'rotation', 'text', 'textNb', 'additionalPlacements'])
+  'fontSize', 'spanFraction', 'sizeScale', 'textScale', 'textSize', 'letterSpacing', 'rotation', 'text', 'textNb', 'additionalPlacements', 'textPosition', 'curve'])
 
 export function validPlacement(input: unknown): input is MarineLabelPath {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false
   const value = input as Record<string, unknown>
   if (Object.keys(value).some(key => !fields.has(key))) return false
+  if (value.curve !== undefined && value.curve !== 'natural') return false
   for (const key of ['text', 'textNb']) {
     const text = value[key]
     if (text !== undefined && (typeof text !== 'string' || !text.trim() || text.length > 120 || /[\r\n]/.test(text))) return false
@@ -79,7 +80,7 @@ export function validPlacement(input: unknown): input is MarineLabelPath {
   }
   if (value.layout === 'horizontal' && (!point(value.anchor) || !Array.isArray(value.bounds))) return false
   const ranges: Record<string, [number, number]> = {
-    center: [0, 1], spanFraction: [0.05, 1], fontSize: [0.01, 1000],
+    center: [0, 1], textPosition: [0, 1], spanFraction: [0.05, 1], fontSize: [0.01, 1000],
     sizeScale: [0.001, 1000], textScale: [0.1, 10], textSize: [0.000001, 1000], letterSpacing: [-0.1, 2], rotation: [-180, 180],
   }
   for (const [key, [min, max]] of Object.entries(ranges)) {

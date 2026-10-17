@@ -2,7 +2,8 @@ import type { MapPoint } from '../composables/useMapZoom'
 
 // Sample a gentle spline once in geographic coordinates; projection changes
 // then reuse this small guide instead of inspecting the detailed coastline.
-export function sampleLabelGuide(points: readonly MapPoint[]): MapPoint[] {
+export function sampleLabelGuide(points: readonly MapPoint[], curve?: 'natural'): MapPoint[] {
+  if (curve === 'natural') return sampleNaturalGuide(points)
   const sampled: MapPoint[] = []
   for (let segment = 0; segment < points.length - 1; segment++) {
     const a = points[Math.max(0, segment - 1)]!
@@ -22,6 +23,35 @@ export function sampleLabelGuide(points: readonly MapPoint[]): MapPoint[] {
   return sampled
 }
 
+// Natural cubic interpolation passes through the nodes with zero curvature at
+// the ends. Endpoint tangents follow the neighboring curve instead of being
+// constrained to the straight chord between the first/last pair of nodes.
+function sampleNaturalGuide(points: readonly MapPoint[]): MapPoint[] {
+  if (points.length < 2) return [...points]
+  const second: MapPoint[] = points.map(() => [0, 0])
+  const upper = points.map(() => 0)
+  for (let index = 1; index < points.length - 1; index++) {
+    const divisor = 4 - upper[index - 1]!
+    upper[index] = 1 / divisor
+    for (const axis of [0, 1] as const) second[index]![axis] = (6 * (
+      points[index + 1]![axis] - 2 * points[index]![axis] + points[index - 1]![axis]
+    ) - second[index - 1]![axis]) / divisor
+  }
+  for (let index = points.length - 2; index > 0; index--) {
+    for (const axis of [0, 1] as const) second[index]![axis] -= upper[index]! * second[index + 1]![axis]
+  }
+  const sampled: MapPoint[] = []
+  for (let segment = 0; segment < points.length - 1; segment++) {
+    for (let step = 0; step < 12; step++) {
+      const t = step / 12, u = 1 - t
+      sampled.push([0, 1].map(axis => u * points[segment]![axis]! + t * points[segment + 1]![axis]!
+        + ((u ** 3 - u) * second[segment]![axis]! + (t ** 3 - t) * second[segment + 1]![axis]!) / 6) as MapPoint)
+    }
+  }
+  sampled.push([...points.at(-1)!])
+  return sampled
+}
+
 export function labelGuideLengths(points: readonly MapPoint[]): number[] {
   const lengths = [0]
   for (let index = 1; index < points.length; index++) {
@@ -34,7 +64,8 @@ export function labelGuideLengths(points: readonly MapPoint[]): number[] {
 
 // Only the part beneath the text participates in viewport/collision checks.
 // A long geographic guide must not make a small label occupy the whole sea.
-export function centeredLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number, centerFraction = 0.5): MapPoint[] | undefined {
+export function centeredLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number, centerFraction = 0.5,
+  preserveDirection = false): MapPoint[] | undefined {
   const total = lengths[lengths.length - 1] ?? 0
   // Extending a short guide at large projected coordinates loses precision
   // when subtracting its endpoints, then accumulates error over its segments.
@@ -62,7 +93,7 @@ export function centeredLabelGuide(points: readonly MapPoint[], lengths: readonl
     result.push(interpolate(Math.min(end, to)))
   }
   if (result.length < 2) return undefined
-  if (result[0]![0] > result[result.length - 1]![0]) result.reverse()
+  if (!preserveDirection && result[0]![0] > result[result.length - 1]![0]) result.reverse()
   return result
 }
 
@@ -72,11 +103,32 @@ export function centeredLabelGuide(points: readonly MapPoint[], lengths: readonl
 export function extendedLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number,
   centerFraction = 0.5): MapPoint[] | undefined {
   const total = lengths.at(-1) ?? 0
-  if (!Number.isFinite(span) || !Number.isFinite(total) || span <= 0 || total <= 0) return undefined
   const center = total * Math.max(0, Math.min(1, centerFraction))
+  return labelGuideAtDistance(points, lengths, span, center)
+}
+
+// The first letter follows the readable direction, starting from the left-hand
+// endpoint. Keep half the measured text after that position, regardless of the
+// larger padded guide used for SVG layout and viewport checks.
+export function startAlignedLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number,
+  textSpan: number, position: number): MapPoint[] | undefined {
+  if (!Number.isFinite(textSpan) || textSpan < 0 || !Number.isFinite(position)) return undefined
+  if (points[0] && points.at(-1) && points[0][0] > points.at(-1)![0]) {
+    points = [...points].reverse()
+    lengths = labelGuideLengths(points)
+  }
+  const total = lengths.at(-1) ?? 0
+  // Orient once before cropping, so a local bend cannot swap the leading edge.
+  return labelGuideAtDistance(points, lengths, span, total * Math.max(0, Math.min(1, position)) + textSpan / 2, true)
+}
+
+function labelGuideAtDistance(points: readonly MapPoint[], lengths: readonly number[], span: number,
+  center: number, preserveDirection = false): MapPoint[] | undefined {
+  const total = lengths.at(-1) ?? 0
+  if (!Number.isFinite(span) || !Number.isFinite(total) || !Number.isFinite(center) || span <= 0 || total <= 0) return undefined
   const before = Math.max(0, span / 2 - center)
   const after = Math.max(0, center + span / 2 - total)
-  if (before === 0 && after === 0) return centeredLabelGuide(points, lengths, span, centerFraction)
+  if (before === 0 && after === 0) return centeredLabelGuide(points, lengths, span, center / total, preserveDirection)
   let first = 1, last = points.length - 2
   while (first < points.length && lengths[first] === 0) first++
   while (last >= 0 && lengths[last] === total) last--
@@ -91,7 +143,7 @@ export function extendedLabelGuide(points: readonly MapPoint[], lengths: readonl
     [end[0] + (end[0] - b[0]) * after / endLength, end[1] + (end[1] - b[1]) * after / endLength],
   ]
   const extendedLengths = labelGuideLengths(extended)
-  return centeredLabelGuide(extended, extendedLengths, span, (before + center) / extendedLengths.at(-1)!)
+  return centeredLabelGuide(extended, extendedLengths, span, (before + center) / extendedLengths.at(-1)!, preserveDirection)
 }
 
 // Clip the guide to the usable viewport, then keep the preferred geographic
