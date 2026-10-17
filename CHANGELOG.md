@@ -6,6 +6,8 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Localize the remaining 54 unresolved water labels using reviewed Norwegian proper-name stems and Norwegian water terms, retaining source stems when no Norwegian variant was established. Record constructed names separately from attested forms.
+
 - Apply 47 documented Norwegian water names, including Øst-Koreabukta, Molukksjøen, Jenisejbukta, and Mecklenburgbukta; retain unresolved names pending further review.
 
 - Move Sargasso Sea slightly northwest and Atlantic Ocean slightly east to separate their labels.

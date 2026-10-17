@@ -7,7 +7,8 @@
     "norwegian-form-verified": 33,
     "norwegian-wikipedia-supported": 14,
     "current-form-supported": 18,
-    "unresolved": 54
+    "norwegian-form-constructed": 48,
+    "norwegian-nynorsk-supported": 6
   },
   "limitations": [
     "Searches do not prove absence of an established Norwegian name. Unresolved entries must not be classified as verified retained names.",
@@ -596,9 +597,12 @@
         -46.0533
       ],
       "rank": 4,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://es.wikipedia.org/wiki/San_Jorge",
+        "https://snl.no/Sankt_Georg"
+      ],
+      "note": "Spanish saint name Jorge corresponds to Sankt Georg in SNL; the Spanish article associates this saint with the gulf. The full Norwegian gulf name is an editorial construction.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -638,6 +642,30 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/San_Jorge_Gulf",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Sankt Georg-bukta",
+      "appliedNameNb": "Sankt Georg-bukta",
+      "properNameCheck": {
+        "stem": "Sankt Georg",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://es.wikipedia.org/wiki/San_Jorge",
+          "https://snl.no/Sankt_Georg"
+        ],
+        "note": "Spanish saint name Jorge corresponds to Sankt Georg in SNL; the Spanish article associates this saint with the gulf. The full Norwegian gulf name is an editorial construction.",
+        "stemSearchQueries": [
+          "San Jorge Gulf",
+          "San Jorge"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "San Jorge Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/San_Jorge_Gulf",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -1195,9 +1223,11 @@
         -32.2795
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Geographe_Bay"
+      ],
+      "note": "The bay commemorates Baudin’s ship Géographe. No separate Norwegian ship-name form was established; retain the shipped stem Geographe instead of translating it as a common noun.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -1258,6 +1288,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Geographe_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Geographebukta",
+      "appliedNameNb": "Geographebukta",
+      "properNameCheck": {
+        "stem": "Geographe",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Geographe_Bay"
+        ],
+        "note": "The bay commemorates Baudin’s ship Géographe. No separate Norwegian ship-name form was established; retain the shipped stem Geographe instead of translating it as a common noun.",
+        "stemSearchQueries": [
+          "Geographe Bay",
+          "Geographe"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Geographe Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Geographe_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -1524,9 +1577,9 @@
         19.9163
       ],
       "rank": 5,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -1579,6 +1632,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Gulf_of_Masirah",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Masirahbukta",
+      "appliedNameNb": "Masirahbukta",
+      "properNameCheck": {
+        "stem": "Masirah",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Gulf of Masirah",
+          "Masirah"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Gulf of Masirah",
+          "englishUrl": "https://en.wikipedia.org/wiki/Gulf_of_Masirah",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -1781,9 +1855,11 @@
         55.6761
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/Kamtsjatka-distriktet"
+      ],
+      "note": "Use the Norwegian peninsula/region stem Kamtsjatka.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -1823,6 +1899,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Kamchatka_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Kamtsjatkabukta",
+      "appliedNameNb": "Kamtsjatkabukta",
+      "properNameCheck": {
+        "stem": "Kamtsjatka",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Kamtsjatka-distriktet"
+        ],
+        "note": "Use the Norwegian peninsula/region stem Kamtsjatka.",
+        "stemSearchQueries": [
+          "Kamchatka Gulf",
+          "Kamchatka"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Kamchatka Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/Kamchatka_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -1879,9 +1978,11 @@
         59.0907
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-nynorsk-supported",
+      "sources": [
+        "https://nn.wikipedia.org/wiki/Karaginskijbukta"
+      ],
+      "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target text could not be fetched; the observed link destination supplies the title.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -1930,6 +2031,32 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Karaginsky_Gulf",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Karaginskijbukta",
+      "appliedNameNb": "Karaginskijbukta",
+      "properNameCheck": {
+        "stem": "Karaginskij",
+        "method": "nynorsk-form-supported",
+        "sources": [
+          "https://nn.wikipedia.org/wiki/Karaginskijbukta"
+        ],
+        "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target text could not be fetched; the observed link destination supplies the title.",
+        "stemSearchQueries": [
+          "Karaginsky Gulf",
+          "Karaginsky"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Karaginsky Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/Karaginsky_Gulf",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Karaginskijbukta",
+          "norwegianTitle": "Karaginskijbukta",
+          "articleFetched": false
+        }
       }
     },
     {
@@ -1994,9 +2121,11 @@
         53.9818
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://www.wikidata.org/wiki/Q862760"
+      ],
+      "note": "The related volcano has Bokmål article title Kronotsky and Nynorsk title Kronotskij; there is no verified distinct Bokmål gulf stem. Retain Kronotsky under the fallback rule rather than claiming an established gulf exonym.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -2045,6 +2174,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Kronotsky_Gulf",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Kronotskybukta",
+      "appliedNameNb": "Kronotskybukta",
+      "properNameCheck": {
+        "stem": "Kronotsky",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://www.wikidata.org/wiki/Q862760"
+        ],
+        "note": "The related volcano has Bokmål article title Kronotsky and Nynorsk title Kronotskij; there is no verified distinct Bokmål gulf stem. Retain Kronotsky under the fallback rule rather than claiming an established gulf exonym.",
+        "stemSearchQueries": [
+          "Kronotsky Gulf",
+          "Kronotsky"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Kronotsky Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/Kronotsky_Gulf",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -2245,9 +2397,11 @@
         74.9154
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-nynorsk-supported",
+      "sources": [
+        "https://nn.wikipedia.org/wiki/McCluresundet"
+      ],
+      "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target article was fetched.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -2296,6 +2450,32 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/M'Clure_Strait",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "McCluresundet",
+      "appliedNameNb": "McCluresundet",
+      "properNameCheck": {
+        "stem": "McClure",
+        "method": "nynorsk-form-supported",
+        "sources": [
+          "https://nn.wikipedia.org/wiki/McCluresundet"
+        ],
+        "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target article was fetched.",
+        "stemSearchQueries": [
+          "M'Clure Strait",
+          "M'Clure"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "M'Clure Strait",
+          "englishUrl": "https://en.wikipedia.org/wiki/M'Clure_Strait",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/McCluresundet",
+          "norwegianTitle": "McCluresundet",
+          "articleFetched": true
+        }
       }
     },
     {
@@ -2307,9 +2487,9 @@
         69.3316
       ],
       "rank": 5,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -2362,6 +2542,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Mackenzie_Bay_(Canada)",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Mackenziebukta",
+      "appliedNameNb": "Mackenziebukta",
+      "properNameCheck": {
+        "stem": "Mackenzie",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Mackenzie Bay",
+          "Mackenzie"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Mackenzie Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Mackenzie_Bay_(Canada)",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -2537,9 +2738,11 @@
         73.2501
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/Olenjok"
+      ],
+      "note": "The river at this gulf is Olenjok in SNL, explicitly equated with English Olenyok; use Olenjok as the stem.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -2600,6 +2803,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Olenyok_Gulf",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Olenjokbukta",
+      "appliedNameNb": "Olenjokbukta",
+      "properNameCheck": {
+        "stem": "Olenjok",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Olenjok"
+        ],
+        "note": "The river at this gulf is Olenjok in SNL, explicitly equated with English Olenyok; use Olenjok as the stem.",
+        "stemSearchQueries": [
+          "Olenyok Gulf",
+          "Olenyok"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Olenyok Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/Olenyok_Gulf",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -2611,9 +2837,9 @@
         -66.6637
       ],
       "rank": 5,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -2666,6 +2892,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Porpoise_Bay_(Antarctica)",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Porpoisebukta",
+      "appliedNameNb": "Porpoisebukta",
+      "properNameCheck": {
+        "stem": "Porpoise",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Porpoise Bay",
+          "Porpoise"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Porpoise Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Porpoise_Bay_(Antarctica)",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -2779,9 +3026,11 @@
         53.8719
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-nynorsk-supported",
+      "sources": [
+        "https://nn.wikipedia.org/wiki/Sakhalinbukta"
+      ],
+      "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target text could not be fetched; the observed link destination supplies the title.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -2830,6 +3079,32 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Sakhalin_Gulf",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Sakhalinbukta",
+      "appliedNameNb": "Sakhalinbukta",
+      "properNameCheck": {
+        "stem": "Sakhalin",
+        "method": "nynorsk-form-supported",
+        "sources": [
+          "https://nn.wikipedia.org/wiki/Sakhalinbukta"
+        ],
+        "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target text could not be fetched; the observed link destination supplies the title.",
+        "stemSearchQueries": [
+          "Sakhalin Gulf",
+          "Sakhalin"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Sakhalin Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/Sakhalin_Gulf",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Sakhalinbukta",
+          "norwegianTitle": "Sakhalinbukta",
+          "articleFetched": false
+        }
       }
     },
     {
@@ -2841,9 +3116,9 @@
         -41.5651
       ],
       "rank": 5,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "The searches did not securely establish the precise saint/eponym association in Norwegian; retain the full source proper name San Matías rather than substituting a personal-name homonym.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -2908,6 +3183,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/San_Mat%C3%ADas_Gulf",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "San Matías-bukta",
+      "appliedNameNb": "San Matías-bukta",
+      "properNameCheck": {
+        "stem": "San Matías",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "The searches did not securely establish the precise saint/eponym association in Norwegian; retain the full source proper name San Matías rather than substituting a personal-name homonym.",
+        "stemSearchQueries": [
+          "San Matías Gulf",
+          "San Matías"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "San Matías Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/San_Mat%C3%ADas_Gulf",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -2973,9 +3269,12 @@
         -32.7165
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://en.wikipedia.org/wiki/St_Helena_Bay",
+        "https://snl.no/Helena_-_romersk_keiserinne"
+      ],
+      "note": "The South African bay commemorates Saint Helena, mother of Constantine, not the Atlantic island; SNL uses Helena for that person. Translate the saint title as Sankt.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3015,6 +3314,30 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/St._Helena_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Sankt Helena-bukta",
+      "appliedNameNb": "Sankt Helena-bukta",
+      "properNameCheck": {
+        "stem": "Sankt Helena",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://en.wikipedia.org/wiki/St_Helena_Bay",
+          "https://snl.no/Helena_-_romersk_keiserinne"
+        ],
+        "note": "The South African bay commemorates Saint Helena, mother of Constantine, not the Atlantic island; SNL uses Helena for that person. Translate the saint title as Sankt.",
+        "stemSearchQueries": [
+          "St. Helena Bay",
+          "St. Helena"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "St. Helena Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/St._Helena_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -3026,9 +3349,9 @@
         -76.958
       ],
       "rank": 5,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3085,6 +3408,30 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Sulzberger_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Sulzbergerbukta",
+      "appliedNameNb": "Sulzbergerbukta",
+      "properNameCheck": {
+        "stem": "Sulzberger",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Sulzberger Bay",
+          "Sulzberger"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Sulzberger Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Sulzberger_Bay",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Sulzberger_Bay",
+          "norwegianTitle": "Sulzberger Bay",
+          "articleFetched": false
+        }
       }
     },
     {
@@ -3183,9 +3530,9 @@
         55.1061
       ],
       "rank": 5,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3230,6 +3577,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Uda_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Udabukta",
+      "appliedNameNb": "Udabukta",
+      "properNameCheck": {
+        "stem": "Uda",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Uda Bay",
+          "Uda"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Uda Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Uda_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -3294,9 +3662,9 @@
         -66.3598
       ],
       "rank": 5,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3344,6 +3712,30 @@
         "norwegianUrl": "https://no.wikipedia.org/wiki/Vincennes_Bay",
         "norwegianTitle": "Vincennes Bay",
         "norwegianArticleFetched": false
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Vincennesbukta",
+      "appliedNameNb": "Vincennesbukta",
+      "properNameCheck": {
+        "stem": "Vincennes",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Vincennes Bay",
+          "Vincennes"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Vincennes Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Vincennes_Bay",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Vincennes_Bay",
+          "norwegianTitle": "Vincennes Bay",
+          "articleFetched": false
+        }
       }
     },
     {
@@ -3355,9 +3747,9 @@
         -74.2958
       ],
       "rank": 5,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3406,6 +3798,26 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Wrigley_Gulf",
         "outcome": "fetch-failed"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Wrigleybukta",
+      "appliedNameNb": "Wrigleybukta",
+      "properNameCheck": {
+        "stem": "Wrigley",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Wrigley Gulf",
+          "Wrigley"
+        ],
+        "nynorskLanguageCheck": {
+          "result": "english-page-fetch-failed",
+          "note": "Prior English article retrieval failed; no language-link conclusion was drawn."
+        }
       }
     },
     {
@@ -3417,9 +3829,12 @@
         72.9273
       ],
       "rank": 5,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/Verkhojansk",
+        "https://en.wikipedia.org/wiki/Yana_Bay"
+      ],
+      "note": "Use Jana, the river spelling attested in SNL, for the bay at its mouth.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3472,6 +3887,30 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Yana_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Janabukta",
+      "appliedNameNb": "Janabukta",
+      "properNameCheck": {
+        "stem": "Jana",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Verkhojansk",
+          "https://en.wikipedia.org/wiki/Yana_Bay"
+        ],
+        "note": "Use Jana, the river spelling attested in SNL, for the bay at its mouth.",
+        "stemSearchQueries": [
+          "Yana Bay",
+          "Yana"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Yana Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Yana_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -3539,9 +3978,11 @@
         69.2908
       ],
       "rank": 6,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-nynorsk-supported",
+      "sources": [
+        "https://nn.wikipedia.org/wiki/Tsjaunskajabukta"
+      ],
+      "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target text could not be fetched; the observed link destination supplies the title.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3602,6 +4043,32 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Chaunskaya_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Tsjaunskajabukta",
+      "appliedNameNb": "Tsjaunskajabukta",
+      "properNameCheck": {
+        "stem": "Tsjaunskaja",
+        "method": "nynorsk-form-supported",
+        "sources": [
+          "https://nn.wikipedia.org/wiki/Tsjaunskajabukta"
+        ],
+        "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target text could not be fetched; the observed link destination supplies the title.",
+        "stemSearchQueries": [
+          "Chaunskaya Bay",
+          "Chaunskaya"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Chaunskaya Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Chaunskaya_Bay",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Tsjaunskajabukta",
+          "norwegianTitle": "Tsjaunskajabukta",
+          "articleFetched": false
+        }
       }
     },
     {
@@ -3669,9 +4136,11 @@
         74.04
       ],
       "rank": 6,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-nynorsk-supported",
+      "sources": [
+        "https://nn.wikipedia.org/wiki/Khatangabukta"
+      ],
+      "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target text could not be fetched; the observed link destination supplies the title.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3724,6 +4193,32 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Khatanga_Gulf",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Khatangabukta",
+      "appliedNameNb": "Khatangabukta",
+      "properNameCheck": {
+        "stem": "Khatanga",
+        "method": "nynorsk-form-supported",
+        "sources": [
+          "https://nn.wikipedia.org/wiki/Khatangabukta"
+        ],
+        "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target text could not be fetched; the observed link destination supplies the title.",
+        "stemSearchQueries": [
+          "Khatanga Gulf",
+          "Khatanga"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Khatanga Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/Khatanga_Gulf",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Khatangabukta",
+          "norwegianTitle": "Khatangabukta",
+          "articleFetched": false
+        }
       }
     },
     {
@@ -3735,9 +4230,11 @@
         48.825
       ],
       "rank": 6,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-nynorsk-supported",
+      "sources": [
+        "https://nn.wikipedia.org/wiki/Salishhavet"
+      ],
+      "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target article was fetched.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -3822,6 +4319,32 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Salish_Sea",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Salishhavet",
+      "appliedNameNb": "Salishhavet",
+      "properNameCheck": {
+        "stem": "Salish",
+        "method": "nynorsk-form-supported",
+        "sources": [
+          "https://nn.wikipedia.org/wiki/Salishhavet"
+        ],
+        "note": "The complete form is documented by the English article’s Nynorsk language-link target; its proper-name spelling and water term are also suitable for Bokmål. Target article was fetched.",
+        "stemSearchQueries": [
+          "Salish Sea",
+          "Salish"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Salish Sea",
+          "englishUrl": "https://en.wikipedia.org/wiki/Salish_Sea",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Salishhavet",
+          "norwegianTitle": "Salishhavet",
+          "articleFetched": true
+        }
       }
     },
     {
@@ -3959,9 +4482,9 @@
         -15.8384
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -4014,6 +4537,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Antongil_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Antongilbukta",
+      "appliedNameNb": "Antongilbukta",
+      "properNameCheck": {
+        "stem": "Antongil",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Antongil Bay",
+          "Antongil"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Antongil Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Antongil_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -4224,9 +4768,9 @@
         0.6682
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -4266,6 +4810,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Buli_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Bulibukta",
+      "appliedNameNb": "Bulibukta",
+      "properNameCheck": {
+        "stem": "Buli",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Buli Bay",
+          "Buli"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Buli Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Buli_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -4277,9 +4842,9 @@
         69.5469
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -4332,6 +4897,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Darnley_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Darnleybukta",
+      "appliedNameNb": "Darnleybukta",
+      "properNameCheck": {
+        "stem": "Darnley",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Darnley Bay",
+          "Darnley"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Darnley Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Darnley_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -4406,9 +4992,12 @@
         73.0558
       ],
       "rank": 7,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://no.wikipedia.org/wiki/Dmitrij_Laptev",
+        "https://en.wikipedia.org/wiki/Dmitry_Laptev_Strait"
+      ],
+      "note": "The strait commemorates the explorer Dmitrij Laptev in Bokmål. Construct the full-name compound to preserve the English label distinction. Nynorsk also documents the shorter Laptevsundet.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -4477,6 +5066,33 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Dmitry_Laptev_Strait",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Dmitrij Laptev-stredet",
+      "appliedNameNb": "Dmitrij Laptev-stredet",
+      "properNameCheck": {
+        "stem": "Dmitrij Laptev",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://no.wikipedia.org/wiki/Dmitrij_Laptev",
+          "https://en.wikipedia.org/wiki/Dmitry_Laptev_Strait"
+        ],
+        "note": "The strait commemorates the explorer Dmitrij Laptev in Bokmål. Construct the full-name compound to preserve the English label distinction. Nynorsk also documents the shorter Laptevsundet.",
+        "stemSearchQueries": [
+          "Dmitry Laptev Strait",
+          "Dmitry Laptev"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Dmitry Laptev Strait",
+          "englishUrl": "https://en.wikipedia.org/wiki/Dmitry_Laptev_Strait",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Laptevsundet",
+          "norwegianTitle": "Laptevsundet",
+          "articleFetched": false
+        }
       }
     },
     {
@@ -4488,9 +5104,9 @@
         72.5827
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -4555,6 +5171,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Eclipse_Sound",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Eclipsesundet",
+      "appliedNameNb": "Eclipsesundet",
+      "properNameCheck": {
+        "stem": "Eclipse",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Eclipse Sound",
+          "Eclipse"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Eclipse Sound",
+          "englishUrl": "https://en.wikipedia.org/wiki/Eclipse_Sound",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -4566,9 +5203,9 @@
         69.4635
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "The Greely reference concerns Lady Franklin Bay in the high Arctic, not the app bay near Cape Parry; rejected as a homonym.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -4608,6 +5245,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Franklin_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "The Greely reference concerns Lady Franklin Bay in the high Arctic, not the app bay near Cape Parry; rejected as a homonym."
+      },
+      "proposedNameNb": "Franklinbukta",
+      "appliedNameNb": "Franklinbukta",
+      "properNameCheck": {
+        "stem": "Franklin",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Franklin Bay",
+          "Franklin"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Franklin Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Franklin_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -4736,9 +5394,9 @@
         8.298
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -4783,6 +5441,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Gulf_of_Urab%C3%A1",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Urabábukta",
+      "appliedNameNb": "Urabábukta",
+      "properNameCheck": {
+        "stem": "Urabá",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Gulf of Urabá",
+          "Urabá"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Gulf of Urabá",
+          "englishUrl": "https://en.wikipedia.org/wiki/Gulf_of_Urab%C3%A1",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -4794,9 +5473,9 @@
         72.2609
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -4845,6 +5524,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Hadley_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Hadleybukta",
+      "appliedNameNb": "Hadleybukta",
+      "properNameCheck": {
+        "stem": "Hadley",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Hadley Bay",
+          "Hadley"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Hadley Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Hadley_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -5156,9 +5856,9 @@
         75.0379
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -5207,6 +5907,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Liddon_Gulf",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Liddonbukta",
+      "appliedNameNb": "Liddonbukta",
+      "properNameCheck": {
+        "stem": "Liddon",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Liddon Gulf",
+          "Liddon"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Liddon Gulf",
+          "englishUrl": "https://en.wikipedia.org/wiki/Liddon_Gulf",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -5269,9 +5990,11 @@
         -1.4834
       ],
       "rank": 7,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/Maraj%C3%B3"
+      ],
+      "note": "The adjacent Brazilian island retains Marajó in Norwegian; keep its accent.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -5320,6 +6043,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Maraj%C3%B3_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Marajóbukta",
+      "appliedNameNb": "Marajóbukta",
+      "properNameCheck": {
+        "stem": "Marajó",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Maraj%C3%B3"
+        ],
+        "note": "The adjacent Brazilian island retains Marajó in Norwegian; keep its accent.",
+        "stemSearchQueries": [
+          "Marajó Bay",
+          "Marajó"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Marajó Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Maraj%C3%B3_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -5435,9 +6181,9 @@
         77.5212
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -5486,6 +6232,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Murchison_Sound",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Murchisonsundet",
+      "appliedNameNb": "Murchisonsundet",
+      "properNameCheck": {
+        "stem": "Murchison",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Murchison Sound",
+          "Murchison"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Murchison Sound",
+          "englishUrl": "https://en.wikipedia.org/wiki/Murchison_Sound",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -5550,9 +6317,11 @@
         -72.7372
       ],
       "rank": 7,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Peacock_Sound"
+      ],
+      "note": "The sound commemorates the ship Peacock; retain the ship-name stem. The linked Abbotisen article describes an ice shelf and must not replace the water name.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -5625,6 +6394,32 @@
         "norwegianTitle": "Abbotisen",
         "norwegianArticleFetched": true,
         "note": "The language link resolves to Abbotisen, the ice shelf covering the sound. Do not use the ice-shelf name as a translation of the sound."
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Peacocksundet",
+      "appliedNameNb": "Peacocksundet",
+      "properNameCheck": {
+        "stem": "Peacock",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Peacock_Sound"
+        ],
+        "note": "The sound commemorates the ship Peacock; retain the ship-name stem. The linked Abbotisen article describes an ice shelf and must not replace the water name.",
+        "stemSearchQueries": [
+          "Peacock Sound",
+          "Peacock"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Peacock Sound",
+          "englishUrl": "https://en.wikipedia.org/wiki/Peacock_Sound",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Abbotisen",
+          "norwegianTitle": "Abbotisen",
+          "articleFetched": false
+        }
       }
     },
     {
@@ -5636,9 +6431,11 @@
         70.425
       ],
       "rank": 7,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/Albert_-_britisk_prins%2C_1819-61"
+      ],
+      "note": "Retain Albert and translate the title Prince as Prins. The full sound name is constructed, not claimed as an attested Norwegian exonym.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -5687,6 +6484,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Prince_Albert_Sound",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Prins Albert-sundet",
+      "appliedNameNb": "Prins Albert-sundet",
+      "properNameCheck": {
+        "stem": "Prins Albert",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Albert_-_britisk_prins%2C_1819-61"
+        ],
+        "note": "Retain Albert and translate the title Prince as Prins. The full sound name is constructed, not claimed as an attested Norwegian exonym.",
+        "stemSearchQueries": [
+          "Prince Albert Sound",
+          "Prince Albert"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Prince Albert Sound",
+          "englishUrl": "https://en.wikipedia.org/wiki/Prince_Albert_Sound",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -5751,9 +6571,12 @@
         51.9486
       ],
       "rank": 7,
-      "status": "unresolved",
-      "sources": [],
-      "note": "App anchor is in British Columbia (-129.3931, 51.9486). The James Cook article refers to the New Zealand namesake; rejected for this label.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Queen_Charlotte_Sound_%28Canada%29",
+        "https://snl.no/Charlottetown"
+      ],
+      "note": "The Canadian sound commemorates Queen Charlotte, not the New Zealand sound or a renamed island group. SNL uses dronning Charlotte for George III’s queen; construct Dronning Charlotte-sundet.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -5802,6 +6625,30 @@
         "norwegianTitle": "Queen Charlotte Sound (Canada)",
         "norwegianArticleFetched": false,
         "note": "Canadian article selected explicitly; parenthetical Canada disambiguates the article and is not part of the display name."
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "App anchor is in British Columbia (-129.3931, 51.9486). The James Cook article refers to the New Zealand namesake; rejected for this label."
+      },
+      "proposedNameNb": "Dronning Charlotte-sundet",
+      "appliedNameNb": "Dronning Charlotte-sundet",
+      "properNameCheck": {
+        "stem": "Dronning Charlotte",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Queen_Charlotte_Sound_%28Canada%29",
+          "https://snl.no/Charlottetown"
+        ],
+        "note": "The Canadian sound commemorates Queen Charlotte, not the New Zealand sound or a renamed island group. SNL uses dronning Charlotte for George III’s queen; construct Dronning Charlotte-sundet.",
+        "stemSearchQueries": [
+          "Queen Charlotte Sound",
+          "Queen Charlotte"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Queen Charlotte Sound",
+          "englishUrl": "https://en.wikipedia.org/wiki/Queen_Charlotte_Sound_(Canada)",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -5906,11 +6753,11 @@
         12.5204
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [
         "https://no.aroundus.com/p/9139840-sibuyan-sea"
       ],
-      "note": "A tourism page contains a Norwegian-looking form, but translation provenance is unclear. Not accepted as established Norwegian usage.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -5987,6 +6834,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Sibuyan_Sea",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "A tourism page contains a Norwegian-looking form, but translation provenance is unclear. Not accepted as established Norwegian usage."
+      },
+      "proposedNameNb": "Sibuyanhavet",
+      "appliedNameNb": "Sibuyanhavet",
+      "properNameCheck": {
+        "stem": "Sibuyan",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Sibuyan Sea",
+          "Sibuyan"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Sibuyan Sea",
+          "englishUrl": "https://en.wikipedia.org/wiki/Sibuyan_Sea",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -5998,11 +6866,12 @@
         71.1003
       ],
       "rank": 7,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [
-        "https://marineregions.org/gazetteer.php?id=48783&p=details"
+        "https://marineregions.org/gazetteer.php?id=48783&p=details",
+        "https://snl.no/Uummannaq"
       ],
-      "note": "Fjord is itself Norwegian as well as English. Source spelling/capitalization and a preferred Bokmål display form still need confirmation; a Danish/Greenlandic source alone is not a Norwegian naming ruling.",
+      "note": "Retain the documented Greenlandic place stem Uummannaq; use the joined Norwegian definite form fjorden.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6055,6 +6924,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Uummannaq_Fjord",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "Fjord is itself Norwegian as well as English. Source spelling/capitalization and a preferred Bokmål display form still need confirmation; a Danish/Greenlandic source alone is not a Norwegian naming ruling."
+      },
+      "proposedNameNb": "Uummannaqfjorden",
+      "appliedNameNb": "Uummannaqfjorden",
+      "properNameCheck": {
+        "stem": "Uummannaq",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Uummannaq"
+        ],
+        "note": "Retain the documented Greenlandic place stem Uummannaq; use the joined Norwegian definite form fjorden.",
+        "stemSearchQueries": [
+          "Uummannaq Fjord",
+          "Uummannaq"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Uummannaq Fjord",
+          "englishUrl": "https://en.wikipedia.org/wiki/Uummannaq_Fjord",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6066,9 +6958,9 @@
         60.7858
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6121,6 +7013,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Baird_Inlet",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Bairdbukta",
+      "appliedNameNb": "Bairdbukta",
+      "properNameCheck": {
+        "stem": "Baird",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Baird Inlet",
+          "Baird"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Baird Inlet",
+          "englishUrl": "https://en.wikipedia.org/wiki/Baird_Inlet",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6132,9 +7045,9 @@
         67.0976
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6195,6 +7108,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Bathurst_Inlet",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Bathurstbukta",
+      "appliedNameNb": "Bathurstbukta",
+      "properNameCheck": {
+        "stem": "Bathurst",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Bathurst Inlet",
+          "Bathurst"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Bathurst Inlet",
+          "englishUrl": "https://en.wikipedia.org/wiki/Bathurst_Inlet",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6206,9 +7140,12 @@
         55.115
       ],
       "rank": 8,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Cordova_Bay",
+        "https://pubs.usgs.gov/bul/0299/report.pdf"
+      ],
+      "note": "Keep the Alaska/Dixon Entrance identity. Retain Cordova; a Norwegian name for the unrelated city Córdoba or the British Columbia bay is not a justified replacement.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6253,6 +7190,30 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Cordova_Bay_(Alaska)",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Cordovabukta",
+      "appliedNameNb": "Cordovabukta",
+      "properNameCheck": {
+        "stem": "Cordova",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Cordova_Bay",
+          "https://pubs.usgs.gov/bul/0299/report.pdf"
+        ],
+        "note": "Keep the Alaska/Dixon Entrance identity. Retain Cordova; a Norwegian name for the unrelated city Córdoba or the British Columbia bay is not a justified replacement.",
+        "stemSearchQueries": [
+          "Cordova Bay",
+          "Cordova"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Cordova Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Cordova_Bay_(Alaska)",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6264,9 +7225,12 @@
         -0.5713
       ],
       "rank": 8,
-      "status": "unresolved",
-      "sources": [],
-      "note": "App anchor is in Raja Ampat (-0.5713, 130.8638). Dampier also names a strait off New Britain. The SNL biographical mention does not disambiguate the strait; no automatic replacement.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/William_Dampier",
+        "https://en.wikipedia.org/wiki/Dampier_Strait_%28Indonesia%29"
+      ],
+      "note": "Retain Dampier, documented for William Dampier in SNL. Keep the Raja Ampat/Indonesia identity; do not borrow the location of the Papua New Guinea namesake.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6335,6 +7299,30 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Dampier_Strait_(Indonesia)",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "App anchor is in Raja Ampat (-0.5713, 130.8638). Dampier also names a strait off New Britain. The SNL biographical mention does not disambiguate the strait; no automatic replacement."
+      },
+      "proposedNameNb": "Dampierstredet",
+      "appliedNameNb": "Dampierstredet",
+      "properNameCheck": {
+        "stem": "Dampier",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/William_Dampier",
+          "https://en.wikipedia.org/wiki/Dampier_Strait_%28Indonesia%29"
+        ],
+        "note": "Retain Dampier, documented for William Dampier in SNL. Keep the Raja Ampat/Indonesia identity; do not borrow the location of the Papua New Guinea namesake.",
+        "stemSearchQueries": [
+          "Dampier Strait",
+          "Dampier"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Dampier Strait",
+          "englishUrl": "https://en.wikipedia.org/wiki/Dampier_Strait_(Indonesia)",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6346,9 +7334,9 @@
         73.208
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6401,6 +7389,26 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Goldsmith_Channel",
         "outcome": "fetch-failed"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Goldsmithkanalen",
+      "appliedNameNb": "Goldsmithkanalen",
+      "properNameCheck": {
+        "stem": "Goldsmith",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Goldsmith Channel",
+          "Goldsmith"
+        ],
+        "nynorskLanguageCheck": {
+          "result": "english-page-fetch-failed",
+          "note": "Prior English article retrieval failed; no language-link conclusion was drawn."
+        }
       }
     },
     {
@@ -6412,9 +7420,9 @@
         -53.94
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6463,6 +7471,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/In%C3%BAtil_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Inútilbukta",
+      "appliedNameNb": "Inútilbukta",
+      "properNameCheck": {
+        "stem": "Inútil",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Inútil Bay",
+          "Inútil"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Inútil Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/In%C3%BAtil_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6474,9 +7503,9 @@
         1.6963
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6516,6 +7545,26 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Kao_Bay",
         "outcome": "fetch-failed"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Kaobukta",
+      "appliedNameNb": "Kaobukta",
+      "properNameCheck": {
+        "stem": "Kao",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Kao Bay",
+          "Kao"
+        ],
+        "nynorskLanguageCheck": {
+          "result": "english-page-fetch-failed",
+          "note": "Prior English article retrieval failed; no language-link conclusion was drawn."
+        }
       }
     },
     {
@@ -6620,9 +7669,9 @@
         71.3304
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6675,6 +7724,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Minto_Inlet",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Mintobukta",
+      "appliedNameNb": "Mintobukta",
+      "properNameCheck": {
+        "stem": "Minto",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Minto Inlet",
+          "Minto"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Minto Inlet",
+          "englishUrl": "https://en.wikipedia.org/wiki/Minto_Inlet",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6740,9 +7810,11 @@
         72.8707
       ],
       "rank": 8,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/Richard_Collinson"
+      ],
+      "note": "Richard Collinson retains this spelling in Norwegian; attach bukta to the multiword name with a hyphen.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6782,6 +7854,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Richard_Collinson_Inlet",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Richard Collinson-bukta",
+      "appliedNameNb": "Richard Collinson-bukta",
+      "properNameCheck": {
+        "stem": "Richard Collinson",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Richard_Collinson"
+        ],
+        "note": "Richard Collinson retains this spelling in Norwegian; attach bukta to the multiword name with a hyphen.",
+        "stemSearchQueries": [
+          "Richard Collinson Inlet",
+          "Richard Collinson"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Richard Collinson Inlet",
+          "englishUrl": "https://en.wikipedia.org/wiki/Richard_Collinson_Inlet",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6793,9 +7888,9 @@
         82.0278
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6840,6 +7935,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Robeson_Channel",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Robesonkanalen",
+      "appliedNameNb": "Robesonkanalen",
+      "properNameCheck": {
+        "stem": "Robeson",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Robeson Channel",
+          "Robeson"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Robeson Channel",
+          "englishUrl": "https://en.wikipedia.org/wiki/Robeson_Channel",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6851,9 +7967,9 @@
         67.8124
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6887,6 +8003,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Sherman_Basin",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Shermanbassenget",
+      "appliedNameNb": "Shermanbassenget",
+      "properNameCheck": {
+        "stem": "Sherman",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Sherman Basin",
+          "Sherman"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Sherman Basin",
+          "englishUrl": "https://en.wikipedia.org/wiki/Sherman_Basin",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6898,9 +8035,11 @@
         52.0756
       ],
       "rank": 8,
-      "status": "unresolved",
-      "sources": [],
-      "note": "App anchor is in British Columbia (-127.8911, 52.0756). SNL Smithsundet references describe Greenland; rejected as a different water body.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Smith_Sound_%28British_Columbia%29"
+      ],
+      "note": "Retain Smith and construct Smithsundet for the British Columbia water. The Greenland namesake does not establish an attested translation for this feature.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -6949,6 +8088,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Smith_Sound_(British_Columbia)",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "App anchor is in British Columbia (-127.8911, 52.0756). SNL Smithsundet references describe Greenland; rejected as a different water body."
+      },
+      "proposedNameNb": "Smithsundet",
+      "appliedNameNb": "Smithsundet",
+      "properNameCheck": {
+        "stem": "Smith",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Smith_Sound_%28British_Columbia%29"
+        ],
+        "note": "Retain Smith and construct Smithsundet for the British Columbia water. The Greenland namesake does not establish an attested translation for this feature.",
+        "stemSearchQueries": [
+          "Smith Sound",
+          "Smith"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Smith Sound",
+          "englishUrl": "https://en.wikipedia.org/wiki/Smith_Sound_(British_Columbia)",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -6960,9 +8122,9 @@
         13.5593
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -7023,6 +8185,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Tayabas_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Tayabasbukta",
+      "appliedNameNb": "Tayabasbukta",
+      "properNameCheck": {
+        "stem": "Tayabas",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Tayabas Bay",
+          "Tayabas"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Tayabas Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Tayabas_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -7034,9 +8217,12 @@
         11.3072
       ],
       "rank": 8,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/Visaya%C3%B8yene",
+        "https://en.wikipedia.org/wiki/Visayan_Sea"
+      ],
+      "note": "Use Visaya from SNL’s Visayaøyene for the surrounding island group, replacing English adjectival Visayan.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -7085,6 +8271,30 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Visayan_Sea",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Visayahavet",
+      "appliedNameNb": "Visayahavet",
+      "properNameCheck": {
+        "stem": "Visaya",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Visaya%C3%B8yene",
+          "https://en.wikipedia.org/wiki/Visayan_Sea"
+        ],
+        "note": "Use Visaya from SNL’s Visayaøyene for the surrounding island group, replacing English adjectival Visayan.",
+        "stemSearchQueries": [
+          "Visayan Sea",
+          "Visayan"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Visayan Sea",
+          "englishUrl": "https://en.wikipedia.org/wiki/Visayan_Sea",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -7096,9 +8306,9 @@
         65.6179
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -7159,6 +8369,30 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Wager_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Wagerbukta",
+      "appliedNameNb": "Wagerbukta",
+      "properNameCheck": {
+        "stem": "Wager",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Wager Bay",
+          "Wager"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Wager Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Wager_Bay",
+          "result": "looked-up",
+          "norwegianUrl": "https://nn.wikipedia.org/wiki/Wager_Bay",
+          "norwegianTitle": "Wager Bay",
+          "articleFetched": true
+        }
       }
     },
     {
@@ -7170,9 +8404,9 @@
         72.6329
       ],
       "rank": 8,
-      "status": "unresolved",
+      "status": "norwegian-form-constructed",
       "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -7221,6 +8455,27 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Wynniatt_Bay",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Wynniattbukta",
+      "appliedNameNb": "Wynniattbukta",
+      "properNameCheck": {
+        "stem": "Wynniatt",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [],
+        "note": "No distinct Norwegian proper-name spelling was established by the recorded stem searches; retain the source stem and translate only the water term. This does not prove that a Norwegian variant does not exist.",
+        "stemSearchQueries": [
+          "Wynniatt Bay",
+          "Wynniatt"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Wynniatt Bay",
+          "englishUrl": "https://en.wikipedia.org/wiki/Wynniatt_Bay",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -7232,9 +8487,11 @@
         -8.5578
       ],
       "rank": 9,
-      "status": "unresolved",
-      "sources": [],
-      "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists.",
+      "status": "norwegian-form-constructed",
+      "sources": [
+        "https://snl.no/Bali"
+      ],
+      "note": "Bali retains its spelling in Norwegian; add stredet.",
       "checks": [
         {
           "source": "Store norske leksikon",
@@ -7279,6 +8536,29 @@
       "wikipediaCheck": {
         "englishUrl": "https://en.wikipedia.org/wiki/Bali_Strait",
         "outcome": "no-bokmal-link"
+      },
+      "preConstructionReview": {
+        "status": "unresolved",
+        "note": "English name, name stem, Norwegian compounds/transcriptions, and a broader Norwegian-context search checked. No sufficiently reliable preferred Norwegian form or same-water Norwegian reference established in this pass. This is not proof that no form exists."
+      },
+      "proposedNameNb": "Balistredet",
+      "appliedNameNb": "Balistredet",
+      "properNameCheck": {
+        "stem": "Bali",
+        "method": "constructed-from-reviewed-stem",
+        "sources": [
+          "https://snl.no/Bali"
+        ],
+        "note": "Bali retains its spelling in Norwegian; add stredet.",
+        "stemSearchQueries": [
+          "Bali Strait",
+          "Bali"
+        ],
+        "nynorskLanguageCheck": {
+          "name": "Bali Strait",
+          "englishUrl": "https://en.wikipedia.org/wiki/Bali_Strait",
+          "result": "no-nynorsk-link"
+        }
       }
     },
     {
@@ -7488,8 +8768,19 @@
     "note": "No Bokmål link on an English article is not evidence that no Norwegian name exists. A language-link target is useful naming evidence even when the target article cannot be fetched."
   },
   "implementation": {
-    "appliedAlternatives": 47,
-    "remainingUnresolved": 54,
-    "note": "Applied both reference/institutional and Wikipedia-supported alternatives. No constructed translations were added. Entry nameNb values record the pre-change baseline; appliedNameNb records the shipped correction."
+    "appliedAlternatives": 101,
+    "initialDocumentedAlternatives": 47,
+    "properNamePass": 54,
+    "constructedAlternatives": 48,
+    "additionalNynorskSupportedAlternatives": 6,
+    "remainingUnresolved": 0,
+    "retainedCurrentForms": 18,
+    "note": "The user authorized constructions for the remaining 54 entries using documented Norwegian proper-name stems where found, otherwise retaining the source stem. The 18 already supported current forms remain unchanged. Zero unresolved means an editorial display choice exists for every in-scope entry, not that all complete names or etymologies are attested. Baseline nameNb values remain historical; appliedNameNb records updates."
+  },
+  "properNameAudit": {
+    "date": "2026-10-17",
+    "scope": 54,
+    "policy": "Prefer an established complete Norwegian form; otherwise use a documented Norwegian form of the same proper-name referent plus a Norwegian water term. If no Norwegian stem is established, retain the source stem. Do not translate a coincidental homonym or label constructed names as attested exonyms.",
+    "limits": "Existing stem-search records were re-examined and supplemented with targeted place/person references and Nynorsk language-link checks. Failed retrievals and uncertain eponyms use the explicitly authorized retained-stem fallback. Personal names are not mechanically translated without a verified association. No claim of exhaustive etymological verification is made."
   }
 }
