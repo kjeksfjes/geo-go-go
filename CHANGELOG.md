@@ -6,6 +6,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Honor the text-center percentage near curved water-label path endpoints, including duplicate placements and text shorter than the path; extend the baseline instead of shifting the name inward.
 - Give each water name multiple independently positioned placements, with repeatable full names or bilingual text parts, shared font size and letter spacing, and support throughout the editor, drafts, and direct project saves.
 - Keep water names visible when switching between placements of the same name, and refresh the selected placement's size and warnings.
 - Save water-name editor changes directly to the maintained project file through the local development server, with validated atomic writes, conflict checks, and continued editing from the saved baseline; keep browser autosave and portable exports.

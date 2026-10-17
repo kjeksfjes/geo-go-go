@@ -66,16 +66,17 @@ export function centeredLabelGuide(points: readonly MapPoint[], lengths: readonl
   return result
 }
 
-// Explicit text scaling can exceed the automatically fitted corridor. Extend
-// its end tangents so SVG does not clip the larger text at the path endpoints.
+// Honor the requested center even near the endpoints. Extend the end tangents
+// whenever the text would cross an endpoint, including text shorter than the
+// full guide, so SVG neither clips it nor silently shifts it inward.
 export function extendedLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number,
   centerFraction = 0.5): MapPoint[] | undefined {
   const total = lengths.at(-1) ?? 0
   if (!Number.isFinite(span) || !Number.isFinite(total) || span <= 0 || total <= 0) return undefined
-  if (span <= total) return centeredLabelGuide(points, lengths, span, centerFraction)
   const center = total * Math.max(0, Math.min(1, centerFraction))
   const before = Math.max(0, span / 2 - center)
   const after = Math.max(0, center + span / 2 - total)
+  if (before === 0 && after === 0) return centeredLabelGuide(points, lengths, span, centerFraction)
   let first = 1, last = points.length - 2
   while (first < points.length && lengths[first] === 0) first++
   while (last >= 0 && lengths[last] === total) last--
