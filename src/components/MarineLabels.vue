@@ -60,7 +60,7 @@ const measurementWidths = new Map<string, number>()
 const measurementContents = new Map<string, string>()
 let measurementStyle = ''
 let measurementGroup: SVGGElement | undefined
-let baselineProbe: SVGTextElement | undefined
+let baselineContext: CanvasRenderingContext2D | null | undefined
 const pathPrefix = useId()
 const labelPlacements = computed(() => (props.labels ?? marineLabels).flatMap(label => {
   const root = placements.value[label.id]
@@ -208,13 +208,21 @@ function updateLabels() {
   // Measure every name with its actual font, case and spacing.
   // Batch these reads before placement writes, and only after gestures settle.
   if (measurementGroup) measurementGroup.style.fontSize = fontSize
-  // Avoid browser-specific inheritance of SVG's middle baseline. The font's
-  // visible x-height supplies the same explicit alphabetic-baseline offset
-  // for every rendered size, including text following a curved path.
-  const xHeight = baselineProbe?.getBBox().height ?? 0
-  // Lift the shared alignment by a fifth of the rendered font size, preserving
-  // the same optical placement on desktop and mobile without editing guides.
-  const baselineOffsetEm = (xHeight > 0 ? xHeight / baseFont / 2 : 0.2) - 0.2
+  // Use ink metrics: SVG getBBox() includes the font's full text cell even
+  // for "x", so its height is not the x-height and would push names downward.
+  // Alphabetic baselines plus an explicit offset behave consistently on paths
+  // and horizontal text. Lift the optical center by 0.2 of each label's size.
+  if (baselineContext === undefined) baselineContext = document.createElement('canvas').getContext('2d')
+  let xHeightEm = 0.4
+  const baselineSample = measurementGroup?.querySelector('.marine-label:not(.marine-label--ocean)')
+    ?? measurementGroup?.querySelector('text')
+  if (baselineContext && baselineSample) {
+    const style = getComputedStyle(baselineSample)
+    baselineContext.font = `${style.fontStyle} ${style.fontWeight} 100px ${style.fontFamily}`
+    const metrics = baselineContext.measureText('x')
+    xHeightEm = (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) / 100 || xHeightEm
+  }
+  const baselineOffsetEm = xHeightEm / 2 - 0.2
   const styleKey = `${fontSize}:${locale.value}`
   if (styleKey !== measurementStyle) {
     measurementStyle = styleKey
@@ -429,8 +437,6 @@ onBeforeUnmount(() => {
        overlay remains noninteractive even when its opacity is zero. -->
   <g :opacity="visible ? 1 : 0" class="marine-labels" :class="{ 'marine-labels--editing': editing }" aria-hidden="true">
     <g :ref="(element) => { measurementGroup = element as SVGGElement | undefined }" visibility="hidden">
-      <text :ref="(element) => { baselineProbe = element as SVGTextElement | undefined }"
-        class="marine-label" style="font-size: 1em">x</text>
       <text
         v-for="label in projectedLabels"
         :key="label.id"
