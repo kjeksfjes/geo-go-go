@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, useId, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
 import { extendedLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
+import { waterLabelPlacements, waterLabelPlacementId } from '../logic/marineLabelPlacements'
 import { locale } from '../i18n'
 import type { MapPoint } from '../composables/useMapZoom'
 
@@ -19,15 +20,18 @@ const props = defineProps<{
   labels?: readonly MarineLabel[]
   editing?: boolean
   editingLabelId?: string
+  editingPlacementIndex?: number
 }>()
 const emit = defineEmits<{
-  select: [id: string]
+  select: [id: string, placementIndex: number]
   'editing-warning': [message: string]
-  'editing-size': [size: { id: string; size: number; pixels: number }]
+  'editing-size': [size: { id: string; size: number; pixels: number; placementIndex: number }]
 }>()
 const placements = computed(() => props.placements ?? marineLabelPaths)
 
 interface ProjectedLabel extends MarineLabel {
+  waterId: string
+  placementIndex: number
   x: number
   y: number
   lines: string[]
@@ -55,10 +59,17 @@ const measurementContents = new Map<string, string>()
 let measurementStyle = ''
 let measurementGroup: SVGGElement | undefined
 const pathPrefix = useId()
-const sampledGuides = computed(() => new Map(Object.entries(placements.value)
-  .map(([id, { points }]) => [id, sampleLabelGuide(points)])))
-const readableGuides = computed(() => new Map(Object.entries(placements.value)
-  .flatMap(([id, { readablePoints }]) => readablePoints ? [[id, sampleLabelGuide(readablePoints)] as const] : [])))
+const labelPlacements = computed(() => (props.labels ?? marineLabels).flatMap(label => {
+  const root = placements.value[label.id]
+  if (!root && label.kind !== 'ocean') return []
+  return (root ? waterLabelPlacements(root) : [undefined]).map((placement, index) => ({
+    label, placement, index, key: waterLabelPlacementId(label.id, index),
+  }))
+}))
+const sampledGuides = computed(() => new Map(labelPlacements.value.flatMap(({ placement, key }) =>
+  placement ? [[key, sampleLabelGuide(placement.points)] as const] : [])))
+const readableGuides = computed(() => new Map(labelPlacements.value.flatMap(({ placement, key }) =>
+  placement?.readablePoints ? [[key, sampleLabelGuide(placement.readablePoints)] as const] : [])))
 let updateFrame: number | undefined
 
 function labelPathId(id: string, offset: number) {
@@ -127,19 +138,19 @@ function projectGuide(source?: readonly MapPoint[], offset: MapPoint = [0, 0]): 
     ? guide as MapPoint[] : undefined
 }
 
-const projectedLabels = computed<ProjectedLabel[]>(() => (props.labels ?? marineLabels).flatMap((label) => {
-  const placement = placements.value[label.id]
-  // An unverified point anchor cannot keep enlarged text off nearby land.
-  if (!placement && label.kind !== 'ocean') return []
+const projectedLabels = computed<ProjectedLabel[]>(() => labelPlacements.value.flatMap(({ label, placement, index, key }) => {
   const offset = placement?.offset ?? [0, 0]
-  const anchor = placement?.anchor ?? label.point
+  // Each copy uses its own anchor, including when the source label lies outside this view.
+  const anchorPoints = placement?.readablePoints ?? placement?.points
+  const anchor = placement?.anchor ?? anchorPoints?.[Math.floor(anchorPoints.length / 2)] ?? label.point
   const point = props.projectPoint([anchor[0] + offset[0], anchor[1] + offset[1]])
   if (!point || !point.every(Number.isFinite)) return []
-  const displayName = locale.value === 'nb' ? label.nameNb : label.name
+  const placementText = locale.value === 'nb' ? placement?.textNb : placement?.text
+  const displayName = placementText ?? (locale.value === 'nb' ? label.nameNb : label.name)
   const horizontal = placement?.layout === 'horizontal'
   const stackedText = locale.value === 'nb' ? label.stackedTextNb : label.stackedText
-  const validGuide = horizontal ? undefined : projectGuide(sampledGuides.value.get(label.id), offset)
-  const readableGuide = horizontal ? undefined : projectGuide(readableGuides.value.get(label.id), offset)
+  const validGuide = horizontal ? undefined : projectGuide(sampledGuides.value.get(key), offset)
+  const readableGuide = horizontal ? undefined : projectGuide(readableGuides.value.get(key), offset)
   const corners = placement?.bounds?.flatMap(([x]) => placement.bounds!.map(([, y]) =>
     props.projectPoint([x, y]),
   ))
@@ -148,10 +159,11 @@ const projectedLabels = computed<ProjectedLabel[]>(() => (props.labels ?? marine
       [Math.max(...corners.map((point) => point![0])), Math.max(...corners.map((point) => point![1]))]] : undefined
   return [{
     ...label,
+    id: key, waterId: label.id, placementIndex: index,
     x: point[0],
     y: point[1],
     displayName,
-    lines: validGuide ? [displayName] : horizontal && stackedText ? stackedText.split('\n') : labelLines(displayName, label.kind, horizontal),
+    lines: validGuide || placementText !== undefined ? [displayName] : horizontal && stackedText ? stackedText.split('\n') : labelLines(displayName, label.kind, horizontal),
     guide: validGuide,
     guideLengths: validGuide ? labelGuideLengths(validGuide) : undefined,
     guideCenter: placement?.center,
@@ -264,9 +276,10 @@ function updateLabels() {
         ? label.textSize * mapTypographyScale * scale
         : baseFontPixels * mapFontFactor * scale
       const fontFactor = fontPixels / baseFontPixels
-      const selectedForEditing = props.editingLabelId === label.id
+      const selectedForEditing = props.editingLabelId === label.waterId
+        && (props.editingPlacementIndex ?? 0) === label.placementIndex
       if (selectedForEditing) emit('editing-size', {
-        id: label.id, size: label.textSize ?? fontPixels / scale / mapTypographyScale, pixels: fontPixels,
+        id: label.waterId, placementIndex: label.placementIndex, size: label.textSize ?? fontPixels / scale / mapTypographyScale, pixels: fontPixels,
       })
       const keepVisible = props.editing && selectedForEditing
       if (fontPixels < (isOcean ? 4 : 10)) {
@@ -435,7 +448,7 @@ onBeforeUnmount(() => {
         :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
         style="display: none"
         :style="{ letterSpacing: label.letterSpacing === undefined ? undefined : `${label.letterSpacing}em` }"
-        @pointerdown.stop.prevent="editing && emit('select', label.id)"
+        @pointerdown.stop.prevent="editing && emit('select', label.waterId, label.placementIndex)"
       >
         <textPath v-if="label.guide" :href="`#${labelPathId(label.id, offset)}`" startOffset="50%">
           {{ label.kind === 'ocean' ? label.displayName.toLocaleUpperCase(locale === 'nb' ? 'nb' : 'en') : label.displayName }}

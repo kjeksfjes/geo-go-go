@@ -47,12 +47,25 @@ export function preservePlacementFontSize(source: MarineLabelPath, currentSize: 
 const point = (value: unknown): value is MapPoint => Array.isArray(value) && value.length === 2
   && value.every(Number.isFinite) && Math.abs(value[0]) <= 720 && Math.abs(value[1]) <= 90
 const fields = new Set(['points', 'readablePoints', 'center', 'offset', 'layout', 'anchor', 'bounds',
-  'fontSize', 'spanFraction', 'sizeScale', 'textScale', 'textSize', 'letterSpacing', 'rotation'])
+  'fontSize', 'spanFraction', 'sizeScale', 'textScale', 'textSize', 'letterSpacing', 'rotation', 'text', 'textNb', 'additionalPlacements'])
 
 export function validPlacement(input: unknown): input is MarineLabelPath {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false
   const value = input as Record<string, unknown>
   if (Object.keys(value).some(key => !fields.has(key))) return false
+  for (const key of ['text', 'textNb']) {
+    const text = value[key]
+    if (text !== undefined && (typeof text !== 'string' || !text.trim() || text.length > 120 || /[\r\n]/.test(text))) return false
+  }
+  if (value.additionalPlacements !== undefined) {
+    if (!Array.isArray(value.additionalPlacements) || value.additionalPlacements.length > 11
+      || (value.additionalPlacements.length > 0 && value.textSize === undefined)) return false
+    for (const placement of value.additionalPlacements) {
+      if (!placement || typeof placement !== 'object'
+        || ['additionalPlacements', 'textSize', 'letterSpacing', 'textScale', 'fontSize', 'sizeScale'].some(key => Object.hasOwn(placement, key))
+        || !validPlacement(placement)) return false
+    }
+  }
   for (const key of ['points', 'readablePoints']) {
     const points = value[key]
     if (key === 'readablePoints' && points === undefined) continue

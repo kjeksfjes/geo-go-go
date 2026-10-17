@@ -176,9 +176,10 @@ const waterEditorEnabled = import.meta.env.DEV && new URLSearchParams(window.loc
 const waterEditorPlacements = shallowRef<Record<string, MarineLabelPath> | undefined>()
 const waterEditorLabels = shallowRef<MarineLabel[] | undefined>()
 const waterEditorSelectedId = ref('')
+const waterEditorPlacementIndex = ref(0)
 const waterEditorEditing = ref(false)
 const waterEditorWarning = ref('')
-const waterEditorFontSize = shallowRef<{ id: string; size: number; pixels: number } | null>(null)
+const waterEditorFontSize = shallowRef<{ id: string; size: number; pixels: number; placementIndex: number } | null>(null)
 const canvasReady = ref(false)
 const canvasContextKind = ref('unavailable')
 const fastTouchZoomPreview = ref(false)
@@ -2048,7 +2049,8 @@ if (import.meta.hot) {
           :labels="waterEditorEnabled ? waterEditorLabels : undefined"
           :editing="waterEditorEnabled && waterEditorEditing && !waterNamePointerPressed && !isInteracting && !interactionLocked"
           :editing-label-id="waterEditorEnabled && waterEditorPlacements ? waterEditorSelectedId : undefined"
-          @select="waterEditorSelectedId = $event"
+          :editing-placement-index="waterEditorPlacementIndex"
+          @select="(id, index) => { waterEditorSelectedId = id; waterEditorPlacementIndex = index }"
           @editing-warning="waterEditorWarning = $event"
           @editing-size="waterEditorFontSize = $event"
         />
@@ -2260,6 +2262,7 @@ if (import.meta.hot) {
       <WaterLabelEditor
         v-if="waterEditorEnabled && !quizMode && WaterLabelEditor"
         v-model:selected-id="waterEditorSelectedId"
+        v-model:placement-index="waterEditorPlacementIndex"
         :width="mapWidth" :height="mapHeight" :transform="transform"
         :project-point="projectPoint" :unproject-point="unprojectPoint"
         :project-geometry="projectGeometry"

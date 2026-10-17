@@ -21,7 +21,11 @@ export interface MarineLabelPath {
   // Extra spacing between letters, relative to the font size.
   letterSpacing?: number
   rotation?: number
+  text?: string
+  textNb?: string
+  additionalPlacements?: MarineLabelPlacement[]
 }
+export type MarineLabelPlacement = Omit<MarineLabelPath, 'additionalPlacements' | 'textSize' | 'letterSpacing' | 'textScale' | 'fontSize' | 'sizeScale'>
 const offsets: Record<string, MapPoint> = {
   'ne:1159116897': [0, -0.15], // Seram Sea: slightly south.
   'ne:1159120201': [0, -0.025], // Dampier Strait: slightly south.

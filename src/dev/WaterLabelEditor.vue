@@ -7,6 +7,7 @@ import waterBoundaries from './water-boundaries.json'
 import { marineLabels, type MarineLabel, type MarineLabelText } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
 import type { MapPoint } from '../composables/useMapZoom'
+import { replaceWaterLabelPlacements, updateWaterLabelPlacement, waterLabelPlacements } from '../logic/marineLabelPlacements'
 import { sampleLabelGuide } from '../logic/marineLabelLayout'
 import { normalizeCountrySearch } from '../logic/countrySuggestions'
 import { isIntegratedWaterDraft } from './integratedWaterDraft'
@@ -23,9 +24,10 @@ const props = defineProps<{
   copyOffsets: readonly number[]
   disabled: boolean
   warning: string
-  fontSize: { id: string; size: number; pixels: number } | null
+  fontSize: { id: string; size: number; pixels: number; placementIndex: number } | null
 }>()
 const selectedId = defineModel<string>('selectedId', { required: true })
+const placementIndex = defineModel<number>('placementIndex', { required: true })
 const emit = defineEmits<{
   preview: [placements: Placements | undefined]
   editing: [enabled: boolean]
@@ -88,8 +90,11 @@ const changedIds = computed(() => [...new Set([...Object.keys(edits.value), ...O
 const allLabels = computed<MarineLabel[]>(() => [...sourceLabels.value, ...Object.values(customLabels.value)]
   .map(label => ({ ...label, ...labelText.value[label.id] })))
 const selectedLabel = computed(() => allLabels.value.find(label => label.id === selectedId.value))
+const selectedRoot = computed(() => edits.value[selectedId.value] ?? baseline[selectedId.value])
+const placementCount = computed(() => 1 + (selectedRoot.value?.additionalPlacements?.length ?? 0))
 const selected = computed(() => {
-  const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
+  const root = selectedRoot.value
+  const source = root && waterLabelPlacements(root)[placementIndex.value]
   if (!source) return null
   const value = editablePlacement(source)
   // Edit the guide the renderer actually uses, including its readable variant.
@@ -131,7 +136,7 @@ const overlay = ref<SVGSVGElement | null>(null)
 const editLocked = computed(() => props.disabled || projectSaving.value || previewOriginal.value || recovery.value !== null
   || hiddenIds.value.includes(selectedId.value)
   // Wait for the first size measurement before editing an automatic label.
-  || (!!selectedId.value && selected.value?.textSize === undefined && props.fontSize?.id !== selectedId.value))
+  || (!!selectedId.value && selected.value?.textSize === undefined && (props.fontSize?.id !== selectedId.value || props.fontSize.placementIndex !== placementIndex.value)))
 
 watch([placements, previewOriginal, recovery], () => {
   emit('preview', recovery.value ? undefined : previewOriginal.value ? sourcePaths.value : placements.value)
@@ -141,7 +146,8 @@ watch([allLabels, hiddenIds, previewOriginal, recovery], () => {
     : allLabels.value.filter(label => !hiddenIds.value.includes(label.id)))
 }, { immediate: true })
 watch([editLocked, showHandles], () => emit('editing', !editLocked.value && showHandles.value), { immediate: true })
-watch(selectedId, () => { finishDrag(); selectedNode.value = 0 })
+watch([selectedId, placementIndex], () => { finishDrag(); selectedNode.value = 0 })
+watch([selectedRoot, placementCount], () => { if (!selectedRoot.value || placementIndex.value >= placementCount.value) placementIndex.value = 0 })
 
 function save() {
   if (recovery.value || storageConflict.value) return
@@ -159,13 +165,17 @@ function commit() {
   historyRevision.value++
   save()
 }
-function update(value: MarineLabelPath | null) {
-  if (editLocked.value || !value || !validPlacement(value)) { status.value = 'That adjustment is outside the supported map coordinates.'; return }
+function storePlacement(value: MarineLabelPath | null) {
+  if (editLocked.value || !value || !validPlacement(value)) { status.value = 'That adjustment is outside the supported map coordinates.'; return false }
   const next = { ...edits.value }
   if (baseline[selectedId.value] && samePlacement(value, baseline[selectedId.value]!)) delete next[selectedId.value]
   else next[selectedId.value] = clone(value)
   edits.value = next
   status.value = ''
+  return true
+}
+function update(value: MarineLabelPath | null) {
+  storePlacement(value && selectedRoot.value ? updateWaterLabelPlacement(selectedRoot.value, placementIndex.value, value) : null)
 }
 function step(action: 'undo' | 'redo') {
   restoreSnapshot(history[action]())
@@ -222,7 +232,7 @@ function addName() {
     rank: newKind.value === 'ocean' ? 0 : 2, minLabel: 1, maxLabel: 10,
     ...(newBoundary.value ? { boundaryId: newBoundary.value } : {}),
   }
-  const size = props.fontSize?.id === selectedId.value ? props.fontSize.size : newKind.value === 'ocean' ? 20 : 8
+  const size = props.fontSize?.id === selectedId.value && props.fontSize.placementIndex === placementIndex.value ? props.fontSize.size : newKind.value === 'ocean' ? 20 : 8
   const placement: MarineLabelPath = {
     points: [[x - 8, y], [x, y], [x + 8, y]], layout: 'horizontal', anchor: [x, y],
     bounds: [[x - 12, Math.max(-90, y - 5)], [x + 12, Math.min(90, y + 5)]], textSize: size,
@@ -230,6 +240,7 @@ function addName() {
   customLabels.value = { ...customLabels.value, [id]: label }
   edits.value = { ...edits.value, [id]: placement }
   selectedId.value = id
+  placementIndex.value = 0
   query.value = ''; changedOnly.value = false; showRemoved.value = false
   adding.value = false; newName.value = ''; newNameNb.value = ''; newBoundary.value = ''
   status.value = 'Name added to this draft. Export when ready for integration.'
@@ -238,15 +249,15 @@ function addName() {
 }
 function number(event: Event) { return Number((event.target as HTMLInputElement).value) }
 function preserveSize(placement: MarineLabelPath) {
-  return preservePlacementFontSize(placement, props.fontSize?.id === selectedId.value ? props.fontSize.size : undefined)
+  return preservePlacementFontSize(placement, props.fontSize?.id === selectedId.value && props.fontSize.placementIndex === placementIndex.value ? props.fontSize.size : undefined)
 }
 function field(key: 'center' | 'spanFraction', event: Event) {
-  const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
+  const source = selected.value
   if (source) update({ ...clone(source), [key]: number(event) })
 }
 
 function setFontSize(event: Event, completed = true) {
-  const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
+  const source = selected.value
   if (!source) return
   const input = event.target as HTMLInputElement
   const size = input.value.trim() ? Number(input.value) : NaN
@@ -262,7 +273,7 @@ function setFontSize(event: Event, completed = true) {
 }
 function setLetterSpacing(event: Event | null, completed = true) {
   if (editLocked.value) return
-  const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
+  const source = selected.value
   if (!source) return
   const input = event?.target as HTMLInputElement | undefined
   const spacing = input?.value.trim() ? Number(input.value) : NaN
@@ -290,7 +301,7 @@ function setLabelText(key: keyof MarineLabelText, event: Event) {
     status.value = 'Names need one line (up to 120 characters); stacked text allows up to four nonempty lines (240 characters total).'
     return
   }
-  const source = edits.value[id] ?? baseline[id]
+  const source = selected.value
   if (source) update(preserveSize(source))
   const changes = { ...labelText.value }
   if (Object.keys(next).length) changes[id] = next
@@ -300,7 +311,8 @@ function setLabelText(key: keyof MarineLabelText, event: Event) {
   commit()
 }
 function automaticFontSize() {
-  const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
+  if (placementCount.value > 1) return
+  const source = selected.value
   if (!source) return
   const value = clone(source)
   delete value.textSize; delete value.textScale
@@ -343,7 +355,49 @@ function focus() {
   emit('focus', selected.value.layout === 'horizontal' && selected.value.bounds
     ? selected.value.bounds : selected.value.points)
 }
-function choose(id: string) { selectedId.value = id; void nextTick(focus) }
+function choose(id: string) { selectedId.value = id; placementIndex.value = 0; void nextTick(focus) }
+
+function addPlacement(duplicate: boolean) {
+  if (editLocked.value || !selectedRoot.value || !selected.value || placementCount.value >= 12) return
+  const frozen = preserveSize(selected.value)
+  if (frozen.textSize === undefined) return
+  const root = updateWaterLabelPlacement(selectedRoot.value, placementIndex.value, frozen)
+  let added: MarineLabelPath | null
+  if (duplicate) {
+    const origin = project(placementPivot(frozen))
+    added = origin ? mapPlacement(frozen, p => {
+      const q = project(p, origin[0])
+      return q && inverse([q[0] + 50 / props.transform.scale, q[1]], p)
+    }) : null
+  } else {
+    const center = props.unprojectPoint([(props.width / 2 - props.transform.x) / props.transform.scale,
+      (props.height / 2 - props.transform.y) / props.transform.scale])
+    if (!center?.every(Number.isFinite)) { status.value = 'Pan to a usable map center before adding a placement.'; return }
+    const [x, y] = center
+    added = { points: [[x - 2, y], [x, y], [x + 2, y]], layout: 'horizontal', anchor: [x, y],
+      bounds: [[x - 3, Math.max(-90, y - 1)], [x + 3, Math.min(90, y + 1)]] }
+  }
+  if (!added) { status.value = 'Could not place a copy here. Pan to a usable map area.'; return }
+  if (!storePlacement(replaceWaterLabelPlacements(root, [...waterLabelPlacements(root), added]))) return
+  placementIndex.value = placementCount.value - 1
+  commit()
+  void nextTick(focus)
+}
+function removePlacement() {
+  if (editLocked.value || !selectedRoot.value || placementCount.value <= 1) return
+  const remaining = waterLabelPlacements(selectedRoot.value).filter((_, index) => index !== placementIndex.value)
+  if (!storePlacement(replaceWaterLabelPlacements(selectedRoot.value, remaining))) return
+  placementIndex.value = Math.min(placementIndex.value, remaining.length - 1)
+  commit()
+}
+function setPlacementText(key: 'text' | 'textNb', event: Event) {
+  if (!selected.value || editLocked.value) return
+  const value = preserveSize(selected.value)
+  const text = (event.target as HTMLInputElement).value.trim()
+  if (text) value[key] = text
+  else delete value[key]
+  update(value); commit()
+}
 
 function nudge(direction: string) {
   if (!selected.value || !pivot.value) return
@@ -642,6 +696,15 @@ onBeforeUnmount(() => {
               <button v-else type="button" :disabled="disabled || previewOriginal" @click="removeName">Remove name</button>
             </div>
             <fieldset :disabled="editLocked">
+              <label>Placement<select v-model.number="placementIndex"><option v-for="index in placementCount" :key="index" :value="index - 1">Placement {{ index }}</option></select></label>
+              <div class="water-editor-actions">
+                <button type="button" :disabled="placementCount >= 12" @click="addPlacement(false)">Add placement</button>
+                <button type="button" :disabled="placementCount >= 12" @click="addPlacement(true)">Duplicate placement</button>
+                <button type="button" :disabled="placementCount <= 1" @click="removePlacement">Remove placement</button>
+              </div>
+              <label>Placement text · English<input :value="selected.text ?? ''" maxlength="120" placeholder="Empty repeats the full name" @change="setPlacementText('text', $event)" /></label>
+              <label>Placement text · Norwegian<input :value="selected.textNb ?? ''" maxlength="120" placeholder="Empty repeats the full name" @change="setPlacementText('textNb', $event)" /></label>
+              <p class="water-editor-hint">Each placement has its own position, path, rotation, and optional single-line text in each language. For split names, enter e.g. Northwest / Nordvest- here and Passage / passasjen on another placement. Font size and letter spacing are shared by all placements. Multiple placements use an explicit shared font size.</p>
               <label>English name<input :value="selectedLabel.name" maxlength="120" @change="setLabelText('name', $event)" /></label>
               <label>Norwegian name<input :value="selectedLabel.nameNb" maxlength="120" @change="setLabelText('nameNb', $event)" /></label>
               <label>English horizontal/stacked text<textarea :value="selectedLabel.stackedText ?? ''" rows="2" maxlength="240" placeholder="Leave empty for automatic wrapping" @change="setLabelText('stackedText', $event)" /></label>
@@ -655,7 +718,7 @@ onBeforeUnmount(() => {
                 :value="Math.min(20, Math.max(0.1, selected.textSize ?? (fontSize?.id === selectedId ? fontSize.size : 0.1)))"
                 @input="setFontSize($event, false)" @change="commit" /></label>
               <div class="water-editor-actions">
-                <button type="button" :disabled="selected.textSize === undefined && selected.textScale === undefined" @click="automaticFontSize">Automatic size</button>
+                <button type="button" :disabled="placementCount > 1 || (selected.textSize === undefined && selected.textScale === undefined)" @click="automaticFontSize">Automatic size</button>
                 <span v-if="fontSize?.id === selectedId && !previewOriginal">Currently {{ fontSize.pixels.toFixed(1) }} px</span>
               </div>
               <p class="water-editor-hint">Use the number input for sizes outside the slider's range. Equal values give equal font size in the same view. The number is font pixels on a 1600px-wide reference map; zoom changes the current pixel size. Larger curved text can extend beyond the path's ends.</p>

@@ -6,6 +6,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Give each water name multiple independently positioned placements, with repeatable full names or bilingual text parts, shared font size and letter spacing, and support throughout the editor, drafts, and direct project saves.
 - Save water-name editor changes directly to the maintained project file through the local development server, with validated atomic writes, conflict checks, and continued editing from the saved baseline; keep browser autosave and portable exports.
 - Allow clearing saved horizontal/stacked text overrides to restore automatic wrapping.
 - Integrate the user’s water-label edits across 90 active placements and 17 display-text overrides, replacing the combined Atlantic label with North and South Atlantic Ocean names in English and Norwegian.
