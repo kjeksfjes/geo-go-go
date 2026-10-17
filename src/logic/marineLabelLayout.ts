@@ -122,6 +122,21 @@ export function startAlignedLabelGuide(points: readonly MapPoint[], lengths: rea
   return labelGuideAtDistance(points, lengths, span, total * Math.max(0, Math.min(1, position)) + textSpan / 2, true)
 }
 
+// Align measured text to the readable endpoints, independently of its padded
+// layout guide. Keep this direction when cropping a locally reversing bend.
+export function alignedLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number,
+  textSpan: number, alignment: 'left' | 'center' | 'right'): MapPoint[] | undefined {
+  if (!Number.isFinite(textSpan) || textSpan < 0) return undefined
+  if (points[0] && points.at(-1) && points[0][0] > points.at(-1)![0]) {
+    points = [...points].reverse()
+    lengths = labelGuideLengths(points)
+  }
+  const total = lengths.at(-1) ?? 0
+  const center = alignment === 'left' ? textSpan / 2
+    : alignment === 'right' ? total - textSpan / 2 : total / 2
+  return labelGuideAtDistance(points, lengths, span, center, true)
+}
+
 function labelGuideAtDistance(points: readonly MapPoint[], lengths: readonly number[], span: number,
   center: number, preserveDirection = false): MapPoint[] | undefined {
   const total = lengths.at(-1) ?? 0

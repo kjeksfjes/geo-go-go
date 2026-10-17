@@ -6,10 +6,10 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
-- Lift water names by 0.2em relative to their own paths, keeping the correction proportional to font size and consistent across desktop and mobile.
-- Align water-label baselines explicitly using the font's measured x-height, including curved and stacked labels, to reduce mobile Safari versus desktop placement differences.
+- Lift water names by 0.1em relative to their optical center, keeping the correction proportional to font size and consistent across desktop and mobile.
+- Align water-label baselines explicitly using the font's measured ink x-height, including curved and stacked labels, to reduce mobile Safari versus desktop placement differences.
 - Measure spaced water labels from rendered character positions and bounds to avoid Safari clipping names when its SVG text-length API omits letter spacing.
-- Position the first letter along curved paths instead of requiring a centered-text interpretation, preserving older saved positions until adjusted; let edited curve endpoints follow neighboring points automatically without fixed handles.
+- Choose left, center, or right alignment for curved water names instead of a percentage slider, preserving older saved positions until an alignment is chosen; let edited curve endpoints follow neighboring points automatically without fixed handles.
 - Honor the text-center percentage near curved water-label path endpoints, including duplicate placements and text shorter than the path; extend the baseline instead of shifting the name inward.
 - Give each water name multiple independently positioned placements, with repeatable full names or bilingual text parts, shared font size and letter spacing, and support throughout the editor, drafts, and direct project saves.
 - Keep water names visible when switching between placements of the same name, and refresh the selected placement's size and warnings.

@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, useId, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
-import { extendedLabelGuide, labelGuideLengths, sampleLabelGuide, startAlignedLabelGuide } from '../logic/marineLabelLayout'
+import { alignedLabelGuide, extendedLabelGuide, labelGuideLengths, sampleLabelGuide, startAlignedLabelGuide } from '../logic/marineLabelLayout'
 import { waterLabelPlacements, waterLabelPlacementId } from '../logic/marineLabelPlacements'
 import { spacedSvgTextWidth } from '../logic/svgTextMetrics'
 import { locale } from '../i18n'
@@ -41,6 +41,7 @@ interface ProjectedLabel extends MarineLabel {
   guideLengths?: number[]
   guideCenter?: number
   guideTextPosition?: number
+  guideTextAlign?: MarineLabelPath['textAlign']
   readableGuide?: MapPoint[]
   readableLengths?: number[]
   waterBounds?: [MapPoint, MapPoint]
@@ -171,6 +172,7 @@ const projectedLabels = computed<ProjectedLabel[]>(() => labelPlacements.value.f
     guideLengths: validGuide ? labelGuideLengths(validGuide) : undefined,
     guideCenter: placement?.center,
     guideTextPosition: placement?.textPosition,
+    guideTextAlign: placement?.textAlign,
     readableGuide,
     readableLengths: readableGuide ? labelGuideLengths(readableGuide) : undefined,
     waterBounds,
@@ -325,10 +327,13 @@ function updateLabels() {
         const source = label.readableGuide && label.readableLengths
           ? { points: label.readableGuide, lengths: label.readableLengths }
           : { points: label.guide, lengths: label.guideLengths }
-        const guide = label.guideTextPosition === undefined
-          ? extendedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale, label.guideCenter)
-          : startAlignedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
-            textWidth / scale, label.guideTextPosition)
+        const guide = label.guideTextAlign !== undefined
+          ? alignedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
+            textWidth / scale, label.guideTextAlign)
+          : label.guideTextPosition === undefined
+            ? extendedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale, label.guideCenter)
+            : startAlignedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
+              textWidth / scale, label.guideTextPosition)
         if (!guide) {
           if (selectedForEditing) editingWarning = 'The path has no usable length for this text. Extend the path or undo the last adjustment.'
           continue

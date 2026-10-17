@@ -47,12 +47,13 @@ export function preservePlacementFontSize(source: MarineLabelPath, currentSize: 
 const point = (value: unknown): value is MapPoint => Array.isArray(value) && value.length === 2
   && value.every(Number.isFinite) && Math.abs(value[0]) <= 720 && Math.abs(value[1]) <= 90
 const fields = new Set(['points', 'readablePoints', 'center', 'offset', 'layout', 'anchor', 'bounds',
-  'fontSize', 'spanFraction', 'sizeScale', 'textScale', 'textSize', 'letterSpacing', 'rotation', 'text', 'textNb', 'additionalPlacements', 'textPosition', 'curve'])
+  'fontSize', 'spanFraction', 'sizeScale', 'textScale', 'textSize', 'letterSpacing', 'rotation', 'text', 'textNb', 'additionalPlacements', 'textPosition', 'textAlign', 'curve'])
 
 export function validPlacement(input: unknown): input is MarineLabelPath {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false
   const value = input as Record<string, unknown>
   if (Object.keys(value).some(key => !fields.has(key))) return false
+  if (value.textAlign !== undefined && !['left', 'center', 'right'].includes(value.textAlign as string)) return false
   if (value.curve !== undefined && value.curve !== 'natural') return false
   for (const key of ['text', 'textNb']) {
     const text = value[key]

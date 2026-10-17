@@ -251,13 +251,20 @@ function number(event: Event) { return Number((event.target as HTMLInputElement)
 function preserveSize(placement: MarineLabelPath) {
   return preservePlacementFontSize(placement, props.fontSize?.id === selectedId.value && props.fontSize.placementIndex === placementIndex.value ? props.fontSize.size : undefined)
 }
-function field(key: 'textPosition' | 'spanFraction', event: Event) {
+function field(key: 'spanFraction', event: Event) {
   const source = selected.value
-  if (source) {
-    const value = { ...clone(source), [key]: number(event) }
-    if (key === 'textPosition') delete value.center
-    update(value)
-  }
+  if (source) update({ ...clone(source), [key]: number(event) })
+}
+function setPathAlignment(event: Event) {
+  const source = selected.value
+  const alignment = (event.target as HTMLSelectElement).value
+  if (!source || !['left', 'center', 'right'].includes(alignment)) return
+  const value = preserveSize(clone(source))
+  value.textAlign = alignment as NonNullable<MarineLabelPath['textAlign']>
+  delete value.textPosition
+  delete value.center
+  update(value)
+  commit()
 }
 
 function setFontSize(event: Event, completed = true) {
@@ -747,8 +754,13 @@ onBeforeUnmount(() => {
               <div class="water-editor-actions"><span>Rotate</span><button v-for="angle in [-10, -1, 1, 10]" :key="angle" type="button" @click="transformGeometry(angle)">{{ angle > 0 ? '+' : '' }}{{ angle }}°</button></div>
               <template v-if="selected.layout !== 'horizontal'">
                 <div class="water-editor-actions"><span>Path size</span><button type="button" @click="transformGeometry(0, 0.9)">−10%</button><button type="button" @click="transformGeometry(0, 1.1)">+10%</button></div>
-                <label>First letter along path {{ selected.textPosition === undefined ? '(not set)' : `${Math.round(selected.textPosition * 100)}%` }}<input type="range" min="0" max="1" step="0.01" :value="selected.textPosition ?? 0" @input="field('textPosition', $event)" @change="commit" /></label>
-                <p class="water-editor-hint">0% starts the first letter at the left-hand end; 100% at the other end. Text can continue past the endpoint. Existing centered positions stay unchanged until this slider is adjusted.</p>
+                <label>Text alignment along path<select
+                  :value="selected.textAlign ?? (selected.textPosition !== undefined || (selected.center !== undefined && selected.center !== 0.5) ? 'saved' : 'center')"
+                  @change="setPathAlignment">
+                  <option v-if="!selected.textAlign && (selected.textPosition !== undefined || (selected.center !== undefined && selected.center !== 0.5))" value="saved" disabled>Saved position</option>
+                  <option value="left">Left</option><option value="center">Center</option><option value="right">Right</option>
+                </select></label>
+                <p class="water-editor-hint">Left starts the text at the readable start of the path; Right ends it at the other endpoint. Center centers it on the path. Saved positions stay unchanged until you choose an alignment.</p>
                 <label class="water-editor-check"><input type="checkbox" :checked="selected.curve === 'natural'" @change="setNaturalCurve" /> Automatic endpoint tangents</label>
                 <p class="water-editor-hint">Endpoint tangents follow the neighboring curve automatically. Enabled when editing path points or switching to a curved layout.</p>
                 <label v-if="selected.textSize === undefined">Auto-size path use {{ Math.round((selected.spanFraction ?? 0.85) * 100) }}%<input type="range" min="0.05" max="1" step="0.01" :value="selected.spanFraction ?? 0.85" @input="field('spanFraction', $event)" @change="commit" /></label>

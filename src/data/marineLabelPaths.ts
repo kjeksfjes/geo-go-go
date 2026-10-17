@@ -8,6 +8,7 @@ export interface MarineLabelPath {
   points: MapPoint[]
   center?: number
   textPosition?: number
+  textAlign?: 'left' | 'center' | 'right'
   curve?: 'natural'
   readablePoints?: MapPoint[]
   offset?: MapPoint
