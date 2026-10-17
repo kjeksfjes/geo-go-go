@@ -114,6 +114,22 @@ Deferred work is tracked in [TASKS.md](TASKS.md), using stable task IDs and expl
 
 The interface follows a shared “pocket atlas” direction: warm paper surfaces, dark ink, Bricolage Grotesque display headings, and Geist controls. Both fonts are locally hosted with licenses and provenance; there are no runtime font-service requests. UI colors, typography, corners, shadows, and common spacing are defined as `--ui-*` tokens in `src/styles.css`; new controls should reuse those roles. Geographic colors remain separate in `src/data/mapPalette.ts` and the map's interaction styles. See [the design audit](docs/design-audit.md) for findings, decisions, and acceptance scope.
 
+## Map view links and local view commands
+
+In Explore mode, **Copy view link** copies a URL containing the geographic center, map zoom, region and projection. For example, `http://localhost:5173/#view=59.2,5.7,128&region=world&projection=mercator` opens a close view of southwest Norway. The same fragment works under the published site's base path. Latitude comes before longitude; zoom is the map's existing scale multiplier (1–16384). Normal region and projection navigation limits still apply. Different viewport shapes show different surrounding areas. Links open Explore mode and leave language, detail and visual layer preferences unchanged.
+
+Opening a different view fragment in the same tab applies it without a reload; Back and Forward navigate between linked views. Copying a link does not continually rewrite the address while panning or add history entries. Invalid view fragments are ignored.
+
+While `npm run dev` is running, move the most recently focused connected map tab with:
+
+```sh
+npm run show:view -- --lat 59.2 --lon 5.7 --zoom 128 --region world --projection mercator
+```
+
+Use `--url http://localhost:5174` if Vite is on another port. The command uses a local-only POST endpoint and Vite's existing WebSocket connection, without browser automation or polling. It animates to the view using the existing map camera animation, without changing the tab's URL or browser history. Add `--animate false` for an instant jump. Focus the intended map tab first if several are open. A command reports delivery, not visual acceptance. The endpoint and command listener are development-only and are absent from the production build. Restart Vite once if an already-running server has not picked up the new configuration.
+
+Read the same tab's current map view with `npm run read:view` (or add `-- --url http://localhost:5174`). The response includes its last settled geographic view, a `busy` flag and the server receipt time. While the map is moving, the view is the previous settled snapshot. Snapshots are sent after movement settles and when the tab is focused or reconnects; there is no camera-frame reporting or continuous polling. Reading does not move the map or change its URL. This reports map coordinates and settings, not a screenshot.
+
 ## Local releases
 
 Add an **Unreleased** section in `CHANGELOG.md` only when there are pending user-visible changes. When a branch is ready to release, replace that heading with a concise versioned entry so no **Unreleased** heading remains in the published changelog, give major and minor releases a fitting name in the heading, update `package.json` and `package-lock.json` together, and commit the release preparation on that branch. From that clean release branch, run `npm run release:merge`. It checks the version, changelog, and production build, then switches to `main`, merges the branch, and creates an annotated version tag with the release name. Use `npm run release:merge -- --check` to run the checks without merging. The script requires `main` to be an ancestor of the release branch, so integrate any newer `main` changes first. After the local merge, push `main` and the tag when publication is intended; pushing `main` deploys the site through GitHub Pages.

@@ -2,6 +2,12 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.21.0 — Shared Horizons — 2026-10-17
+
+### Improvements
+
+- Share Explore map views with links containing position, zoom, region and projection. Add local development commands to show an animated view or read the last settled view in the most recently focused connected map tab, without changing its URL.
+
 ## 0.20.0 — Waterways Revealed — 2026-10-17
 
 ### Improvements

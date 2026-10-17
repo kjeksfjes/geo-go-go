@@ -28,6 +28,7 @@ import { clearStoredValues, readStoredBoolean, readStoredValue, writeStoredValue
 import { locale, regionName, resetLocale, setLocale, t } from './i18n'
 import { isCountryLevelSelection } from './data/mapSelection'
 import { supplementalAreaInfoById } from './data/supplementalLand'
+import { parseSharedMapView, validateSharedMapView, type SharedMapView } from './logic/sharedMapView'
 
 const QuizTipPopover = defineAsyncComponent(() => import('./components/QuizTipPopover.vue'))
 
@@ -43,6 +44,36 @@ const wrongAnswerRevealed = ref(false)
 const mode = ref<GameMode>('explore')
 const quizMode = computed(() => mode.value !== 'explore')
 const activeRegionId = ref<MapRegionId>('world')
+const requestedMapView = shallowRef<SharedMapView | null>(null)
+
+function openSharedMapView() {
+  const view = parseSharedMapView(window.location.hash)
+  if (view) applySharedMapView(view)
+}
+
+function applySharedMapView(view: SharedMapView) {
+  if (!view || !regionById.has(view.region as MapRegionId)) return
+  if (quizMode.value && hasUnfinishedQuizProgress.value && !window.confirm(t('openSharedViewConfirmation'))) return
+  mode.value = 'explore'
+  selectedCountryId.value = null
+  selectedGeographicUnitId.value = null
+  selectedLandAreaId.value = null
+  requestedMapView.value = view
+  activeRegionId.value = view.region as MapRegionId
+}
+
+function receiveDevelopmentView(input: unknown) {
+  const view = validateSharedMapView(input)
+  if (!view || !regionById.has(view.region as MapRegionId)) return
+  applySharedMapView({ ...view, animate: view.animate ?? true })
+}
+
+function announceDevelopmentMap() {
+  if (import.meta.hot) {
+    import.meta.hot.send('geo-go-go:active', {})
+    worldMap.value?.reportDevelopmentView()
+  }
+}
 const regionSelectionRevision = ref(0)
 const showingQuizGuess = ref(false)
 watch([mode, activeRegionId], () => { selectedLandAreaId.value = null })
@@ -347,6 +378,14 @@ function handleEscape(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  window.addEventListener('hashchange', openSharedMapView)
+  openSharedMapView()
+  if (import.meta.hot) {
+    import.meta.hot.on('geo-go-go:view', receiveDevelopmentView)
+    import.meta.hot.on('vite:ws:connect', announceDevelopmentMap)
+    window.addEventListener('focus', announceDevelopmentMap)
+    announceDevelopmentMap()
+  }
   document.addEventListener('pointerdown', handleTipPointer, true)
   document.addEventListener('keydown', handleTipKey, true)
   document.addEventListener('keydown', handleQuizShortcut)
@@ -355,6 +394,10 @@ onMounted(() => {
   if (highDetailPreferred) void setHighDetail(true, false)
 })
 onBeforeUnmount(() => {
+  window.removeEventListener('hashchange', openSharedMapView)
+  window.removeEventListener('focus', announceDevelopmentMap)
+  if (import.meta.hot) import.meta.hot.off('geo-go-go:view', receiveDevelopmentView)
+  if (import.meta.hot) import.meta.hot.off('vite:ws:connect', announceDevelopmentMap)
   document.removeEventListener('pointerdown', handleTipPointer, true)
   document.removeEventListener('keydown', handleTipKey, true)
   document.removeEventListener('keydown', handleQuizShortcut)
@@ -520,6 +563,8 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
 
     <section class="map-card" :aria-label="t('worldMapGame')">
       <WorldMap
+        :shared-view="requestedMapView"
+        @shared-view-applied="requestedMapView = null"
         ref="worldMap"
         :focus-overlay="mapOverlay"
         :geographic-units="renderedGeographicUnits"

@@ -1,10 +1,12 @@
 {
   "name": "geo-go-go",
   "private": true,
-  "version": "0.20.0",
+  "version": "0.21.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "show:view": "node scripts/show-map-view.mjs",
+    "read:view": "node scripts/read-map-view.mjs",
     "build": "npm run check:country-names && npm run check:marine-labels && vue-tsc -b && vite build",
     "check:country-names": "node scripts/validate-country-names.mjs",
     "check:marine-labels": "node scripts/validate-marine-labels.mjs",

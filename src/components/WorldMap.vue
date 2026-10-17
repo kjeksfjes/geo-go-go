@@ -3,6 +3,7 @@ import { geoArea, geoDistance } from 'd3-geo'
 import packageInfo from '../../package.json'
 import { createGestureDiagnostics, type GestureWorkerEvent, type GestureWheelInput } from '../logic/gestureDiagnostics'
 import { copyText } from '../utils/copyText'
+import { sharedMapViewHash, type SharedMapView } from '../logic/sharedMapView'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
@@ -90,6 +91,7 @@ function initialScaleUnits(): ScaleUnitSystem {
 }
 
 const props = defineProps<{
+  sharedView: SharedMapView | null
   focusOverlay: HTMLElement | null
   geographicUnits: GeographicUnitFeature[]
   detailedGeographicUnits: GeographicUnitFeature[] | null
@@ -119,6 +121,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  'shared-view-applied': []
   select: [countryId: string | null, geographicUnitId: string | null]
   'land-select': [id: string | null]
   'quiz-next': []
@@ -1007,6 +1010,29 @@ function resetView() {
   focusActiveRegion(true, true)
 }
 
+const viewCopyStatus = ref<'idle' | 'copied' | 'failed'>('idle')
+let viewCopyTimer: number | undefined
+function sharedViewSnapshot(): SharedMapView | null {
+  const center = unprojectPoint([
+    (mapWidth.value / 2 - transform.x) / transform.scale,
+    (mapHeight.value / 2 - transform.y) / transform.scale,
+  ])
+  if (!center?.every(Number.isFinite)) return null
+  return {
+    lat: center[1], lon: ((center[0] + 180) % 360 + 360) % 360 - 180,
+    zoom: transform.scale, region: renderedRegion.value.id, projection: projectionId.value,
+  }
+}
+async function copyViewLink() {
+  const view = sharedViewSnapshot()
+  if (!view) return
+  const url = new URL(window.location.href)
+  url.hash = sharedMapViewHash(view)
+  viewCopyStatus.value = await copyText(url.href) ? 'copied' : 'failed'
+  if (viewCopyTimer !== undefined) window.clearTimeout(viewCopyTimer)
+  viewCopyTimer = window.setTimeout(() => { viewCopyStatus.value = 'idle' }, 2500)
+}
+
 watch(
   () => renderedRegion.value.id,
   () => focusActiveRegion(!autoRegionalProjection.value && projectionId.value !== 'regional-equal-area'),
@@ -1149,7 +1175,7 @@ async function focusCountry(countryId: string) {
   restoreHoverUnderPointer()
 }
 
-defineExpose({ focusCountry })
+defineExpose({ focusCountry, reportDevelopmentView })
 
 let focusOverlayObserver: ResizeObserver | undefined
 watch(() => props.focusOverlay, (overlay) => {
@@ -1531,6 +1557,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (viewCopyTimer !== undefined) window.clearTimeout(viewCopyTimer)
   window.removeEventListener('pointerup', releaseWaterNamePress, true)
   window.removeEventListener('pointercancel', releaseWaterNamePress, true)
   window.removeEventListener('blur', clearWaterNamePress)
@@ -1551,6 +1578,7 @@ onBeforeUnmount(() => {
 // Automatic changes follow the selected region, not temporary quiz-guess framing.
 // Queue the latest request while detail/projection work is busy.
 watch([() => props.selectedRegionId, autoRegionalProjection], ([regionId, enabled], previous) => {
+  if (props.sharedView) { pendingAutoProjection.value = null; return }
   pendingProportionalTransition = previous !== undefined && (enabled || previous[1] === true)
   if (enabled) {
     writeStoredValue(mapSettingKeys.globalProjection, globalProjectionId.value)
@@ -1676,6 +1704,51 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
     projectionLoading.value = false
     projectionBlurDuration.value = 280
   }
+}
+
+// Apply explicit views after region, detail, projection and element sizing settle.
+// A newer request replaces a queued one; normal navigation keeps its existing rules.
+const applyingSharedView = ref(false)
+watch([() => props.sharedView, interactionLocked, measuredWidth, measuredHeight, applyingSharedView], async () => {
+  const view = props.sharedView
+  if (!view || interactionLocked.value || applyingSharedView.value || measuredWidth.value <= 0 || measuredHeight.value <= 0) return
+  applyingSharedView.value = true
+  try {
+    pendingAutoProjection.value = null
+    renderedRegion.value = props.activeRegion
+    renderedMapUnitIds.value = props.visibleMapUnitIds
+    await setProjection(view.projection)
+    await nextTick()
+    await afterPaint()
+    if (props.sharedView !== view) return
+    const point = projectPoint([view.lon, view.lat])
+    if (point?.every(Number.isFinite)) zoomToPoint(point, view.zoom, view.animate ?? false)
+    emit('shared-view-applied')
+  } finally {
+    applyingSharedView.value = false
+  }
+}, { flush: 'post' })
+
+// Development snapshots run on interaction boundaries, never on camera frames.
+let developmentViewTimer: number | undefined
+function reportDevelopmentView() {
+  if (!import.meta.hot) return
+  const busy = isInteracting.value || interactionLocked.value || applyingSharedView.value || props.sharedView !== null
+  import.meta.hot.send('geo-go-go:state', { busy, view: busy ? null : sharedViewSnapshot() })
+}
+if (import.meta.hot) {
+  watch([isInteracting, interactionLocked, applyingSharedView, () => props.sharedView,
+    measuredWidth, measuredHeight, projectionId, () => renderedRegion.value.id], () => {
+    if (developmentViewTimer !== undefined) window.clearTimeout(developmentViewTimer)
+    if (isInteracting.value || interactionLocked.value || applyingSharedView.value || props.sharedView) {
+      reportDevelopmentView()
+    } else {
+      developmentViewTimer = window.setTimeout(reportDevelopmentView, 100)
+    }
+  }, { flush: 'post' })
+  onBeforeUnmount(() => {
+    if (developmentViewTimer !== undefined) window.clearTimeout(developmentViewTimer)
+  })
 }
 </script>
 
@@ -2122,6 +2195,9 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
         </span>
         <button v-if="isZoomed" type="button" @click="resetView">
           {{ t('resetView') }}
+        </button>
+        <button v-if="!quizMode" type="button" :disabled="interactionLocked || isInteracting" @click="copyViewLink" aria-live="polite">
+          {{ t(viewCopyStatus === 'copied' ? 'viewLinkCopied' : viewCopyStatus === 'failed' ? 'viewLinkCopyFailed' : 'copyViewLink') }}
         </button>
       </div>
       <button
@@ -2587,6 +2663,9 @@ async function setProjection(nextId: MapProjectionId, proportionalTransition = f
   right: 1.5rem;
   bottom: 1.4rem;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100% - 3rem);
   align-items: center;
   gap: 0.6rem;
   color: var(--ui-text);
