@@ -7,6 +7,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 ### Improvements
 
 - Integrate the user’s water-label edits across 90 active placements and 17 display-text overrides, replacing the combined Atlantic label with North and South Atlantic Ocean names in English and Norwegian.
+- Recognize the fully integrated saved water-label draft and reopen the editor on the updated map with a local backup; keep unmatched drafts in recovery so additional edits cannot be lost.
 - Add a local development water-name editor with live map previews, movable/rotatable placements, editable curve points, text sizing, horizontal/stacked layout, undo/redo, saved drafts, and JSON import/export for review and integration.
 - Add and remove bilingual water names in editor drafts, restore removed catalog names, and use separate North/South Atlantic and Pacific boundary references for new names; preserve these changes in undo/redo and exports while retaining compatibility with older drafts.
 - Edit English and Norwegian water-name wording and optional horizontal/stacked text with explicit line breaks and hyphens; keep curved text on one line and preserve wrapping choices in saved drafts and layout switches.

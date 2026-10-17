@@ -9,6 +9,7 @@ import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths
 import type { MapPoint } from '../composables/useMapZoom'
 import { sampleLabelGuide } from '../logic/marineLabelLayout'
 import { normalizeCountrySearch } from '../logic/countrySuggestions'
+import { isIntegratedWaterDraft } from './integratedWaterDraft'
 import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, oceanPartNames, placementPivot, preservePlacementFontSize, readDraft, samePlacement, validLabelText, validPlacement, waterKinds, type CustomWaterLabel, type Placements } from './waterLabelDraft'
 
 const props = defineProps<{
@@ -57,9 +58,25 @@ try {
   lastSaved = saved
   if (saved) {
     try { restoreSnapshot(readDraft(saved, baseline, ids)) }
-    catch (error) { recovery.value = saved; status.value = String((error as Error).message) }
+    catch (error) {
+      recovery.value = saved; status.value = String((error as Error).message)
+      void resumeIntegratedDraft(saved)
+    }
   }
 } catch { storageError.value = true }
+async function resumeIntegratedDraft(saved: string) {
+  try {
+    if (!await isIntegratedWaterDraft(saved) || recovery.value !== saved) return
+    if (localStorage.getItem(storageKey) !== saved) { storageConflict.value = true; return }
+    // Keep the full original before starting a fresh draft on the new baseline.
+    localStorage.setItem(`${storageKey}.integrated-backup`, saved)
+    const fresh = JSON.stringify(makeDraft({}, baseline, packageInfo.version))
+    localStorage.setItem(storageKey, fresh)
+    lastSaved = fresh
+    recovery.value = null
+    status.value = 'Your previous draft is already integrated. The editor is ready for new changes on the updated map; a local backup of the old draft is retained.'
+  } catch { /* Keep recovery controls and the original draft if matching or storage fails. */ }
+}
 function snapshot() { return { placements: edits.value, customLabels: customLabels.value, hiddenIds: hiddenIds.value, labelText: labelText.value } }
 function restoreSnapshot(value: ReturnType<typeof snapshot>) {
   edits.value = value.placements; customLabels.value = value.customLabels; hiddenIds.value = value.hiddenIds; labelText.value = value.labelText
