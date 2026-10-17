@@ -6,6 +6,10 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Refine smaller water labels: center the Magellan curve, straighten and enlarge Marmara, reposition and enlarge Taiwan, extend the Bosporus baseline, stack Korea Strait west of Tsushima, and enlarge Cook Strait.
+
+- Give Sea of Japan a stronger S-curve, reverse the Laccadive Sea bend, and enlarge Boknafjord along a longer curved water corridor.
+
 - Give Sognefjord a gentle bend that rises through its middle and flattens toward the east; refine the restored Trondheimsfjord and Gulf of Ob baselines to follow their water corridors.
 
 - Restore placements for all 15 previously hidden water names, following narrow passages and fjords with prepared geographic guides. Let their names use the available path length instead of restrictive coast-width font caps, accepting some coastline contact for readability. Check that every imported water label has a prepared placement.

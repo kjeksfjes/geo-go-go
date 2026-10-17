@@ -56,9 +56,44 @@ const authored: Record<string, MarineLabelPath> = {
   'ne:1159115399': { points: [[-96, 24.5], [-91, 25.8], [-85, 26.2]] },
   'ne:1159115379': { points: [[-83, 16.5], [-78, 14], [-74, 14.5], [-68, 16], [-64, 15.5]], center: 0.6 },
   'ne:1159115171': { points: [[29, 42.5], [33.5, 43.2], [37.5, 43], [40, 42.5]] },
+  'ne:1159116143': { // Laccadive Sea: reverse the bend around its existing center.
+    points: [[74.046564, 11.121151], [75.787762, 6.624515], [78.912937, 4.916062]],
+    readablePoints: undefined,
+  },
+  'ne:1159115305': { // Sea of Japan: sweep northeast through the central basin.
+    points: [[132.567311, 36.716987], [133.263113, 38.880715], [135.690493, 40.821501], [138.108417, 42.739805], [139.176528, 45.01112]],
+    spanFraction: 0.834104, readablePoints: undefined,
+  },
   'ne:1159117043': { points: [[-76.35, 39.1], [-76.42, 38.6], [-76.23, 38], [-76.1, 37.3], [-76.05, 36.98]] },
   'ne:1159117301': { points: [[-86.1, 20.6], [-85.75, 21.7], [-85.2, 22.6]] },
-  'ne:1159118553': { points: [[-70.7, -53.55], [-70.55, -53.3], [-70.6, -52.95]] },
+  'ne:1159118553': { // Strait of Magellan: center the bend within the passage.
+    points: [[-70.60, -53.55], [-70.65, -53.3], [-70.51, -52.95]],
+    readablePoints: undefined,
+  },
+  'ne:1159119181': { // Sea of Marmara
+    points: [[27.58, 40.77], [28.22, 40.77], [28.87, 40.77]],
+    sizeScale: 0.46, readablePoints: undefined,
+  },
+  'ne:1159118835': { // Bosporus: use more of the winding strait.
+    points: [[29.01, 41.035], [29.047, 41.085], [29.066, 41.13], [29.10, 41.175]],
+    spanFraction: 0.92, readablePoints: undefined,
+  },
+  'ne:1159116947': { // Taiwan Strait
+    points: [[118.8, 23.94], [119.45, 24.45], [120.06, 24.98]],
+    sizeScale: 0.48, readablePoints: undefined,
+  },
+  'ne:1159116907': { // Korea Strait: two lines west of Tsushima.
+    points: [[127.65, 33.85], [128.25, 33.85], [128.9, 33.85]],
+    layout: 'horizontal', anchor: [128.25, 33.85],
+    bounds: [[127.4, 33.43], [129.1, 34.27]],
+    sizeScale: 0.56, readablePoints: undefined,
+  },
+  'ne:1159118281': { // Cook Strait: keep the reviewed center, with more room.
+    points: [[174.630984, -41.586576], [174.479632, -41.395982], [174.53769, -41.006556]],
+    layout: 'horizontal', anchor: [174.515544, -41.488418],
+    bounds: [[174.124123, -41.655477], [174.906965, -41.32136]],
+    sizeScale: 0.48, readablePoints: undefined,
+  },
   'ne:1159116269': { points: [[-72, -59], [-66, -58.5], [-60, -59]] },
   // Restore waters whose source footprints or winding channels could not
   // yield an automatic guide. Keep their water-following corridors intact,
@@ -114,6 +149,11 @@ const authored: Record<string, MarineLabelPath> = {
   'ne:1159117781': { // Sognefjord
     points: [[5.55, 61.094], [5.68, 61.12], [5.82, 61.135], [5.95, 61.136], [6.07, 61.124]],
     readablePoints: undefined,
+  },
+  'ne:1159118943': { // Boknafjord: use the long southwest-to-northeast water corridor.
+    points: [[5.15, 59.045], [5.4, 59.11], [5.56, 59.17], [5.74, 59.23], [5.90, 59.30]],
+    layout: undefined, anchor: undefined, bounds: undefined,
+    spanFraction: 0.92, readablePoints: undefined,
   },
   'ne:1159117797': { // Trondheimsfjord
     points: [[10.18, 63.505], [10.36, 63.545], [10.56, 63.56]],
