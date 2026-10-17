@@ -2,6 +2,27 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.22.0 — Waterline Workshop — 2026-10-18
+
+### Improvements
+
+- Add a local development water-name editor with draggable placements and curve points, rotation, font sizes, letter spacing, horizontal/stacked layouts, bilingual wording and manual line breaks, undo/redo, browser autosave, and portable draft import/export.
+- Save validated water-name edits directly to the maintained project file through the local development server, with atomic writes and conflict checks. Editing and project-save tools stay out of production builds.
+- Add and remove names, repeat a name in multiple independently positioned placements, or split it into bilingual text parts. Share typography across placements and highlight approximate Natural Earth water boundaries as geographic guidance.
+- Align curved names to the left, center, or right of their paths; preserve older saved positions until changed. Let edited endpoints follow their neighboring curves automatically.
+- Integrate the user’s water-name placements, sizes, spacing, and English/Norwegian text refinements, including separate North and South Atlantic Ocean names.
+- Give map cards larger flags, full-width quiz feedback beneath the header, and compact country details beneath the name; scale flags for narrow screens.
+
+### Fixes
+
+- Prevent water names from disappearing when resizing, changing layout, or switching duplicate placements; preserve their reference font size while moving and reshaping them.
+- Measure rendered letter spacing to prevent Safari from clipping curved names, and use explicit font-relative baseline alignment for more consistent mobile and desktop placement.
+- Preserve recoverable browser drafts after source changes, recognize the previously integrated draft, and allow clearing saved stacked text to restore automatic wrapping.
+
+### Security
+
+- Update the transitive `source-map-js` dependency to fix a denial-of-service vulnerability when build tooling processes malicious source maps (GHSA-68fv-2mgg-jv7q).
+
 ## 0.21.0 — Shared Horizons — 2026-10-17
 
 ### Improvements

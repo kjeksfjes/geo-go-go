@@ -1,11 +1,15 @@
 import type { MapPoint } from '../composables/useMapZoom'
 import generated from './marine-label-paths.json'
+import overrides from './marine-label-overrides.json'
 
 // Generated water corridors follow source polygon shape; authored overrides
 // refine distinctive seas. These guides never change boundaries or names.
 export interface MarineLabelPath {
   points: MapPoint[]
   center?: number
+  textPosition?: number
+  textAlign?: 'left' | 'center' | 'right'
+  curve?: 'natural'
   readablePoints?: MapPoint[]
   offset?: MapPoint
   layout?: 'horizontal'
@@ -14,7 +18,17 @@ export interface MarineLabelPath {
   fontSize?: number
   spanFraction?: number
   sizeScale?: number
+  textScale?: number
+  // Font pixels at the shared 1600px-wide, projection-scale-1 reference view.
+  textSize?: number
+  // Extra spacing between letters, relative to the font size.
+  letterSpacing?: number
+  rotation?: number
+  text?: string
+  textNb?: string
+  additionalPlacements?: MarineLabelPlacement[]
 }
+export type MarineLabelPlacement = Omit<MarineLabelPath, 'additionalPlacements' | 'textSize' | 'letterSpacing' | 'textScale' | 'fontSize' | 'sizeScale'>
 const offsets: Record<string, MapPoint> = {
   'ne:1159116897': [0, -0.15], // Seram Sea: slightly south.
   'ne:1159120201': [0, -0.025], // Dampier Strait: slightly south.
@@ -166,7 +180,12 @@ const authored: Record<string, MarineLabelPath> = {
 }
 
 const prepared = generated as unknown as Record<string, MarineLabelPath>
+const maintained = overrides.placements as unknown as Record<string, MarineLabelPath>
 export const marineLabelPaths: Record<string, MarineLabelPath> = Object.fromEntries(
-  [...new Set([...Object.keys(prepared), ...Object.keys(authored)])]
-    .map((id) => [id, { ...prepared[id], ...authored[id], offset: offsets[id] }]),
+  [...new Set([...Object.keys(prepared), ...Object.keys(authored), ...Object.keys(overrides.placements)])]
+    .filter(id => !overrides.removedIds.includes(id))
+    // Draft placements are complete snapshots; merging would restore removed
+    // offsets, readable guides, or layout fields from the older preparation.
+    .map((id) => [id, maintained[id]
+      ?? { ...prepared[id], ...authored[id], offset: offsets[id] }]),
 )

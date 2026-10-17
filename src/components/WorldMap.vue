@@ -4,7 +4,9 @@ import packageInfo from '../../package.json'
 import { createGestureDiagnostics, type GestureWorkerEvent, type GestureWheelInput } from '../logic/gestureDiagnostics'
 import { copyText } from '../utils/copyText'
 import { sharedMapViewHash, type SharedMapView } from '../logic/sharedMapView'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
+import type { MarineLabelPath } from '../data/marineLabelPaths'
+import type { MarineLabel } from '../data/marineLabels'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
 import LoadingIndicator from './LoadingIndicator.vue'
@@ -168,6 +170,16 @@ const countryMarkersEnabled = ref(readStoredBoolean(mapSettingKeys.countryMarker
 const limitedCountryZoomEnabled = ref(readStoredBoolean(mapSettingKeys.limitedCountryZoom, true))
 // Keep the SVG renderer available for a direct performance comparison.
 const canvasRendererEnabled = new URLSearchParams(window.location.search).get('renderer') !== 'svg'
+const WaterLabelEditor = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('../dev/WaterLabelEditor.vue')) : undefined
+const waterEditorEnabled = import.meta.env.DEV && new URLSearchParams(window.location.search).has('water-editor')
+const waterEditorPlacements = shallowRef<Record<string, MarineLabelPath> | undefined>()
+const waterEditorLabels = shallowRef<MarineLabel[] | undefined>()
+const waterEditorSelectedId = ref('')
+const waterEditorPlacementIndex = ref(0)
+const waterEditorEditing = ref(false)
+const waterEditorWarning = ref('')
+const waterEditorFontSize = shallowRef<{ id: string; size: number; pixels: number; placementIndex: number } | null>(null)
 const canvasReady = ref(false)
 const canvasContextKind = ref('unavailable')
 const fastTouchZoomPreview = ref(false)
@@ -271,6 +283,7 @@ const {
   horizontalWrap,
   interactionGeographicPaths,
   projectPoint,
+  projectGeometry,
   questionLandmassAnchors,
   projectionDebug,
   projectionScale,
@@ -420,6 +433,17 @@ const {
 )
 
 watch([interactionLocked, isInteracting], ([locked, moving]) => emit('view-busy-change', locked || moving), { immediate: true })
+
+function focusWaterEditor(points: MapPoint[]) {
+  const projected = points.map(projectPoint).filter((p): p is MapPoint => !!p && p.every(Number.isFinite))
+  if (projected.length < 2 || interactionLocked.value) return
+  const period = horizontalWrap.value?.period
+  if (period) for (const point of projected) point[0] += Math.round((projected[0]![0] - point[0]) / period) * period
+  const xs = projected.map(p => p[0]), ys = projected.map(p => p[1])
+  const width = mapWidth.value > 700 ? mapWidth.value - 340 : mapWidth.value
+  zoomToBounds([[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]], undefined,
+    { viewport: [[0, 0], [Math.max(200, width), mapHeight.value]] })
+}
 
 const gestureDiagnosticsActive = ref(false)
 const lastGestureReport = shallowRef<Record<string, unknown> | null>(null)
@@ -1369,10 +1393,23 @@ function handleMapCaptureClick(event: MouseEvent) {
     event.stopPropagation()
     return
   }
-  if (!event.isTrusted || !suppressCompatibilityClick) return
-  suppressCompatibilityClick = false
-  event.preventDefault()
-  event.stopPropagation()
+  if (event.isTrusted && suppressCompatibilityClick) {
+    suppressCompatibilityClick = false
+    event.preventDefault()
+    event.stopPropagation()
+    return
+  }
+  // Water names, editor handles, and panel controls live in separate overlays.
+  // A real click on the map itself therefore deselects the edited water name.
+  if (waterEditorEnabled && !props.quizMode) {
+    if (consumeDragClick()) {
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+    waterEditorSelectedId.value = ''
+    waterEditorWarning.value = ''
+  }
 }
 
 function clearHoveredUnit(id: string) {
@@ -1768,6 +1805,7 @@ if (import.meta.hot) {
         'map-container--dragging': isDragging,
         'map-container--interacting': isInteracting,
         'map-container--fast-touch-zoom': fastTouchZoomPreview,
+        'map-container--water-editor': waterEditorEnabled,
       }"
       :aria-busy="interactionLocked"
       :inert="interactionLocked"
@@ -1993,13 +2031,13 @@ if (import.meta.hot) {
            not alter the interactive map's descendant geometry. Reuse the
            overlay class so projection snapshots retain the label layer. -->
       <svg
-        v-if="marineLabelsEnabled && !quizMode"
+        v-if="(marineLabelsEnabled || waterEditorEnabled) && !quizMode"
         class="map-highlights map-water-labels"
         :viewBox="`0 0 ${mapWidth} ${mapHeight}`"
         aria-hidden="true"
       >
         <MarineLabels
-          :visible="marineLabelsEnabled && !quizMode && !waterNamePointerPressed && !isInteracting"
+          :visible="(marineLabelsEnabled || waterEditorEnabled) && !quizMode && !waterNamePointerPressed && !isInteracting"
           :width="mapWidth"
           :height="mapHeight"
           :transform="transform"
@@ -2007,6 +2045,14 @@ if (import.meta.hot) {
           :project-point="projectPoint"
           :copy-offsets="copyOffsets"
           :wrap-period="horizontalWrap?.period ?? null"
+          :placements="waterEditorEnabled ? waterEditorPlacements : undefined"
+          :labels="waterEditorEnabled ? waterEditorLabels : undefined"
+          :editing="waterEditorEnabled && waterEditorEditing && !waterNamePointerPressed && !isInteracting && !interactionLocked"
+          :editing-label-id="waterEditorEnabled && waterEditorPlacements ? waterEditorSelectedId : undefined"
+          :editing-placement-index="waterEditorPlacementIndex"
+          @select="(id, index) => { waterEditorSelectedId = id; waterEditorPlacementIndex = index }"
+          @editing-warning="waterEditorWarning = $event"
+          @editing-size="waterEditorFontSize = $event"
         />
       </svg>
 
@@ -2213,6 +2259,21 @@ if (import.meta.hot) {
         <span class="touch-zoom-preview-status__dot" aria-hidden="true" />
         {{ t(gestureCopyState === 'copied' ? 'gestureCopied' : gestureCopyState === 'failed' ? 'gestureCopyFailed' : !canvasRendererActive ? 'svgZoom' : fastTouchZoomPreview ? (isDragging ? 'touchPanPreview' : 'fastZoomPreview') : restoringTouchDetail ? 'restoringZoomDetail' : 'normalZoom') }}
       </button>
+      <WaterLabelEditor
+        v-if="waterEditorEnabled && !quizMode && WaterLabelEditor"
+        v-model:selected-id="waterEditorSelectedId"
+        v-model:placement-index="waterEditorPlacementIndex"
+        :width="mapWidth" :height="mapHeight" :transform="transform"
+        :project-point="projectPoint" :unproject-point="unprojectPoint"
+        :project-geometry="projectGeometry"
+        :wrap-period="horizontalWrap?.period ?? null" :copy-offsets="copyOffsets"
+        :disabled="interactionLocked || isInteracting"
+        :warning="waterEditorWarning"
+        :font-size="waterEditorFontSize"
+        @preview="waterEditorPlacements = $event" @editing="waterEditorEditing = $event"
+        @labels="waterEditorLabels = $event"
+        @focus="focusWaterEditor"
+      />
       <MapScaleBar v-if="scaleBar" :scale="scaleBar" />
       <MapDebugPanel
         v-if="debugEnabled && debugMetrics"
@@ -2778,6 +2839,8 @@ if (import.meta.hot) {
   box-shadow: var(--ui-shadow-panel);
   backdrop-filter: blur(12px);
 }
+
+.map-container--water-editor .map-settings-panel { z-index: 7; }
 
 .map-settings-panel :deep(.detail-toggle) {
   width: 100%;

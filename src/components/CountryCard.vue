@@ -47,12 +47,12 @@ const componentDetail = computed(() => {
       <div class="country-card__message">
         <p class="map-overlay__eyebrow">{{ t('selectedCountry') }}</p>
         <h2 class="map-overlay__heading">{{ countryName(country.id) }}</h2>
-      </div>
-      <div class="country-card__details">
-        <p v-if="componentDetail" class="country-card__component">
-          {{ componentDetail.name }}<span v-if="componentDetail.type"> · <em>{{ componentDetail.type }}</em></span>
-        </p>
-        <p class="country-card__code">{{ t('mapCode', { code: country.id }) }}</p>
+        <div class="country-card__details">
+          <p v-if="componentDetail" class="country-card__component">
+            {{ componentDetail.name }}<span v-if="componentDetail.type"> · <em>{{ componentDetail.type }}</em></span>
+          </p>
+          <p class="country-card__code">{{ t('mapCode', { code: country.id }) }}</p>
+        </div>
       </div>
     </template>
     <p v-else class="country-card__empty">{{ t('chooseCountry') }}</p>
@@ -70,7 +70,7 @@ const componentDetail = computed(() => {
 .country-card__message { min-width: 0; }
 .country-card__message:first-child,
 .country-card__empty { grid-column: 1 / -1; }
-.country-card__details { grid-column: 2; min-width: 0; }
+.country-card__details { margin-top: var(--ui-space-2); overflow-wrap: anywhere; }
 
 .country-card__flags {
   display: flex;
@@ -95,7 +95,6 @@ const componentDetail = computed(() => {
 .country-card__component + .country-card__code { margin-top: var(--ui-space-1); }
 
 @media (max-width: 560px) {
-  .country-card__details { grid-column: 1 / -1; }
   .country-card__code { display: none; }
   .country-card__component { font-size: var(--ui-text-small); }
 }

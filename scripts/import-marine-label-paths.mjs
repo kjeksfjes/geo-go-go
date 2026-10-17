@@ -14,7 +14,8 @@ const helper = ts.transpileModule(readFileSync(new URL('../src/logic/marineLabel
 }).outputText
 const { sampleLabelGuide } = await import(`data:text/javascript;base64,${Buffer.from(helper).toString('base64')}`)
 const authoredModule = ts.transpileModule(readFileSync(new URL('../src/data/marineLabelPaths.ts', import.meta.url), 'utf8')
-  .replace("import generated from './marine-label-paths.json'", 'const generated = {}'), {
+  .replace("import generated from './marine-label-paths.json'", 'const generated = {}')
+  .replace("import overrides from './marine-label-overrides.json'", 'const overrides = { placements: {}, removedIds: [] }'), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText
 const { marineLabelPaths: authored } = await import(`data:text/javascript;base64,${Buffer.from(authoredModule).toString('base64')}`)

@@ -574,6 +574,10 @@ export function useMapProjection(
     return projection.invert?.(point) as MapPoint | undefined
   }
 
+  function projectGeometry(geometry: Geometry): string {
+    return pathGenerator.value(geometry) ?? ''
+  }
+
   return {
     backgroundLandPaths,
     bathymetryPaths,
@@ -584,6 +588,7 @@ export function useMapProjection(
     horizontalWrap,
     interactionGeographicPaths,
     projectPoint,
+    projectGeometry,
     questionLandmassAnchors,
     projectionDebug,
     projectionScale,
