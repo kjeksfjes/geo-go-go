@@ -8,7 +8,7 @@ import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths
 import type { MapPoint } from '../composables/useMapZoom'
 import { sampleLabelGuide } from '../logic/marineLabelLayout'
 import { normalizeCountrySearch } from '../logic/countrySuggestions'
-import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, placementPivot, readDraft, samePlacement, validPlacement, type Placements } from './waterLabelDraft'
+import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, placementPivot, preservePlacementFontSize, readDraft, samePlacement, validPlacement, type Placements } from './waterLabelDraft'
 
 const props = defineProps<{
   width: number
@@ -91,7 +91,9 @@ const previewOriginal = ref(false)
 const selectedNode = ref(0)
 const fileInput = ref<HTMLInputElement | null>(null)
 const overlay = ref<SVGSVGElement | null>(null)
-const editLocked = computed(() => props.disabled || previewOriginal.value || recovery.value !== null)
+const editLocked = computed(() => props.disabled || previewOriginal.value || recovery.value !== null
+  // Wait for the first size measurement before editing an automatic label.
+  || (!!selectedId.value && selected.value?.textSize === undefined && props.fontSize?.id !== selectedId.value))
 
 watch([placements, previewOriginal, recovery], () => {
   emit('preview', previewOriginal.value || recovery.value ? undefined : placements.value)
@@ -136,6 +138,9 @@ function resetLabel() {
   commit()
 }
 function number(event: Event) { return Number((event.target as HTMLInputElement).value) }
+function preserveSize(placement: MarineLabelPath) {
+  return preservePlacementFontSize(placement, props.fontSize?.id === selectedId.value ? props.fontSize.size : undefined)
+}
 function field(key: 'center' | 'spanFraction', event: Event) {
   const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
   if (source) update({ ...clone(source), [key]: number(event) })
@@ -146,8 +151,8 @@ function setFontSize(event: Event) {
   if (!source) return
   const input = event.target as HTMLInputElement
   const size = input.value.trim() ? Number(input.value) : NaN
-  if (!Number.isFinite(size) || size < 0.01 || size > 1000) {
-    status.value = 'Enter a font size between 0.01 and 1000.'
+  if (!Number.isFinite(size) || size < 0.000001 || size > 1000) {
+    status.value = 'Enter a font size between 0.000001 and 1000.'
     return
   }
   const value = clone(source)
@@ -206,7 +211,7 @@ function nudge(direction: string) {
   const dx = (direction === '←' ? -2 : direction === '→' ? 2 : 0) / props.transform.scale
   const dy = (direction === '↑' ? -2 : direction === '↓' ? 2 : 0) / props.transform.scale
   const origin = pivot.value
-  update(mapPlacement(selected.value, p => {
+  update(mapPlacement(preserveSize(selected.value), p => {
     const q = project(p, origin[0])
     return q && inverse([q[0] + dx, q[1] + dy], p)
   }))
@@ -217,7 +222,7 @@ function transformGeometry(degrees: number, scale = 1) {
   if (!selected.value || !pivot.value) return
   const origin = pivot.value
   const angle = degrees * Math.PI / 180
-  const changed = mapPlacement(selected.value, p => {
+  const changed = mapPlacement(preserveSize(selected.value), p => {
     const q = project(p, origin[0])
     if (!q) return undefined
     const x = (q[0] - origin[0]) * scale, y = (q[1] - origin[1]) * scale
@@ -234,7 +239,7 @@ function transformGeometry(degrees: number, scale = 1) {
 }
 function layout(event: Event) {
   if (!selected.value) return
-  const value = clone(selected.value)
+  const value = preserveSize(selected.value)
   if ((event.target as HTMLSelectElement).value === 'horizontal') {
     const center = placementPivot(value)
     value.layout = 'horizontal'
@@ -253,13 +258,13 @@ function layout(event: Event) {
 }
 function editNode(axis: number, event: Event) {
   if (!selected.value?.points[selectedNode.value]) return
-  const value = clone(selected.value)
+  const value = preserveSize(selected.value)
   value.points[selectedNode.value]![axis] = number(event)
   update(value); commit()
 }
 function addNode() {
   if (!selected.value || selected.value.points.length >= 128) return
-  const value = clone(selected.value)
+  const value = preserveSize(selected.value)
   const index = Math.min(selectedNode.value, value.points.length - 2)
   const a = value.points[index]!, b = value.points[index + 1]!
   value.points.splice(index + 1, 0, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2])
@@ -268,7 +273,7 @@ function addNode() {
 }
 function removeNode() {
   if (!selected.value || selected.value.points.length <= 3) return
-  const value = clone(selected.value)
+  const value = preserveSize(selected.value)
   value.points.splice(selectedNode.value, 1)
   selectedNode.value = Math.min(selectedNode.value, value.points.length - 1)
   update(value); commit()
@@ -285,7 +290,7 @@ function startDrag(event: PointerEvent, index: number | null) {
   const start = mousePoint(event)
   if (!start) return
   if (index !== null) selectedNode.value = index
-  drag = { pointerId: event.pointerId, index, start, placement: clone(selected.value), offset: displayOffset.value, before: edits.value }
+  drag = { pointerId: event.pointerId, index, start, placement: preserveSize(selected.value), offset: displayOffset.value, before: edits.value }
   overlay.value?.setPointerCapture(event.pointerId)
 }
 function moveDrag(event: PointerEvent) {
@@ -432,8 +437,8 @@ onBeforeUnmount(() => {
             <div class="water-editor-actions"><button type="button" :disabled="disabled" @click="focus">Find on map</button><button type="button" :disabled="editLocked || !edits[selectedId]" @click="resetLabel">Reset this name</button></div>
             <fieldset :disabled="editLocked">
               <label>Layout<select :value="selected.layout ?? 'curve'" @change="layout"><option value="curve">Text along path</option><option value="horizontal">Horizontal / stacked</option></select></label>
-              <label>Font size<input type="number" min="0.01" max="1000" step="0.1"
-                :value="selected.textSize ?? (fontSize?.id === selectedId ? Number(fontSize.size.toFixed(3)) : undefined)"
+              <label>Font size<input type="number" min="0.000001" max="1000" step="0.1"
+                :value="selected.textSize ?? (fontSize?.id === selectedId ? Number(fontSize.size.toFixed(6)) : undefined)"
                 placeholder="Enter size" @change="setFontSize" /></label>
               <div class="water-editor-actions">
                 <button type="button" :disabled="selected.textSize === undefined && selected.textScale === undefined" @click="automaticFontSize">Automatic size</button>

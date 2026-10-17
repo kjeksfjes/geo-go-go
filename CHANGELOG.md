@@ -11,6 +11,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 - Remove horizontal/stacked frame outlines and frame-size controls from the editor; use the fixed water-boundary highlight as geographic guidance.
 - Stop hidden preparation rectangles from hiding explicitly resized water names, including deselected labels and normal previews.
 - Replace the editor's text-size multiplier with an explicit reference font size so equal values give equal letter size across names; show the current pixel size, allow restoring automatic sizing, and preserve existing drafts.
+- Preserve the displayed font size when moving, rotating, switching layout, or reshaping a water name, including the first move of an ocean label that previously triggered automatic shrinking.
 - Keep the selected water name visible while editing below the normal visibility cutoff or outside its fitting frame, explain these limits in the panel, and prevent rounding errors from hiding text fitted to the full path.
 - Fix disappearing text after switching from horizontal/stacked layout back to a path, refresh measurements when line breaks change, and make text sizing independent of automatic fitting limits.
 
