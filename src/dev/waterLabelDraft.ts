@@ -1,13 +1,22 @@
 import type { MarineLabelPath } from '../data/marineLabelPaths'
 import type { MapPoint } from '../composables/useMapZoom'
+import type { MarineLabel } from '../data/marineLabels'
 
 export type Placements = Record<string, MarineLabelPath>
+export interface CustomWaterLabel extends MarineLabel { boundaryId?: string }
+export const oceanPartNames: Record<string, string> = {
+  'ocean:atlantic:north': 'North Atlantic Ocean', 'ocean:atlantic:south': 'South Atlantic Ocean',
+  'ocean:pacific:north': 'North Pacific Ocean', 'ocean:pacific:south': 'South Pacific Ocean',
+}
+export const waterKinds = ['ocean', 'sea', 'gulf', 'bay', 'strait', 'sound', 'channel', 'fjord', 'inlet']
 export interface WaterLabelDraft {
   format: 'geo-go-go-water-label-edits'
-  version: 1
+  version: 2
   baseVersion: string
   originals: Placements
   placements: Placements
+  customLabels: Record<string, CustomWaterLabel>
+  hiddenIds: string[]
 }
 
 export function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) }
@@ -59,24 +68,49 @@ export function validPlacement(input: unknown): input is MarineLabelPath {
 export function readDraft(text: string, baseline: Placements, ids: ReadonlySet<string>): WaterLabelDraft {
   if (text.length > 2_000_000) throw new Error('This file is too large for a water-label draft.')
   const value = JSON.parse(text)
-  if (value?.format !== 'geo-go-go-water-label-edits' || value.version !== 1
+  if (value?.format !== 'geo-go-go-water-label-edits' || ![1, 2].includes(value.version)
     || typeof value.baseVersion !== 'string' || value.baseVersion.length > 40) throw new Error('Unsupported water-label draft.')
+  const customLabels = value.version === 1 ? {} : value.customLabels
+  const hiddenIds = value.version === 1 ? [] : value.hiddenIds
+  if (!customLabels || typeof customLabels !== 'object' || Array.isArray(customLabels)
+    || Object.keys(customLabels).length > 100) throw new Error('Invalid custom-name collection (maximum 100).')
+  const knownIds = new Set(ids)
+  for (const [id, input] of Object.entries(customLabels)) {
+    const label = input as CustomWaterLabel
+    if (!/^custom:[a-z0-9-]{1,80}$/.test(id) || ids.has(id) || !label || typeof label !== 'object'
+      || label.id !== id || ![label.name, label.nameNb].every(name => typeof name === 'string' && name.trim() && name.length <= 120)
+      || !waterKinds.includes(label.kind) || !point(label.point) || Math.abs(label.point[0]) > 180
+      || !Number.isInteger(label.rank) || label.rank < 0 || label.rank > 9
+      || !Number.isFinite(label.minLabel) || !Number.isFinite(label.maxLabel)
+      || label.minLabel < 0 || label.maxLabel > 10 || label.minLabel > label.maxLabel
+      || (label.boundaryId !== undefined && !ids.has(label.boundaryId) && !Object.hasOwn(oceanPartNames, label.boundaryId))
+      || Object.keys(label).some(key => !['id', 'name', 'nameNb', 'kind', 'point', 'rank', 'minLabel', 'maxLabel', 'boundaryId'].includes(key))) {
+      throw new Error(`Invalid custom water name: ${id}`)
+    }
+    knownIds.add(id)
+  }
+  if (!Array.isArray(hiddenIds) || hiddenIds.length > ids.size || new Set(hiddenIds).size !== hiddenIds.length
+    || !hiddenIds.every(id => typeof id === 'string' && ids.has(id))) throw new Error('Invalid removed-name collection.')
   for (const key of ['placements', 'originals'] as const) {
     const entries = value[key]
     if (!entries || typeof entries !== 'object' || Array.isArray(entries)
-      || Object.keys(entries).length > ids.size) throw new Error('Invalid placement collection.')
+      || Object.keys(entries).length > knownIds.size) throw new Error('Invalid placement collection.')
     for (const [id, placement] of Object.entries(entries)) {
-      if (!ids.has(id) || !validPlacement(placement)) throw new Error(`Invalid placement: ${id}`)
+      if (!(key === 'originals' ? ids : knownIds).has(id) || !validPlacement(placement)) throw new Error(`Invalid placement: ${id}`)
     }
   }
-  if (Object.keys(value.originals).length !== Object.keys(value.placements).length) throw new Error('Draft originals do not match its edits.')
+  const originalIds = Object.keys(value.placements).filter(id => ids.has(id))
+  if (Object.keys(value.originals).length !== originalIds.length) throw new Error('Draft originals do not match its edits.')
+  for (const id of Object.keys(customLabels)) if (!Object.hasOwn(value.placements, id)) throw new Error(`Missing custom placement: ${id}`)
   for (const id of Object.keys(value.placements)) {
+    if (!ids.has(id)) continue
     if (!Object.hasOwn(value.originals, id)) throw new Error(`Missing original placement: ${id}`)
     if (!samePlacement(value.originals[id], baseline[id]!)) {
       throw new Error(`The source placement for ${id} has changed. Keep this export and ask for its edits to be reconciled.`)
     }
   }
-  return clone(value)
+  return clone({ format: value.format, version: 2, baseVersion: value.baseVersion,
+    originals: value.originals, placements: value.placements, customLabels, hiddenIds })
 }
 
 export function samePlacement(a: MarineLabelPath, b: MarineLabelPath): boolean {
@@ -84,9 +118,10 @@ export function samePlacement(a: MarineLabelPath, b: MarineLabelPath): boolean {
   return JSON.stringify(ordered(a)) === JSON.stringify(ordered(b))
 }
 
-export function makeDraft(placements: Placements, baseline: Placements, version: string): WaterLabelDraft {
-  const originals = Object.fromEntries(Object.keys(placements).map(id => [id, baseline[id]!]))
-  return clone({ format: 'geo-go-go-water-label-edits', version: 1, baseVersion: version, originals, placements })
+export function makeDraft(placements: Placements, baseline: Placements, version: string,
+  customLabels: Record<string, CustomWaterLabel> = {}, hiddenIds: string[] = []): WaterLabelDraft {
+  const originals = Object.fromEntries(Object.keys(placements).filter(id => Object.hasOwn(baseline, id)).map(id => [id, baseline[id]!]))
+  return clone({ format: 'geo-go-go-water-label-edits', version: 2, baseVersion: version, originals, placements, customLabels, hiddenIds })
 }
 
 // Existing nudges taper over the sampled curve. Bake them into editable nodes

@@ -7,6 +7,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 ### Improvements
 
 - Add a local development water-name editor with live map previews, movable/rotatable placements, editable curve points, text sizing, horizontal/stacked layout, undo/redo, saved drafts, and JSON import/export for review and integration.
+- Add and remove bilingual water names in editor drafts, restore removed catalog names, and use separate North/South Atlantic and Pacific boundary references for new names; preserve these changes in undo/redo and exports while retaining compatibility with older drafts.
 - Highlight the selected water body's approximate Natural Earth boundary in the local editor, with a fixed geographic area independent of label layout and placement and a toggle for clean previews; keep the polygon data out of production builds.
 - Remove horizontal/stacked frame outlines and frame-size controls from the editor; use the fixed water-boundary highlight as geographic guidance.
 - Stop hidden preparation rectangles from hiding explicitly resized water names, including deselected labels and normal previews.

@@ -16,6 +16,7 @@ const props = defineProps<{
   copyOffsets: readonly number[]
   wrapPeriod: number | null
   placements?: Record<string, MarineLabelPath>
+  labels?: readonly MarineLabel[]
   editing?: boolean
   editingLabelId?: string
 }>()
@@ -125,7 +126,7 @@ function projectGuide(source?: readonly MapPoint[], offset: MapPoint = [0, 0]): 
     ? guide as MapPoint[] : undefined
 }
 
-const projectedLabels = computed<ProjectedLabel[]>(() => marineLabels.flatMap((label) => {
+const projectedLabels = computed<ProjectedLabel[]>(() => (props.labels ?? marineLabels).flatMap((label) => {
   const placement = placements.value[label.id]
   // An unverified point anchor cannot keep enlarged text off nearby land.
   if (!placement && label.kind !== 'ocean') return []

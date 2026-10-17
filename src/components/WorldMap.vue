@@ -6,6 +6,7 @@ import { copyText } from '../utils/copyText'
 import { sharedMapViewHash, type SharedMapView } from '../logic/sharedMapView'
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRef, useId, watch } from 'vue'
 import type { MarineLabelPath } from '../data/marineLabelPaths'
+import type { MarineLabel } from '../data/marineLabels'
 import MapDetailToggle from './MapDetailToggle.vue'
 import CanvasMap from './CanvasMap.vue'
 import LoadingIndicator from './LoadingIndicator.vue'
@@ -173,6 +174,7 @@ const WaterLabelEditor = import.meta.env.DEV
   ? defineAsyncComponent(() => import('../dev/WaterLabelEditor.vue')) : undefined
 const waterEditorEnabled = import.meta.env.DEV && new URLSearchParams(window.location.search).has('water-editor')
 const waterEditorPlacements = shallowRef<Record<string, MarineLabelPath> | undefined>()
+const waterEditorLabels = shallowRef<MarineLabel[] | undefined>()
 const waterEditorSelectedId = ref('')
 const waterEditorEditing = ref(false)
 const waterEditorWarning = ref('')
@@ -2043,6 +2045,7 @@ if (import.meta.hot) {
           :copy-offsets="copyOffsets"
           :wrap-period="horizontalWrap?.period ?? null"
           :placements="waterEditorEnabled ? waterEditorPlacements : undefined"
+          :labels="waterEditorEnabled ? waterEditorLabels : undefined"
           :editing="waterEditorEnabled && waterEditorEditing && !waterNamePointerPressed && !isInteracting && !interactionLocked"
           :editing-label-id="waterEditorEnabled && waterEditorPlacements ? waterEditorSelectedId : undefined"
           @select="waterEditorSelectedId = $event"
@@ -2265,6 +2268,7 @@ if (import.meta.hot) {
         :warning="waterEditorWarning"
         :font-size="waterEditorFontSize"
         @preview="waterEditorPlacements = $event" @editing="waterEditorEditing = $event"
+        @labels="waterEditorLabels = $event"
         @focus="focusWaterEditor"
       />
       <MapScaleBar v-if="scaleBar" :scale="scaleBar" />

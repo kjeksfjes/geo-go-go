@@ -2,13 +2,14 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import packageInfo from '../../package.json'
 import type { Geometry } from 'geojson'
+import { geoCentroid } from 'd3-geo'
 import waterBoundaries from './water-boundaries.json'
-import { marineLabels } from '../data/marineLabels'
+import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
 import type { MapPoint } from '../composables/useMapZoom'
 import { sampleLabelGuide } from '../logic/marineLabelLayout'
 import { normalizeCountrySearch } from '../logic/countrySuggestions'
-import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, placementPivot, preservePlacementFontSize, readDraft, samePlacement, validPlacement, type Placements } from './waterLabelDraft'
+import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, oceanPartNames, placementPivot, preservePlacementFontSize, readDraft, samePlacement, validPlacement, waterKinds, type CustomWaterLabel, type Placements } from './waterLabelDraft'
 
 const props = defineProps<{
   width: number
@@ -28,6 +29,7 @@ const emit = defineEmits<{
   preview: [placements: Placements | undefined]
   editing: [enabled: boolean]
   focus: [points: MapPoint[]]
+  labels: [labels: MarineLabel[] | undefined]
 }>()
 
 // Settings reset clears geo-go-go.*; keep editorial work outside that prefix.
@@ -42,6 +44,8 @@ const baseline: Placements = Object.fromEntries(marineLabels.map(label => {
   }]
 }))
 const edits = shallowRef<Placements>({})
+const customLabels = shallowRef<Record<string, CustomWaterLabel>>({})
+const hiddenIds = shallowRef<string[]>([])
 const status = ref('')
 const storageError = ref(false)
 const storageConflict = ref(false)
@@ -51,17 +55,22 @@ try {
   const saved = localStorage.getItem(storageKey)
   lastSaved = saved
   if (saved) {
-    try { edits.value = readDraft(saved, baseline, ids).placements }
+    try { restoreSnapshot(readDraft(saved, baseline, ids)) }
     catch (error) { recovery.value = saved; status.value = String((error as Error).message) }
   }
 } catch { storageError.value = true }
-const history = createHistory(edits.value)
+function snapshot() { return { placements: edits.value, customLabels: customLabels.value, hiddenIds: hiddenIds.value } }
+function restoreSnapshot(value: ReturnType<typeof snapshot>) {
+  edits.value = value.placements; customLabels.value = value.customLabels; hiddenIds.value = value.hiddenIds
+}
+const history = createHistory(snapshot())
 const historyRevision = ref(0)
 const canUndo = computed(() => { void historyRevision.value; return history.canUndo })
 const canRedo = computed(() => { void historyRevision.value; return history.canRedo })
 const placements = computed(() => ({ ...marineLabelPaths, ...edits.value }))
-const changedIds = computed(() => Object.keys(edits.value))
-const selectedLabel = computed(() => marineLabels.find(label => label.id === selectedId.value))
+const changedIds = computed(() => [...new Set([...Object.keys(edits.value), ...hiddenIds.value])])
+const allLabels = computed<MarineLabel[]>(() => [...marineLabels, ...Object.values(customLabels.value)])
+const selectedLabel = computed(() => allLabels.value.find(label => label.id === selectedId.value))
 const selected = computed(() => {
   const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
   if (!source) return null
@@ -72,19 +81,30 @@ const selected = computed(() => {
 })
 const query = ref('')
 const changedOnly = ref(false)
+const showRemoved = ref(false)
+const adding = ref(false)
+const newName = ref(''), newNameNb = ref(''), newKind = ref('ocean'), newBoundary = ref('')
 const results = computed(() => {
   const search = normalizeCountrySearch(query.value)
-  return marineLabels.filter(label => (!changedOnly.value || Object.hasOwn(edits.value, label.id))
+  return allLabels.value.filter(label => (showRemoved.value || !hiddenIds.value.includes(label.id))
+    && (!changedOnly.value || changedIds.value.includes(label.id))
     && normalizeCountrySearch(`${label.name} ${label.nameNb} ${label.id}`).includes(search))
     .sort((a, b) => a.name.localeCompare(b.name))
 })
 const collapsed = ref(false)
 const showHandles = ref(true)
 const showWaterArea = ref(true)
-const boundaries = waterBoundaries.boundaries as unknown as Record<string, Geometry>
+const boundaries: Record<string, Geometry> = { ...waterBoundaries.boundaries as unknown as Record<string, Geometry> }
+for (const ocean of ['atlantic', 'pacific']) {
+  const geometry = boundaries[`ocean:${ocean}`]
+  if (geometry?.type === 'GeometryCollection') {
+    boundaries[`ocean:${ocean}:north`] = geometry.geometries[0]!
+    boundaries[`ocean:${ocean}:south`] = geometry.geometries[1]!
+  }
+}
 // Source geometry is independent of the editable placement and its fitting box.
 const boundaryPath = computed(() => {
-  const geometry = boundaries[selectedId.value]
+  const geometry = boundaries[customLabels.value[selectedId.value]?.boundaryId ?? selectedId.value]
   return geometry ? props.projectGeometry(geometry) : ''
 })
 const previewOriginal = ref(false)
@@ -92,11 +112,16 @@ const selectedNode = ref(0)
 const fileInput = ref<HTMLInputElement | null>(null)
 const overlay = ref<SVGSVGElement | null>(null)
 const editLocked = computed(() => props.disabled || previewOriginal.value || recovery.value !== null
+  || hiddenIds.value.includes(selectedId.value)
   // Wait for the first size measurement before editing an automatic label.
   || (!!selectedId.value && selected.value?.textSize === undefined && props.fontSize?.id !== selectedId.value))
 
 watch([placements, previewOriginal, recovery], () => {
   emit('preview', previewOriginal.value || recovery.value ? undefined : placements.value)
+}, { immediate: true })
+watch([allLabels, hiddenIds, previewOriginal, recovery], () => {
+  emit('labels', previewOriginal.value || recovery.value ? undefined
+    : allLabels.value.filter(label => !hiddenIds.value.includes(label.id)))
 }, { immediate: true })
 watch([editLocked, showHandles], () => emit('editing', !editLocked.value && showHandles.value), { immediate: true })
 watch(selectedId, () => { finishDrag(); selectedNode.value = 0 })
@@ -105,37 +130,92 @@ function save() {
   if (recovery.value || storageConflict.value) return
   try {
     if (localStorage.getItem(storageKey) !== lastSaved) { storageConflict.value = true; return }
-    const saved = JSON.stringify(makeDraft(edits.value, baseline, packageInfo.version))
+    const saved = JSON.stringify(currentDraft())
     localStorage.setItem(storageKey, saved)
     lastSaved = saved
     storageError.value = false
   } catch { storageError.value = true }
 }
+function currentDraft() { return makeDraft(edits.value, baseline, packageInfo.version, customLabels.value, hiddenIds.value) }
 function commit() {
-  history.push(edits.value)
+  history.push(snapshot())
   historyRevision.value++
   save()
 }
 function update(value: MarineLabelPath | null) {
   if (editLocked.value || !value || !validPlacement(value)) { status.value = 'That adjustment is outside the supported map coordinates.'; return }
   const next = { ...edits.value }
-  if (samePlacement(value, baseline[selectedId.value]!)) delete next[selectedId.value]
+  if (baseline[selectedId.value] && samePlacement(value, baseline[selectedId.value]!)) delete next[selectedId.value]
   else next[selectedId.value] = clone(value)
   edits.value = next
   status.value = ''
 }
 function step(action: 'undo' | 'redo') {
-  edits.value = history[action]()
+  restoreSnapshot(history[action]())
+  if (!allLabels.value.some(label => label.id === selectedId.value)) selectedId.value = ''
   historyRevision.value++
   selectedNode.value = 0
   save()
 }
 function resetLabel() {
+  if (customLabels.value[selectedId.value]) return
   const next = { ...edits.value }
   delete next[selectedId.value]
   edits.value = next
   selectedNode.value = 0
   commit()
+}
+function removeName() {
+  const id = selectedId.value
+  if (!id || props.disabled || previewOriginal.value) return
+  if (customLabels.value[id]) {
+    const names = { ...customLabels.value }, placements = { ...edits.value }
+    delete names[id]; delete placements[id]
+    customLabels.value = names; edits.value = placements
+  } else hiddenIds.value = [...new Set([...hiddenIds.value, id])]
+  selectedId.value = ''
+  commit()
+}
+function restoreName() {
+  hiddenIds.value = hiddenIds.value.filter(id => id !== selectedId.value)
+  commit()
+  void nextTick(focus)
+}
+function addName() {
+  if (props.disabled || previewOriginal.value || recovery.value) return
+  const name = newName.value.trim(), nameNb = newNameNb.value.trim()
+  if (!name || !nameNb || name.length > 120 || nameNb.length > 120) { status.value = 'Enter an English and Norwegian name (up to 120 characters each).'; return }
+  if (Object.keys(customLabels.value).length >= 100) { status.value = 'A draft can contain up to 100 added names.'; return }
+  if (allLabels.value.some(label => !hiddenIds.value.includes(label.id) && normalizeCountrySearch(label.name) === normalizeCountrySearch(name))) {
+    status.value = 'That English name already exists. Select it to edit its placement.'; return
+  }
+  const geometry = boundaries[newBoundary.value]
+  const center = geometry ? geoCentroid(geometry) : props.unprojectPoint([
+    (props.width / 2 - props.transform.x) / props.transform.scale,
+    (props.height / 2 - props.transform.y) / props.transform.scale,
+  ])
+  if (!center?.every(Number.isFinite)) { status.value = 'Pan to a usable map center before adding a name.'; return }
+  const x = ((center[0] + 180) % 360 + 360) % 360 - 180
+  const y = Math.max(-89.999, Math.min(89.999, center[1]))
+  const id = `custom:${crypto.randomUUID()}`
+  const label: CustomWaterLabel = {
+    id, name, nameNb, kind: newKind.value, point: [x, y],
+    rank: newKind.value === 'ocean' ? 0 : 2, minLabel: 1, maxLabel: 10,
+    ...(newBoundary.value ? { boundaryId: newBoundary.value } : {}),
+  }
+  const size = props.fontSize?.id === selectedId.value ? props.fontSize.size : newKind.value === 'ocean' ? 20 : 8
+  const placement: MarineLabelPath = {
+    points: [[x - 8, y], [x, y], [x + 8, y]], layout: 'horizontal', anchor: [x, y],
+    bounds: [[x - 12, Math.max(-90, y - 5)], [x + 12, Math.min(90, y + 5)]], textSize: size,
+  }
+  customLabels.value = { ...customLabels.value, [id]: label }
+  edits.value = { ...edits.value, [id]: placement }
+  selectedId.value = id
+  query.value = ''; changedOnly.value = false; showRemoved.value = false
+  adding.value = false; newName.value = ''; newNameNb.value = ''; newBoundary.value = ''
+  status.value = 'Name added to this draft. Export when ready for integration.'
+  commit()
+  void nextTick(focus)
 }
 function number(event: Event) { return Number((event.target as HTMLInputElement).value) }
 function preserveSize(placement: MarineLabelPath) {
@@ -335,7 +415,7 @@ function download(text: string, filename: string) {
 }
 function exportDraft() {
   commit()
-  download(JSON.stringify(makeDraft(edits.value, baseline, packageInfo.version), null, 2) + '\n', 'geo-go-go-water-label-edits.json')
+  download(JSON.stringify(currentDraft(), null, 2) + '\n', 'geo-go-go-water-label-edits.json')
   status.value = 'Exported. Keep this file and hand it back when your edits are ready.'
 }
 async function importDraft(event: Event) {
@@ -346,7 +426,8 @@ async function importDraft(event: Event) {
     if (file.size > 2_000_000) throw new Error('This file is too large for a water-label draft.')
     const value = readDraft(await file.text(), baseline, ids)
     if (changedIds.value.length && !window.confirm('Replace your current edits with this file? Export first to keep both versions.')) return
-    edits.value = value.placements
+    restoreSnapshot(value)
+    if (!allLabels.value.some(label => label.id === selectedId.value)) selectedId.value = ''
     selectedNode.value = 0
     commit()
     status.value = 'Draft imported.'
@@ -368,7 +449,7 @@ onMounted(() => {
   window.addEventListener('storage', storageChanged)
 })
 onBeforeUnmount(() => {
-  finishDrag(); save(); emit('preview', undefined); emit('editing', false)
+  finishDrag(); save(); emit('preview', undefined); emit('labels', undefined); emit('editing', false)
   window.removeEventListener('pagehide', save)
   window.removeEventListener('storage', storageChanged)
 })
@@ -382,7 +463,7 @@ onBeforeUnmount(() => {
           :transform="offset ? `translate(${offset} 0)` : undefined" vector-effect="non-scaling-stroke" />
       </g>
     </svg>
-    <svg v-if="showHandles && !previewOriginal && !recovery && selected" ref="overlay" class="water-editor-overlay"
+    <svg v-if="showHandles && !previewOriginal && !recovery && selected && !hiddenIds.includes(selectedId)" ref="overlay" class="water-editor-overlay"
       :viewBox="`0 0 ${width} ${height}`" aria-label="Water label path editor"
       @pointermove="moveDrag" @pointerup="finishDrag" @pointercancel="cancelDrag" @lostpointercapture="finishDrag">
       <g v-if="!disabled">
@@ -419,22 +500,42 @@ onBeforeUnmount(() => {
             <button type="button" :disabled="!canRedo || disabled" @click="step('redo')">Redo</button>
             <button type="button" @click="exportDraft">Export</button>
             <button type="button" @click="fileInput?.click()">Import</button>
+            <button type="button" :disabled="disabled || previewOriginal" @click="adding = !adding">Add name</button>
             <input ref="fileInput" hidden type="file" accept=".json,application/json" @change="importDraft" />
           </div>
+          <form v-if="adding" class="water-editor-add" @submit.prevent="addName">
+            <label>English name<input v-model="newName" required maxlength="120" placeholder="North Atlantic Ocean" /></label>
+            <label>Norwegian name<input v-model="newNameNb" required maxlength="120" placeholder="Nord-Atlanteren" /></label>
+            <label>Water type<select v-model="newKind"><option v-for="kind in waterKinds" :key="kind" :value="kind">{{ kind }}</option></select></label>
+            <label>Boundary reference<select v-model="newBoundary">
+              <option value="">None — start at map center</option>
+              <optgroup label="Ocean source regions"><option v-for="(name, id) in oceanPartNames" :key="id" :value="id">{{ name }}</option></optgroup>
+              <optgroup label="Existing water regions"><option v-for="label in marineLabels" :key="label.id" :value="label.id">{{ label.name }}</option></optgroup>
+            </select></label>
+            <p class="water-editor-hint">New names start at the map center or the chosen region's geographic center. Both languages are required.</p>
+            <div class="water-editor-actions"><button type="submit" :disabled="disabled || previewOriginal">Create name</button><button type="button" @click="adding = false">Cancel</button></div>
+          </form>
           <label class="water-editor-check"><input v-model="previewOriginal" type="checkbox" /> Compare with original placements</label>
           <label class="water-editor-check"><input v-model="showHandles" type="checkbox" /> Show editing handles</label>
           <label class="water-editor-check"><input v-model="showWaterArea" type="checkbox" /> Show approximate water boundary</label>
           <label>Find a water name<input v-model="query" type="search" placeholder="English, Norwegian, or ID" /></label>
           <label class="water-editor-check"><input v-model="changedOnly" type="checkbox" /> Changed names only</label>
+          <label class="water-editor-check"><input v-model="showRemoved" type="checkbox" /> Show removed names</label>
           <select class="water-editor-results" size="4" aria-label="Water names" :value="selectedId" @change="choose(($event.target as HTMLSelectElement).value)">
-            <option v-for="label in results" :key="label.id" :value="label.id">{{ edits[label.id] ? '● ' : '' }}{{ label.name }} / {{ label.nameNb }}</option>
+            <option v-for="label in results" :key="label.id" :value="label.id">{{ hiddenIds.includes(label.id) ? 'Removed · ' : customLabels[label.id] ? 'Added · ' : edits[label.id] ? '● ' : '' }}{{ label.name }} / {{ label.nameNb }}</option>
           </select>
           <p v-if="!results.length">No matching names.</p>
           <template v-if="selected && selectedLabel">
             <div class="water-editor-selection"><strong>{{ selectedLabel.name }}</strong><span>{{ selectedLabel.nameNb }} · {{ selectedLabel.id }}</span></div>
-            <p v-if="showWaterArea" class="water-editor-hint">Purple area: Natural Earth's approximate marine extent. It stays fixed as you edit; it is guidance, not a placement restriction.</p>
+            <p v-if="showWaterArea && boundaryPath" class="water-editor-hint">Purple area: Natural Earth's approximate marine extent. It stays fixed as you edit; it is guidance, not a placement restriction.</p>
+            <p v-if="customLabels[selectedId] && !boundaryPath" class="water-editor-hint">This added name has no boundary reference.</p>
             <p v-if="warning" class="water-editor-warning" role="status">{{ warning }}</p>
-            <div class="water-editor-actions"><button type="button" :disabled="disabled" @click="focus">Find on map</button><button type="button" :disabled="editLocked || !edits[selectedId]" @click="resetLabel">Reset this name</button></div>
+            <div class="water-editor-actions">
+              <button type="button" :disabled="disabled" @click="focus">Find on map</button>
+              <button v-if="!customLabels[selectedId]" type="button" :disabled="editLocked || !edits[selectedId]" @click="resetLabel">Reset this name</button>
+              <button v-if="hiddenIds.includes(selectedId)" type="button" :disabled="disabled || previewOriginal" @click="restoreName">Restore name</button>
+              <button v-else type="button" :disabled="disabled || previewOriginal" @click="removeName">Remove name</button>
+            </div>
             <fieldset :disabled="editLocked">
               <label>Layout<select :value="selected.layout ?? 'curve'" @change="layout"><option value="curve">Text along path</option><option value="horizontal">Horizontal / stacked</option></select></label>
               <label>Font size<input type="number" min="0.000001" max="1000" step="0.1"
@@ -478,6 +579,7 @@ onBeforeUnmount(() => {
 header, .water-editor-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
 header { justify-content: space-between; }
 .water-editor-body, fieldset { display: grid; gap: 9px; }
+.water-editor-add { display: grid; gap: 8px; padding: 9px; border: 1px solid var(--ui-border); border-radius: 6px; }
 fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 label { display: grid; gap: 3px; }
 input:not([type=checkbox]), select { width: 100%; min-width: 0; box-sizing: border-box; }
