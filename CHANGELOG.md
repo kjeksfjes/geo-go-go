@@ -2,19 +2,14 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
-## Unreleased
+## 0.19.0 — Northern Names — 2026-10-17
 
 ### Improvements
 
-- Localize the remaining 54 unresolved water labels using reviewed Norwegian proper-name stems and Norwegian water terms, retaining source stems when no Norwegian variant was established. Record constructed names separately from attested forms.
-
-- Apply 47 documented Norwegian water names, including Øst-Koreabukta, Molukksjøen, Jenisejbukta, and Mecklenburgbukta; retain unresolved names pending further review.
-
-- Move Sargasso Sea slightly northwest and Atlantic Ocean slightly east to separate their labels.
-- Break Norwegian “Sargassohavet” over two lines so the shifted label fits its prepared water bounds.
-- Move Sargasso Sea's prepared water bounds with its authored northwest placement so the Norwegian text is not rejected against its previous location.
-- Add an opt-in `?water-label-debug` diagnostic that highlights overlapping letter bounds and lists likely water-name collisions in the current viewport without hiding labels. Measurements run only in diagnostic mode after map movement settles.
-- Keep water names independently visible instead of suppressing them when another name overlaps, including seas within larger oceans such as the Sargasso Sea. Preserve map-edge clipping and prepared coastline bounds.
+- Update 101 Norwegian water names: apply 47 documented alternatives, then localize 54 remaining labels using reviewed Norwegian proper-name stems and water terms. Keep constructed forms and their evidence distinct in the audit.
+- Keep water names visible independently when they overlap, including seas within larger oceans. Preserve geographic placement and map-edge clipping.
+- Separate Sargasso Sea and Atlantic Ocean labels, and let Norwegian Sargassohavet break over two lines within its shifted water bounds.
+- Add an opt-in `?water-label-debug` diagnostic that marks overlapping letter bounds and lists likely collisions after map movement settles.
 
 ## 0.18.0 — Coastal Lettering — 2026-10-13
 
