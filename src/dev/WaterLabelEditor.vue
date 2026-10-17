@@ -226,7 +226,7 @@ function field(key: 'center' | 'spanFraction', event: Event) {
   if (source) update({ ...clone(source), [key]: number(event) })
 }
 
-function setFontSize(event: Event) {
+function setFontSize(event: Event, completed = true) {
   const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
   if (!source) return
   const input = event.target as HTMLInputElement
@@ -238,7 +238,8 @@ function setFontSize(event: Event) {
   const value = clone(source)
   value.textSize = size
   delete value.textScale
-  update(value); commit()
+  update(value)
+  if (completed) commit()
 }
 function automaticFontSize() {
   const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
@@ -541,11 +542,14 @@ onBeforeUnmount(() => {
               <label>Font size<input type="number" min="0.000001" max="1000" step="0.1"
                 :value="selected.textSize ?? (fontSize?.id === selectedId ? Number(fontSize.size.toFixed(6)) : undefined)"
                 placeholder="Enter size" @change="setFontSize" /></label>
+              <label>Font size slider · 0.1–20<input type="range" min="0.1" max="20" step="0.1"
+                :value="Math.min(20, Math.max(0.1, selected.textSize ?? (fontSize?.id === selectedId ? fontSize.size : 0.1)))"
+                @input="setFontSize($event, false)" @change="commit" /></label>
               <div class="water-editor-actions">
                 <button type="button" :disabled="selected.textSize === undefined && selected.textScale === undefined" @click="automaticFontSize">Automatic size</button>
                 <span v-if="fontSize?.id === selectedId && !previewOriginal">Currently {{ fontSize.pixels.toFixed(1) }} px</span>
               </div>
-              <p class="water-editor-hint">Equal values give equal font size in the same view. The number is font pixels on a 1600px-wide reference map; zoom changes the current pixel size. Larger curved text can extend beyond the path's ends.</p>
+              <p class="water-editor-hint">Use the number input for sizes outside the slider's range. Equal values give equal font size in the same view. The number is font pixels on a 1600px-wide reference map; zoom changes the current pixel size. Larger curved text can extend beyond the path's ends.</p>
               <div class="water-editor-actions"><span>Rotate</span><button v-for="angle in [-10, -1, 1, 10]" :key="angle" type="button" @click="transformGeometry(angle)">{{ angle > 0 ? '+' : '' }}{{ angle }}°</button></div>
               <template v-if="selected.layout !== 'horizontal'">
                 <div class="water-editor-actions"><span>Path size</span><button type="button" @click="transformGeometry(0, 0.9)">−10%</button><button type="button" @click="transformGeometry(0, 1.1)">+10%</button></div>
