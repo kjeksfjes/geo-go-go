@@ -449,7 +449,8 @@ button:disabled { cursor: default; }
 p { margin: 6px 0; }
 .water-editor-guide { fill: none; stroke: #b54219; stroke-width: 2; stroke-dasharray: 5 3; }
 .water-editor-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: move; touch-action: none; }
-.water-editor-node { fill: #fff; stroke: #b54219; stroke-width: 2; pointer-events: all; cursor: grab; touch-action: none; }
+.water-editor-node { fill: #fff; stroke: #b54219; stroke-width: 2; pointer-events: all; cursor: pointer; touch-action: none; }
+.water-editor-node:hover { stroke-width: 3; }
 .water-editor-node--selected { fill: #ffc765; }
 .water-editor-move { pointer-events: all; cursor: move; touch-action: none; }
 .water-editor-move circle { fill: #fff; stroke: #276c8e; stroke-width: 2; }
