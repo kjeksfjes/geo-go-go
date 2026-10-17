@@ -10,7 +10,7 @@ import type { MapPoint } from '../composables/useMapZoom'
 import { sampleLabelGuide } from '../logic/marineLabelLayout'
 import { normalizeCountrySearch } from '../logic/countrySuggestions'
 import { isIntegratedWaterDraft } from './integratedWaterDraft'
-import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, oceanPartNames, placementPivot, preservePlacementFontSize, readDraft, samePlacement, validLabelText, validPlacement, waterKinds, type CustomWaterLabel, type Placements } from './waterLabelDraft'
+import { clone, createHistory, editablePlacement, makeDraft, mapPlacement, oceanPartNames, placementPivot, preservePlacementFontSize, readDraft, samePlacement, validLabelText, validPlacement, waterLabelBaseline, waterKinds, type CustomWaterLabel, type Placements } from './waterLabelDraft'
 
 const props = defineProps<{
   width: number
@@ -35,15 +35,13 @@ const emit = defineEmits<{
 
 // Settings reset clears geo-go-go.*; keep editorial work outside that prefix.
 const storageKey = 'geo-go-go-editor.water-label-draft.v1'
-const ids = new Set(marineLabels.map(label => label.id))
-// The four oceans without authored guides need a starting horizontal frame.
-const baseline: Placements = Object.fromEntries(marineLabels.map(label => {
-  const [x, y] = label.point
-  return [label.id, marineLabelPaths[label.id] ?? {
-    points: [[x - 10, y], [x, y], [x + 10, y]], layout: 'horizontal', anchor: [x, y],
-    bounds: [[x - 15, Math.max(-90, y - 5)], [x + 15, Math.min(90, y + 5)]],
-  }]
-}))
+const sourceLabels = shallowRef<MarineLabel[]>(marineLabels)
+const sourcePaths = shallowRef<Placements>(marineLabelPaths)
+let ids = new Set(marineLabels.map(label => label.id))
+let baseline = waterLabelBaseline(marineLabels, marineLabelPaths)
+const projectRevision = ref('')
+const projectSaving = ref(false)
+const projectError = ref('')
 const edits = shallowRef<Placements>({})
 const customLabels = shallowRef<Record<string, CustomWaterLabel>>({})
 const hiddenIds = shallowRef<string[]>([])
@@ -81,13 +79,13 @@ function snapshot() { return { placements: edits.value, customLabels: customLabe
 function restoreSnapshot(value: ReturnType<typeof snapshot>) {
   edits.value = value.placements; customLabels.value = value.customLabels; hiddenIds.value = value.hiddenIds; labelText.value = value.labelText
 }
-const history = createHistory(snapshot())
+let history = createHistory(snapshot())
 const historyRevision = ref(0)
 const canUndo = computed(() => { void historyRevision.value; return history.canUndo })
 const canRedo = computed(() => { void historyRevision.value; return history.canRedo })
-const placements = computed(() => ({ ...marineLabelPaths, ...edits.value }))
+const placements = computed(() => ({ ...sourcePaths.value, ...edits.value }))
 const changedIds = computed(() => [...new Set([...Object.keys(edits.value), ...Object.keys(labelText.value), ...hiddenIds.value])])
-const allLabels = computed<MarineLabel[]>(() => [...marineLabels, ...Object.values(customLabels.value)]
+const allLabels = computed<MarineLabel[]>(() => [...sourceLabels.value, ...Object.values(customLabels.value)]
   .map(label => ({ ...label, ...labelText.value[label.id] })))
 const selectedLabel = computed(() => allLabels.value.find(label => label.id === selectedId.value))
 const selected = computed(() => {
@@ -123,23 +121,23 @@ for (const ocean of ['atlantic', 'pacific']) {
 }
 // Source geometry is independent of the editable placement and its fitting box.
 const boundaryPath = computed(() => {
-  const geometry = boundaries[customLabels.value[selectedId.value]?.boundaryId ?? selectedId.value]
+  const geometry = boundaries[selectedLabel.value?.boundaryId ?? selectedId.value]
   return geometry ? props.projectGeometry(geometry) : ''
 })
 const previewOriginal = ref(false)
 const selectedNode = ref(0)
 const fileInput = ref<HTMLInputElement | null>(null)
 const overlay = ref<SVGSVGElement | null>(null)
-const editLocked = computed(() => props.disabled || previewOriginal.value || recovery.value !== null
+const editLocked = computed(() => props.disabled || projectSaving.value || previewOriginal.value || recovery.value !== null
   || hiddenIds.value.includes(selectedId.value)
   // Wait for the first size measurement before editing an automatic label.
   || (!!selectedId.value && selected.value?.textSize === undefined && props.fontSize?.id !== selectedId.value))
 
 watch([placements, previewOriginal, recovery], () => {
-  emit('preview', previewOriginal.value || recovery.value ? undefined : placements.value)
+  emit('preview', recovery.value ? undefined : previewOriginal.value ? sourcePaths.value : placements.value)
 }, { immediate: true })
 watch([allLabels, hiddenIds, previewOriginal, recovery], () => {
-  emit('labels', previewOriginal.value || recovery.value ? undefined
+  emit('labels', recovery.value ? undefined : previewOriginal.value ? sourceLabels.value
     : allLabels.value.filter(label => !hiddenIds.value.includes(label.id)))
 }, { immediate: true })
 watch([editLocked, showHandles], () => emit('editing', !editLocked.value && showHandles.value), { immediate: true })
@@ -281,12 +279,12 @@ function setLetterSpacing(event: Event | null, completed = true) {
 function setLabelText(key: keyof MarineLabelText, event: Event) {
   if (editLocked.value) return
   const id = selectedId.value
-  const original = customLabels.value[id] ?? marineLabels.find(label => label.id === id)
+  const original = customLabels.value[id] ?? sourceLabels.value.find(label => label.id === id)
   if (!original) return
   const input = event.target as HTMLInputElement | HTMLTextAreaElement
   const text = input.value.replace(/\r\n?/g, '\n').split('\n').map(line => line.trim()).join('\n').trim()
   const next = { ...labelText.value[id] }
-  if ((!text && (key === 'stackedText' || key === 'stackedTextNb')) || text === original[key]) delete next[key]
+  if ((!text && (key === 'stackedText' || key === 'stackedTextNb') && !original[key]) || text === original[key]) delete next[key]
   else next[key] = text
   if (!validLabelText(next)) {
     status.value = 'Names need one line (up to 120 characters); stacked text allows up to four nonempty lines (240 characters total).'
@@ -501,11 +499,56 @@ function discardRecovery() {
   status.value = ''
   save()
 }
+interface ProjectState { revision: string; labels: MarineLabel[]; placements: Placements }
+const projectEndpoint = '/__geo_go_go/water-label-project'
+async function loadProjectRevision() {
+  try {
+    const response = await fetch(projectEndpoint, { cache: 'no-store' })
+    const value = await response.json() as ProjectState & { error?: string }
+    if (!response.ok) throw new Error(value.error ?? 'Project saving is unavailable.')
+    if (JSON.stringify(value.labels) !== JSON.stringify(sourceLabels.value)
+      || JSON.stringify(value.placements) !== JSON.stringify(sourcePaths.value)) {
+      throw new Error('Project data changed since this page loaded. Export your draft and reload before saving.')
+    }
+    projectRevision.value = value.revision
+    projectError.value = ''
+  } catch (error) { projectError.value = (error as Error).message }
+}
+async function saveToProject() {
+  if (!projectRevision.value || projectSaving.value || props.disabled || previewOriginal.value || recovery.value || storageConflict.value) return
+  finishDrag()
+  commit()
+  projectSaving.value = true
+  projectError.value = ''
+  try {
+    const response = await fetch(projectEndpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ revision: projectRevision.value, draft: currentDraft() }),
+    })
+    const value = await response.json() as ProjectState & { error?: string }
+    if (!response.ok) {
+      if (response.status === 409) projectRevision.value = ''
+      throw new Error(value.error ?? 'Could not save project data.')
+    }
+    sourceLabels.value = value.labels
+    sourcePaths.value = value.placements
+    ids = new Set(value.labels.map(label => label.id))
+    baseline = waterLabelBaseline(value.labels, value.placements)
+    restoreSnapshot({ placements: {}, customLabels: {}, hiddenIds: [], labelText: {} })
+    if (!ids.has(selectedId.value)) selectedId.value = ''
+    history = createHistory(snapshot()); historyRevision.value++
+    projectRevision.value = value.revision
+    save()
+    status.value = 'Saved to project. This is the new editing baseline; other tabs pick it up on reload. Commit and publish separately.'
+  } catch (error) { projectError.value = (error as Error).message }
+  finally { projectSaving.value = false }
+}
 function storageChanged(event: StorageEvent) {
   if (event.storageArea === localStorage && (event.key === storageKey || event.key === null)
     && event.newValue !== lastSaved) storageConflict.value = true
 }
 onMounted(() => {
+  void loadProjectRevision()
   window.addEventListener('pagehide', save)
   window.addEventListener('storage', storageChanged)
 })
@@ -548,7 +591,7 @@ onBeforeUnmount(() => {
     <aside class="water-editor-panel" aria-label="Water name editor">
       <header><strong>Water name editor</strong><button type="button" @click="collapsed = !collapsed" :aria-expanded="!collapsed">{{ collapsed ? 'Expand' : 'Minimize' }}</button></header>
       <p class="water-editor-summary">Local draft · {{ changedIds.length }} changed · {{ storageConflict ? 'Autosave paused — another tab changed the draft' : storageError ? 'Autosave unavailable — export to keep work' : recovery ? 'Saved draft needs attention' : 'Autosaves in this browser' }}</p>
-      <div v-show="!collapsed" class="water-editor-body">
+      <fieldset v-show="!collapsed" class="water-editor-body" :disabled="projectSaving">
         <template v-if="recovery">
           <p role="alert">{{ status }}</p>
           <button type="button" @click="download(recovery!, 'geo-go-go-water-label-recovery.json')">Download saved draft</button>
@@ -557,6 +600,7 @@ onBeforeUnmount(() => {
         <template v-else>
           <p v-if="storageConflict" role="alert">Another tab changed the saved draft. Export this tab's work before reloading; its edits will not overwrite the other tab.</p>
           <div class="water-editor-actions">
+            <button type="button" :disabled="!projectRevision || !changedIds.length || disabled || previewOriginal || storageConflict" @click="saveToProject">{{ projectSaving ? 'Saving…' : 'Save to project' }}</button>
             <button type="button" :disabled="!canUndo || disabled" @click="step('undo')">Undo</button>
             <button type="button" :disabled="!canRedo || disabled" @click="step('redo')">Redo</button>
             <button type="button" @click="exportDraft">Export</button>
@@ -571,7 +615,7 @@ onBeforeUnmount(() => {
             <label>Boundary reference<select v-model="newBoundary">
               <option value="">None — start at map center</option>
               <optgroup label="Ocean source regions"><option v-for="(name, id) in oceanPartNames" :key="id" :value="id">{{ name }}</option></optgroup>
-              <optgroup label="Existing water regions"><option v-for="label in marineLabels" :key="label.id" :value="label.id">{{ label.name }}</option></optgroup>
+              <optgroup label="Existing water regions"><option v-for="label in sourceLabels" :key="label.id" :value="label.id">{{ label.name }}</option></optgroup>
             </select></label>
             <p class="water-editor-hint">New names start at the map center or the chosen region's geographic center. Both languages are required.</p>
             <div class="water-editor-actions"><button type="submit" :disabled="disabled || previewOriginal">Create name</button><button type="button" @click="adding = false">Cancel</button></div>
@@ -639,9 +683,10 @@ onBeforeUnmount(() => {
           </template>
           <p v-else>Select a name above or click a visible water label.</p>
           <p class="water-editor-hint">Drag the cross to move; drag points to reshape. Pan/zoom on the map background. Use normal language, projection, and detail controls to compare. Choose World for names outside the current region.</p>
+          <p v-if="projectError" class="water-editor-warning" role="alert">{{ projectError }}</p>
           <p v-if="status" role="status">{{ status }}</p>
         </template>
-      </div>
+      </fieldset>
     </aside>
   </div>
 </template>

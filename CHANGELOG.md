@@ -6,6 +6,8 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Save water-name editor changes directly to the maintained project file through the local development server, with validated atomic writes, conflict checks, and continued editing from the saved baseline; keep browser autosave and portable exports.
+- Allow clearing saved horizontal/stacked text overrides to restore automatic wrapping.
 - Integrate the user’s water-label edits across 90 active placements and 17 display-text overrides, replacing the combined Atlantic label with North and South Atlantic Ocean names in English and Norwegian.
 - Recognize the fully integrated saved water-label draft and reopen the editor on the updated map with a local backup; keep unmatched drafts in recovery so additional edits cannot be lost.
 - Add a local development water-name editor with live map previews, movable/rotatable placements, editable curve points, text sizing, horizontal/stacked layout, undo/redo, saved drafts, and JSON import/export for review and integration.

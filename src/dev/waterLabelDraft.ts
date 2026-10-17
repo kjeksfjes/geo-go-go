@@ -22,6 +22,16 @@ export interface WaterLabelDraft {
 
 export function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) }
 
+export function waterLabelBaseline(labels: readonly MarineLabel[], paths: Placements): Placements {
+  return Object.fromEntries(labels.map(label => {
+    const [x, y] = label.point
+    return [label.id, paths[label.id] ?? {
+      points: [[x - 10, y], [x, y], [x + 10, y]], layout: 'horizontal', anchor: [x, y],
+      bounds: [[x - 15, Math.max(-90, y - 5)], [x + 15, Math.min(90, y + 5)]],
+    }]
+  }))
+}
+
 // Freeze the currently rendered reference size before geometry changes can
 // trigger automatic fitting, including the first placement of an ocean label.
 export function preservePlacementFontSize(source: MarineLabelPath, currentSize: number | undefined): MarineLabelPath {
@@ -69,9 +79,10 @@ export function validPlacement(input: unknown): input is MarineLabelPath {
 export function validLabelText(input: unknown): input is MarineLabelText {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false
   return Object.entries(input).every(([key, text]) => {
-    if (typeof text !== 'string' || !text.trim()) return false
-    if (key === 'name' || key === 'nameNb') return text.length <= 120 && !/[\r\n]/.test(text)
+    if (typeof text !== 'string') return false
+    if (key === 'name' || key === 'nameNb') return !!text.trim() && text.length <= 120 && !/[\r\n]/.test(text)
     if (key !== 'stackedText' && key !== 'stackedTextNb') return false
+    if (text === '') return true // Explicitly restore automatic wrapping over a saved override.
     const lines = text.split('\n')
     return text.length <= 240 && !text.includes('\r') && lines.length <= 4 && lines.every(line => line.trim())
   })
@@ -90,7 +101,7 @@ export function readDraft(text: string, baseline: Placements, ids: ReadonlySet<s
   for (const [id, input] of Object.entries(customLabels)) {
     const label = input as CustomWaterLabel
     if (!/^custom:[a-z0-9-]{1,80}$/.test(id) || ids.has(id) || !label || typeof label !== 'object'
-      || label.id !== id || ![label.name, label.nameNb].every(name => typeof name === 'string' && name.trim() && name.length <= 120)
+      || label.id !== id || !validLabelText({ name: label.name, nameNb: label.nameNb })
       || !waterKinds.includes(label.kind) || !point(label.point) || Math.abs(label.point[0]) > 180
       || !Number.isInteger(label.rank) || label.rank < 0 || label.rank > 9
       || !Number.isFinite(label.minLabel) || !Number.isFinite(label.maxLabel)

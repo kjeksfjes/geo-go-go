@@ -7,6 +7,7 @@ export interface MarineLabel {
   nameNb: string
   stackedText?: string
   stackedTextNb?: string
+  boundaryId?: string
   kind: string
   point: [number, number]
   rank: number
