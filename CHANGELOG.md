@@ -8,6 +8,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 - Add a local development water-name editor with live map previews, movable/rotatable placements, editable curve points, text sizing, horizontal/stacked layout, undo/redo, saved drafts, and JSON import/export for review and integration.
 - Keep the selected water name visible while editing below the normal visibility cutoff or outside its fitting frame, explain these limits in the panel, and prevent rounding errors from hiding text fitted to the full path.
+- Fix disappearing text after switching from horizontal/stacked layout back to a path, refresh measurements when line breaks change, and make text sizing independent of automatic fitting limits.
 
 ### Security
 

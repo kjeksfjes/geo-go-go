@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, useId, watch } from 'vue'
 import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
-import { centeredLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
+import { extendedLabelGuide, labelGuideLengths, sampleLabelGuide } from '../logic/marineLabelLayout'
 import { locale } from '../i18n'
 import type { MapPoint } from '../composables/useMapZoom'
 
@@ -44,6 +44,7 @@ const groups = new Map<number, SVGGElement>()
 const paths = new Map<string, SVGPathElement>()
 const measurements = new Map<string, SVGTextElement>()
 const measurementWidths = new Map<string, number>()
+const measurementContents = new Map<string, string>()
 let measurementStyle = ''
 let measurementGroup: SVGGElement | undefined
 const pathPrefix = useId()
@@ -187,11 +188,17 @@ function updateLabels() {
     measurementWidths.clear()
   }
   for (const label of projectedLabels.value) {
-    if ((!label.guide && !label.waterBounds && labelLevel < label.minLabel) || measurementWidths.has(label.id)) continue
+    const contents = JSON.stringify(label.lines)
+    if ((!label.guide && !label.waterBounds && labelLevel < label.minLabel)
+      || (measurementWidths.has(label.id) && measurementContents.get(label.id) === contents)) continue
+    measurementWidths.delete(label.id)
     const element = measurements.get(label.id)
     const length = element ? Math.max(...Array.from(element.children,
       (line) => (line as SVGTextContentElement).getComputedTextLength())) : 0
-    if (length) measurementWidths.set(label.id, length)
+    if (length) {
+      measurementWidths.set(label.id, length)
+      measurementContents.set(label.id, contents)
+    }
   }
   const visible = new Set<SVGElement>()
   const elements: SVGElement[] = []
@@ -214,9 +221,10 @@ function updateLabels() {
       // Choose a size in the unzoomed map, then scale it exactly with the
       // geography. Fit the whole water corridor, never the zoomed viewport.
       // Geographic area sets the hierarchy without polar projection inflation.
-      // Prepared water space remains the upper limit for coastline clearance.
+      // Fit the base size to prepared water space, then apply explicit manual
+      // text scaling independently so the editor's size control stays useful.
       const areaSize = label.sizeScale !== undefined ? 17 * 0.6 * label.sizeScale : 20
-      const preferredSize = Math.min(label.fontSize ?? Infinity, areaSize) * mapTypographyScale * (label.textScale ?? 1)
+      const preferredSize = Math.min(label.fontSize ?? Infinity, areaSize) * mapTypographyScale
       const paddedWidth = baseTextWidth + baseFontPixels * 2
       const corridorLengths = label.readableLengths ?? label.guideLengths
       const corridorSpace = corridorLengths
@@ -239,6 +247,7 @@ function updateLabels() {
         )
       }
       const mapFontFactor = Math.min(preferredSize / baseFontPixels, corridorSpace / paddedWidth, heightFactor, rotationFactor)
+        * (label.textScale ?? 1)
       const fontFactor = mapFontFactor * scale
       const fontPixels = baseFontPixels * fontFactor
       const selectedForEditing = props.editingLabelId === label.id
@@ -255,6 +264,10 @@ function updateLabels() {
       element.removeAttribute('transform')
       let box: LabelBox
       if (label.guide && label.guideLengths) {
+        // Horizontal text leaves absolute coordinates on the shared <text>.
+        // A textPath inherits those values and can start beyond its path.
+        element.removeAttribute('x')
+        element.removeAttribute('y')
         // Keep the label at its geographic center even when only part of it
         // is in view. The map container clips the rendered text at its edges.
         const path = paths.get(labelPathId(label.id, offset))
@@ -262,7 +275,7 @@ function updateLabels() {
         const source = label.readableGuide && label.readableLengths
           ? { points: label.readableGuide, lengths: label.readableLengths }
           : { points: label.guide, lengths: label.guideLengths }
-        const guide = centeredLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
+        const guide = extendedLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
           label.guideCenter)
         if (!guide) {
           if (selectedForEditing) editingWarning = 'The path has no usable length for this text. Extend the path or undo the last adjustment.'

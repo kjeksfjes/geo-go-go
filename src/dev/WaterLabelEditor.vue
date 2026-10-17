@@ -400,7 +400,7 @@ onBeforeUnmount(() => {
             <fieldset :disabled="editLocked">
               <label>Layout<select :value="selected.layout ?? 'curve'" @change="layout"><option value="curve">Text along path</option><option value="horizontal">Horizontal / stacked</option></select></label>
               <label>Text size ×{{ (selected.textScale ?? 1).toFixed(2) }}<input type="range" min="0.1" max="5" step="0.05" :value="selected.textScale ?? 1" @input="field('textScale', $event)" @change="commit" /></label>
-              <p class="water-editor-hint">Text still fits its path or frame. Enlarge the path/frame if size stops increasing.</p>
+              <p class="water-editor-hint">Text size scales independently of the path/frame. Larger text can extend beyond its ends.</p>
               <div class="water-editor-actions"><span>Rotate</span><button v-for="angle in [-10, -1, 1, 10]" :key="angle" type="button" @click="transformGeometry(angle)">{{ angle > 0 ? '+' : '' }}{{ angle }}°</button></div>
               <div class="water-editor-actions"><span>{{ selected.layout === 'horizontal' ? 'Frame' : 'Path' }} size</span><button type="button" @click="transformGeometry(0, 0.9)">−10%</button><button type="button" @click="transformGeometry(0, 1.1)">+10%</button></div>
               <template v-if="selected.layout !== 'horizontal'">

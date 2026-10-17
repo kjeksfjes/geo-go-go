@@ -63,6 +63,33 @@ export function centeredLabelGuide(points: readonly MapPoint[], lengths: readonl
   return result
 }
 
+// Explicit text scaling can exceed the automatically fitted corridor. Extend
+// its end tangents so SVG does not clip the larger text at the path endpoints.
+export function extendedLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number,
+  centerFraction = 0.5): MapPoint[] | undefined {
+  const total = lengths.at(-1) ?? 0
+  if (!Number.isFinite(span) || !Number.isFinite(total) || span <= 0 || total <= 0) return undefined
+  if (span <= total) return centeredLabelGuide(points, lengths, span, centerFraction)
+  const center = total * Math.max(0, Math.min(1, centerFraction))
+  const before = Math.max(0, span / 2 - center)
+  const after = Math.max(0, center + span / 2 - total)
+  let first = 1, last = points.length - 2
+  while (first < points.length && lengths[first] === 0) first++
+  while (last >= 0 && lengths[last] === total) last--
+  if (first >= points.length || last < 0) return undefined
+  const start = points[0]!, end = points.at(-1)!
+  const a = points[first]!, b = points[last]!
+  const startLength = Math.hypot(a[0] - start[0], a[1] - start[1])
+  const endLength = Math.hypot(end[0] - b[0], end[1] - b[1])
+  const extended: MapPoint[] = [
+    [start[0] - (a[0] - start[0]) * before / startLength, start[1] - (a[1] - start[1]) * before / startLength],
+    ...points,
+    [end[0] + (end[0] - b[0]) * after / endLength, end[1] + (end[1] - b[1]) * after / endLength],
+  ]
+  const extendedLengths = labelGuideLengths(extended)
+  return centeredLabelGuide(extended, extendedLengths, span, (before + center) / extendedLengths.at(-1)!)
+}
+
 // Clip the guide to the usable viewport, then keep the preferred geographic
 // center whenever possible. A partly visible sea can still carry its name.
 export function visibleLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number,
