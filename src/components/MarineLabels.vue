@@ -4,6 +4,7 @@ import { marineLabels, type MarineLabel } from '../data/marineLabels'
 import { marineLabelPaths, type MarineLabelPath } from '../data/marineLabelPaths'
 import { extendedLabelGuide, labelGuideLengths, sampleLabelGuide, startAlignedLabelGuide } from '../logic/marineLabelLayout'
 import { waterLabelPlacements, waterLabelPlacementId } from '../logic/marineLabelPlacements'
+import { spacedSvgTextWidth } from '../logic/svgTextMetrics'
 import { locale } from '../i18n'
 import type { MapPoint } from '../composables/useMapZoom'
 
@@ -218,7 +219,7 @@ function updateLabels() {
     measurementWidths.delete(label.id)
     const element = measurements.get(label.id)
     const length = element ? Math.max(...Array.from(element.children,
-      (line) => (line as SVGTextContentElement).getComputedTextLength())) : 0
+      (line) => spacedSvgTextWidth(line as SVGTextContentElement))) : 0
     if (length) {
       measurementWidths.set(label.id, length)
       measurementContents.set(label.id, contents)
