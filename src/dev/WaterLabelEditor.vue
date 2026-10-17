@@ -17,6 +17,7 @@ const props = defineProps<{
   wrapPeriod: number | null
   copyOffsets: readonly number[]
   disabled: boolean
+  warning: string
 }>()
 const selectedId = defineModel<string>('selectedId', { required: true })
 const emit = defineEmits<{
@@ -394,6 +395,7 @@ onBeforeUnmount(() => {
           <p v-if="!results.length">No matching names.</p>
           <template v-if="selected && selectedLabel">
             <div class="water-editor-selection"><strong>{{ selectedLabel.name }}</strong><span>{{ selectedLabel.nameNb }} · {{ selectedLabel.id }}</span></div>
+            <p v-if="warning" class="water-editor-warning" role="status">{{ warning }}</p>
             <div class="water-editor-actions"><button type="button" :disabled="disabled" @click="focus">Find on map</button><button type="button" :disabled="editLocked || !edits[selectedId]" @click="resetLabel">Reset this name</button></div>
             <fieldset :disabled="editLocked">
               <label>Layout<select :value="selected.layout ?? 'curve'" @change="layout"><option value="curve">Text along path</option><option value="horizontal">Horizontal / stacked</option></select></label>
@@ -443,6 +445,7 @@ button:disabled { cursor: default; }
 .water-editor-coordinates { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .water-editor-selection { display: grid; }
 .water-editor-summary, .water-editor-hint { color: var(--ui-text); font-size: 11px; }
+.water-editor-warning { padding: 7px; border-left: 3px solid #b54219; }
 p { margin: 6px 0; }
 .water-editor-guide { fill: none; stroke: #b54219; stroke-width: 2; stroke-dasharray: 5 3; }
 .water-editor-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: move; touch-action: none; }

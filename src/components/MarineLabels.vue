@@ -17,8 +17,9 @@ const props = defineProps<{
   wrapPeriod: number | null
   placements?: Record<string, MarineLabelPath>
   editing?: boolean
+  editingLabelId?: string
 }>()
-const emit = defineEmits<{ select: [id: string] }>()
+const emit = defineEmits<{ select: [id: string]; 'editing-warning': [message: string] }>()
 const placements = computed(() => props.placements ?? marineLabelPaths)
 
 interface ProjectedLabel extends MarineLabel {
@@ -194,6 +195,7 @@ function updateLabels() {
   }
   const visible = new Set<SVGElement>()
   const elements: SVGElement[] = []
+  let editingWarning = ''
   for (const offset of props.copyOffsets) {
     const group = groups.get(offset)
     if (!group) continue
@@ -239,7 +241,12 @@ function updateLabels() {
       const mapFontFactor = Math.min(preferredSize / baseFontPixels, corridorSpace / paddedWidth, heightFactor, rotationFactor)
       const fontFactor = mapFontFactor * scale
       const fontPixels = baseFontPixels * fontFactor
-      if (fontPixels < (isOcean ? 4 : 10)) continue
+      const selectedForEditing = props.editingLabelId === label.id
+      const keepVisible = props.editing && selectedForEditing
+      if (fontPixels < (isOcean ? 4 : 10)) {
+        if (selectedForEditing) editingWarning = 'Below the normal map visibility cutoff at this zoom. Zoom in or increase text size; hiding handles shows the normal map preview.'
+        if (!keepVisible) continue
+      }
       const textWidth = baseTextWidth * fontFactor
       const halfWidth = textWidth / 2
       const halfHeight = fontPixels * (label.lines.length > 1 ? 1.2 : 0.7)
@@ -257,7 +264,10 @@ function updateLabels() {
           : { points: label.guide, lengths: label.guideLengths }
         const guide = centeredLabelGuide(source.points, source.lengths, paddedWidth * fontFactor / scale,
           label.guideCenter)
-        if (!guide) continue
+        if (!guide) {
+          if (selectedForEditing) editingWarning = 'The path has no usable length for this text. Extend the path or undo the last adjustment.'
+          continue
+        }
         element.style.fontSize = `${fontPixels}px`
         const screenPoints = guide.map(([x, y]) => [
           props.transform.x + scale * (x + offset),
@@ -286,10 +296,14 @@ function updateLabels() {
       if (label.waterBounds) {
         const [[left, top], [right, bottom]] = label.waterBounds
         const coastMargin = Math.max(10, fontPixels / 2)
-        if (box[0] < props.transform.x + scale * (left + offset) + coastMargin
+        const outsideFrame = box[0] < props.transform.x + scale * (left + offset) + coastMargin
           || box[2] > props.transform.x + scale * (right + offset) - coastMargin
           || box[1] < props.transform.y + scale * top + coastMargin
-          || box[3] > props.transform.y + scale * bottom - coastMargin) continue
+          || box[3] > props.transform.y + scale * bottom - coastMargin
+        if (outsideFrame) {
+          if (selectedForEditing) editingWarning = 'Outside the fitting frame. Enlarge the frame or adjust placement; hiding handles shows the normal map preview.'
+          if (!keepVisible) continue
+        }
       }
       // Prepared water space proves whether there is enough room at this
       // projection and zoom. Source zoom metadata must not hide a fitting name.
@@ -305,6 +319,7 @@ function updateLabels() {
   }
 
   for (const element of elements) setVisible(element, visible.has(element))
+  emit('editing-warning', editingWarning)
 }
 
 function scheduleUpdate() {
@@ -327,6 +342,7 @@ watch(
     props.transform.x, props.transform.y, props.transform.scale,
     props.width, props.height, props.projectionScale,
     props.copyOffsets, projectedLabels.value,
+    props.editing, props.editingLabelId,
   ],
   scheduleUpdate,
   { flush: 'post' },
