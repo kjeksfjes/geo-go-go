@@ -350,9 +350,9 @@ onBeforeUnmount(() => {
       @pointermove="moveDrag" @pointerup="finishDrag" @pointercancel="cancelDrag" @lostpointercapture="finishDrag">
       <g v-if="!disabled">
         <polygon v-if="frame" :points="frame" class="water-editor-frame" />
-        <path :d="guidePath" class="water-editor-guide" />
-        <path :d="guidePath" class="water-editor-hit" @pointerdown.stop.prevent="startDrag($event, null)"><title>Drag the whole path</title></path>
         <template v-if="selected.layout !== 'horizontal'">
+          <path :d="guidePath" class="water-editor-guide" />
+          <path :d="guidePath" class="water-editor-hit" @pointerdown.stop.prevent="startDrag($event, null)"><title>Drag the whole path</title></path>
           <template v-for="(p, index) in nodes" :key="index">
             <circle v-if="p" :cx="p[0]" :cy="p[1]" :r="index === selectedNode ? 7 : 5"
               :class="['water-editor-node', { 'water-editor-node--selected': index === selectedNode }]"
