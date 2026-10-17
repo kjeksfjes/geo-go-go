@@ -60,6 +60,7 @@ const measurementWidths = new Map<string, number>()
 const measurementContents = new Map<string, string>()
 let measurementStyle = ''
 let measurementGroup: SVGGElement | undefined
+let baselineProbe: SVGTextElement | undefined
 const pathPrefix = useId()
 const labelPlacements = computed(() => (props.labels ?? marineLabels).flatMap(label => {
   const root = placements.value[label.id]
@@ -207,6 +208,11 @@ function updateLabels() {
   // Measure every name with its actual font, case and spacing.
   // Batch these reads before placement writes, and only after gestures settle.
   if (measurementGroup) measurementGroup.style.fontSize = fontSize
+  // Avoid browser-specific inheritance of SVG's middle baseline. The font's
+  // visible x-height supplies the same explicit alphabetic-baseline offset
+  // for every rendered size, including text following a curved path.
+  const xHeight = baselineProbe?.getBBox().height ?? 0
+  const baselineOffsetEm = xHeight > 0 ? xHeight / baseFont / 2 : 0.2
   const styleKey = `${fontSize}:${locale.value}`
   if (styleKey !== measurementStyle) {
     measurementStyle = styleKey
@@ -294,6 +300,7 @@ function updateLabels() {
       const halfHeight = fontPixels * (label.lines.length > 1 ? 1.2 + (label.lines.length - 2) * 0.675 : 0.7)
       const labelFont = `${fontPixels}px`
       if (element.style.fontSize !== labelFont) element.style.fontSize = labelFont
+      element.setAttribute('dy', `${baselineOffsetEm}em`)
       element.removeAttribute('transform')
       let box: LabelBox
       if (label.guide && label.guideLengths) {
@@ -420,6 +427,8 @@ onBeforeUnmount(() => {
        overlay remains noninteractive even when its opacity is zero. -->
   <g :opacity="visible ? 1 : 0" class="marine-labels" :class="{ 'marine-labels--editing': editing }" aria-hidden="true">
     <g :ref="(element) => { measurementGroup = element as SVGGElement | undefined }" visibility="hidden">
+      <text :ref="(element) => { baselineProbe = element as SVGTextElement | undefined }"
+        class="marine-label" style="font-size: 1em">x</text>
       <text
         v-for="label in projectedLabels"
         :key="label.id"
@@ -485,8 +494,10 @@ onBeforeUnmount(() => {
   font-weight: var(--ui-weight);
   letter-spacing: 0.11em;
   text-anchor: middle;
-  dominant-baseline: middle;
 }
+
+/* Set child baselines explicitly: WebKit has differed when inheriting middle. */
+.marine-label, .marine-label tspan, .marine-label textPath { dominant-baseline: alphabetic; }
 
 .marine-labels--editing .marine-label { pointer-events: visiblePainted; cursor: pointer; }
 

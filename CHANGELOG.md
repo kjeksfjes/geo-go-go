@@ -6,6 +6,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Align water-label baselines explicitly using the font's measured x-height, including curved and stacked labels, to reduce mobile Safari versus desktop placement differences.
 - Measure spaced water labels from rendered character positions and bounds to avoid Safari clipping names when its SVG text-length API omits letter spacing.
 - Position the first letter along curved paths instead of requiring a centered-text interpretation, preserving older saved positions until adjusted; let edited curve endpoints follow neighboring points automatically without fixed handles.
 - Honor the text-center percentage near curved water-label path endpoints, including duplicate placements and text shorter than the path; extend the baseline instead of shifting the name inward.
