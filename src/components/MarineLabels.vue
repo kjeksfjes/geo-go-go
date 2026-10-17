@@ -314,7 +314,7 @@ function updateLabels() {
           || box[1] < props.transform.y + scale * top + coastMargin
           || box[3] > props.transform.y + scale * bottom - coastMargin
         if (outsideFrame) {
-          if (selectedForEditing) editingWarning = 'Outside the fitting frame. Enlarge the frame or adjust placement; hiding handles shows the normal map preview.'
+          if (selectedForEditing) editingWarning = 'Text exceeds its automatic fitting area. Reduce text size; hiding handles shows the normal map preview.'
           if (!keepVisible) continue
         }
       }

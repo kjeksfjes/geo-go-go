@@ -171,13 +171,6 @@ const guidePath = computed(() => {
   return points.map((p, i) => `${i ? 'L' : 'M'}${p![0]},${p![1]}`).join(' ')
 })
 const anchor = computed(() => selected.value && screen(placementPivot(selected.value)))
-const frame = computed(() => {
-  const bounds = selected.value?.bounds
-  if (!bounds || selected.value?.layout !== 'horizontal') return ''
-  const [[x0, y0], [x1, y1]] = bounds
-  const points = ([[x0, y0], [x1, y0], [x1, y1], [x0, y1]] as MapPoint[]).map(screen)
-  return points.every(p => p) ? points.map(p => p!.join(',')).join(' ') : ''
-})
 function focus() {
   if (!selected.value) return
   emit('focus', selected.value.layout === 'horizontal' && selected.value.bounds
@@ -365,7 +358,6 @@ onBeforeUnmount(() => {
       :viewBox="`0 0 ${width} ${height}`" aria-label="Water label path editor"
       @pointermove="moveDrag" @pointerup="finishDrag" @pointercancel="cancelDrag" @lostpointercapture="finishDrag">
       <g v-if="!disabled">
-        <polygon v-if="frame" :points="frame" class="water-editor-frame" />
         <template v-if="selected.layout !== 'horizontal'">
           <path :d="guidePath" class="water-editor-guide" />
           <path :d="guidePath" class="water-editor-hit" @pointerdown.stop.prevent="startDrag($event, null)"><title>Drag the whole path</title></path>
@@ -412,16 +404,16 @@ onBeforeUnmount(() => {
           <p v-if="!results.length">No matching names.</p>
           <template v-if="selected && selectedLabel">
             <div class="water-editor-selection"><strong>{{ selectedLabel.name }}</strong><span>{{ selectedLabel.nameNb }} · {{ selectedLabel.id }}</span></div>
-            <p v-if="showWaterArea" class="water-editor-hint">Purple area: Natural Earth's approximate marine extent. It stays fixed as you edit; it is guidance, not a placement restriction. The blue rectangle is the editable text-fitting frame.</p>
+            <p v-if="showWaterArea" class="water-editor-hint">Purple area: Natural Earth's approximate marine extent. It stays fixed as you edit; it is guidance, not a placement restriction.</p>
             <p v-if="warning" class="water-editor-warning" role="status">{{ warning }}</p>
             <div class="water-editor-actions"><button type="button" :disabled="disabled" @click="focus">Find on map</button><button type="button" :disabled="editLocked || !edits[selectedId]" @click="resetLabel">Reset this name</button></div>
             <fieldset :disabled="editLocked">
               <label>Layout<select :value="selected.layout ?? 'curve'" @change="layout"><option value="curve">Text along path</option><option value="horizontal">Horizontal / stacked</option></select></label>
               <label>Text size ×{{ (selected.textScale ?? 1).toFixed(2) }}<input type="range" min="0.1" max="5" step="0.05" :value="selected.textScale ?? 1" @input="field('textScale', $event)" @change="commit" /></label>
-              <p class="water-editor-hint">Text size scales independently of the path/frame. Larger text can extend beyond its ends.</p>
+              <p class="water-editor-hint">Text size scales independently. Larger curved text can extend beyond the path's ends.</p>
               <div class="water-editor-actions"><span>Rotate</span><button v-for="angle in [-10, -1, 1, 10]" :key="angle" type="button" @click="transformGeometry(angle)">{{ angle > 0 ? '+' : '' }}{{ angle }}°</button></div>
-              <div class="water-editor-actions"><span>{{ selected.layout === 'horizontal' ? 'Frame' : 'Path' }} size</span><button type="button" @click="transformGeometry(0, 0.9)">−10%</button><button type="button" @click="transformGeometry(0, 1.1)">+10%</button></div>
               <template v-if="selected.layout !== 'horizontal'">
+                <div class="water-editor-actions"><span>Path size</span><button type="button" @click="transformGeometry(0, 0.9)">−10%</button><button type="button" @click="transformGeometry(0, 1.1)">+10%</button></div>
                 <label>Text position along path {{ Math.round((selected.center ?? 0.5) * 100) }}%<input type="range" min="0" max="1" step="0.01" :value="selected.center ?? 0.5" @input="field('center', $event)" @change="commit" /></label>
                 <label>Use {{ Math.round((selected.spanFraction ?? 0.85) * 100) }}% of path<input type="range" min="0.05" max="1" step="0.01" :value="selected.spanFraction ?? 0.85" @input="field('spanFraction', $event)" @change="commit" /></label>
                 <label>Path point<select v-model.number="selectedNode"><option v-for="(_, i) in selected.points" :key="i" :value="i">Point {{ i + 1 }}</option></select></label>
@@ -475,6 +467,5 @@ p { margin: 6px 0; }
 .water-editor-move { pointer-events: all; cursor: move; touch-action: none; }
 .water-editor-move circle { fill: #fff; stroke: #276c8e; stroke-width: 2; }
 .water-editor-move path { fill: none; stroke: #276c8e; stroke-width: 2; pointer-events: none; }
-.water-editor-frame { fill: none; stroke: #276c8e; stroke-width: 1; stroke-dasharray: 4 4; }
 @media (max-width: 700px) { .water-editor-panel { max-height: 50%; } }
 </style>
