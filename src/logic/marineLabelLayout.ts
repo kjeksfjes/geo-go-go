@@ -36,10 +36,13 @@ export function labelGuideLengths(points: readonly MapPoint[]): number[] {
 // A long geographic guide must not make a small label occupy the whole sea.
 export function centeredLabelGuide(points: readonly MapPoint[], lengths: readonly number[], span: number, centerFraction = 0.5): MapPoint[] | undefined {
   const total = lengths[lengths.length - 1] ?? 0
-  // Fitting text to the full path involves multiplying and dividing by the
-  // camera scale. Roundoff must not turn an exact fit into a hidden label.
-  const tolerance = Math.max(total, span) * Number.EPSILON * 8
-  if (!Number.isFinite(span) || span <= 0 || total <= 0 || span - total > tolerance) return undefined
+  // Extending a short guide at large projected coordinates loses precision
+  // when subtracting its endpoints, then accumulates error over its segments.
+  // Include that coordinate magnitude so an exact fit stays usable at every
+  // text size, even when its recomputed length is microscopically shorter.
+  const magnitude = points.reduce((largest, [x, y]) => Math.max(largest, Math.abs(x), Math.abs(y)), Math.max(total, span))
+  const tolerance = magnitude * Number.EPSILON * Math.max(1, points.length) * 8
+  if (!Number.isFinite(span) || !Number.isFinite(total) || span <= 0 || total <= 0 || span - total > tolerance) return undefined
   span = Math.min(span, total)
   const center = Math.max(span / 2, Math.min(total - span / 2, total * centerFraction))
   const start = center - span / 2

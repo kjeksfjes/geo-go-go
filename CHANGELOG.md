@@ -13,6 +13,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 - Stop hidden preparation rectangles from hiding explicitly resized water names, including deselected labels and normal previews.
 - Replace the editor's text-size multiplier with an explicit reference font size so equal values give equal letter size across names; show the current pixel size, allow restoring automatic sizing, and preserve existing drafts.
 - Add a live font-size slider from 0.1 to 20, with the numeric input retaining its wider range and one undo step per slider adjustment.
+- Fix curved water names disappearing at certain font sizes because rounding errors incorrectly rejected their extended text paths.
 - Preserve the displayed font size when moving, rotating, switching layout, or reshaping a water name, including the first move of an ocean label that previously triggered automatic shrinking.
 - Keep the selected water name visible while editing below the normal visibility cutoff or outside its fitting frame, explain these limits in the panel, and prevent rounding errors from hiding text fitted to the full path.
 - Fix disappearing text after switching from horizontal/stacked layout back to a path, refresh measurements when line breaks change, and make text sizing independent of automatic fitting limits.
