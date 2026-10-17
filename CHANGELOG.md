@@ -6,6 +6,8 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Give map cards larger flags, full-width quiz feedback beneath the header, and compact country details beneath the name; scale flags for narrow screens.
+
 - Lift water names by 0.1em relative to their optical center, keeping the correction proportional to font size and consistent across desktop and mobile.
 - Align water-label baselines explicitly using the font's measured ink x-height, including curved and stacked labels, to reduce mobile Safari versus desktop placement differences.
 - Measure spaced water labels from rendered character positions and bounds to avoid Safari clipping names when its SVG text-length API omits letter spacing.
