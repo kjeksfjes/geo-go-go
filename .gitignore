@@ -20,3 +20,6 @@ dist
 *.key
 *.p12
 *.pfx
+
+# Portable editor handoffs stay local; integrated overrides are tracked in src/data.
+/geo-go-go-water-label-edits*.json

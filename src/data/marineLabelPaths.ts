@@ -1,5 +1,6 @@
 import type { MapPoint } from '../composables/useMapZoom'
 import generated from './marine-label-paths.json'
+import overrides from './marine-label-overrides.json'
 
 // Generated water corridors follow source polygon shape; authored overrides
 // refine distinctive seas. These guides never change boundaries or names.
@@ -172,7 +173,12 @@ const authored: Record<string, MarineLabelPath> = {
 }
 
 const prepared = generated as unknown as Record<string, MarineLabelPath>
+const maintained = overrides.placements as unknown as Record<string, MarineLabelPath>
 export const marineLabelPaths: Record<string, MarineLabelPath> = Object.fromEntries(
-  [...new Set([...Object.keys(prepared), ...Object.keys(authored)])]
-    .map((id) => [id, { ...prepared[id], ...authored[id], offset: offsets[id] }]),
+  [...new Set([...Object.keys(prepared), ...Object.keys(authored), ...Object.keys(overrides.placements)])]
+    .filter(id => !overrides.removedIds.includes(id))
+    // Draft placements are complete snapshots; merging would restore removed
+    // offsets, readable guides, or layout fields from the older preparation.
+    .map((id) => [id, maintained[id]
+      ?? { ...prepared[id], ...authored[id], offset: offsets[id] }]),
 )
