@@ -6,6 +6,10 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 ### Improvements
 
+- Give Sognefjord a gentle bend that rises through its middle and flattens toward the east; refine the restored Trondheimsfjord and Gulf of Ob baselines to follow their water corridors.
+
+- Restore placements for all 15 previously hidden water names, following narrow passages and fjords with prepared geographic guides. Let their names use the available path length instead of restrictive coast-width font caps, accepting some coastline contact for readability. Check that every imported water label has a prepared placement.
+
 - Keep language switching visible in the mobile header and add English/Norsk choices to the introductory help invitation.
 
 - Simplify the first three guide steps in Norwegian and English, including the touch navigation equivalent.

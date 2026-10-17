@@ -60,6 +60,69 @@ const authored: Record<string, MarineLabelPath> = {
   'ne:1159117301': { points: [[-86.1, 20.6], [-85.75, 21.7], [-85.2, 22.6]] },
   'ne:1159118553': { points: [[-70.7, -53.55], [-70.55, -53.3], [-70.6, -52.95]] },
   'ne:1159116269': { points: [[-72, -59], [-66, -58.5], [-60, -59]] },
+  // Restore waters whose source footprints or winding channels could not
+  // yield an automatic guide. Keep their water-following corridors intact,
+  // and use the normal path-length sizing rather than tiny coast-width caps.
+  'ne:1159115729': { // Luzon Strait
+    points: [[119.9, 21.35], [121.0, 21.35], [122.2, 21.35]],
+    readablePoints: undefined,
+  },
+  'ne:1159116927': { // Seto Inland Sea
+    points: [[131.3, 33.8], [131.65, 33.82], [132.0, 33.85]],
+    readablePoints: undefined,
+  },
+  'ne:1159117067': { // Strait of Gibraltar
+    points: [[-5.851139, 35.923033], [-5.700023, 35.925266], [-5.545031, 35.957333], [-5.427882, 36.007702], [-5.262298, 36.043897], [-5.182091, 36.042104]],
+    readablePoints: undefined,
+  },
+  'ne:1159118231': { // La Pérouse Strait
+    points: [[141.6, 45.66], [142.1, 45.68], [142.7, 45.7]],
+    readablePoints: undefined,
+  },
+  'ne:1159118905': { // Maputo Bay
+    points: [[32.7, -26.15], [32.8, -26.02], [32.87, -25.86]],
+    readablePoints: undefined,
+  },
+  'ne:1159118925': { // St. Helena Bay
+    points: [[18.03, -32.63], [18.13, -32.57], [18.23, -32.52]],
+    readablePoints: undefined,
+  },
+  'ne:1159119119': { // Gulf of Ob
+    points: [[73.08, 69.3], [73.12, 70.0], [72.98, 70.7], [72.85, 71.4]],
+    readablePoints: undefined,
+  },
+  'ne:1159118853': { // Bab-el-Mandeb
+    points: [[43.16, 12.83], [43.3, 12.69], [43.5, 12.51]],
+    readablePoints: undefined,
+  },
+  'ne:1159119155': { // Dardanelles
+    points: [[26.47, 40.23], [26.55, 40.28], [26.65, 40.365]],
+    readablePoints: undefined,
+  },
+  'ne:1159119885': { // George VI Sound
+    points: [[-68.65, -69.8], [-68.2, -70.6], [-67.9, -71.3], [-68.0, -72.0], [-68.6, -72.6], [-70.0, -73.0], [-72.0, -73.0]],
+    readablePoints: undefined,
+  },
+  'ne:1159117755': { // Kara Strait
+    points: [[57.8, 70.4], [58.3, 70.5], [58.8, 70.65]],
+    readablePoints: undefined,
+  },
+  'ne:1159120685': { // San Francisco Bay
+    points: [[-122.35, 37.79], [-122.32, 37.735], [-122.29, 37.69], [-122.24, 37.635], [-122.19, 37.59]],
+    spanFraction: 0.92, readablePoints: undefined,
+  },
+  'ne:1159117781': { // Sognefjord
+    points: [[5.55, 61.094], [5.68, 61.12], [5.82, 61.135], [5.95, 61.136], [6.07, 61.124]],
+    readablePoints: undefined,
+  },
+  'ne:1159117797': { // Trondheimsfjord
+    points: [[10.18, 63.505], [10.36, 63.545], [10.56, 63.56]],
+    readablePoints: undefined,
+  },
+  'ne:1159120015': { // Matochkin Strait
+    points: [[54.45, 73.378], [54.6, 73.392], [54.75, 73.42]],
+    readablePoints: undefined,
+  },
 }
 
 const prepared = generated as unknown as Record<string, MarineLabelPath>
