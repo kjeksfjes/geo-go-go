@@ -212,7 +212,9 @@ function updateLabels() {
   // visible x-height supplies the same explicit alphabetic-baseline offset
   // for every rendered size, including text following a curved path.
   const xHeight = baselineProbe?.getBBox().height ?? 0
-  const baselineOffsetEm = xHeight > 0 ? xHeight / baseFont / 2 : 0.2
+  // Lift the shared alignment by a fifth of the rendered font size, preserving
+  // the same optical placement on desktop and mobile without editing guides.
+  const baselineOffsetEm = (xHeight > 0 ? xHeight / baseFont / 2 : 0.2) - 0.2
   const styleKey = `${fontSize}:${locale.value}`
   if (styleKey !== measurementStyle) {
     measurementStyle = styleKey
