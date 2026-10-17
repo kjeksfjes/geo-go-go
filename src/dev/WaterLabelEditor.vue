@@ -245,6 +245,22 @@ function setFontSize(event: Event, completed = true) {
   update(value)
   if (completed) commit()
 }
+function setLetterSpacing(event: Event | null, completed = true) {
+  if (editLocked.value) return
+  const source = edits.value[selectedId.value] ?? baseline[selectedId.value]
+  if (!source) return
+  const input = event?.target as HTMLInputElement | undefined
+  const spacing = input?.value.trim() ? Number(input.value) : NaN
+  if (event && (!Number.isFinite(spacing) || spacing < -0.1 || spacing > 2)) {
+    status.value = 'Enter letter spacing between -0.1 and 2 em.'
+    return
+  }
+  const value = preserveSize(source)
+  if (event) value.letterSpacing = spacing
+  else delete value.letterSpacing
+  update(value)
+  if (completed) commit()
+}
 function setLabelText(key: keyof MarineLabelText, event: Event) {
   if (editLocked.value) return
   const id = selectedId.value
@@ -582,6 +598,13 @@ onBeforeUnmount(() => {
                 <span v-if="fontSize?.id === selectedId && !previewOriginal">Currently {{ fontSize.pixels.toFixed(1) }} px</span>
               </div>
               <p class="water-editor-hint">Use the number input for sizes outside the slider's range. Equal values give equal font size in the same view. The number is font pixels on a 1600px-wide reference map; zoom changes the current pixel size. Larger curved text can extend beyond the path's ends.</p>
+              <label>Letter spacing (em)<input type="number" min="-0.1" max="2" step="0.01"
+                :value="selected.letterSpacing ?? (selectedLabel.kind === 'ocean' ? 0.25 : 0.11)" @change="setLetterSpacing" /></label>
+              <label>Letter spacing slider · −0.1–0.5 em<input type="range" min="-0.1" max="0.5" step="0.01"
+                :value="Math.min(0.5, selected.letterSpacing ?? (selectedLabel.kind === 'ocean' ? 0.25 : 0.11))"
+                @input="setLetterSpacing($event, false)" @change="commit" /></label>
+              <div class="water-editor-actions"><button type="button" :disabled="selected.letterSpacing === undefined" @click="setLetterSpacing(null)">Default letter spacing</button></div>
+              <p class="water-editor-hint">0 means no extra spacing; larger values spread letters apart and negative values tighten them. Spacing follows font size and applies to both languages and layouts. The number input accepts values beyond the slider's range.</p>
               <div class="water-editor-actions"><span>Rotate</span><button v-for="angle in [-10, -1, 1, 10]" :key="angle" type="button" @click="transformGeometry(angle)">{{ angle > 0 ? '+' : '' }}{{ angle }}°</button></div>
               <template v-if="selected.layout !== 'horizontal'">
                 <div class="water-editor-actions"><span>Path size</span><button type="button" @click="transformGeometry(0, 0.9)">−10%</button><button type="button" @click="transformGeometry(0, 1.1)">+10%</button></div>

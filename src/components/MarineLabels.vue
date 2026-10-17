@@ -43,6 +43,7 @@ interface ProjectedLabel extends MarineLabel {
   sizeScale?: number
   textScale?: number
   textSize?: number
+  letterSpacing?: number
   rotation?: number
 }
 
@@ -162,6 +163,7 @@ const projectedLabels = computed<ProjectedLabel[]>(() => (props.labels ?? marine
     sizeScale: placement?.sizeScale,
     textScale: placement?.textScale,
     textSize: placement?.textSize,
+    letterSpacing: placement?.letterSpacing,
     rotation: placement?.rotation,
   }]
 }))
@@ -196,7 +198,7 @@ function updateLabels() {
     measurementWidths.clear()
   }
   for (const label of projectedLabels.value) {
-    const contents = JSON.stringify(label.lines)
+    const contents = JSON.stringify([label.lines, label.letterSpacing])
     if ((!label.guide && !label.waterBounds && labelLevel < label.minLabel)
       || (measurementWidths.has(label.id) && measurementContents.get(label.id) === contents)) continue
     measurementWidths.delete(label.id)
@@ -403,6 +405,7 @@ onBeforeUnmount(() => {
         :key="label.id"
         :ref="(element) => assignMeasurement(element, label.id)"
         class="marine-label"
+        :style="{ letterSpacing: label.letterSpacing === undefined ? undefined : `${label.letterSpacing}em` }"
         :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
       >
         <tspan v-for="(line, index) in label.lines" :key="index" x="0" :dy="index > 0 ? '1.35em' : undefined">
@@ -431,6 +434,7 @@ onBeforeUnmount(() => {
         class="marine-label"
         :class="{ 'marine-label--ocean': label.kind === 'ocean', 'marine-label--small': label.rank >= 3 }"
         style="display: none"
+        :style="{ letterSpacing: label.letterSpacing === undefined ? undefined : `${label.letterSpacing}em` }"
         @pointerdown.stop.prevent="editing && emit('select', label.id)"
       >
         <textPath v-if="label.guide" :href="`#${labelPathId(label.id, offset)}`" startOffset="50%">
