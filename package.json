@@ -4,7 +4,9 @@
   "version": "0.22.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "start": "vite --host 0.0.0.0 --port 5173 --strictPort",
+    "stop": "node scripts/stop-dev-server.mjs",
+    "dev": "vite --port 5173 --strictPort",
     "show:view": "node scripts/show-map-view.mjs",
     "read:view": "node scripts/read-map-view.mjs",
     "build": "npm run check:country-names && npm run check:marine-labels && vue-tsc -b && vite build",

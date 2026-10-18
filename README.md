@@ -116,6 +116,12 @@ Deferred work is tracked in [TASKS.md](TASKS.md), using stable task IDs and expl
 
 The interface follows a shared “pocket atlas” direction: warm paper surfaces, dark ink, Bricolage Grotesque display headings, and Geist controls. Both fonts are locally hosted with licenses and provenance; there are no runtime font-service requests. UI colors, typography, corners, shadows, and common spacing are defined as `--ui-*` tokens in `src/styles.css`; new controls should reuse those roles. Geographic colors remain separate in `src/data/mapPalette.ts` and the map's interaction styles. See [the design audit](docs/design-audit.md) for findings, decisions, and acceptance scope.
 
+## Start and stop the local server
+
+From the project directory, run `npm start` to serve the app at `http://localhost:5173` and your computer's local network address, so other devices on the same network can open it too. Keep that terminal running; Ctrl+C stops the server normally.
+
+If the original terminal is unavailable, open a new terminal in the project directory and run `npm stop`. This finds the project's Vite server on port 5173 and stops it, closing both localhost and local-network access. It refuses to stop an unrelated process using that port. Saved project files and browser drafts are unaffected. `npm run dev` remains available for localhost-only development. Both start commands require port 5173 to be free instead of silently choosing another port.
+
 ## Map view links and local view commands
 
 In Explore mode, **Copy view link** copies a URL containing the geographic center, map zoom, region and projection. For example, `http://localhost:5173/#view=59.2,5.7,128&region=world&projection=mercator` opens a close view of southwest Norway. The same fragment works under the published site's base path. Latitude comes before longitude; zoom is the map's existing scale multiplier (1–16384). Normal region and projection navigation limits still apply. Different viewport shapes show different surrounding areas. Links open Explore mode and leave language, detail and visual layer preferences unchanged.
