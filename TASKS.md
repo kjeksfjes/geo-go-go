@@ -2,6 +2,33 @@
 
 Lightweight backlog for deferred work. Keep stable task IDs and update each task's status as work progresses; recording a task does not authorize starting it automatically. No task-management dependency is required for now.
 
+## TASK-012 — Add capital quiz modes
+
+Status: Backlog — deferred until requested. Added: 2026-10-18.
+
+Explore capital quizzes using the existing country identities, regional question pools, scoring, answer suggestions, and English/Norwegian interface. The repository currently has no capital catalog or city coordinates. [Natural Earth Populated Places](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/) is a candidate source for a small checked-in catalog; review its coverage and currency rather than importing one capital per country blindly. No database or live API is proposed.
+
+### Proposed scope and decisions
+
+- [ ] Start with **Name the capital**: highlight a country and ask for its capital using searchable answer suggestions. Consider **Find the capital** separately, with selectable markers or a forgiving geographic click radius suitable for touch.
+- [ ] Import and review capital names, coordinates, country associations, English/Bokmål display names, accepted spelling alternatives, source provenance, and licensing.
+- [ ] Define explicit answer policies for multiple capitals, constitutional capitals versus seats of government, disputed arrangements, and recent changes; support exceptions without changing country or quiz identities.
+- [ ] Reuse existing quiz behavior where practical, keep the catalog lightweight, and run proportionate data/build checks. Leave desktop/mobile visual acceptance to the user.
+
+## TASK-013 — Add USA state and Norway county map sets and quizzes
+
+Status: Backlog — deferred until requested. Added: 2026-10-18.
+
+Add separate **USA states** and **Norway counties** map sets alongside **Countries**, sharing the existing Explore, Find, and Name quiz interface. In these map sets, hide the rest of the world entirely and fit the view to the selected country. Subdivisions must have their own stable identities and answer catalogs; they must not become countries or alter the existing country quiz. Complete state/county boundaries are not currently checked in.
+
+### Proposed scope and decisions
+
+- [ ] Import and review the 50 US states, using [US Census cartographic boundary files](https://www.census.gov/geographies/mapping-files/2025/geo/carto-boundary-file.html) as a candidate source. Exclude DC and territories from the default state quiz unless explicitly agreed otherwise. Assess Alaska/Hawaii inset maps so all states remain accessible without shrinking the mainland excessively.
+- [ ] Import current Norwegian county boundaries from [Kartverket/Geonorge](https://kartverket.no/en/api-and-data/grensedata), with the 15-county division introduced in 2024 as the current baseline; verify the division again when implementing. Define the map extent explicitly and keep areas outside county membership out of the question pool.
+- [ ] Provide **Explore**, **Find the state/county**, and **Name the state/county**, with reviewed English/Bokmål names, appropriate prompts, existing scoring/feedback, and keyboard/touch answer interactions.
+- [ ] Load subdivision geometry only for the selected map set, use appropriately simplified detail levels, and preserve consistent drawing and hit-testing in Canvas and SVG. Hide foreign land, background/context geometry, and unrelated labels in these views.
+- [ ] Record source versions, licensing, and reproducible imports; validate exact quiz membership and geometry coverage. Run proportionate build/data checks and leave visual acceptance to the user.
+
 ## TASK-011 — Consider optional repository and deployment security hardening
 
 Status: Deferred by the user. Added: 2026-10-17.
