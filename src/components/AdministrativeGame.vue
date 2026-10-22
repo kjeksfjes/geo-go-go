@@ -13,6 +13,7 @@ import type { QuizTipAction } from '../logic/quizTips'
 import CountryQuizPanel from './CountryQuizPanel.vue'
 import type { AdministrativeMapData, AdministrativeGameProps } from '../types/administrativeMap'
 import { placeText } from '../logic/placeText'
+import { projectUsStateContext } from '../logic/usStateContext'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { useQuizRound } from '../composables/useQuizRound'
 import { useElementSize } from '../composables/useElementSize'
@@ -49,6 +50,7 @@ const bathymetryLoading = ref(false)
 const reliefLoading = ref(false)
 const layerError = ref(false)
 const reliefClipId = `administrative-relief-${useId()}`
+const contextClipId = `administrative-context-${useId()}`
 async function setBathymetry(enabled: boolean) {
   layerError.value = false
   if (enabled && !bathymetry.value.length) {
@@ -173,10 +175,11 @@ const canvasActive = computed(() => canvasEnabled && canvasReady.value)
 const projectedBathymetry = computed(() => bathymetryEnabled.value ? bathymetry.value.map(band => ({ depth: band.depth, path: generator.value(band.geometry) ?? '' })) : [])
 const projectedRelief = computed(() => reliefEnabled.value ? relief.value.map(band => ({ elevation: band.elevation, path: generator.value(band.geometry) ?? '' })) : [])
 const reliefClipPath = computed(() => paths.value.map(p => p.path).join(''))
+const contextPaths = computed(() => fixedLayout ? projectUsStateContext(projection.value, width.value, height.value) : [])
 const scene = computed<CanvasMapScene>(() => ({
   coordinateKey: `${mapData.id}:${width.value}:${height.value}:high-detail:${activeProjectionId.value}`,
   spherePath: `M${-width.value},${-height.value}h${width.value * 3}v${height.value * 3}h${-width.value * 3}Z`,
-  bathymetry: projectedBathymetry.value, relief: projectedRelief.value, reliefClipPath: reliefClipPath.value, contextCountries: [],
+  bathymetry: projectedBathymetry.value, relief: projectedRelief.value, reliefClipPath: reliefClipPath.value, contextCountries: contextPaths.value,
   countries: paths.value.map(({ path, bounds }) => ({ path, bounds })),
 }))
 function insetRegion(point: [number, number]) {
@@ -309,9 +312,17 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', keyboard); emit(
       @wheel.prevent="svg && zoomFromWheel($event, svg)"
       @touchstart.prevent="touch" @touchmove.prevent="touch" @touchend="touch" @touchcancel="touch" @click="click">
       <g ref="mapContent">
-        <defs><clipPath :id="reliefClipId"><path :d="reliefClipPath" /></clipPath></defs>
+        <defs>
+          <clipPath :id="reliefClipId"><path :d="reliefClipPath" /></clipPath>
+          <template v-for="(context, index) in contextPaths" :key="index">
+            <clipPath v-if="context.clipPath" :id="`${contextClipId}-${index}`"><path :d="context.clipPath" clip-rule="evenodd" /></clipPath>
+          </template>
+        </defs>
         <template v-if="!canvasActive">
           <path v-for="band in projectedBathymetry" :key="band.depth" :d="band.path" :fill="`var(--map-bathymetry-${band.depth})`" pointer-events="none" />
+          <g class="administrative-context" aria-hidden="true">
+            <path v-for="(context, index) in contextPaths" :key="index" :d="context.path" :clip-path="context.clipPath ? `url(#${contextClipId}-${index})` : undefined" />
+          </g>
           <path v-for="path in paths" :key="`base:${path.id}`" :d="path.path" :fill="reliefEnabled ? 'var(--map-relief-land)' : 'var(--map-land)'" pointer-events="none" />
           <g :clip-path="`url(#${reliefClipId})`" style="mix-blend-mode: screen" pointer-events="none">
             <path v-for="band in projectedRelief" :key="band.elevation" :d="band.path" :fill="`var(--map-relief-${band.elevation})`" :fill-opacity="`var(--map-relief-${band.elevation}-opacity)`" />
@@ -374,6 +385,8 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', keyboard); emit(
 
 <style scoped>
 .administrative-game { position: absolute; inset: 0; overflow: hidden; background: var(--map-ocean); }
+.administrative-context { fill: var(--map-context-land); stroke: var(--map-context-border); stroke-width: 0.6; pointer-events: none; }
+.administrative-context path { vector-effect: non-scaling-stroke; }
 .administrative-map { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .administrative { fill: transparent; stroke: var(--map-border); stroke-width: 0.8; vector-effect: non-scaling-stroke; cursor: pointer; outline: none; }
 .administrative-game--canvas .administrative { fill: transparent; stroke: none; pointer-events: all; }

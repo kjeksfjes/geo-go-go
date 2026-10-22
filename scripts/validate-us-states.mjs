@@ -68,9 +68,14 @@ for (const source of sources.files) {
 
 // Exercise the actual shared round and suggestion logic with the new catalog.
 async function importTypeScript(file) {
-  const source = await readFile(new URL(file, root), 'utf8')
+  let source = await readFile(new URL(file, root), 'utf8')
+  if (file === 'src/logic/usStateContext.ts') {
+    const units = await readFile(new URL('src/data/ne-map-units-50m.json', root), 'utf8')
+    source = source.replace("import mapUnits from '../data/ne-map-units-50m.json'", `const mapUnits = ${units}`)
+  }
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText
     .replace(/from ['"]vue['"]/g, `from ${JSON.stringify(import.meta.resolve('vue'))}`)
+    .replace(/from ['"]d3-geo['"]/g, `from ${JSON.stringify(import.meta.resolve('d3-geo'))}`)
   return import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)
 }
 const { useQuizRound } = await importTypeScript('src/composables/useQuizRound.ts')
@@ -101,3 +106,24 @@ assert.equal(filterCountrySuggestions(suggestions, 'North Carolina', 'nb')[0].id
 assert.equal(filterCountrySuggestions(suggestions, 'sor-dakota', 'nb')[0].id, 'us:state:SD')
 assert.equal(filterCountrySuggestions(suggestions, 'CA', 'en')[0].id, 'us:state:CA')
 console.log('Validated 50 state identities and names, geography/lake fixtures, three inset viewport sizes, projection inversion, 50 local flags, shared quiz progression, and bilingual answer aliases.')
+
+// Context uses the same projection scale/translation but must leave the two
+// synthetic inset oceans clear of mainland Mexico/Caribbean geography.
+const { projectUsStateContext } = await importTypeScript('src/logic/usStateContext.ts')
+for (const [width, height] of [[390, 650], [1280, 720]]) {
+  const projection = geoAlbersUsa().fitExtent([[16, 16], [width - 16, height - 45]], geometry)
+  const before = projection(fixtures.CA)
+  const context = projectUsStateContext(projection, width, height)
+  assert.ok(context.some(layer => layer.clipPath) && context.some(layer => !layer.clipPath))
+  assert.ok(context.every(layer => layer.path && layer.bounds.flat().every(Number.isFinite)))
+  assert.deepEqual(projection(fixtures.CA), before, 'Context must not move or refit the state map')
+  const mask = context.find(layer => layer.clipPath).clipPath
+  const rectangles = [...mask.matchAll(/M([^,]+),([^H]+)H([^V]+)V([^H]+)H([^Z]+)Z/g)]
+    .map(match => [Number(match[1]), Number(match[2]), Number(match[3]), Number(match[4])])
+  assert.equal(rectangles.length, 3, 'Outer clip with Alaska/Hawaii holes')
+  const inside = point => rectangles.filter(([left, top, right, bottom]) => point[0] > left && point[0] < right && point[1] > top && point[1] < bottom).length % 2 === 1
+  assert.equal(inside(projection(fixtures.CA)), true, 'Mainland backdrop remains visible')
+  assert.equal(inside(projection(fixtures.AK)), false, 'Mainland backdrop stays out of Alaska')
+  assert.equal(inside(projection(fixtures.HI)), false, 'Mainland backdrop stays out of Hawaii')
+}
+console.log('Validated faded context bounds, unchanged state framing, and mainland exclusion from both inset oceans.')

@@ -18,10 +18,12 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 - Always use the finer county geometry and disable the High detail switch in county mode with an explanation.
 
-- Add USA states with Explore, Find, and Name quizzes for all 50 states, locally bundled state flags, English/Bokmål names and search aliases, and no foreign land or territories.
+- Add USA states with Explore, Find, and Name quizzes for all 50 states, locally bundled state flags, English/Bokmål names and search aliases, and no foreign or territorial quiz answers.
 - Share county/state map behavior, use marked Alaska/Hawaii insets with region-aware scale bars and zoom limits, and keep the shared settings panel with explanations for fixed-layout controls.
 
 - Align the revealed-answer label with state/county names and flags or crests, and correct shared Name quiz layout selectors.
+
+- Add faded neighboring land to the USA states view, preserving state framing, inset oceans, and the 50-state quiz pool.
 
 ## 0.22.0 — Waterline Workshop — 2026-10-18
 
