@@ -42,6 +42,13 @@ export function applyDocumentLocale() {
 
 const messages = {
   en: {
+    chooseCounty: 'Choose a county', mapSet: 'Map', countriesMap: 'Countries', norwayCounties: 'Norway counties',
+    findCounty: 'Find the county', nameCounty: 'Name the county', identifyCountyQuestion: 'Which county is highlighted?',
+    countyAnswerHint: 'Type a county name and choose a suggestion.', clickCountyLocation: 'Click the county on the map.',
+    nextCounty: 'Next county', noCounties: 'No counties available.', countyNamePlaceholder: 'County name',
+    countySuggestions: 'County suggestions', noCountyMatches: 'No matching counties.', selectedCounty: 'Selected county',
+    countyMap: 'Interactive map of Norway counties', countyLoading: 'Loading Norway counties…', countyLoadError: 'Could not load the county map.', retry: 'Try again',
+    countyAttribution: 'County boundaries: Kartverket (CC BY 4.0). Coastline: Natural Earth.',
     tipTitle: 'Did you know?', tipGotIt: 'Got it', tipNoMore: 'No more tips', tipClose: 'Close tip',
     tipReset: 'Reset tips', tipResetDone: 'Tips reset', tipResetHint: 'Show previously learned and dismissed tips again.',
     quizTips: 'Quiz tips', quizTipsHint: 'Offer occasional tips for quiz shortcuts.',
@@ -116,6 +123,13 @@ const messages = {
     seeResults: 'See results', nextCountry: 'Next country',
   },
   nb: {
+    chooseCounty: 'Velg et fylke', mapSet: 'Kart', countriesMap: 'Land', norwayCounties: 'Norges fylker',
+    findCounty: 'Finn fylket', nameCounty: 'Navngi fylket', identifyCountyQuestion: 'Hvilket fylke er markert?',
+    countyAnswerHint: 'Skriv et fylkesnavn og velg et forslag.', clickCountyLocation: 'Klikk på fylket i kartet.',
+    nextCounty: 'Neste fylke', noCounties: 'Ingen fylker tilgjengelig.', countyNamePlaceholder: 'Fylkesnavn',
+    countySuggestions: 'Fylkesforslag', noCountyMatches: 'Ingen fylker passer med søket.', selectedCounty: 'Valgt fylke',
+    countyMap: 'Interaktivt kart over Norges fylker', countyLoading: 'Laster Norges fylker…', countyLoadError: 'Kunne ikke laste fylkeskartet.', retry: 'Prøv igjen',
+    countyAttribution: 'Fylkesgrenser: Kartverket (CC BY 4.0). Kystlinje: Natural Earth.',
     tipTitle: 'Visste du at?', tipGotIt: 'Skjønner', tipNoMore: 'Ingen flere tips', tipClose: 'Lukk tips',
     tipReset: 'Tilbakestill tips', tipResetDone: 'Tips tilbakestilt', tipResetHint: 'Vis tidligere lærte og avviste tips igjen.',
     quizTips: 'Quiztips', quizTipsHint: 'Vis av og til tips om snarveier i quizen.',

@@ -7,14 +7,15 @@ import { useMapTreeSelectControl } from '../composables/useMapTreeSelectControl'
 
 const props = defineProps<{
   options: readonly MapRegion[]
+  includeCounties?: boolean
 }>()
 
-const model = defineModel<MapRegionId>({ required: true })
+const model = defineModel<MapRegionId | 'norway-counties'>({ required: true })
 const { treeSelect, toggleFromControl, startAligning, stopAligning } =
   useMapTreeSelectControl('region-selector', '.header-region-control', 'region-selector-label', 'bottom')
 
 interface TreeOption {
-  id: MapRegionId
+  id: MapRegionId | 'norway-counties'
   label: string
   children?: TreeOption[]
 }
@@ -25,16 +26,18 @@ function toTreeOption(region: MapRegion): TreeOption {
   return option
 }
 
-const treeOptions = computed(() => props.options.map(toTreeOption))
+const treeOptions = computed(() => [...props.options.map(toTreeOption),
+  ...(props.includeCounties ? [{ id: 'norway-counties' as const, label: t('norwayCounties') }] : []),
+])
 
 function selectRegion(value: string | null) {
-  if (value !== null) model.value = value as MapRegionId
+  if (value !== null) model.value = value as MapRegionId | 'norway-counties'
 }
 </script>
 
 <template>
   <div class="map-select-field region-selector" @mousedown.capture="toggleFromControl">
-    <span id="region-selector-label">{{ t('region') }}</span>
+    <span id="region-selector-label">{{ t(includeCounties ? 'mapSet' : 'region') }}</span>
     <TreeSelect
       ref="treeSelect"
       instance-id="region-selector"

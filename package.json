@@ -9,11 +9,12 @@
     "dev": "vite --port 5173 --strictPort",
     "show:view": "node scripts/show-map-view.mjs",
     "read:view": "node scripts/read-map-view.mjs",
-    "build": "npm run check:country-names && npm run check:marine-labels && vue-tsc -b && vite build",
+    "build": "npm run check:country-names && npm run check:marine-labels && npm run check:counties && vue-tsc -b && vite build",
     "check:country-names": "node scripts/validate-country-names.mjs",
     "check:marine-labels": "node scripts/validate-marine-labels.mjs",
     "preview": "vite preview",
-    "release:merge": "node scripts/release-merge.mjs"
+    "release:merge": "node scripts/release-merge.mjs",
+    "check:counties": "node scripts/validate-norway-counties.mjs"
   },
   "dependencies": {
     "@zanmato/vue3-treeselect": "^0.4.4",

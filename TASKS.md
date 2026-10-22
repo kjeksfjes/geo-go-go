@@ -17,17 +17,15 @@ Explore capital quizzes using the existing country identities, regional question
 
 ## TASK-013 — Add USA state and Norway county map sets and quizzes
 
-Status: Backlog — deferred until requested. Added: 2026-10-18.
+Status: Norway counties implemented; awaiting the user's visual/device acceptance. USA states deferred until requested. Added: 2026-10-18. Updated: 2026-10-22.
 
-Add separate **USA states** and **Norway counties** map sets alongside **Countries**, sharing the existing Explore, Find, and Name quiz interface. In these map sets, hide the rest of the world entirely and fit the view to the selected country. Subdivisions must have their own stable identities and answer catalogs; they must not become countries or alter the existing country quiz. Complete state/county boundaries are not currently checked in.
+The Norway county map is available from the header selector with Explore, Find the county, and Name the county. It uses all 15 official county identities independently of country identities, shared quiz progression/cards/suggestions, and only county land geometry; foreign countries and unrelated layers are absent. Kartverket's 2026 boundaries are clipped to the existing Natural Earth 10m Norway coastline and simplified into overview/high-detail assets with shared borders preserved. Geometry is lazy-loaded, and Canvas and SVG share the same paths. Provenance, attribution, and regeneration are documented in [README.md](README.md#norway-counties) and [the source record](docs/norway-counties-source.json). County data and quiz progression have automated checks; no browser or device visual acceptance is claimed.
 
-### Proposed scope and decisions
+### Remaining work
 
-- [ ] Import and review the 50 US states, using [US Census cartographic boundary files](https://www.census.gov/geographies/mapping-files/2025/geo/carto-boundary-file.html) as a candidate source. Exclude DC and territories from the default state quiz unless explicitly agreed otherwise. Assess Alaska/Hawaii inset maps so all states remain accessible without shrinking the mainland excessively.
-- [ ] Import current Norwegian county boundaries from [Kartverket/Geonorge](https://kartverket.no/en/api-and-data/grensedata), with the 15-county division introduced in 2024 as the current baseline; verify the division again when implementing. Define the map extent explicitly and keep areas outside county membership out of the question pool.
-- [ ] Provide **Explore**, **Find the state/county**, and **Name the state/county**, with reviewed English/Bokmål names, appropriate prompts, existing scoring/feedback, and keyboard/touch answer interactions.
-- [ ] Load subdivision geometry only for the selected map set, use appropriately simplified detail levels, and preserve consistent drawing and hit-testing in Canvas and SVG. Hide foreign land, background/context geometry, and unrelated labels in these views.
-- [ ] Record source versions, licensing, and reproducible imports; validate exact quiz membership and geometry coverage. Run proportionate build/data checks and leave visual acceptance to the user.
+- [ ] Obtain the user's desktop/mobile acceptance of county framing, Oslo's small target, coastal coverage, answer interactions, and both renderers/detail levels.
+- [ ] When separately authorized, import and review the 50 US states, using [US Census cartographic boundary files](https://www.census.gov/geographies/mapping-files/2025/geo/carto-boundary-file.html) as a candidate source. Exclude DC and territories from the default state quiz unless explicitly agreed otherwise. Assess Alaska/Hawaii inset maps so all states remain accessible without shrinking the mainland excessively.
+- [ ] Add USA Explore/Find/Name behavior using separate state identities and reviewed names, hiding foreign land and unrelated layers. Reuse shared quiz/navigation/rendering code where appropriate, retain lazy data loading, and record source versions, licensing, reproducible imports, and proportionate data/build checks.
 
 ## TASK-011 — Consider optional repository and deployment security hardening
 

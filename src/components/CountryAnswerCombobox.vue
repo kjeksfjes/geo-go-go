@@ -4,12 +4,17 @@ import {
   ComboboxAnchor, ComboboxContent, ComboboxEmpty, ComboboxInput,
   ComboboxItem, ComboboxPortal, ComboboxRoot, ComboboxViewport,
 } from 'reka-ui'
-import { countryName, locale, t } from '../i18n'
+import { countryName, locale, t, type MessageKey } from '../i18n'
 import { countryInfoById } from '../data/countries'
 import type { QuizTipAction } from '../logic/quizTips'
 import { filterCountrySuggestions, normalizeCountrySearch } from '../logic/countrySuggestions'
 
-const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean }>()
+const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean; names?: Readonly<Record<string, string>>; county?: boolean }>()
+function displayName(id: string) { return props.names ? props.names[id] ?? id : countryName(id) }
+function text(key: MessageKey) {
+  const countyKeys: Partial<Record<MessageKey, MessageKey>> = { countryNamePlaceholder: 'countyNamePlaceholder', countrySuggestions: 'countySuggestions', noCountryMatches: 'noCountyMatches' }
+  return t(props.county ? countyKeys[key] ?? key : key)
+}
 const emit = defineEmits<{ answer: [countryId: string]; 'tip-action': [action: QuizTipAction] }>()
 let selectionMethod: 'keyboard' | 'pointer' = 'keyboard'
 let selectionPointerType = 'mouse'
@@ -31,7 +36,7 @@ const inputId = `country-answer-${useId()}`
 const search = defineModel<string>('search', { required: true })
 const open = ref(false)
 const suggestions = computed(() => filterCountrySuggestions(
-  props.countryIds.map((id) => ({ id, name: countryName(id) })), search.value, locale.value,
+  props.countryIds.map((id) => ({ id, name: displayName(id) })), search.value, locale.value,
 ))
 
 function selectCountry(value: unknown) {
@@ -73,7 +78,7 @@ onMounted(() => {
       <input
         :id="inputId"
         class="country-answer__input"
-        :value="countryName(answerId)"
+        :value="displayName(answerId)"
         data-1p-ignore
         data-bwignore="true"
         data-lpignore="true"
@@ -107,7 +112,7 @@ onMounted(() => {
           data-lpignore="true"
           data-form-type="other"
           :aria-label="t('yourGuess')"
-          :placeholder="t('countryNamePlaceholder')"
+          :placeholder="text('countryNamePlaceholder')"
           autocorrect="off"
           autocapitalize="none"
           :spellcheck="false"
@@ -115,11 +120,11 @@ onMounted(() => {
         />
       </ComboboxAnchor>
       <ComboboxPortal>
-        <ComboboxContent @pointerdown.capture="recordSuggestionPointer" @keydown.capture="recordKeys" class="country-suggestions" position="popper" :side-offset="6" :collision-padding="12" :aria-label="t('countrySuggestions')">
+        <ComboboxContent @pointerdown.capture="recordSuggestionPointer" @keydown.capture="recordKeys" class="country-suggestions" position="popper" :side-offset="6" :collision-padding="12" :aria-label="text('countrySuggestions')">
           <ComboboxViewport class="country-suggestions__viewport">
-            <ComboboxEmpty class="country-suggestions__empty">{{ t('noCountryMatches') }}</ComboboxEmpty>
+            <ComboboxEmpty class="country-suggestions__empty">{{ text('noCountryMatches') }}</ComboboxEmpty>
             <ComboboxItem v-for="option in suggestions" :key="option.id" :value="option.id" :text-value="option.name" class="country-suggestions__item">
-              <span v-if="countryInfoById.get(option.id)?.flagCode" class="country-suggestions__flag fi" :class="`fi-${countryInfoById.get(option.id)?.flagCode}`" aria-hidden="true" />
+              <span v-if="!names && countryInfoById.get(option.id)?.flagCode" class="country-suggestions__flag fi" :class="`fi-${countryInfoById.get(option.id)?.flagCode}`" aria-hidden="true" />
               <span class="country-suggestions__name">{{ option.name }}</span>
             </ComboboxItem>
           </ComboboxViewport>

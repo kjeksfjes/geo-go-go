@@ -3,11 +3,13 @@ import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import type { QuizTipAction } from '../logic/quizTips'
 import type { QuizPhase } from '../composables/useCountryQuiz'
 import type { CountryInfo, GeographicComponentInfo } from '../types/country'
-import { componentName, countryName, t } from '../i18n'
+import { componentName, countryName, t, type MessageKey } from '../i18n'
 
 const CountryAnswerCombobox = defineAsyncComponent(() => import('./CountryAnswerCombobox.vue'))
 
 const props = defineProps<{
+  names?: Readonly<Record<string, string>>
+  county?: boolean
   identify?: boolean
   viewingOutsideRegion?: boolean
   wrongAnswerRevealed: boolean
@@ -15,14 +17,23 @@ const props = defineProps<{
   automaticReveal: boolean
   countryIds?: readonly string[]
   phase: QuizPhase
-  question: CountryInfo | null
-  answer: CountryInfo | null
+  question: Pick<CountryInfo, 'id'> & { flagCode?: string } | null
+  answer: Pick<CountryInfo, 'id'> & { flagCode?: string } | null
   answerComponent: GeographicComponentInfo | null
   alwaysShowWrongAnswer: boolean
   score: number
   questionNumber: number
   total: number
 }>()
+
+function displayName(id: string) { return props.names ? props.names[id] ?? id : countryName(id) }
+function text(key: MessageKey, values: Record<string, string | number> = {}) {
+  const countyKeys: Partial<Record<MessageKey, MessageKey>> = {
+    nameCountry: 'nameCounty', findCountry: 'findCounty', identifyQuestion: 'identifyCountyQuestion',
+    countryAnswerHint: 'countyAnswerHint', clickLocation: 'clickCountyLocation', nextCountry: 'nextCounty', noCountries: 'noCounties',
+  }
+  return t(props.county ? countyKeys[key] ?? key : key, values)
+}
 
 const emit = defineEmits<{
   'tip-action': [action: QuizTipAction]
@@ -93,7 +104,7 @@ const alwaysShowButton = ref<HTMLButtonElement | null>(null)
 const clickedAnswerRevealButton = ref<HTMLButtonElement | null>(null)
 const questionHeading = ref<HTMLHeadingElement | null>(null)
 const isCorrect = computed(() => props.answer?.id === props.question?.id)
-const showQuestionFlag = computed(() => !props.identify || (props.phase === 'answered' && isCorrect.value))
+const showQuestionFlag = computed(() => !!props.question?.flagCode && (!props.identify || (props.phase === 'answered' && isCorrect.value)))
 const showWrongAnswer = computed(() => props.alwaysShowWrongAnswer || props.wrongAnswerRevealed)
 
 async function revealAnswer() {
@@ -128,21 +139,21 @@ watch(() => props.question?.id, async (countryId) => {
 </script>
 
 <template>
-  <section data-quiz-tip="panel" tabindex="-1" @pointerdown.capture="lastPointerType = $event.pointerType" class="quiz-panel map-overlay__content" :class="[`quiz-panel--${phase}`, { 'quiz-panel--identify': identify, 'quiz-panel--with-flag': showQuestionFlag }]" :aria-label="t(identify ? 'nameCountry' : 'quiz')" @keydown.capture="handleSkipShortcut">
+  <section data-quiz-tip="panel" tabindex="-1" @pointerdown.capture="lastPointerType = $event.pointerType" class="quiz-panel map-overlay__content" :class="[`quiz-panel--${phase}`, { 'quiz-panel--identify': identify, 'quiz-panel--with-flag': showQuestionFlag }]" :aria-label="text(identify ? 'nameCountry' : 'quiz')" @keydown.capture="handleSkipShortcut">
     <template v-if="phase === 'complete'">
       <div class="quiz-panel__message" aria-live="polite">
-        <p class="map-overlay__eyebrow">{{ t('regionComplete') }}</p>
-        <h2 class="map-overlay__heading">{{ t('finalScore', { score, total }) }}</h2>
+        <p class="map-overlay__eyebrow">{{ text('regionComplete') }}</p>
+        <h2 class="map-overlay__heading">{{ text('finalScore', { score, total }) }}</h2>
       </div>
       <button ref="restartButton" class="quiz-panel__button" type="button" @click="emit('restart')">
-        {{ t('playAgain') }}
+        {{ text('playAgain') }}
       </button>
     </template>
 
     <template v-else-if="phase === 'empty'">
       <div class="quiz-panel__message">
-        <p class="map-overlay__eyebrow">{{ t(identify ? 'nameCountry' : 'findCountry') }}</p>
-        <h2 class="map-overlay__heading">{{ t('noCountries') }}</h2>
+        <p class="map-overlay__eyebrow">{{ text(identify ? 'nameCountry' : 'findCountry') }}</p>
+        <h2 class="map-overlay__heading">{{ text('noCountries') }}</h2>
       </div>
     </template>
 
@@ -152,13 +163,13 @@ watch(() => props.question?.id, async (countryId) => {
         class="quiz-panel__flag map-overlay__flag fi"
         :class="`fi-${question.flagCode}`"
         role="img"
-        :aria-label="t('flag', { name: countryName(question.id) })"
+        :aria-label="text('flag', { name: displayName(question.id) })"
       />
       <div class="quiz-panel__message">
         <p class="map-overlay__eyebrow">
-          {{ t('questionStatus', { number: questionNumber, total, score, points: t(score === 1 ? 'point' : 'points') }) }}
+          {{ text('questionStatus', { number: questionNumber, total, score, points: text(score === 1 ? 'point' : 'points') }) }}
         </p>
-        <h2 class="map-overlay__heading" ref="questionHeading" tabindex="-1">{{ identify ? t('identifyQuestion') : t('find', { name: countryName(question.id) }) }}</h2>
+        <h2 class="map-overlay__heading" ref="questionHeading" tabindex="-1">{{ identify ? text('identifyQuestion') : text('find', { name: displayName(question.id) }) }}</h2>
       </div>
       <CountryAnswerCombobox
         ref="answerInput"
@@ -167,6 +178,7 @@ watch(() => props.question?.id, async (countryId) => {
         v-model:search="answerDraft"
         class="quiz-panel__input"
         :country-ids="countryIds ?? []"
+        :names="names" :county="county"
         :answer-id="phase === 'answered' ? answer?.id ?? null : null"
         :correct="isCorrect"
         @answer="emit('answer', $event)"
@@ -174,37 +186,37 @@ watch(() => props.question?.id, async (countryId) => {
       />
       <div class="quiz-panel__status" aria-live="polite">
         <p v-if="phase === 'question'" class="quiz-panel__hint">
-          {{ t(identify ? 'countryAnswerHint' : 'clickLocation') }}
+          {{ text(identify ? 'countryAnswerHint' : 'clickLocation') }}
         </p>
         <p
           v-else-if="isCorrect"
           class="quiz-panel__feedback quiz-panel__feedback--correct"
         >
-          {{ t('correct') }}
+          {{ text('correct') }}
         </p>
         <template v-else-if="identify && (answer || phase === 'skipped')">
-          <p class="quiz-panel__feedback" :class="{ 'quiz-panel__feedback--wrong': phase !== 'skipped' }">{{ t(phase === 'skipped' ? 'skippedQuestion' : 'notQuite') }}</p>
+          <p class="quiz-panel__feedback" :class="{ 'quiz-panel__feedback--wrong': phase !== 'skipped' }">{{ text(phase === 'skipped' ? 'skippedQuestion' : 'notQuite') }}</p>
           <div class="quiz-panel__answer">
             <template v-if="correctAnswerVisible">
               <span class="quiz-panel__correct-answer">
-                <span>{{ t('correctAnswer') }}</span>
+                <span>{{ text('correctAnswer') }}</span>
                 <span class="quiz-panel__correct-country">
-                  <span class="quiz-panel__answer-flag fi" :class="`fi-${question.flagCode}`" aria-hidden="true" />
-                  <strong class="quiz-panel__correct-name">{{ countryName(question.id) }}</strong>
+                  <span v-if="question.flagCode" class="quiz-panel__answer-flag fi" :class="`fi-${question.flagCode}`" aria-hidden="true" />
+                  <strong class="quiz-panel__correct-name">{{ displayName(question.id) }}</strong>
                 </span>
               </span>
-              <button ref="automaticRevealButton" data-quiz-tip="automatic" class="quiz-panel__text-button quiz-panel__text-button--preference" type="button" :aria-pressed="automaticReveal" :aria-label="t('alwaysRevealAnswers')" @click="toggleAutomaticReveal">
-                {{ t('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !automaticReveal }" aria-hidden="true">✓</span>
+              <button ref="automaticRevealButton" data-quiz-tip="automatic" class="quiz-panel__text-button quiz-panel__text-button--preference" type="button" :aria-pressed="automaticReveal" :aria-label="text('alwaysRevealAnswers')" @click="toggleAutomaticReveal">
+                {{ text('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !automaticReveal }" aria-hidden="true">✓</span>
               </button>
             </template>
-            <button v-else ref="namedAnswerRevealButton" class="quiz-panel__text-button" type="button" @click="revealNamedAnswer">{{ t('showAnswer') }}</button>
+            <button v-else ref="namedAnswerRevealButton" class="quiz-panel__text-button" type="button" @click="revealNamedAnswer">{{ text('showAnswer') }}</button>
           </div>
         </template>
         <template v-else-if="answer">
-          <p class="quiz-panel__feedback quiz-panel__feedback--wrong">{{ t('wrong') }}</p>
+          <p class="quiz-panel__feedback quiz-panel__feedback--wrong">{{ text('wrong') }}</p>
           <div class="quiz-panel__answer">
             <template v-if="showWrongAnswer">
-              <span>{{ t('youClickedBefore') }}<strong>{{ countryName(answer.id) }}</strong><span v-if="answerComponent"> · {{ componentName(answerComponent) }}</span>{{ t('youClickedAfter') }}</span>
+              <span>{{ text('youClickedBefore') }}<strong>{{ displayName(answer.id) }}</strong><span v-if="answerComponent"> · {{ componentName(answerComponent) }}</span>{{ text('youClickedAfter') }}</span>
               <button
                 ref="alwaysShowButton" data-quiz-tip="automatic"
                 class="quiz-panel__text-button quiz-panel__text-button--preference"
@@ -212,38 +224,38 @@ watch(() => props.question?.id, async (countryId) => {
                 :aria-pressed="alwaysShowWrongAnswer"
                 @click="toggleAlwaysShow"
               >
-                {{ t('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !alwaysShowWrongAnswer }" aria-hidden="true">✓</span>
+                {{ text('showAutomatically') }}<span class="quiz-panel__preference-check" :class="{ 'quiz-panel__preference-check--hidden': !alwaysShowWrongAnswer }" aria-hidden="true">✓</span>
               </button>
             </template>
             <button v-else ref="clickedAnswerRevealButton" class="quiz-panel__text-button" type="button" @click="revealAnswer">
-              {{ t('whatDidIClick') }}
+              {{ text('whatDidIClick') }}
             </button>
           </div>
         </template>
       </div>
-      <p v-if="viewingOutsideRegion" class="quiz-panel__view-hint" aria-live="polite">{{ t('viewingOutsideGuess') }}</p>
+      <p v-if="viewingOutsideRegion" class="quiz-panel__view-hint" aria-live="polite">{{ text('viewingOutsideGuess') }}</p>
       <div class="quiz-panel__actions">
-        <button class="quiz-panel__text-button quiz-panel__restart" type="button" @click="emit('restart')">{{ t('restartQuiz') }}</button>
-        <button v-if="identify && phase === 'question'" class="quiz-panel__button quiz-panel__button--secondary" type="button" aria-keyshortcuts="Control+Enter Meta+Enter" :aria-label="t('skipQuestion')" @click="skipFromButton">
-          {{ t('skipQuestion') }} <kbd class="quiz-panel__shortcut" aria-hidden="true">{{ skipKeyHint }}</kbd>
+        <button class="quiz-panel__text-button quiz-panel__restart" type="button" @click="emit('restart')">{{ text('restartQuiz') }}</button>
+        <button v-if="identify && phase === 'question'" class="quiz-panel__button quiz-panel__button--secondary" type="button" aria-keyshortcuts="Control+Enter Meta+Enter" :aria-label="text('skipQuestion')" @click="skipFromButton">
+          {{ text('skipQuestion') }} <kbd class="quiz-panel__shortcut" aria-hidden="true">{{ skipKeyHint }}</kbd>
         </button>
         <button
           v-if="identify && phase === 'answered' && !isCorrect && answer"
           class="quiz-panel__button quiz-panel__button--secondary"
           type="button"
-          :aria-label="`${t('myGuess')} — ${t('showCountryOnMap', { name: countryName(answer.id) })}`"
+          :aria-label="`${text('myGuess')} — ${text('showCountryOnMap', { name: displayName(answer.id) })}`"
           @click="emit('show-guess')"
         >
-          {{ t('myGuess') }}
+          {{ text('myGuess') }}
         </button>
         <button
           v-if="!identify && phase === 'answered' && !isCorrect"
           class="quiz-panel__button quiz-panel__button--secondary"
           type="button"
-          :aria-label="t('showCountryOnMap', { name: countryName(question.id) })"
+          :aria-label="text('showCountryOnMap', { name: displayName(question.id) })"
           @click="emit('show-answer')"
         >
-          {{ t('showOnMap') }}
+          {{ text('showOnMap') }}
         </button>
         <button
           v-if="phase === 'answered' || phase === 'skipped' || !identify"
@@ -256,7 +268,7 @@ watch(() => props.question?.id, async (countryId) => {
           :tabindex="phase === 'question' ? -1 : 0"
           @click="nextQuestion"
         >
-          {{ questionNumber === total ? t('seeResults') : t('nextCountry') }}
+          {{ questionNumber === total ? text('seeResults') : text('nextCountry') }}
         </button>
       </div>
     </template>
@@ -411,8 +423,8 @@ watch(() => props.question?.id, async (countryId) => {
   outline-offset: 3px;
 }
 
-.quiz-panel--identify:not(.quiz-panel--with-flag) { grid-template-columns: minmax(0, 1fr); }
-.quiz-panel--identify:not(.quiz-panel--with-flag) .quiz-panel__message { grid-column: 1 / -1; }
+.quiz-panel--identify:notext(.quiz-panel--with-flag) { grid-template-columns: minmax(0, 1fr); }
+.quiz-panel--identify:notext(.quiz-panel--with-flag) .quiz-panel__message { grid-column: 1 / -1; }
 .quiz-panel__input { grid-column: 1 / -1; min-width: 0; }
 .quiz-panel__view-hint { grid-column: 1 / -1; margin: 0; color: var(--ui-muted); font-size: var(--ui-text-small); }
 .quiz-panel__shortcut { margin-left: 0.35rem; font: inherit; font-weight: var(--ui-weight); opacity: 0.75; }
@@ -439,7 +451,7 @@ watch(() => props.question?.id, async (countryId) => {
     padding-top: 0.4rem;
   }
 
-  .quiz-panel--question:not(.quiz-panel--identify) .quiz-panel__button--reserved { display: none; }
+  .quiz-panel--question:notext(.quiz-panel--identify) .quiz-panel__button--reserved { display: none; }
 
   .quiz-panel__button {
     min-height: 2.75rem;

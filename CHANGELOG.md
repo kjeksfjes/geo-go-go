@@ -2,6 +2,13 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Improvements
+
+- Add a Norway county map with Explore, Find the county, and Name the county modes, all 15 counties, bilingual controls, shared quiz behavior, and a view that hides the rest of the world.
+- Import official 2026 county boundaries, clipped to the atlas coastline, with lazy-loaded overview/high-detail geometry, Canvas/SVG rendering, touch and keyboard navigation, small-county markers, and source attribution.
+
 ## 0.22.0 — Waterline Workshop — 2026-10-18
 
 ### Improvements
