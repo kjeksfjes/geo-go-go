@@ -4,15 +4,20 @@ import MapDetailToggle from './MapDetailToggle.vue'
 import ProjectionSelector from './ProjectionSelector.vue'
 import { projectionOptions, type MapProjectionId } from '../composables/useMapProjection'
 import { type ScaleUnitSystem } from '../logic/mapScale'
+import { placeText } from '../logic/placeText'
+import type { PlaceKind } from '../types/administrativeMap'
 import { t, type Locale } from '../i18n'
 
-defineProps<{
-  open: boolean; county?: boolean; locale: Locale
+const props = defineProps<{
+  open: boolean; placeKind?: PlaceKind; fixedLayout?: boolean; locale: Locale
   detailLoading: boolean; projectionLoading: boolean; highDetailEnabled: boolean
   bathymetryLoading: boolean; bathymetryEnabled: boolean; reliefLoading: boolean; reliefEnabled: boolean
   interactionLocked: boolean; quizMode: boolean; projectionId: MapProjectionId
   quizTipsEnabled: boolean; suggestAllCountries: boolean; automaticAnswerReveal: boolean; alwaysShowWrongAnswer: boolean
 }>()
+function text(key: import('../i18n').MessageKey, values: Record<string, string | number> = {}) {
+  return placeText(props.placeKind ?? 'country', key, values)
+}
 const autoRegionalProjection = defineModel<boolean>('autoRegionalProjection', { required: true })
 const marineLabelsEnabled = defineModel<boolean>('marineLabelsEnabled', { required: true })
 const countryMarkersEnabled = defineModel<boolean>('countryMarkersEnabled', { required: true })
@@ -53,34 +58,35 @@ onBeforeUnmount(() => { if (resetTimer !== undefined) window.clearTimeout(resetT
           <div class="settings-layer-options" role="group" aria-labelledby="settings-appearance-heading" aria-describedby="settings-layer-performance-hint">
             <MapDetailToggle
               :loading="detailLoading"
-              :disabled="projectionLoading || county"
-              :description="county ? t('countyHighDetailHint') : undefined"
+              :disabled="projectionLoading || placeKind === 'county' || placeKind === 'state'"
+              :description="placeKind && placeKind !== 'country' ? t('fixedHighDetailHint') : undefined"
               :model-value="highDetailEnabled"
               @update:model-value="requestDetailChange"
             />
-            <MapDetailToggle :label="t('bathymetry')" :loading="bathymetryLoading" :disabled="interactionLocked" :model-value="bathymetryEnabled" @update:model-value="setBathymetryEnabled" />
+            <MapDetailToggle :label="t('bathymetry')" :description="fixedLayout ? t('usInsetBathymetryHint') : undefined" :loading="bathymetryLoading" :disabled="interactionLocked || fixedLayout" :model-value="bathymetryEnabled" @update:model-value="setBathymetryEnabled" />
             <MapDetailToggle :label="t('relief')" :loading="reliefLoading" :disabled="interactionLocked" :model-value="reliefEnabled" @update:model-value="setReliefEnabled" />
             <MapDetailToggle
               :label="t('waterNames')"
-              :description="!county && quizMode ? t('waterNamesQuizHint') : undefined"
-              :disabled="interactionLocked || quizMode || county"
-              :model-value="marineLabelsEnabled && !quizMode && !county"
+              :description="(!placeKind || placeKind === 'country') && quizMode ? t('waterNamesQuizHint') : undefined"
+              :disabled="interactionLocked || quizMode || placeKind === 'county' || placeKind === 'state'"
+              :model-value="marineLabelsEnabled && !quizMode && (!placeKind || placeKind === 'country')"
               @update:model-value="marineLabelsEnabled = $event"
             />
             <p id="settings-layer-performance-hint" class="settings-hint">{{ t('mapPerformanceHint') }}</p>
           </div>
           <MapDetailToggle
             :label="t('autoRegionalProjection')"
-            :description="t('autoRegionalProjectionHint')"
+            :description="t(fixedLayout ? 'usInsetProjectionHint' : 'autoRegionalProjectionHint')"
             :model-value="autoRegionalProjection"
-            :disabled="interactionLocked"
+            :disabled="interactionLocked || fixedLayout"
             @update:model-value="autoRegionalProjection = $event"
           />
           <div class="projection-control">
             <svg class="control-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
               <path d="m2 5 6-2 8 2 6-2v16l-6 2-8-2-6 2V5Zm6-2v16m8-14v16" />
             </svg>
-            <ProjectionSelector :model-value="projectionId" :disabled="interactionLocked" :options="projectionOptions" @update:model-value="selectProjection" />
+            <div v-if="fixedLayout" class="fixed-projection"><span>{{ t('projection') }}</span><button type="button" disabled>{{ t('usInsetProjection') }}</button></div>
+            <ProjectionSelector v-else :model-value="projectionId" :disabled="interactionLocked" :options="projectionOptions" @update:model-value="selectProjection" />
           </div>
         </section>
         <div class="settings-side-column">
@@ -99,38 +105,38 @@ onBeforeUnmount(() => { if (resetTimer !== undefined) window.clearTimeout(resetT
               </p>
             </div>
             <MapDetailToggle
-              :label="t(county ? 'countyMarkers' : 'countryMarkers')"
-              :description="t(county ? 'countyMarkersHint' : 'countryMarkersHint')"
+              :label="text('countryMarkers')"
+              :description="text('countryMarkersHint')"
               :model-value="countryMarkersEnabled"
               @update:model-value="countryMarkersEnabled = $event"
             />
-            <fieldset :disabled="county" class="answer-scope-setting" aria-describedby="answer-scope-context answer-scope-hint">
+            <fieldset :disabled="placeKind === 'county' || placeKind === 'state'" class="answer-scope-setting" aria-describedby="answer-scope-context answer-scope-hint">
               <legend class="visually-hidden">{{ t('answerSuggestions') }}</legend>
               <p class="settings-card-title" aria-hidden="true">{{ t('answerSuggestions') }}</p>
-              <p id="answer-scope-context" class="settings-context">{{ t('appliesToMode', { mode: t(county ? 'nameCounty' : 'nameCountry') }) }}</p>
+              <p id="answer-scope-context" class="settings-context">{{ t('appliesToMode', { mode: text('nameCountry') }) }}</p>
               <div class="answer-scope-choices">
                 <label>
                   <input type="radio" name="quiz-answer-scope" :checked="!suggestAllCountries" @change="emit('suggest-all-countries-change', false)" />
-                  <span>{{ t(county ? 'norwayCounties' : 'selectedRegion') }}</span>
+                  <span>{{ text('selectedRegion') }}</span>
                 </label>
                 <label>
                   <input type="radio" name="quiz-answer-scope" :checked="suggestAllCountries" @change="emit('suggest-all-countries-change', true)" />
-                  <span>{{ t(county ? 'allCounties' : 'allCountries') }}</span>
+                  <span>{{ text('allCountries') }}</span>
                 </label>
               </div>
-              <p id="answer-scope-hint" class="settings-hint">{{ t(county ? 'countySuggestionsHint' : 'answerSuggestionsHint') }}</p>
+              <p id="answer-scope-hint" class="settings-hint">{{ text('answerSuggestionsHint') }}</p>
             </fieldset>
             <MapDetailToggle
               :label="t('revealAnswersAutomatically')"
-              :context="t('appliesToMode', { mode: t(county ? 'nameCounty' : 'nameCountry') })"
+              :context="t('appliesToMode', { mode: text('nameCountry') })"
               :description="t('revealAnswersAutomaticallyHint')"
               :model-value="automaticAnswerReveal"
               @update:model-value="emit('automatic-answer-reveal-change', $event)"
             />
             <MapDetailToggle
-              :label="t(county ? 'revealClickedCounty' : 'revealClickedCountry')"
-              :context="t('appliesToMode', { mode: t(county ? 'findCounty' : 'findCountry') })"
-              :description="t(county ? 'revealClickedCountyHint' : 'revealClickedCountryHint')"
+              :label="text('revealClickedCountry')"
+              :context="t('appliesToMode', { mode: text('findCountry') })"
+              :description="text('revealClickedCountryHint')"
               :model-value="alwaysShowWrongAnswer"
               @update:model-value="emit('wrong-answer-preference-change', $event)"
             />
@@ -138,7 +144,7 @@ onBeforeUnmount(() => { if (resetTimer !== undefined) window.clearTimeout(resetT
           <section class="settings-section" aria-labelledby="settings-navigation-heading">
             <h3 id="settings-navigation-heading">{{ t('navigationAndScale') }}</h3>
             <MapDetailToggle
-              :label="t(county ? 'limitAutomaticCountyZoom' : 'limitAutomaticCountryZoom')"
+              :label="text('limitAutomaticCountryZoom')"
               :description="t('limitCountryZoomHint')"
               :model-value="limitedCountryZoomEnabled"
               @update:model-value="limitedCountryZoomEnabled = $event"
@@ -324,4 +330,9 @@ onBeforeUnmount(() => { if (resetTimer !== undefined) window.clearTimeout(resetT
   .map-settings-language :deep(.language-selector) { padding: 0.15rem; }
   .map-settings-language :deep(.language-selector button) { min-height: 2.05rem; padding: 0.25rem 0.6rem; }
 }
+</style>
+
+<style scoped>
+.fixed-projection { display: grid; gap: 0.25rem; width: 100%; font-size: var(--ui-text-small); color: var(--ui-muted); }
+.fixed-projection button { text-align: left; padding: 0.6rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius-control); color: var(--ui-muted); background: var(--ui-surface); font: inherit; }
 </style>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { placeText } from '../logic/placeText'
+import type { PlaceKind } from '../types/administrativeMap'
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import type { QuizTipAction } from '../logic/quizTips'
 import type { QuizPhase } from '../composables/useCountryQuiz'
@@ -9,8 +11,9 @@ const CountryAnswerCombobox = defineAsyncComponent(() => import('./CountryAnswer
 
 const props = defineProps<{
   names?: Readonly<Record<string, string>>
+  aliases?: Readonly<Record<string, readonly string[]>>
   badges?: Readonly<Record<string, string>>
-  county?: boolean
+  placeKind?: PlaceKind
   identify?: boolean
   viewingOutsideRegion?: boolean
   wrongAnswerRevealed: boolean
@@ -29,11 +32,7 @@ const props = defineProps<{
 
 function displayName(id: string) { return props.names ? props.names[id] ?? id : countryName(id) }
 function text(key: MessageKey, values: Record<string, string | number> = {}) {
-  const countyKeys: Partial<Record<MessageKey, MessageKey>> = {
-    quiz: 'findCounty', nameCountry: 'nameCounty', findCountry: 'findCounty', identifyQuestion: 'identifyCountyQuestion',
-    countryAnswerHint: 'countyAnswerHint', clickLocation: 'clickCountyLocation', nextCountry: 'nextCounty', noCountries: 'noCounties',
-  }
-  return t(props.county ? countyKeys[key] ?? key : key, values)
+  return placeText(props.placeKind ?? 'country', key, values)
 }
 
 const emit = defineEmits<{
@@ -160,7 +159,7 @@ watch(() => props.question?.id, async (countryId) => {
 
     <template v-else-if="question">
       <template v-if="showQuestionFlag">
-        <img v-if="badges?.[question.id]" class="quiz-panel__flag map-overlay__emblem" :src="badges[question.id]" :alt="t('coatOfArms', { name: displayName(question.id) })" />
+        <img v-if="badges?.[question.id]" class="quiz-panel__flag map-overlay__emblem" :src="badges[question.id]" :alt="text('flag', { name: displayName(question.id) })" />
       <span
         v-else
         class="quiz-panel__flag map-overlay__flag fi"
@@ -182,7 +181,7 @@ watch(() => props.question?.id, async (countryId) => {
         v-model:search="answerDraft"
         class="quiz-panel__input"
         :country-ids="countryIds ?? []"
-        :names="names" :badges="badges" :county="county"
+        :names="names" :badges="badges" :place-kind="placeKind" :aliases="aliases"
         :answer-id="phase === 'answered' ? answer?.id ?? null : null"
         :correct="isCorrect"
         @answer="emit('answer', $event)"
@@ -205,7 +204,7 @@ watch(() => props.question?.id, async (countryId) => {
               <span class="quiz-panel__correct-answer">
                 <span>{{ text('correctAnswer') }}</span>
                 <span class="quiz-panel__correct-country">
-                  <img v-if="badges?.[question.id]" class="quiz-panel__answer-emblem" :src="badges[question.id]" :alt="t('coatOfArms', { name: displayName(question.id) })" />
+                  <img v-if="badges?.[question.id]" class="quiz-panel__answer-emblem" :src="badges[question.id]" :alt="text('flag', { name: displayName(question.id) })" />
                   <span v-else-if="question.flagCode" class="quiz-panel__answer-flag fi" :class="`fi-${question.flagCode}`" aria-hidden="true" />
                   <strong class="quiz-panel__correct-name">{{ displayName(question.id) }}</strong>
                 </span>

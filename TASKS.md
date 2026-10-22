@@ -17,15 +17,16 @@ Explore capital quizzes using the existing country identities, regional question
 
 ## TASK-013 — Add USA state and Norway county map sets and quizzes
 
-Status: Norway counties implemented; awaiting the user's visual/device acceptance. USA states deferred until requested. Added: 2026-10-18. Updated: 2026-10-22.
+Status: Norway counties and USA states implemented; awaiting the user's visual/device acceptance. Added: 2026-10-18. Updated: 2026-10-23.
 
-The Norway county map is available from the header selector with Explore, Find the county, and Name the county. It uses all 15 official county identities independently of country identities, shared quiz progression/cards/suggestions, and only county land geometry; foreign countries and unrelated layers are absent. Kartverket's 2026 boundaries are clipped to the existing Natural Earth 10m Norway coastline and simplified into overview/high-detail assets with shared borders preserved. Geometry is lazy-loaded, and Canvas and SVG share the same paths. Provenance, attribution, and regeneration are documented in [README.md](README.md#norway-counties) and [the source record](docs/norway-counties-source.json). County data and quiz progression have automated checks; no browser or device visual acceptance is claimed.
+The Norway county map is available from the header selector with Explore, Find the county, and Name the county. It uses all 15 official county identities independently of country identities, shared quiz progression/cards/suggestions, and only county land geometry; foreign countries and unrelated layers are absent. Kartverket's 2026 boundaries are clipped to the existing Natural Earth 10m Norway coastline and simplified into shared-border assets; the app always uses the finer county geometry. Geometry is lazy-loaded, and Canvas and SVG share the same paths. Provenance, attribution, and regeneration are documented in [README.md](README.md#norway-counties) and [the source record](docs/norway-counties-source.json). County data and quiz progression have automated checks; no browser or device visual acceptance is claimed.
 
 ### Remaining work
 
-- [ ] Obtain the user's desktop/mobile acceptance of county framing, Oslo's small target, coastal coverage, answer interactions, and both renderers/detail levels.
-- [ ] When separately authorized, import and review the 50 US states, using [US Census cartographic boundary files](https://www.census.gov/geographies/mapping-files/2025/geo/carto-boundary-file.html) as a candidate source. Exclude DC and territories from the default state quiz unless explicitly agreed otherwise. Assess Alaska/Hawaii inset maps so all states remain accessible without shrinking the mainland excessively.
-- [ ] Add USA Explore/Find/Name behavior using separate state identities and reviewed names, hiding foreign land and unrelated layers. Reuse shared quiz/navigation/rendering code where appropriate, retain lazy data loading, and record source versions, licensing, reproducible imports, and proportionate data/build checks.
+- [ ] Obtain the user's desktop/mobile acceptance of county framing, Oslo's small target, coastal coverage, answer interactions, and both renderers.
+- [x] Import the 50 US states from Census 2025 cartographic boundaries, excluding DC and territories. Use marked Alaska/Hawaii insets, a fixed Albers USA projection, and a local scale caption.
+- [x] Add USA Explore/Find/Name modes, English/Bokmål names and search aliases, 50 local state flags, shared county/state rendering and navigation, lazy data loading, source provenance/import tools, and build/data checks.
+- [ ] Obtain the user’s desktop/mobile acceptance of state framing, insets, small-state targets, flags, quiz behavior, scale captions, and Canvas/SVG rendering.
 
 ## TASK-011 — Consider optional repository and deployment security hardening
 

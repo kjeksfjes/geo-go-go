@@ -4,6 +4,9 @@ import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import RegionSelector from './components/RegionSelector.vue'
 import WorldMap from './components/WorldMap.vue'
+import MapLoadState from './components/MapLoadState.vue'
+import { placeText } from './logic/placeText'
+import type { AdministrativeMapId } from './types/administrativeMap'
 import { useQuizTips } from './composables/useQuizTips'
 import { useHelpTour } from './composables/useHelpTour'
 import { useCountryQuiz } from './composables/useCountryQuiz'
@@ -30,23 +33,29 @@ import { isCountryLevelSelection } from './data/mapSelection'
 import { supplementalAreaInfoById } from './data/supplementalLand'
 import { parseSharedMapView, validateSharedMapView, type SharedMapView } from './logic/sharedMapView'
 
-const CountyGame = defineAsyncComponent(() => import('./components/CountyGame.vue'))
-const countyGame = ref<InstanceType<typeof CountyGame> | null>(null)
-const mapSet = ref<'countries' | 'norway-counties'>('countries')
-function chooseMap(value: MapRegionId | 'norway-counties') {
-  if (value === 'norway-counties') {
+const CountyGame = defineAsyncComponent({ loader: () => import('./components/CountyGame.vue'), loadingComponent: MapLoadState, errorComponent: MapLoadState })
+const UsStatesGame = defineAsyncComponent({ loader: () => import('./components/UsStatesGame.vue'), loadingComponent: MapLoadState, errorComponent: MapLoadState })
+const administrativeGame = ref<InstanceType<typeof CountyGame> | null>(null)
+const mapSet = ref<'countries' | AdministrativeMapId>('countries')
+const placeKind = computed(() => mapSet.value === 'norway-counties' ? 'county' : mapSet.value === 'usa-states' ? 'state' : 'country')
+const administrativeComponent = computed(() => mapSet.value === 'usa-states' ? UsStatesGame : CountyGame)
+function chooseMap(value: MapRegionId | AdministrativeMapId) {
+  if (value === 'norway-counties' || value === 'usa-states') {
     if (mapSet.value === value) return
-    if (quizMode.value && hasUnfinishedQuizProgress.value && !window.confirm(t('leaveQuizConfirmation'))) {
+    if (mapSet.value !== 'countries') {
+      if (!(administrativeGame.value?.confirmLeave?.() ?? true)) { regionSelectionRevision.value++; return }
+    } else if (quizMode.value && hasUnfinishedQuizProgress.value && !window.confirm(t('leaveQuizConfirmation'))) {
       regionSelectionRevision.value++; return
     }
     resetQuiz()
     quizTips.startRound()
+    mapViewBusy.value = false
     mapSet.value = value
     settingsOpen.value = false
     return
   }
-  if (mapSet.value === 'norway-counties') {
-    if (countyGame.value && !countyGame.value.confirmLeave()) { regionSelectionRevision.value++; return }
+  if (mapSet.value !== 'countries') {
+    if (!(administrativeGame.value?.confirmLeave?.() ?? true)) { regionSelectionRevision.value++; return }
     mapSet.value = 'countries'
     settingsOpen.value = false
     activeRegionId.value = value
@@ -78,7 +87,7 @@ function openSharedMapView() {
 function applySharedMapView(view: SharedMapView) {
   if (!view || !regionById.has(view.region as MapRegionId)) return
   if (quizMode.value && hasUnfinishedQuizProgress.value && !window.confirm(t('openSharedViewConfirmation'))) return
-  if (mapSet.value === 'norway-counties' && countyGame.value && !countyGame.value.confirmLeave()) return
+  if (mapSet.value !== 'countries' && !(administrativeGame.value?.confirmLeave?.() ?? true)) return
   mapSet.value = 'countries'
   mode.value = 'explore'
   selectedCountryId.value = null
@@ -251,8 +260,8 @@ const quizTips = useQuizTips(computed(() => ({
   answerRevealVisible: mode.value === 'name-country'
     ? ['answered', 'skipped'].includes(quizPhase.value) && quizAnswerId.value !== quizQuestionId.value && correctAnswerVisible.value
     : quizPhase.value === 'answered' && quizAnswerId.value !== quizQuestionId.value && wrongAnswerRevealed.value,
-  county: mapSet.value === 'norway-counties',
-  ...(mapSet.value === 'norway-counties' ? countyGame.value?.tipContext : {}),
+  placeKind: placeKind.value,
+  ...(mapSet.value !== 'countries' ? administrativeGame.value?.tipContext : {}),
 })))
 
 function handleTipPointer(event: PointerEvent) {
@@ -294,8 +303,8 @@ function startRegionalQuiz() {
 
 function setMode(nextMode: GameMode) {
   if (mode.value === nextMode) return
-  if (mapSet.value === 'norway-counties') {
-    if (!countyGame.value || countyGame.value.confirmLeave()) mode.value = nextMode
+  if (mapSet.value !== 'countries') {
+    if (administrativeGame.value?.confirmLeave?.() ?? true) mode.value = nextMode
     return
   }
   if (quizMode.value && hasUnfinishedQuizProgress.value
@@ -538,8 +547,8 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
           </svg>
           <RegionSelector
             :key="regionSelectionRevision"
-            :model-value="mapSet === 'norway-counties' ? mapSet : activeRegionId"
-            :options="regions" include-counties
+            :model-value="mapSet !== 'countries' ? mapSet : activeRegionId"
+            :options="regions" include-administrative
             @update:model-value="chooseMap"
           />
         </div>
@@ -548,10 +557,10 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
             {{ t('explore') }}
           </button>
           <button type="button" :aria-pressed="mode === 'find-country'" @click="setMode('find-country')">
-            {{ t(mapSet === 'norway-counties' ? 'findCounty' : 'findCountry') }}
+            {{ placeText(placeKind, 'findCountry') }}
           </button>
           <button type="button" :aria-pressed="mode === 'name-country'" @click="setMode('name-country')">
-            {{ t(mapSet === 'norway-counties' ? 'nameCounty' : 'nameCountry') }}
+            {{ placeText(placeKind, 'nameCountry') }}
           </button>
         </div>
       </div>
@@ -594,8 +603,8 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
       <p v-if="helpError && !invitationVisible" class="help-error" role="status">{{ t('helpLoadError') }}</p>
     </header>
 
-    <section class="map-card" :aria-label="t(mapSet === 'norway-counties' ? 'countyMap' : 'worldMapGame')">
-      <CountyGame v-if="mapSet === 'norway-counties'" ref="countyGame" :mode="mode" :settings-open="settingsOpen"
+    <section class="map-card" :aria-label="placeText(placeKind, 'worldMapGame')">
+      <component v-if="mapSet !== 'countries'" :is="administrativeComponent" :key="mapSet" ref="administrativeGame" :mode="mode" :settings-open="settingsOpen"
         :automatic-answer-reveal="automaticAnswerReveal" :always-show-wrong-answer="alwaysShowWrongAnswer" :quiz-tips-enabled="quizTips.enabled.value"
         @automatic-answer-reveal-change="setAutomaticAnswerReveal" @wrong-answer-preference-change="setAlwaysShowWrongAnswer"
         @quiz-tips-enabled-change="quizTips.setEnabled" @quiz-tips-reset="quizTips.reset" @tip-action="quizTips.record" @round-start="quizTips.startRound" @view-busy-change="mapViewBusy = $event" />

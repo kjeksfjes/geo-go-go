@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { placeText } from '../logic/placeText'
+import type { PlaceKind } from '../types/administrativeMap'
 import { computed, onMounted, ref, useId, watch } from 'vue'
 import {
   ComboboxAnchor, ComboboxContent, ComboboxEmpty, ComboboxInput,
@@ -9,11 +11,10 @@ import { countryInfoById } from '../data/countries'
 import type { QuizTipAction } from '../logic/quizTips'
 import { filterCountrySuggestions, normalizeCountrySearch } from '../logic/countrySuggestions'
 
-const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean; names?: Readonly<Record<string, string>>; badges?: Readonly<Record<string, string>>; county?: boolean }>()
+const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean; names?: Readonly<Record<string, string>>; badges?: Readonly<Record<string, string>>; aliases?: Readonly<Record<string, readonly string[]>>; placeKind?: PlaceKind }>()
 function displayName(id: string) { return props.names ? props.names[id] ?? id : countryName(id) }
-function text(key: MessageKey) {
-  const countyKeys: Partial<Record<MessageKey, MessageKey>> = { countryNamePlaceholder: 'countyNamePlaceholder', countrySuggestions: 'countySuggestions', noCountryMatches: 'noCountyMatches' }
-  return t(props.county ? countyKeys[key] ?? key : key)
+function text(key: MessageKey, values: Record<string, string | number> = {}) {
+  return placeText(props.placeKind ?? 'country', key, values)
 }
 const emit = defineEmits<{ answer: [countryId: string]; 'tip-action': [action: QuizTipAction] }>()
 let selectionMethod: 'keyboard' | 'pointer' = 'keyboard'
@@ -36,7 +37,7 @@ const inputId = `country-answer-${useId()}`
 const search = defineModel<string>('search', { required: true })
 const open = ref(false)
 const suggestions = computed(() => filterCountrySuggestions(
-  props.countryIds.map((id) => ({ id, name: displayName(id) })), search.value, locale.value,
+  props.countryIds.map((id) => ({ id, name: displayName(id), aliases: props.aliases?.[id] })), search.value, locale.value,
 ))
 
 function selectCountry(value: unknown) {

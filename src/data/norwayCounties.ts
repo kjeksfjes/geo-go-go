@@ -14,3 +14,10 @@ const emblems = import.meta.glob('../assets/county-arms/*.svg', { eager: true, q
 export const countyEmblems: Readonly<Record<string, string>> = Object.fromEntries(
   [...countyInfoById.values()].map(county => [county.id, emblems[`../assets/county-arms/${county.code}.svg`]!]),
 )
+
+export const countyMap: import('../types/administrativeMap').AdministrativeMapData = {
+  id: 'norway-counties', kind: 'county', layout: 'geographic', features: countyFeatures,
+  places: countyInfoById, ids: countyIds, names: { en: countyNames, nb: countyNames }, badges: countyEmblems,
+  zoomReferenceIds: ['no:county:50', 'no:county:18'],
+  attribution: { label: 'countyAttribution', url: 'https://data.norge.no/nb/datasets/8aa07439-e295-3e11-8ee5-141cf03d7bd5/administrative-enheter-fylker' },
+}

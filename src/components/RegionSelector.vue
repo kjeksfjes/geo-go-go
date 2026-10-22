@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import TreeSelect from '@zanmato/vue3-treeselect'
+import type { AdministrativeMapId } from '../types/administrativeMap'
 import type { MapRegion, MapRegionId } from '../data/regions'
 import { regionName, t } from '../i18n'
 import { useMapTreeSelectControl } from '../composables/useMapTreeSelectControl'
 
 const props = defineProps<{
   options: readonly MapRegion[]
-  includeCounties?: boolean
+  includeAdministrative?: boolean
 }>()
 
-const model = defineModel<MapRegionId | 'norway-counties'>({ required: true })
+const model = defineModel<MapRegionId | AdministrativeMapId>({ required: true })
 const { treeSelect, toggleFromControl, startAligning, stopAligning } =
   useMapTreeSelectControl('region-selector', '.header-region-control', 'region-selector-label', 'bottom')
 
 interface TreeOption {
-  id: MapRegionId | 'norway-counties'
+  id: MapRegionId | AdministrativeMapId
   label: string
   children?: TreeOption[]
 }
@@ -27,17 +28,17 @@ function toTreeOption(region: MapRegion): TreeOption {
 }
 
 const treeOptions = computed(() => [...props.options.map(toTreeOption),
-  ...(props.includeCounties ? [{ id: 'norway-counties' as const, label: t('norwayCounties') }] : []),
+  ...(props.includeAdministrative ? [{ id: 'norway-counties' as const, label: t('norwayCounties') }, { id: 'usa-states' as const, label: t('usaStates') }] : []),
 ])
 
 function selectRegion(value: string | null) {
-  if (value !== null) model.value = value as MapRegionId | 'norway-counties'
+  if (value !== null) model.value = value as MapRegionId | AdministrativeMapId
 }
 </script>
 
 <template>
   <div class="map-select-field region-selector" @mousedown.capture="toggleFromControl">
-    <span id="region-selector-label">{{ t(includeCounties ? 'mapSet' : 'region') }}</span>
+    <span id="region-selector-label">{{ t(includeAdministrative ? 'mapSet' : 'region') }}</span>
     <TreeSelect
       ref="treeSelect"
       instance-id="region-selector"
