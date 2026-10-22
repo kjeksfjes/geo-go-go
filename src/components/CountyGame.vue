@@ -232,7 +232,6 @@ function select(id: string | null) {
   if (!quiz.value) {
     selectedId.value = id
     if (id) { void nextTick(() => focus(id)) }
-    else resetZoom()
     return
   }
   if (phase.value === 'answered' || phase.value === 'skipped') { next(); return }

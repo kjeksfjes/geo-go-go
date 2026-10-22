@@ -12,7 +12,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 
 - Keep water names hidden in Norway counties mode, with the setting disabled there.
 
-- Smooth county selection and deselection by keeping the projection stable while the camera animates; honor the automatic zoom limit.
+- Smooth county selection by keeping the projection stable while the camera animates; honor the automatic zoom limit. Deselecting closes the card without moving the map.
 
 - Cap automatic county zoom at a wider level between the fitted Trøndelag and Nordland views, even after manually zooming closer.
 
