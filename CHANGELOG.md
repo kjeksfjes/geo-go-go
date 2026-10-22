@@ -2,29 +2,18 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
-## Unreleased
+## 0.23.0 — Local Horizons — 2026-10-23
 
 ### Improvements
 
-- Add a Norway county map with Explore, Find the county, and Name the county modes, all 15 counties, bilingual controls, shared quiz behavior, and a view that hides the rest of the world.
-- Import official 2026 county boundaries, clipped to the atlas coastline, with lazy-loaded high-detail geometry, Canvas/SVG rendering, touch and keyboard navigation, small-county markers, and source attribution.
-- Restore the shared settings panel for county maps, remove browser selection rectangles and quiz hover tooltips, and display all 15 county coats of arms in cards and answers.
-
-- Keep water names hidden in Norway counties mode, with the setting disabled there.
-
-- Smooth county selection by keeping the projection stable while the camera animates; honor the automatic zoom limit. Deselecting closes the card without moving the map.
-
-- Cap automatic county zoom at a wider level between the fitted Trøndelag and Nordland views, even after manually zooming closer.
-
-- Always use the finer county geometry and disable the High detail switch in county mode with an explanation.
-
-- Add USA states with Explore, Find, and Name quizzes for all 50 states, locally bundled state flags, English/Bokmål names and search aliases, and no foreign or territorial quiz answers.
-- Share county/state map behavior, use marked Alaska/Hawaii insets with region-aware scale bars and zoom limits, and keep the shared settings panel with explanations for fixed-layout controls.
-
-- Align the revealed-answer label with state/county names and flags or crests, and correct shared Name quiz layout selectors.
-
-- Add faded neighboring land to the USA states view, preserving state framing, inset oceans, and the 50-state quiz pool.
-- Move Alaska and Hawaii into marked Pacific panels close to the west coast, keeping them clear of the mainland and Mexico.
+- Add Norway county Explore, Find, and Name modes for all 15 counties, with official 2026 boundaries, bilingual controls, county coats of arms, and shared quiz settings.
+- Add USA state Explore, Find, and Name modes for all 50 states, with local flags, English/Bokmål names, and search aliases.
+- Show faded neighboring land around the USA and place Alaska and Hawaii in marked Pacific panels near the west coast, with appropriate scale bars and zoom limits.
+- Smooth county selection and cap automatic zoom at a wider view. Deselecting closes the card without moving the map.
+- Keep county/state maps in high detail, hide water names, and explain unavailable controls in the shared settings panel.
+- Align revealed-answer labels with names and flags or crests, and refine shared Name quiz card layouts.
+- Refine saved water-name placements and typography.
+- Add simple local server start and stop commands.
 
 ## 0.22.0 — Waterline Workshop — 2026-10-18
 
