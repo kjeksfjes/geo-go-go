@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { geoArea, geoBounds, geoContains } from 'd3-geo'
 
 const expected = {
@@ -41,3 +42,17 @@ for (const level of ['overview', 'detail']) {
   }
 }
 console.log('Validated all 15 Norway counties, both detail levels, D3 winding, bounds, rings, and geographic identity fixtures.')
+
+const armsRoot = new URL('../src/assets/county-arms/', import.meta.url)
+const sources = JSON.parse(await readFile(new URL('sources.json', armsRoot), 'utf8'))
+assert.deepEqual(sources.files.map(source => source.code).sort(), Object.keys(expected).sort())
+for (const source of sources.files) {
+  assert.equal(source.file, `${source.code}.svg`)
+  const svg = await readFile(new URL(source.file, armsRoot))
+  assert.equal(createHash('sha256').update(svg).digest('hex'), source.sha256, `${source.code}: coat of arms checksum`)
+  assert.ok(source.page.startsWith('https://commons.wikimedia.org/wiki/File:'))
+  assert.ok(source.license && source.usageNotes)
+  assert.ok(!/<(?:script|foreignObject)\b|\son\w+\s*=/i.test(svg.toString()), `${source.code}: active SVG content`)
+  assert.ok(!/(?:href|url)\s*(?:=|\()\s*["']?https?:/i.test(svg.toString()), `${source.code}: external SVG dependency`)
+}
+console.log('Validated all 15 locally bundled county coats of arms and source checksums.')

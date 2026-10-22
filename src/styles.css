@@ -366,6 +366,8 @@ html[data-input-modality='keyboard'] .settings-button:focus-visible {
   text-transform: uppercase;
 }
 
+.map-overlay__emblem { width: var(--ui-card-flag-width); height: calc(var(--ui-card-flag-width) * 0.75); object-fit: contain; }
+
 .map-overlay__flag {
   width: var(--ui-card-flag-width);
   font-size: calc(var(--ui-card-flag-width) * 0.75);

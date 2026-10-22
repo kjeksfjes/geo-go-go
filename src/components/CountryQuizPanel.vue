@@ -9,6 +9,7 @@ const CountryAnswerCombobox = defineAsyncComponent(() => import('./CountryAnswer
 
 const props = defineProps<{
   names?: Readonly<Record<string, string>>
+  badges?: Readonly<Record<string, string>>
   county?: boolean
   identify?: boolean
   viewingOutsideRegion?: boolean
@@ -29,7 +30,7 @@ const props = defineProps<{
 function displayName(id: string) { return props.names ? props.names[id] ?? id : countryName(id) }
 function text(key: MessageKey, values: Record<string, string | number> = {}) {
   const countyKeys: Partial<Record<MessageKey, MessageKey>> = {
-    nameCountry: 'nameCounty', findCountry: 'findCounty', identifyQuestion: 'identifyCountyQuestion',
+    quiz: 'findCounty', nameCountry: 'nameCounty', findCountry: 'findCounty', identifyQuestion: 'identifyCountyQuestion',
     countryAnswerHint: 'countyAnswerHint', clickLocation: 'clickCountyLocation', nextCountry: 'nextCounty', noCountries: 'noCounties',
   }
   return t(props.county ? countyKeys[key] ?? key : key, values)
@@ -104,7 +105,7 @@ const alwaysShowButton = ref<HTMLButtonElement | null>(null)
 const clickedAnswerRevealButton = ref<HTMLButtonElement | null>(null)
 const questionHeading = ref<HTMLHeadingElement | null>(null)
 const isCorrect = computed(() => props.answer?.id === props.question?.id)
-const showQuestionFlag = computed(() => !!props.question?.flagCode && (!props.identify || (props.phase === 'answered' && isCorrect.value)))
+const showQuestionFlag = computed(() => !!(props.question?.flagCode || (props.question && props.badges?.[props.question.id])) && (!props.identify || (props.phase === 'answered' && isCorrect.value)))
 const showWrongAnswer = computed(() => props.alwaysShowWrongAnswer || props.wrongAnswerRevealed)
 
 async function revealAnswer() {
@@ -158,13 +159,16 @@ watch(() => props.question?.id, async (countryId) => {
     </template>
 
     <template v-else-if="question">
+      <template v-if="showQuestionFlag">
+        <img v-if="badges?.[question.id]" class="quiz-panel__flag map-overlay__emblem" :src="badges[question.id]" :alt="t('coatOfArms', { name: displayName(question.id) })" />
       <span
-        v-if="showQuestionFlag"
+        v-else
         class="quiz-panel__flag map-overlay__flag fi"
         :class="`fi-${question.flagCode}`"
         role="img"
         :aria-label="text('flag', { name: displayName(question.id) })"
       />
+      </template>
       <div class="quiz-panel__message">
         <p class="map-overlay__eyebrow">
           {{ text('questionStatus', { number: questionNumber, total, score, points: text(score === 1 ? 'point' : 'points') }) }}
@@ -178,7 +182,7 @@ watch(() => props.question?.id, async (countryId) => {
         v-model:search="answerDraft"
         class="quiz-panel__input"
         :country-ids="countryIds ?? []"
-        :names="names" :county="county"
+        :names="names" :badges="badges" :county="county"
         :answer-id="phase === 'answered' ? answer?.id ?? null : null"
         :correct="isCorrect"
         @answer="emit('answer', $event)"
@@ -201,7 +205,8 @@ watch(() => props.question?.id, async (countryId) => {
               <span class="quiz-panel__correct-answer">
                 <span>{{ text('correctAnswer') }}</span>
                 <span class="quiz-panel__correct-country">
-                  <span v-if="question.flagCode" class="quiz-panel__answer-flag fi" :class="`fi-${question.flagCode}`" aria-hidden="true" />
+                  <img v-if="badges?.[question.id]" class="quiz-panel__answer-emblem" :src="badges[question.id]" :alt="t('coatOfArms', { name: displayName(question.id) })" />
+                  <span v-else-if="question.flagCode" class="quiz-panel__answer-flag fi" :class="`fi-${question.flagCode}`" aria-hidden="true" />
                   <strong class="quiz-panel__correct-name">{{ displayName(question.id) }}</strong>
                 </span>
               </span>
@@ -340,6 +345,7 @@ watch(() => props.question?.id, async (countryId) => {
 .quiz-panel__correct-name { color: var(--ui-success); }
 .quiz-panel__correct-answer { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: var(--ui-space-2); }
 .quiz-panel__correct-country { display: inline-flex; align-items: center; gap: var(--ui-space-2); min-width: 0; }
+.quiz-panel__answer-emblem { width: 1.5rem; height: 1.5rem; object-fit: contain; flex: 0 0 auto; }
 .quiz-panel__answer-flag { flex: 0 0 auto; width: 1.333333rem; font-size: 1rem; border-radius: var(--ui-radius-flag); }
 
 .quiz-panel__text-button {

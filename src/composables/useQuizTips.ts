@@ -4,6 +4,7 @@ import { locale, t } from '../i18n'
 import { readStoredValue, writeStoredValue } from '../utils/storage'
 
 interface TipContext {
+  county?: boolean
   mode: string
   phase: string
   question: string
@@ -71,7 +72,11 @@ export function useQuizTips(context: Ref<TipContext>) {
     const key = current.id === 'continue'
       ? current.input === 'keyboard' ? 'tipSpaceNext' : current.input === 'mouse' ? 'tipClickNext' : 'tipTapNext'
       : tipText[current.id]
-    return t(key, {
+    const countyKeys = {
+      tipTapNext: 'tipCountyTapNext', tipClickNext: 'tipCountyClickNext', tipSpaceNext: 'tipCountySpaceNext',
+      tipAnswerKeys: 'tipCountyAnswerKeys', tipAnswerGo: 'tipCountyAnswerGo', tipAutoRevealClicked: 'tipCountyAutoRevealClicked',
+    } as const
+    return t(context.value.county && key in countyKeys ? countyKeys[key as keyof typeof countyKeys] : key, {
       shortcut: /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘Enter' : 'Ctrl+Enter',
       after: t(context.value.mode === 'find-country' ? 'tipAfterAnswer' : 'tipAfterAnswerOrSkip'),
     })

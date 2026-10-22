@@ -51,6 +51,8 @@ function chooseMap(value: MapRegionId | 'norway-counties') {
     settingsOpen.value = false
     activeRegionId.value = value
     if (quizMode.value) startRegionalQuiz()
+    const preferredDetail = readStoredBoolean(highDetailPreferenceKey, false)
+    if (preferredDetail !== highDetailEnabled.value) void setHighDetail(preferredDetail, false)
   } else setActiveRegion(value)
 }
 
@@ -243,7 +245,7 @@ const quizTips = useQuizTips(computed(() => ({
   mode: mode.value,
   phase: quizPhase.value,
   question: `${mode.value}:${activeRegionId.value}:${quizQuestionNumber.value}:${quizQuestionId.value}`,
-  busy: detailLoading.value || mapViewBusy.value || helpActive.value || helpLoading.value || settingsOpen.value || invitationVisible.value,
+  busy: detailLoading.value || mapViewBusy.value || helpActive.value || helpLoading.value || settingsOpen.value || (mapSet.value === 'countries' && invitationVisible.value),
   input: tipInputMethod.value,
   automaticReveal: mode.value === 'name-country' ? automaticAnswerReveal.value : alwaysShowWrongAnswer.value,
   nextCountryVisible: ['answered', 'skipped'].includes(quizPhase.value) && quizQuestionNumber.value < quizTotal.value,
@@ -251,6 +253,8 @@ const quizTips = useQuizTips(computed(() => ({
   answerRevealVisible: mode.value === 'name-country'
     ? ['answered', 'skipped'].includes(quizPhase.value) && quizAnswerId.value !== quizQuestionId.value && correctAnswerVisible.value
     : quizPhase.value === 'answered' && quizAnswerId.value !== quizQuestionId.value && wrongAnswerRevealed.value,
+  county: mapSet.value === 'norway-counties',
+  ...(mapSet.value === 'norway-counties' ? countyGame.value?.tipContext : {}),
 })))
 
 function handleTipPointer(event: PointerEvent) {
@@ -593,7 +597,10 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
     </header>
 
     <section class="map-card" :aria-label="t(mapSet === 'norway-counties' ? 'countyMap' : 'worldMapGame')">
-      <CountyGame v-if="mapSet === 'norway-counties'" ref="countyGame" :mode="mode" :settings-open="settingsOpen" />
+      <CountyGame v-if="mapSet === 'norway-counties'" ref="countyGame" :mode="mode" :settings-open="settingsOpen"
+        :automatic-answer-reveal="automaticAnswerReveal" :always-show-wrong-answer="alwaysShowWrongAnswer" :quiz-tips-enabled="quizTips.enabled.value"
+        @automatic-answer-reveal-change="setAutomaticAnswerReveal" @wrong-answer-preference-change="setAlwaysShowWrongAnswer"
+        @quiz-tips-enabled-change="quizTips.setEnabled" @quiz-tips-reset="quizTips.reset" @tip-action="quizTips.record" @round-start="quizTips.startRound" @view-busy-change="mapViewBusy = $event" />
       <WorldMap v-else
         :shared-view="requestedMapView"
         @shared-view-applied="requestedMapView = null"

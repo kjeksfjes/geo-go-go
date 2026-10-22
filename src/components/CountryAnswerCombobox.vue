@@ -9,7 +9,7 @@ import { countryInfoById } from '../data/countries'
 import type { QuizTipAction } from '../logic/quizTips'
 import { filterCountrySuggestions, normalizeCountrySearch } from '../logic/countrySuggestions'
 
-const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean; names?: Readonly<Record<string, string>>; county?: boolean }>()
+const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean; names?: Readonly<Record<string, string>>; badges?: Readonly<Record<string, string>>; county?: boolean }>()
 function displayName(id: string) { return props.names ? props.names[id] ?? id : countryName(id) }
 function text(key: MessageKey) {
   const countyKeys: Partial<Record<MessageKey, MessageKey>> = { countryNamePlaceholder: 'countyNamePlaceholder', countrySuggestions: 'countySuggestions', noCountryMatches: 'noCountyMatches' }
@@ -124,7 +124,8 @@ onMounted(() => {
           <ComboboxViewport class="country-suggestions__viewport">
             <ComboboxEmpty class="country-suggestions__empty">{{ text('noCountryMatches') }}</ComboboxEmpty>
             <ComboboxItem v-for="option in suggestions" :key="option.id" :value="option.id" :text-value="option.name" class="country-suggestions__item">
-              <span v-if="!names && countryInfoById.get(option.id)?.flagCode" class="country-suggestions__flag fi" :class="`fi-${countryInfoById.get(option.id)?.flagCode}`" aria-hidden="true" />
+              <img v-if="badges?.[option.id]" class="country-suggestions__emblem" :src="badges[option.id]" alt="" />
+              <span v-else-if="!names && countryInfoById.get(option.id)?.flagCode" class="country-suggestions__flag fi" :class="`fi-${countryInfoById.get(option.id)?.flagCode}`" aria-hidden="true" />
               <span class="country-suggestions__name">{{ option.name }}</span>
             </ComboboxItem>
           </ComboboxViewport>
@@ -160,6 +161,7 @@ onMounted(() => {
 }
 .country-suggestions__viewport { min-height: 0; max-height: inherit; overflow-y: auto; overscroll-behavior: contain; }
 .country-suggestions__item { display: flex; align-items: center; gap: var(--ui-space-2); min-height: var(--ui-control-height); line-height: 1.4; padding: 0.625rem var(--ui-space-3); border-radius: var(--ui-radius-small); font-size: var(--ui-text-body); font-weight: var(--ui-weight-large); cursor: pointer; outline: none; }
+.country-suggestions__emblem { width: 1.5rem; height: 1.5rem; object-fit: contain; flex: 0 0 auto; }
 .country-suggestions__flag { flex: 0 0 auto; width: 1.333333rem; font-size: 1rem; border-radius: 2px; }
 .country-suggestions__name { min-width: 0; overflow-wrap: anywhere; }
 .country-suggestions__item[data-highlighted] { background: var(--ui-hover); color: var(--ui-ink); }
