@@ -15,7 +15,7 @@ import { countyFeatures, countyEmblems, countyIds, countyInfoById, countyNames, 
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { useQuizRound } from '../composables/useQuizRound'
 import { useElementSize } from '../composables/useElementSize'
-import { useMapZoom, type MapBounds } from '../composables/useMapZoom'
+import { useMapZoom, PREFERRED_COUNTRY_FOCUS_SCALE, type MapBounds } from '../composables/useMapZoom'
 import type { CanvasMapScene } from '../types/mapCanvas'
 import { locale, setLocale, t } from '../i18n'
 import { readStoredBoolean, readStoredValue, writeStoredValue } from '../utils/storage'
@@ -78,7 +78,6 @@ const mapContent = ref<SVGGElement | null>(null)
 const overlay = ref<HTMLElement | null>(null)
 const panel = ref<InstanceType<typeof CountryQuizPanel> | null>(null)
 const measured = useElementSize(container)
-const overlaySize = useElementSize(overlay)
 const width = computed(() => Math.max(320, measured.width.value))
 const height = computed(() => Math.max(280, measured.height.value))
 const features = shallowRef<CountyFeature[]>(countyFeatures)
@@ -146,11 +145,15 @@ function next() {
 function setAutomatic(value: boolean) { emit('automatic-answer-reveal-change', value); correctRevealed.value = value }
 function setAlwaysShow(value: boolean) { emit('wrong-answer-preference-change', value); wrongRevealed.value = value }
 
-const focusViewport = computed<MapBounds>(() => {
-  if (!quiz.value && !selectedId.value) return [[16, 16], [width.value - 16, height.value - 45]]
+// Keep projected coordinates independent of selection and card size. Only the
+// camera's destination viewport changes when a card opens or closes.
+const overviewViewport = computed<MapBounds>(() => [[16, 16], [width.value - 16, height.value - 45]])
+function focusViewport(): MapBounds {
+  if (!quiz.value && !selectedId.value) return overviewViewport.value
   if (width.value > 900) return [[460, 16], [width.value - 16, height.value - 45]]
-  return [[16, Math.min(height.value * 0.55, overlaySize.height.value + 32)], [width.value - 16, height.value - 45]]
-})
+  const cardHeight = overlay.value?.getBoundingClientRect().height ?? 0
+  return [[16, Math.min(height.value * 0.55, cardHeight + 32)], [width.value - 16, height.value - 45]]
+}
 
 // Fit only county land. No world/context/territory layers are part of this scene.
 const collection = computed(() => ({ type: 'FeatureCollection' as const, features: features.value }))
@@ -158,7 +161,7 @@ const activeProjectionId = computed(() => autoProjection.value ? 'regional-equal
 const projection = computed(() => {
   const p = activeProjectionId.value === 'regional-equal-area'
     ? geoAzimuthalEqualArea().rotate([-15, -65]) : projectionFactories[activeProjectionId.value]()
-  return p.fitExtent(focusViewport.value, collection.value).clipExtent([[-width.value, -height.value], [width.value * 2, height.value * 2]])
+  return p.fitExtent(overviewViewport.value, collection.value).clipExtent([[-width.value, -height.value], [width.value * 2, height.value * 2]])
 })
 const generator = computed(() => geoPath(projection.value))
 const paths = computed(() => features.value.map(feature => ({
@@ -182,7 +185,7 @@ const projectedBathymetry = computed(() => bathymetryEnabled.value ? bathymetry.
 const projectedRelief = computed(() => reliefEnabled.value ? relief.value.map(band => ({ elevation: band.elevation, path: generator.value(band.geometry) ?? '' })) : [])
 const reliefClipPath = computed(() => paths.value.map(p => p.path).join(''))
 const scene = computed<CanvasMapScene>(() => ({
-  coordinateKey: `norway-counties:${width.value}:${height.value}:${detailEnabled.value}:${activeProjectionId.value}:${focusViewport.value.flat().join(',')}`,
+  coordinateKey: `norway-counties:${width.value}:${height.value}:${detailEnabled.value}:${activeProjectionId.value}`,
   spherePath: `M${-width.value},${-height.value}h${width.value * 3}v${height.value * 3}h${-width.value * 3}Z`,
   bathymetry: projectedBathymetry.value, relief: projectedRelief.value, reliefClipPath: reliefClipPath.value, contextCountries: [],
   countries: paths.value.map(({ path, bounds }) => ({ path, bounds })),
@@ -198,7 +201,7 @@ const scaleBar = computed(() => {
 watch([isInteracting, detailLoading, bathymetryLoading, reliefLoading], () => emit('view-busy-change', isInteracting.value || detailLoading.value || bathymetryLoading.value || reliefLoading.value))
 function focus(id: string) {
   const path = paths.value.find(path => path.id === id)
-  if (path) zoomToBounds(path.bounds, undefined, { viewport: focusViewport.value, preferredScale: limitZoom.value ? 8 : undefined })
+  if (path) zoomToBounds(path.bounds, undefined, { viewport: focusViewport(), preferredScale: limitZoom.value ? PREFERRED_COUNTRY_FOCUS_SCALE : undefined })
 }
 function overview() { resetZoom() }
 async function focusQuestion() {
@@ -216,6 +219,7 @@ function select(id: string | null) {
   if (!quiz.value) {
     selectedId.value = id
     if (id) { void nextTick(() => focus(id)) }
+    else resetZoom()
     return
   }
   if (phase.value === 'answered' || phase.value === 'skipped') { next(); return }

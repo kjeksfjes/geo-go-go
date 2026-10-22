@@ -23,6 +23,7 @@ import {
 } from '../composables/useMapProjection'
 import {
   useMapZoom,
+  PREFERRED_COUNTRY_FOCUS_SCALE,
   type MapBounds,
   type MapHomeView,
   type MapPoint,
@@ -65,7 +66,6 @@ import {
   type SmallCountryMarker,
 } from '../logic/smallCountryMarkers'
 
-const PREFERRED_COUNTRY_FOCUS_SCALE = 5
 const COUNTRY_MARKER_MIN_ZOOM = 2
 const MARKER_DISTRIBUTION_MS = 200
 const MARKER_STAGGER_MS = 120

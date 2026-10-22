@@ -16,6 +16,9 @@ export interface ZoomToBoundsOptions {
   viewport?: MapBounds
 }
 
+// Shared automatic focus preference; manual zoom can override it.
+export const PREFERRED_COUNTRY_FOCUS_SCALE = 5
+
 const MIN_ZOOM = 1
 // Allow a little more room to pull the map away from an edge while keeping
 // roughly a third of the projected viewport available to drag it back.
