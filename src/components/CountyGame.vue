@@ -15,7 +15,7 @@ import { countyFeatures, countyEmblems, countyIds, countyInfoById, countyNames, 
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { useQuizRound } from '../composables/useQuizRound'
 import { useElementSize } from '../composables/useElementSize'
-import { useMapZoom, PREFERRED_COUNTRY_FOCUS_SCALE, type MapBounds } from '../composables/useMapZoom'
+import { useMapZoom, type MapBounds } from '../composables/useMapZoom'
 import type { CanvasMapScene } from '../types/mapCanvas'
 import { locale, setLocale, t } from '../i18n'
 import { readStoredBoolean, readStoredValue, writeStoredValue } from '../utils/storage'
@@ -201,7 +201,19 @@ const scaleBar = computed(() => {
 watch([isInteracting, detailLoading, bathymetryLoading, reliefLoading], () => emit('view-busy-change', isInteracting.value || detailLoading.value || bathymetryLoading.value || reliefLoading.value))
 function focus(id: string) {
   const path = paths.value.find(path => path.id === id)
-  if (path) zoomToBounds(path.bounds, undefined, { viewport: focusViewport(), preferredScale: limitZoom.value ? PREFERRED_COUNTRY_FOCUS_SCALE : undefined })
+  if (!path) return
+  const viewport = focusViewport()
+  // Use the user's reference framing rather than the world map's multiplier:
+  // a level halfway between fitting Trøndelag and Nordland in this viewport.
+  const [[left, top], [right, bottom]] = viewport
+  const referenceScales = paths.value.filter(p => ['no:county:50', 'no:county:18'].includes(p.id)).map(p => {
+    const [[x0, y0], [x1, y1]] = p.bounds
+    const widthRatio = Math.max(1, x1 - x0) / Math.max(1, right - left)
+    const heightRatio = Math.max(1, y1 - y0) / Math.max(1, bottom - top)
+    return Math.max(1.8, 0.68 / Math.max(widthRatio, heightRatio))
+  })
+  const maxScale = limitZoom.value ? referenceScales.reduce((sum, scale) => sum + scale, 0) / referenceScales.length : undefined
+  zoomToBounds(path.bounds, undefined, { viewport, maxScale })
 }
 function overview() { resetZoom() }
 async function focusQuestion() {
@@ -213,6 +225,7 @@ async function focusQuestion() {
 watch(() => props.mode, () => { start(); void focusQuestion() }, { immediate: true })
 watch(currentId, () => { void focusQuestion() })
 watch([projection], () => { void focusQuestion() }, { flush: 'post' })
+watch(limitZoom, () => { if (selectedId.value || identify.value) void focusQuestion() })
 
 function select(id: string | null) {
   if (isAnimating.value || detailLoading.value) return

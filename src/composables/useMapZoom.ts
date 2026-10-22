@@ -13,6 +13,7 @@ export interface MapHomeView {
 }
 export interface ZoomToBoundsOptions {
   preferredScale?: number
+  maxScale?: number
   viewport?: MapBounds
 }
 
@@ -322,7 +323,7 @@ export function useMapZoom(
   function zoomToBounds(
     bounds: MapBounds,
     focusPoint?: MapPoint,
-    { preferredScale, viewport = [[0, 0], [width.value, height.value]] }: ZoomToBoundsOptions = {},
+    { preferredScale, maxScale = MAX_ZOOM, viewport = [[0, 0], [width.value, height.value]] }: ZoomToBoundsOptions = {},
   ) {
     const [[x0, y0], [x1, y1]] = bounds
     const [[viewLeft, viewTop], [viewRight, viewBottom]] = viewport
@@ -338,7 +339,7 @@ export function useMapZoom(
     const requestedScale = preferredScale === undefined
       ? fitScale
       : Math.max(minimumScale, preferredScale, manualZoomScale ?? preferredScale)
-    const scale = Math.min(fitScale, requestedScale)
+    const scale = Math.min(fitScale, requestedScale, Math.max(minimumScale, maxScale))
 
     // A larger country can temporarily require a wider view. Keep the manual
     // preference so selecting a smaller country can restore that zoom level.
