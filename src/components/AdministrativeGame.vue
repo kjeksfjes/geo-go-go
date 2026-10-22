@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, useId, watch } from 'vue'
-import { geoAlbersUsa, geoAzimuthalEqualArea, geoPath, geoDistance } from 'd3-geo'
+import { geoAzimuthalEqualArea, geoPath, geoDistance } from 'd3-geo'
 import CanvasMap from './CanvasMap.vue'
 import MapSettingsPanel from './MapSettingsPanel.vue'
 import MapScaleBar from './MapScaleBar.vue'
@@ -14,6 +14,7 @@ import CountryQuizPanel from './CountryQuizPanel.vue'
 import type { AdministrativeMapData, AdministrativeGameProps } from '../types/administrativeMap'
 import { placeText } from '../logic/placeText'
 import { projectUsStateContext } from '../logic/usStateContext'
+import { createUsStateProjection, usStateInsets } from '../logic/usStateProjection'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { useQuizRound } from '../composables/useQuizRound'
 import { useElementSize } from '../composables/useElementSize'
@@ -142,7 +143,7 @@ function focusViewport(): MapBounds {
 const collection = computed(() => ({ type: 'FeatureCollection' as const, features: features }))
 const activeProjectionId = computed(() => fixedLayout || autoProjection.value ? 'regional-equal-area' : projectionId.value)
 const projection = computed(() => {
-  if (fixedLayout) return geoAlbersUsa().fitExtent(overviewViewport.value, collection.value)
+  if (fixedLayout) return createUsStateProjection().fitExtent(overviewViewport.value, collection.value)
   const p = activeProjectionId.value === 'regional-equal-area'
     ? geoAzimuthalEqualArea().rotate([-15, -65]) : projectionFactories[activeProjectionId.value]()
   return p.fitExtent(overviewViewport.value, collection.value).clipExtent([[-width.value, -height.value], [width.value * 2, height.value * 2]])
@@ -151,12 +152,9 @@ const generator = computed(() => geoPath(projection.value))
 const paths = computed(() => features.map(feature => ({
   id: feature.id, path: generator.value(feature) ?? '', bounds: generator.value.bounds(feature) as MapBounds,
 })))
-const insets = computed(() => fixedLayout ? ['AK', 'HI'].map(code => {
-  const path = paths.value.find(p => p.id === `us:state:${code}`)!
-  return { code, bounds: path.bounds }
-}) : [])
+const insets = computed(() => fixedLayout ? usStateInsets(projection.value.scale(), projection.value.translate()) : [])
 function insetLabel(code: string) {
-  return t(quiz.value ? code === 'AK' ? 'insetSmaller' : 'insetIslands' : code === 'AK' ? 'alaskaInset' : 'hawaiiInset')
+  return quiz.value ? t('mapInset') : names.value[`us:state:${code}`]
 }
 const wholeBounds = computed(() => generator.value.bounds(collection.value) as MapBounds)
 const noWrap = ref(null)
@@ -177,7 +175,7 @@ const projectedRelief = computed(() => reliefEnabled.value ? relief.value.map(ba
 const reliefClipPath = computed(() => paths.value.map(p => p.path).join(''))
 const contextPaths = computed(() => fixedLayout ? projectUsStateContext(projection.value, width.value, height.value) : [])
 const scene = computed<CanvasMapScene>(() => ({
-  coordinateKey: `${mapData.id}:${width.value}:${height.value}:high-detail:${activeProjectionId.value}`,
+  coordinateKey: `${mapData.id}:${width.value}:${height.value}:high-detail:${fixedLayout ? 'pacific-insets' : activeProjectionId.value}`,
   spherePath: `M${-width.value},${-height.value}h${width.value * 3}v${height.value * 3}h${-width.value * 3}Z`,
   bathymetry: projectedBathymetry.value, relief: projectedRelief.value, reliefClipPath: reliefClipPath.value, contextCountries: contextPaths.value,
   countries: paths.value.map(({ path, bounds }) => ({ path, bounds })),
@@ -334,7 +332,8 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', keyboard); emit(
           <title v-if="!quiz">{{ names[path.id] }}</title>
         </path>
         <g v-for="inset in insets" :key="inset.code" class="administrative-inset" aria-hidden="true" pointer-events="none">
-          <text :x="inset.bounds[0][0]" :y="inset.bounds[1][1] + 14 / transform.scale" :font-size="11 / transform.scale" :stroke-width="2 / transform.scale">{{ insetLabel(inset.code) }}</text>
+          <rect :x="inset.bounds[0][0]" :y="inset.bounds[0][1]" :width="inset.bounds[1][0] - inset.bounds[0][0]" :height="inset.bounds[1][1] - inset.bounds[0][1]" />
+          <text :x="inset.bounds[0][0]" :y="inset.bounds[1][1] + 14 / transform.scale" :font-size="11 / transform.scale" :stroke-width="2 / transform.scale">{{ insetLabel(inset.code) }}<tspan v-if="inset.code === 'AK'" :x="inset.bounds[0][0]" :dy="12 / transform.scale">{{ t('insetScaleNote') }}</tspan></text>
         </g>
         <template v-for="path in paths" :key="`marker:${path.id}`">
           <circle v-if="markersEnabled && marker(path)" :cx="(path.bounds[0][0] + path.bounds[1][0]) / 2" :cy="(path.bounds[0][1] + path.bounds[1][1]) / 2"
@@ -402,6 +401,7 @@ onBeforeUnmount(() => { document.removeEventListener('keydown', keyboard); emit(
 .administrative-controls { position: absolute; right: 1rem; bottom: 2.5rem; }
 .administrative-controls button, .administrative-load-error button { min-height: var(--ui-control-height); padding: 0.45rem 0.7rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius-control); color: var(--ui-ink); background: var(--ui-panel); font: inherit; cursor: pointer; }
 .administrative-attribution { position: absolute; right: 0.5rem; bottom: 0.3rem; left: 0.5rem; width: fit-content; max-width: calc(100% - 1rem); padding: 0.15rem 0.3rem; border-radius: var(--ui-radius-small); background: var(--ui-panel); color: var(--ui-text); font-size: 0.65rem; }
+.administrative-inset rect { fill: none; stroke: var(--map-context-border); stroke-width: 0.7; vector-effect: non-scaling-stroke; }
 .administrative-inset text { fill: var(--ui-muted); font-family: var(--ui-font); paint-order: stroke; stroke: var(--map-ocean); }
 .administrative-load-error { position: absolute; right: 1rem; top: 1rem; z-index: 5; background: var(--ui-panel); padding: 0.5rem; }
 </style>

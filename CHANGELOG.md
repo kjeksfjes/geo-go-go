@@ -24,6 +24,7 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 - Align the revealed-answer label with state/county names and flags or crests, and correct shared Name quiz layout selectors.
 
 - Add faded neighboring land to the USA states view, preserving state framing, inset oceans, and the 50-state quiz pool.
+- Move Alaska and Hawaii into marked Pacific panels close to the west coast, keeping them clear of the mainland and Mexico.
 
 ## 0.22.0 — Waterline Workshop — 2026-10-18
 

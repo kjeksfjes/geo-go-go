@@ -43,6 +43,7 @@ export function applyDocumentLocale() {
 const messages = {
   en: {
     mapLoadError: 'Could not load the map.',
+    mapInset: 'Inset', insetScaleNote: 'Smaller scale',
     usaStates: 'USA states',
     findState: 'Find the state',
     nameState: 'Name the state',
@@ -176,6 +177,7 @@ const messages = {
   },
   nb: {
     mapLoadError: 'Kunne ikke laste kartet.',
+    mapInset: 'Innfelt kart', insetScaleNote: 'Mindre målestokk',
     usaStates: 'USAs delstater',
     findState: 'Finn delstaten',
     nameState: 'Navngi delstaten',

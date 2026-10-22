@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
-import { geoAlbersUsa, geoArea, geoContains, geoPath } from 'd3-geo'
+import { geoArea, geoContains, geoPath } from 'd3-geo'
 import ts from 'typescript'
 
 const root = new URL('../', import.meta.url)
 const read = async file => JSON.parse(await readFile(new URL(file, root), 'utf8'))
 const catalog = await read('src/data/us-state-catalog.json')
 const geometry = await read('src/data/us-states.json')
+const { createUsStateProjection, usStateInsets, usStateProjectionParts } = await importTypeScript('src/logic/usStateProjection.ts')
 // Explicit state identities prevent DC, territories, or a missing state from
 // silently becoming a different quiz pool when source data is regenerated.
 const expected = 'AL:01 AK:02 AZ:04 AR:05 CA:06 CO:08 CT:09 DE:10 FL:12 GA:13 HI:15 ID:16 IL:17 IN:18 IA:19 KS:20 KY:21 LA:22 ME:23 MD:24 MA:25 MI:26 MN:27 MS:28 MO:29 MT:30 NE:31 NV:32 NH:33 NJ:34 NM:35 NY:36 NC:37 ND:38 OH:39 OK:40 OR:41 PA:42 RI:44 SC:45 SD:46 TN:47 TX:48 UT:49 VT:50 VA:51 WA:53 WV:54 WI:55 WY:56'.split(' ').sort()
@@ -36,7 +37,7 @@ for (const point of [[-87, 44], [-88, 47.5], [-123, 52], [-102, 24], [-66.5, 18.
   assert.equal(geometry.features.filter(f => geoContains(f, point)).length, 0, 'Lakes, foreign land and territories stay absent')
 }
 for (const [width, height] of [[390, 650], [1280, 720], [1440, 900]]) {
-  const projection = geoAlbersUsa().fitExtent([[16, 16], [width - 16, height - 45]], geometry)
+  const projection = createUsStateProjection().fitExtent([[16, 16], [width - 16, height - 45]], geometry)
   const path = geoPath(projection)
   for (const feature of geometry.features) {
     assert.ok(path(feature), `${feature.id}: empty inset path`)
@@ -67,17 +68,19 @@ for (const source of sources.files) {
 }
 
 // Exercise the actual shared round and suggestion logic with the new catalog.
-async function importTypeScript(file) {
+async function typeScriptUrl(file) {
   let source = await readFile(new URL(file, root), 'utf8')
   if (file === 'src/logic/usStateContext.ts') {
     const units = await readFile(new URL('src/data/ne-map-units-50m.json', root), 'utf8')
     source = source.replace("import mapUnits from '../data/ne-map-units-50m.json'", `const mapUnits = ${units}`)
+    source = source.replace("from './usStateProjection'", `from ${JSON.stringify(await typeScriptUrl('src/logic/usStateProjection.ts'))}`)
   }
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText
     .replace(/from ['"]vue['"]/g, `from ${JSON.stringify(import.meta.resolve('vue'))}`)
     .replace(/from ['"]d3-geo['"]/g, `from ${JSON.stringify(import.meta.resolve('d3-geo'))}`)
-  return import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)
+  return `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`
 }
+async function importTypeScript(file) { return import(await typeScriptUrl(file)) }
 const { useQuizRound } = await importTypeScript('src/composables/useQuizRound.ts')
 const ids = new Set(catalog.map(s => s.id))
 const round = useQuizRound(new Map(catalog.map(s => [s.id, s])), ids)
@@ -111,7 +114,7 @@ console.log('Validated 50 state identities and names, geography/lake fixtures, t
 // synthetic inset oceans clear of mainland Mexico/Caribbean geography.
 const { projectUsStateContext } = await importTypeScript('src/logic/usStateContext.ts')
 for (const [width, height] of [[390, 650], [1280, 720]]) {
-  const projection = geoAlbersUsa().fitExtent([[16, 16], [width - 16, height - 45]], geometry)
+  const projection = createUsStateProjection().fitExtent([[16, 16], [width - 16, height - 45]], geometry)
   const before = projection(fixtures.CA)
   const context = projectUsStateContext(projection, width, height)
   assert.ok(context.some(layer => layer.clipPath) && context.some(layer => !layer.clipPath))
@@ -127,3 +130,27 @@ for (const [width, height] of [[390, 650], [1280, 720]]) {
   assert.equal(inside(projection(fixtures.HI)), false, 'Mainland backdrop stays out of Hawaii')
 }
 console.log('Validated faded context bounds, unchanged state framing, and mainland exclusion from both inset oceans.')
+
+// Detached Pacific panels must not cover mainland state land or Mexico, and
+// their surrounding-land projectors must agree with the active state map.
+const mapUnits = await read('src/data/ne-map-units-50m.json')
+for (const [width, height] of [[390, 650], [1280, 720]]) {
+  const projection = createUsStateProjection().fitExtent([[16, 16], [width - 16, height - 45]], geometry)
+  const panels = usStateInsets(projection.scale(), projection.translate())
+  assert.ok(panels[0].bounds[1][1] < panels[1].bounds[0][1], 'Pacific panels remain vertically separated')
+  const parts = usStateProjectionParts(projection.scale(), projection.translate())
+  for (const [code, part] of [['AK', parts.alaska], ['HI', parts.hawaii]]) {
+    const point = fixtures[code]
+    const expected = part(point)
+    assert.deepEqual(projection(point), expected)
+  }
+  const mainlandGeometry = { ...geometry, features: geometry.features.filter(f => !['us:state:AK', 'us:state:HI'].includes(f.id)) }
+  const mainlandBounds = geoPath(projection).bounds(mainlandGeometry)
+  const mexicoBounds = geoPath(parts.mainland).bounds(mapUnits.features.find(f => f.id === 'MEX'))
+  const overlap = (a, b) => a[0][0] < b[1][0] && a[1][0] > b[0][0] && a[0][1] < b[1][1] && a[1][1] > b[0][1]
+  for (const panel of panels) {
+    assert.equal(overlap(panel.bounds, mainlandBounds), false, 'Inset does not overlap mainland state bounds')
+    assert.equal(overlap(panel.bounds, mexicoBounds), false, 'Inset does not overlap Mexico')
+  }
+}
+console.log('Validated detached Pacific panels, context/state projection agreement, and mainland/Mexico separation.')

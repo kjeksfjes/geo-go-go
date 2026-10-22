@@ -1,6 +1,7 @@
-import { geoAlbers, geoConicEqualArea, geoPath, type GeoProjection } from 'd3-geo'
+import { geoPath, type GeoProjection } from 'd3-geo'
 import type { Feature, Geometry } from 'geojson'
 import mapUnits from '../data/ne-map-units-50m.json'
+import { usStateInsets, usStateProjectionParts } from './usStateProjection'
 import type { CanvasMapScene } from '../types/mapCanvas'
 
 type ContextFeature = Feature<Geometry, { continent: string }> & { id: string }
@@ -12,22 +13,19 @@ function rectangle(left: number, top: number, right: number, bottom: number) {
   return `M${left},${top}H${right}V${bottom}H${left}Z`
 }
 
-// Match the constituent projections of the installed d3-geo Albers USA layout.
+// Share the constituent projections and inset bounds with the active state map.
 // Fit and navigation still use only the 50 states. Context never enters them.
 export function projectUsStateContext(projection: GeoProjection, width: number, height: number): CanvasMapScene['contextCountries'] {
   const k = projection.scale()
-  const [x, y] = projection.translate()
-  const alaskaBounds: [[number, number], [number, number]] = [[x - 0.425 * k, y + 0.120 * k], [x - 0.214 * k, y + 0.234 * k]]
-  const hawaiiBounds: [[number, number], [number, number]] = [[x - 0.214 * k, y + 0.166 * k], [x - 0.115 * k, y + 0.234 * k]]
-  // Even-odd holes reserve the inset oceans, rather than letting mainland
-  // Mexico/Caribbean land appear behind Alaska or Hawaii at those pixels.
+  const translate = projection.translate()
+  const [alaskaInset, hawaiiInset] = usStateInsets(k, translate)
+  const parts = usStateProjectionParts(k, translate)
+  // Even-odd holes keep the independent Pacific inset panels clear.
   const mainlandClip = rectangle(-width, -height, width * 2, height * 2)
-    + rectangle(...alaskaBounds[0], ...alaskaBounds[1])
-    + rectangle(...hawaiiBounds[0], ...hawaiiBounds[1])
-  const mainlandProjection = geoAlbers().scale(k).translate([x, y])
-    .clipExtent([[-width, -height], [width * 2, height * 2]])
-  const alaskaProjection = geoConicEqualArea().rotate([154, 0]).center([-2, 58.5]).parallels([55, 65])
-    .scale(k * 0.35).translate([x - 0.307 * k, y + 0.201 * k]).clipExtent(alaskaBounds)
+    + rectangle(...alaskaInset!.bounds[0], ...alaskaInset!.bounds[1])
+    + rectangle(...hawaiiInset!.bounds[0], ...hawaiiInset!.bounds[1])
+  const mainlandProjection = parts.mainland.clipExtent([[-width, -height], [width * 2, height * 2]])
+  const alaskaProjection = parts.alaska
   function project(features: ContextFeature[], projector: GeoProjection, clipPath?: string) {
     const path = geoPath(projector)
     return features.flatMap(feature => {
