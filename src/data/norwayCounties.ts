@@ -1,9 +1,9 @@
 import type { Feature, MultiPolygon, Polygon } from 'geojson'
-import overview from './norway-counties-overview.json'
+import detail from './norway-counties-detail.json'
 
 export interface CountyInfo { id: string; code: string; name: string }
 export type CountyFeature = Feature<Polygon | MultiPolygon, { code: string; name: string }> & { id: string }
-export const countyFeatures = overview.features as CountyFeature[]
+export const countyFeatures = detail.features as CountyFeature[]
 export const countyInfoById: ReadonlyMap<string, CountyInfo> = new Map(countyFeatures.map(f =>
   [f.id, { id: f.id, ...f.properties }]))
 export const countyIds: ReadonlySet<string> = new Set(countyInfoById.keys())
@@ -14,6 +14,3 @@ const emblems = import.meta.glob('../assets/county-arms/*.svg', { eager: true, q
 export const countyEmblems: Readonly<Record<string, string>> = Object.fromEntries(
   [...countyInfoById.values()].map(county => [county.id, emblems[`../assets/county-arms/${county.code}.svg`]!]),
 )
-export async function loadCountyDetail(): Promise<CountyFeature[]> {
-  return (await import('./norway-counties-detail.json')).default.features as CountyFeature[]
-}

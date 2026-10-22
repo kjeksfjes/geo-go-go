@@ -11,7 +11,7 @@ import { loadBathymetryBands, type BathymetryBand } from '../data/bathymetry'
 import { loadReliefBands, type ReliefBand } from '../data/relief'
 import type { QuizTipAction } from '../logic/quizTips'
 import CountryQuizPanel from './CountryQuizPanel.vue'
-import { countyFeatures, countyEmblems, countyIds, countyInfoById, countyNames, loadCountyDetail, type CountyFeature } from '../data/norwayCounties'
+import { countyFeatures, countyEmblems, countyIds, countyInfoById, countyNames } from '../data/norwayCounties'
 import { mapPaletteCssVariables } from '../data/mapPalette'
 import { useQuizRound } from '../composables/useQuizRound'
 import { useElementSize } from '../composables/useElementSize'
@@ -80,31 +80,6 @@ const panel = ref<InstanceType<typeof CountryQuizPanel> | null>(null)
 const measured = useElementSize(container)
 const width = computed(() => Math.max(320, measured.width.value))
 const height = computed(() => Math.max(280, measured.height.value))
-const features = shallowRef<CountyFeature[]>(countyFeatures)
-const detailEnabled = ref(false)
-const detailLoading = ref(false)
-const detailError = ref(false)
-const highDetailKey = 'geo-go-go.map.high-detail'
-let detailRequest = 0
-async function setDetail(enabled: boolean) {
-  const request = ++detailRequest
-  detailError.value = false
-  if (!enabled) {
-    features.value = countyFeatures; detailEnabled.value = false; detailLoading.value = false
-    writeStoredValue(highDetailKey, false); return
-  }
-  detailLoading.value = true
-  try {
-    const detailed = await loadCountyDetail()
-    if (request !== detailRequest) return
-    features.value = detailed; detailEnabled.value = true
-    writeStoredValue(highDetailKey, true)
-  } catch {
-    if (request === detailRequest) detailError.value = true
-  } finally {
-    if (request === detailRequest) detailLoading.value = false
-  }
-}
 const round = useQuizRound(countyInfoById, countyIds)
 const { currentId, currentPlace, answeredId, answeredPlace, phase, score, questionNumber, total } = round
 const selectedId = ref<string | null>(null)
@@ -156,7 +131,7 @@ function focusViewport(): MapBounds {
 }
 
 // Fit only county land. No world/context/territory layers are part of this scene.
-const collection = computed(() => ({ type: 'FeatureCollection' as const, features: features.value }))
+const collection = computed(() => ({ type: 'FeatureCollection' as const, features: countyFeatures }))
 const activeProjectionId = computed(() => autoProjection.value ? 'regional-equal-area' : projectionId.value)
 const projection = computed(() => {
   const p = activeProjectionId.value === 'regional-equal-area'
@@ -164,7 +139,7 @@ const projection = computed(() => {
   return p.fitExtent(overviewViewport.value, collection.value).clipExtent([[-width.value, -height.value], [width.value * 2, height.value * 2]])
 })
 const generator = computed(() => geoPath(projection.value))
-const paths = computed(() => features.value.map(feature => ({
+const paths = computed(() => countyFeatures.map(feature => ({
   id: feature.id, path: generator.value(feature) ?? '', bounds: generator.value.bounds(feature) as MapBounds,
 })))
 const wholeBounds = computed(() => generator.value.bounds(collection.value) as MapBounds)
@@ -185,7 +160,7 @@ const projectedBathymetry = computed(() => bathymetryEnabled.value ? bathymetry.
 const projectedRelief = computed(() => reliefEnabled.value ? relief.value.map(band => ({ elevation: band.elevation, path: generator.value(band.geometry) ?? '' })) : [])
 const reliefClipPath = computed(() => paths.value.map(p => p.path).join(''))
 const scene = computed<CanvasMapScene>(() => ({
-  coordinateKey: `norway-counties:${width.value}:${height.value}:${detailEnabled.value}:${activeProjectionId.value}`,
+  coordinateKey: `norway-counties:${width.value}:${height.value}:high-detail:${activeProjectionId.value}`,
   spherePath: `M${-width.value},${-height.value}h${width.value * 3}v${height.value * 3}h${-width.value * 3}Z`,
   bathymetry: projectedBathymetry.value, relief: projectedRelief.value, reliefClipPath: reliefClipPath.value, contextCountries: [],
   countries: paths.value.map(({ path, bounds }) => ({ path, bounds })),
@@ -198,7 +173,7 @@ const scaleBar = computed(() => {
   if (!a || !b) return null
   return mapScaleBar(geoDistance(a, b) * 6371.0088 / sample, width.value, scaleUnits.value, locale.value)
 })
-watch([isInteracting, detailLoading, bathymetryLoading, reliefLoading], () => emit('view-busy-change', isInteracting.value || detailLoading.value || bathymetryLoading.value || reliefLoading.value))
+watch([isInteracting, bathymetryLoading, reliefLoading], () => emit('view-busy-change', isInteracting.value || bathymetryLoading.value || reliefLoading.value))
 function focus(id: string) {
   const path = paths.value.find(path => path.id === id)
   if (!path) return
@@ -228,7 +203,7 @@ watch([projection], () => { void focusQuestion() }, { flush: 'post' })
 watch(limitZoom, () => { if (selectedId.value || identify.value) void focusQuestion() })
 
 function select(id: string | null) {
-  if (isAnimating.value || detailLoading.value) return
+  if (isAnimating.value) return
   if (!quiz.value) {
     selectedId.value = id
     if (id) { void nextTick(() => focus(id)) }
@@ -277,11 +252,10 @@ function marker(path: typeof paths.value[number]) {
 }
 onMounted(() => {
   document.addEventListener('keydown', keyboard)
-  if (readStoredBoolean(highDetailKey, false)) void setDetail(true)
   if (bathymetryEnabled.value) void setBathymetry(true)
   if (reliefEnabled.value) void setRelief(true)
 })
-onBeforeUnmount(() => { detailRequest++; document.removeEventListener('keydown', keyboard) })
+onBeforeUnmount(() => { document.removeEventListener('keydown', keyboard) })
 </script>
 
 <template>
@@ -336,17 +310,17 @@ onBeforeUnmount(() => { detailRequest++; document.removeEventListener('keydown',
         </div>
       </aside>
     </div>
-    <MapSettingsPanel county :open="settingsOpen" :locale="locale" :detail-loading="detailLoading" :projection-loading="false"
-      :high-detail-enabled="detailEnabled" :bathymetry-loading="bathymetryLoading" :bathymetry-enabled="bathymetryEnabled"
-      :relief-loading="reliefLoading" :relief-enabled="reliefEnabled" :interaction-locked="detailLoading || bathymetryLoading || reliefLoading" :quiz-mode="quiz"
+    <MapSettingsPanel county :open="settingsOpen" :locale="locale" :detail-loading="false" :projection-loading="false"
+      :high-detail-enabled="true" :bathymetry-loading="bathymetryLoading" :bathymetry-enabled="bathymetryEnabled"
+      :relief-loading="reliefLoading" :relief-enabled="reliefEnabled" :interaction-locked="bathymetryLoading || reliefLoading" :quiz-mode="quiz"
       :projection-id="activeProjectionId" :quiz-tips-enabled="quizTipsEnabled" :suggest-all-countries="false"
       :automatic-answer-reveal="automaticAnswerReveal" :always-show-wrong-answer="alwaysShowWrongAnswer"
       v-model:auto-regional-projection="autoProjection" :marine-labels-enabled="false" v-model:country-markers-enabled="markersEnabled"
       v-model:limited-country-zoom-enabled="limitZoom" v-model:scale-bar-enabled="scaleEnabled" v-model:scale-units="scaleUnits"
-      @locale-change="setLocale" @detail-change="setDetail" @bathymetry-change="setBathymetry" @relief-change="setRelief" @projection-change="selectProjection"
+      @locale-change="setLocale" @bathymetry-change="setBathymetry" @relief-change="setRelief" @projection-change="selectProjection"
       @quiz-tips-enabled-change="emit('quiz-tips-enabled-change', $event)" @quiz-tips-reset="emit('quiz-tips-reset')"
       @automatic-answer-reveal-change="setAutomatic" @wrong-answer-preference-change="setAlwaysShow" />
-    <p v-if="detailError || layerError" class="county-load-error" role="alert">{{ t('countyLoadError') }} <button @click="setDetail(true); setBathymetry(bathymetryEnabled); setRelief(reliefEnabled)">{{ t('retry') }}</button></p>
+    <p v-if="layerError" class="county-load-error" role="alert">{{ t('countyLoadError') }} <button @click="setBathymetry(bathymetryEnabled); setRelief(reliefEnabled)">{{ t('retry') }}</button></p>
     <MapScaleBar v-if="scaleBar" :scale="scaleBar" />
     <div class="county-controls"><button type="button" @click="overview">{{ t('resetView') }}</button></div>
     <a class="county-attribution" href="https://data.norge.no/nb/datasets/8aa07439-e295-3e11-8ee5-141cf03d7bd5/administrative-enheter-fylker" target="_blank" rel="noopener noreferrer">{{ t('countyAttribution') }}</a>

@@ -51,8 +51,6 @@ function chooseMap(value: MapRegionId | 'norway-counties') {
     settingsOpen.value = false
     activeRegionId.value = value
     if (quizMode.value) startRegionalQuiz()
-    const preferredDetail = readStoredBoolean(highDetailPreferenceKey, false)
-    if (preferredDetail !== highDetailEnabled.value) void setHighDetail(preferredDetail, false)
   } else setActiveRegion(value)
 }
 

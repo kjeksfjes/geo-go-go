@@ -42,6 +42,7 @@ export function applyDocumentLocale() {
 
 const messages = {
   en: {
+    countyHighDetailHint: 'County maps always use high detail.',
     countyMarkers: 'County markers', countyMarkersHint: 'Help locate small counties with hollow markers.', revealClickedCounty: 'Reveal clicked county names', revealClickedCountyHint: 'Show which county you clicked after a wrong answer.', limitAutomaticCountyZoom: 'Limit county zoom', allCounties: 'All counties', countySuggestionsHint: 'All 15 Norwegian counties are available as answers.', coatOfArms: 'Coat of arms of {name}',
     chooseCounty: 'Choose a county', mapSet: 'Map', countriesMap: 'Countries', norwayCounties: 'Norway counties',
     findCounty: 'Find the county', nameCounty: 'Name the county', identifyCountyQuestion: 'Which county is highlighted?',
@@ -130,6 +131,7 @@ const messages = {
     seeResults: 'See results', nextCountry: 'Next country',
   },
   nb: {
+    countyHighDetailHint: 'Fylkeskart bruker alltid høy detaljgrad.',
     countyMarkers: 'Fylkesmarkører', countyMarkersHint: 'Gjør små fylker lettere å finne med hule markører.', revealClickedCounty: 'Vis navn på fylket du klikket', revealClickedCountyHint: 'Vis hvilket fylke du klikket etter et feil svar.', limitAutomaticCountyZoom: 'Begrens fylkeszoom', allCounties: 'Alle fylker', countySuggestionsHint: 'Alle de 15 norske fylkene er tilgjengelige som svar.', coatOfArms: 'Fylkesvåpen for {name}',
     chooseCounty: 'Velg et fylke', mapSet: 'Kart', countriesMap: 'Land', norwayCounties: 'Norges fylker',
     findCounty: 'Finn fylket', nameCounty: 'Navngi fylket', identifyCountyQuestion: 'Hvilket fylke er markert?',

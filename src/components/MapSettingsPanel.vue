@@ -53,7 +53,8 @@ onBeforeUnmount(() => { if (resetTimer !== undefined) window.clearTimeout(resetT
           <div class="settings-layer-options" role="group" aria-labelledby="settings-appearance-heading" aria-describedby="settings-layer-performance-hint">
             <MapDetailToggle
               :loading="detailLoading"
-              :disabled="projectionLoading"
+              :disabled="projectionLoading || county"
+              :description="county ? t('countyHighDetailHint') : undefined"
               :model-value="highDetailEnabled"
               @update:model-value="requestDetailChange"
             />
