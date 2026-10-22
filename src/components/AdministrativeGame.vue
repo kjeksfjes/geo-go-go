@@ -121,6 +121,7 @@ function start() {
 function restart() {
   if (unfinished.value && !window.confirm(t('restartQuizConfirmation'))) return
   start()
+  void focusQuestion()
 }
 function next() {
   emit('tip-action', 'advance')
@@ -238,7 +239,8 @@ async function focusQuestion() {
   else resetZoom(false)
 }
 watch(() => props.mode, () => { start(); void focusQuestion() }, { immediate: true })
-watch(currentId, () => { void focusQuestion() })
+// Find rounds keep the camera where the user left it between questions.
+watch(currentId, () => { if (identify.value) void focusQuestion() })
 watch([projection], () => { void focusQuestion() }, { flush: 'post' })
 watch(limitZoom, () => { if (selectedId.value || identify.value) void focusQuestion() })
 

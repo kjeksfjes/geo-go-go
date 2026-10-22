@@ -2,6 +2,12 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## Unreleased
+
+### Improvements
+
+- Keep the current map position and zoom when advancing through Find the county/state questions.
+
 ## 0.23.0 — Local Horizons — 2026-10-23
 
 ### Improvements
