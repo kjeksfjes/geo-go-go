@@ -21,6 +21,8 @@ Concise, user-facing notes for local releases. Add an **Unreleased** section whe
 - Add USA states with Explore, Find, and Name quizzes for all 50 states, locally bundled state flags, English/Bokmål names and search aliases, and no foreign land or territories.
 - Share county/state map behavior, use marked Alaska/Hawaii insets with region-aware scale bars and zoom limits, and keep the shared settings panel with explanations for fixed-layout controls.
 
+- Align the revealed-answer label with state/county names and flags or crests, and correct shared Name quiz layout selectors.
+
 ## 0.22.0 — Waterline Workshop — 2026-10-18
 
 ### Improvements
