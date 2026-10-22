@@ -1,0 +1,452 @@
+[
+  {
+    "id": "us:state:AK",
+    "code": "AK",
+    "fips": "02",
+    "name": {
+      "en": "Alaska",
+      "nb": "Alaska"
+    }
+  },
+  {
+    "id": "us:state:AL",
+    "code": "AL",
+    "fips": "01",
+    "name": {
+      "en": "Alabama",
+      "nb": "Alabama"
+    }
+  },
+  {
+    "id": "us:state:AR",
+    "code": "AR",
+    "fips": "05",
+    "name": {
+      "en": "Arkansas",
+      "nb": "Arkansas"
+    }
+  },
+  {
+    "id": "us:state:AZ",
+    "code": "AZ",
+    "fips": "04",
+    "name": {
+      "en": "Arizona",
+      "nb": "Arizona"
+    }
+  },
+  {
+    "id": "us:state:CA",
+    "code": "CA",
+    "fips": "06",
+    "name": {
+      "en": "California",
+      "nb": "California"
+    }
+  },
+  {
+    "id": "us:state:CO",
+    "code": "CO",
+    "fips": "08",
+    "name": {
+      "en": "Colorado",
+      "nb": "Colorado"
+    }
+  },
+  {
+    "id": "us:state:CT",
+    "code": "CT",
+    "fips": "09",
+    "name": {
+      "en": "Connecticut",
+      "nb": "Connecticut"
+    }
+  },
+  {
+    "id": "us:state:DE",
+    "code": "DE",
+    "fips": "10",
+    "name": {
+      "en": "Delaware",
+      "nb": "Delaware"
+    }
+  },
+  {
+    "id": "us:state:FL",
+    "code": "FL",
+    "fips": "12",
+    "name": {
+      "en": "Florida",
+      "nb": "Florida"
+    }
+  },
+  {
+    "id": "us:state:GA",
+    "code": "GA",
+    "fips": "13",
+    "name": {
+      "en": "Georgia",
+      "nb": "Georgia"
+    }
+  },
+  {
+    "id": "us:state:HI",
+    "code": "HI",
+    "fips": "15",
+    "name": {
+      "en": "Hawaii",
+      "nb": "Hawaii"
+    }
+  },
+  {
+    "id": "us:state:IA",
+    "code": "IA",
+    "fips": "19",
+    "name": {
+      "en": "Iowa",
+      "nb": "Iowa"
+    }
+  },
+  {
+    "id": "us:state:ID",
+    "code": "ID",
+    "fips": "16",
+    "name": {
+      "en": "Idaho",
+      "nb": "Idaho"
+    }
+  },
+  {
+    "id": "us:state:IL",
+    "code": "IL",
+    "fips": "17",
+    "name": {
+      "en": "Illinois",
+      "nb": "Illinois"
+    }
+  },
+  {
+    "id": "us:state:IN",
+    "code": "IN",
+    "fips": "18",
+    "name": {
+      "en": "Indiana",
+      "nb": "Indiana"
+    }
+  },
+  {
+    "id": "us:state:KS",
+    "code": "KS",
+    "fips": "20",
+    "name": {
+      "en": "Kansas",
+      "nb": "Kansas"
+    }
+  },
+  {
+    "id": "us:state:KY",
+    "code": "KY",
+    "fips": "21",
+    "name": {
+      "en": "Kentucky",
+      "nb": "Kentucky"
+    }
+  },
+  {
+    "id": "us:state:LA",
+    "code": "LA",
+    "fips": "22",
+    "name": {
+      "en": "Louisiana",
+      "nb": "Louisiana"
+    }
+  },
+  {
+    "id": "us:state:MA",
+    "code": "MA",
+    "fips": "25",
+    "name": {
+      "en": "Massachusetts",
+      "nb": "Massachusetts"
+    }
+  },
+  {
+    "id": "us:state:MD",
+    "code": "MD",
+    "fips": "24",
+    "name": {
+      "en": "Maryland",
+      "nb": "Maryland"
+    }
+  },
+  {
+    "id": "us:state:ME",
+    "code": "ME",
+    "fips": "23",
+    "name": {
+      "en": "Maine",
+      "nb": "Maine"
+    }
+  },
+  {
+    "id": "us:state:MI",
+    "code": "MI",
+    "fips": "26",
+    "name": {
+      "en": "Michigan",
+      "nb": "Michigan"
+    }
+  },
+  {
+    "id": "us:state:MN",
+    "code": "MN",
+    "fips": "27",
+    "name": {
+      "en": "Minnesota",
+      "nb": "Minnesota"
+    }
+  },
+  {
+    "id": "us:state:MO",
+    "code": "MO",
+    "fips": "29",
+    "name": {
+      "en": "Missouri",
+      "nb": "Missouri"
+    }
+  },
+  {
+    "id": "us:state:MS",
+    "code": "MS",
+    "fips": "28",
+    "name": {
+      "en": "Mississippi",
+      "nb": "Mississippi"
+    }
+  },
+  {
+    "id": "us:state:MT",
+    "code": "MT",
+    "fips": "30",
+    "name": {
+      "en": "Montana",
+      "nb": "Montana"
+    }
+  },
+  {
+    "id": "us:state:NC",
+    "code": "NC",
+    "fips": "37",
+    "name": {
+      "en": "North Carolina",
+      "nb": "Nord-Carolina"
+    }
+  },
+  {
+    "id": "us:state:ND",
+    "code": "ND",
+    "fips": "38",
+    "name": {
+      "en": "North Dakota",
+      "nb": "Nord-Dakota"
+    }
+  },
+  {
+    "id": "us:state:NE",
+    "code": "NE",
+    "fips": "31",
+    "name": {
+      "en": "Nebraska",
+      "nb": "Nebraska"
+    }
+  },
+  {
+    "id": "us:state:NH",
+    "code": "NH",
+    "fips": "33",
+    "name": {
+      "en": "New Hampshire",
+      "nb": "New Hampshire"
+    }
+  },
+  {
+    "id": "us:state:NJ",
+    "code": "NJ",
+    "fips": "34",
+    "name": {
+      "en": "New Jersey",
+      "nb": "New Jersey"
+    }
+  },
+  {
+    "id": "us:state:NM",
+    "code": "NM",
+    "fips": "35",
+    "name": {
+      "en": "New Mexico",
+      "nb": "New Mexico"
+    }
+  },
+  {
+    "id": "us:state:NV",
+    "code": "NV",
+    "fips": "32",
+    "name": {
+      "en": "Nevada",
+      "nb": "Nevada"
+    }
+  },
+  {
+    "id": "us:state:NY",
+    "code": "NY",
+    "fips": "36",
+    "name": {
+      "en": "New York",
+      "nb": "New York"
+    }
+  },
+  {
+    "id": "us:state:OH",
+    "code": "OH",
+    "fips": "39",
+    "name": {
+      "en": "Ohio",
+      "nb": "Ohio"
+    }
+  },
+  {
+    "id": "us:state:OK",
+    "code": "OK",
+    "fips": "40",
+    "name": {
+      "en": "Oklahoma",
+      "nb": "Oklahoma"
+    }
+  },
+  {
+    "id": "us:state:OR",
+    "code": "OR",
+    "fips": "41",
+    "name": {
+      "en": "Oregon",
+      "nb": "Oregon"
+    }
+  },
+  {
+    "id": "us:state:PA",
+    "code": "PA",
+    "fips": "42",
+    "name": {
+      "en": "Pennsylvania",
+      "nb": "Pennsylvania"
+    }
+  },
+  {
+    "id": "us:state:RI",
+    "code": "RI",
+    "fips": "44",
+    "name": {
+      "en": "Rhode Island",
+      "nb": "Rhode Island"
+    }
+  },
+  {
+    "id": "us:state:SC",
+    "code": "SC",
+    "fips": "45",
+    "name": {
+      "en": "South Carolina",
+      "nb": "Sør-Carolina"
+    }
+  },
+  {
+    "id": "us:state:SD",
+    "code": "SD",
+    "fips": "46",
+    "name": {
+      "en": "South Dakota",
+      "nb": "Sør-Dakota"
+    }
+  },
+  {
+    "id": "us:state:TN",
+    "code": "TN",
+    "fips": "47",
+    "name": {
+      "en": "Tennessee",
+      "nb": "Tennessee"
+    }
+  },
+  {
+    "id": "us:state:TX",
+    "code": "TX",
+    "fips": "48",
+    "name": {
+      "en": "Texas",
+      "nb": "Texas"
+    }
+  },
+  {
+    "id": "us:state:UT",
+    "code": "UT",
+    "fips": "49",
+    "name": {
+      "en": "Utah",
+      "nb": "Utah"
+    }
+  },
+  {
+    "id": "us:state:VA",
+    "code": "VA",
+    "fips": "51",
+    "name": {
+      "en": "Virginia",
+      "nb": "Virginia"
+    }
+  },
+  {
+    "id": "us:state:VT",
+    "code": "VT",
+    "fips": "50",
+    "name": {
+      "en": "Vermont",
+      "nb": "Vermont"
+    }
+  },
+  {
+    "id": "us:state:WA",
+    "code": "WA",
+    "fips": "53",
+    "name": {
+      "en": "Washington",
+      "nb": "Washington"
+    }
+  },
+  {
+    "id": "us:state:WI",
+    "code": "WI",
+    "fips": "55",
+    "name": {
+      "en": "Wisconsin",
+      "nb": "Wisconsin"
+    }
+  },
+  {
+    "id": "us:state:WV",
+    "code": "WV",
+    "fips": "54",
+    "name": {
+      "en": "West Virginia",
+      "nb": "Vest-Virginia"
+    }
+  },
+  {
+    "id": "us:state:WY",
+    "code": "WY",
+    "fips": "56",
+    "name": {
+      "en": "Wyoming",
+      "nb": "Wyoming"
+    }
+  }
+]

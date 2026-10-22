@@ -4,6 +4,9 @@ import CountryCard from './components/CountryCard.vue'
 import CountryQuizPanel from './components/CountryQuizPanel.vue'
 import RegionSelector from './components/RegionSelector.vue'
 import WorldMap from './components/WorldMap.vue'
+import MapLoadState from './components/MapLoadState.vue'
+import { placeText } from './logic/placeText'
+import type { AdministrativeMapId } from './types/administrativeMap'
 import { useQuizTips } from './composables/useQuizTips'
 import { useHelpTour } from './composables/useHelpTour'
 import { useCountryQuiz } from './composables/useCountryQuiz'
@@ -30,6 +33,36 @@ import { isCountryLevelSelection } from './data/mapSelection'
 import { supplementalAreaInfoById } from './data/supplementalLand'
 import { parseSharedMapView, validateSharedMapView, type SharedMapView } from './logic/sharedMapView'
 
+const CountyGame = defineAsyncComponent({ loader: () => import('./components/CountyGame.vue'), loadingComponent: MapLoadState, errorComponent: MapLoadState })
+const UsStatesGame = defineAsyncComponent({ loader: () => import('./components/UsStatesGame.vue'), loadingComponent: MapLoadState, errorComponent: MapLoadState })
+const administrativeGame = ref<InstanceType<typeof CountyGame> | null>(null)
+const mapSet = ref<'countries' | AdministrativeMapId>('countries')
+const placeKind = computed(() => mapSet.value === 'norway-counties' ? 'county' : mapSet.value === 'usa-states' ? 'state' : 'country')
+const administrativeComponent = computed(() => mapSet.value === 'usa-states' ? UsStatesGame : CountyGame)
+function chooseMap(value: MapRegionId | AdministrativeMapId) {
+  if (value === 'norway-counties' || value === 'usa-states') {
+    if (mapSet.value === value) return
+    if (mapSet.value !== 'countries') {
+      if (!(administrativeGame.value?.confirmLeave?.() ?? true)) { regionSelectionRevision.value++; return }
+    } else if (quizMode.value && hasUnfinishedQuizProgress.value && !window.confirm(t('leaveQuizConfirmation'))) {
+      regionSelectionRevision.value++; return
+    }
+    resetQuiz()
+    quizTips.startRound()
+    mapViewBusy.value = false
+    mapSet.value = value
+    settingsOpen.value = false
+    return
+  }
+  if (mapSet.value !== 'countries') {
+    if (!(administrativeGame.value?.confirmLeave?.() ?? true)) { regionSelectionRevision.value++; return }
+    mapSet.value = 'countries'
+    settingsOpen.value = false
+    activeRegionId.value = value
+    if (quizMode.value) startRegionalQuiz()
+  } else setActiveRegion(value)
+}
+
 const QuizTipPopover = defineAsyncComponent(() => import('./components/QuizTipPopover.vue'))
 
 const selectedCountryId = ref<string | null>(null)
@@ -54,6 +87,8 @@ function openSharedMapView() {
 function applySharedMapView(view: SharedMapView) {
   if (!view || !regionById.has(view.region as MapRegionId)) return
   if (quizMode.value && hasUnfinishedQuizProgress.value && !window.confirm(t('openSharedViewConfirmation'))) return
+  if (mapSet.value !== 'countries' && !(administrativeGame.value?.confirmLeave?.() ?? true)) return
+  mapSet.value = 'countries'
   mode.value = 'explore'
   selectedCountryId.value = null
   selectedGeographicUnitId.value = null
@@ -217,7 +252,7 @@ const quizTips = useQuizTips(computed(() => ({
   mode: mode.value,
   phase: quizPhase.value,
   question: `${mode.value}:${activeRegionId.value}:${quizQuestionNumber.value}:${quizQuestionId.value}`,
-  busy: detailLoading.value || mapViewBusy.value || helpActive.value || helpLoading.value || settingsOpen.value || invitationVisible.value,
+  busy: detailLoading.value || mapViewBusy.value || helpActive.value || helpLoading.value || settingsOpen.value || (mapSet.value === 'countries' && invitationVisible.value),
   input: tipInputMethod.value,
   automaticReveal: mode.value === 'name-country' ? automaticAnswerReveal.value : alwaysShowWrongAnswer.value,
   nextCountryVisible: ['answered', 'skipped'].includes(quizPhase.value) && quizQuestionNumber.value < quizTotal.value,
@@ -225,6 +260,8 @@ const quizTips = useQuizTips(computed(() => ({
   answerRevealVisible: mode.value === 'name-country'
     ? ['answered', 'skipped'].includes(quizPhase.value) && quizAnswerId.value !== quizQuestionId.value && correctAnswerVisible.value
     : quizPhase.value === 'answered' && quizAnswerId.value !== quizQuestionId.value && wrongAnswerRevealed.value,
+  placeKind: placeKind.value,
+  ...(mapSet.value !== 'countries' ? administrativeGame.value?.tipContext : {}),
 })))
 
 function handleTipPointer(event: PointerEvent) {
@@ -266,6 +303,10 @@ function startRegionalQuiz() {
 
 function setMode(nextMode: GameMode) {
   if (mode.value === nextMode) return
+  if (mapSet.value !== 'countries') {
+    if (administrativeGame.value?.confirmLeave?.() ?? true) mode.value = nextMode
+    return
+  }
   if (quizMode.value && hasUnfinishedQuizProgress.value
     && !window.confirm(t('leaveQuizConfirmation'))) return
 
@@ -343,6 +384,7 @@ function restartQuiz() {
 }
 
 function handleQuizShortcut(event: KeyboardEvent) {
+  if (mapSet.value !== 'countries') return
   if (
     helpActive.value
     || event.code !== 'Space'
@@ -505,9 +547,9 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
           </svg>
           <RegionSelector
             :key="regionSelectionRevision"
-            :model-value="activeRegionId"
-            :options="regions"
-            @update:model-value="setActiveRegion"
+            :model-value="mapSet !== 'countries' ? mapSet : activeRegionId"
+            :options="regions" include-administrative
+            @update:model-value="chooseMap"
           />
         </div>
         <div class="mode-selector" data-help="mode" role="group" :aria-label="t('gameMode')">
@@ -515,15 +557,15 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
             {{ t('explore') }}
           </button>
           <button type="button" :aria-pressed="mode === 'find-country'" @click="setMode('find-country')">
-            {{ t('findCountry') }}
+            {{ placeText(placeKind, 'findCountry') }}
           </button>
           <button type="button" :aria-pressed="mode === 'name-country'" @click="setMode('name-country')">
-            {{ t('nameCountry') }}
+            {{ placeText(placeKind, 'nameCountry') }}
           </button>
         </div>
       </div>
       <div class="header-actions">
-        <button class="help-button" type="button" :disabled="helpLoading || detailLoading" :aria-busy="helpLoading" @click="openHelp">
+        <button v-if="mapSet === 'countries'" class="help-button" type="button" :disabled="helpLoading || detailLoading" :aria-busy="helpLoading" @click="openHelp">
           {{ t('help') }}
         </button>
         <div class="language-selector" role="group" :aria-label="t('language')">
@@ -545,7 +587,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
           </svg>
         </button>
       </div>
-      <aside v-if="invitationVisible" class="help-invitation" :aria-label="t('help')">
+      <aside v-if="invitationVisible && mapSet === 'countries'" class="help-invitation" :aria-label="t('help')">
         <div class="language-selector" role="group" :aria-label="t('language')">
           <button type="button" :aria-pressed="locale === 'en'" lang="en" @click="setLocale('en')">English</button>
           <button type="button" :aria-pressed="locale === 'nb'" lang="nb" @click="setLocale('nb')">Norsk</button>
@@ -561,8 +603,12 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
       <p v-if="helpError && !invitationVisible" class="help-error" role="status">{{ t('helpLoadError') }}</p>
     </header>
 
-    <section class="map-card" :aria-label="t('worldMapGame')">
-      <WorldMap
+    <section class="map-card" :aria-label="placeText(placeKind, 'worldMapGame')">
+      <component v-if="mapSet !== 'countries'" :is="administrativeComponent" :key="mapSet" ref="administrativeGame" :mode="mode" :settings-open="settingsOpen"
+        :automatic-answer-reveal="automaticAnswerReveal" :always-show-wrong-answer="alwaysShowWrongAnswer" :quiz-tips-enabled="quizTips.enabled.value"
+        @automatic-answer-reveal-change="setAutomaticAnswerReveal" @wrong-answer-preference-change="setAlwaysShowWrongAnswer"
+        @quiz-tips-enabled-change="quizTips.setEnabled" @quiz-tips-reset="quizTips.reset" @tip-action="quizTips.record" @round-start="quizTips.startRound" @view-busy-change="mapViewBusy = $event" />
+      <WorldMap v-else
         :shared-view="requestedMapView"
         @shared-view-applied="requestedMapView = null"
         ref="worldMap"
@@ -607,7 +653,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
         @quiz-next="advanceQuizQuestion"
         @focus-answer="quizPanel?.focusAnswer()"
       />
-      <div v-if="quizMode" ref="mapOverlay" class="map-overlay" :inert="detailLoading">
+      <div v-if="mapSet === 'countries' && quizMode" ref="mapOverlay" class="map-overlay" :inert="detailLoading">
         <div class="map-overlay__card">
           <CountryQuizPanel
             ref="quizPanel"
@@ -641,7 +687,7 @@ async function setHighDetail(enabled: boolean, pathsCached: boolean) {
           />
         </div>
       </div>
-      <div v-else-if="selectedCountry || selectedLandArea" ref="mapOverlay" class="map-overlay" :inert="detailLoading">
+      <div v-else-if="mapSet === 'countries' && (selectedCountry || selectedLandArea)" ref="mapOverlay" class="map-overlay" :inert="detailLoading">
         <div class="map-overlay__card">
           <CountryCard :country="selectedCountry" :component="selectedComponent" :area="selectedLandArea" />
         </div>

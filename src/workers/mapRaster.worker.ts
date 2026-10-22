@@ -7,7 +7,7 @@ type Bounds = [[number, number], [number, number]]
 interface PreparedScene {
   sphere: DrawPath
   bathymetry: Array<{ depth: number; path: DrawPath }>
-  contextCountries: Array<{ path: DrawPath; bounds: Bounds }>
+  contextCountries: Array<{ path: DrawPath; bounds: Bounds; clip: DrawPath }>
   relief: Array<{ elevation: number; path: DrawPath }>
   reliefClip: DrawPath
   countries: Array<{ path: DrawPath; outline: DrawPath | undefined; division: DrawPath; internalBoundary?: boolean; bounds: Bounds }>
@@ -52,7 +52,7 @@ function prepare(source: CanvasMapScene): PreparedScene {
   const prepared = {
     sphere: pathFrom(source.spherePath),
     bathymetry: source.bathymetry.map(({ depth, path }) => ({ depth, path: pathFrom(path) })),
-    contextCountries: source.contextCountries.map(({ path, bounds }) => ({ path: pathFrom(path), bounds })),
+    contextCountries: source.contextCountries.map(({ path, bounds, clipPath }) => ({ path: pathFrom(path), bounds, clip: pathFrom(clipPath) })),
     relief: source.relief.map(({ elevation, path }) => ({ elevation, path: pathFrom(path) })),
     reliefClip: pathFrom(source.reliefClipPath),
     countries: source.countries.map(({ path, outlinePath, divisionPath, internalBoundary, bounds }) => ({
@@ -107,7 +107,11 @@ function drawScene(
     context.translate(offset, 0)
     context.fillStyle = mapPalette.contextLand
     for (const country of contextCountries) {
-      if (country.path) context.fill(country.path)
+      if (country.clip) {
+        context.save(); context.clip(country.clip, 'evenodd')
+        if (country.path) context.fill(country.path)
+        context.restore()
+      } else if (country.path) context.fill(country.path)
     }
     context.fillStyle = prepared.relief.length ? mapPalette.reliefLand : mapPalette.land
     for (const country of countries) {
@@ -136,7 +140,11 @@ function drawScene(
     context.save()
     context.translate(offset, 0)
     for (const country of contextCountries) {
-      if (country.path) context.stroke(country.path)
+      if (country.clip) {
+        context.save(); context.clip(country.clip, 'evenodd')
+        if (country.path) context.stroke(country.path)
+        context.restore()
+      } else if (country.path) context.stroke(country.path)
     }
     context.restore()
   }

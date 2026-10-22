@@ -2,6 +2,19 @@
 
 Concise, user-facing notes for local releases. Add an **Unreleased** section when there are upcoming changes, then replace its heading with the versioned release heading before publishing.
 
+## 0.23.0 — Local Horizons — 2026-10-23
+
+### Improvements
+
+- Add Norway county Explore, Find, and Name modes for all 15 counties, with official 2026 boundaries, bilingual controls, county coats of arms, and shared quiz settings.
+- Add USA state Explore, Find, and Name modes for all 50 states, with local flags, English/Bokmål names, and search aliases.
+- Show faded neighboring land around the USA and place Alaska and Hawaii in marked Pacific panels near the west coast, with appropriate scale bars and zoom limits.
+- Smooth county selection and cap automatic zoom at a wider view. Deselecting closes the card without moving the map.
+- Keep county/state maps in high detail, hide water names, and explain unavailable controls in the shared settings panel.
+- Align revealed-answer labels with names and flags or crests, and refine shared Name quiz card layouts.
+- Refine saved water-name placements and typography.
+- Add simple local server start and stop commands.
+
 ## 0.22.0 — Waterline Workshop — 2026-10-18
 
 ### Improvements

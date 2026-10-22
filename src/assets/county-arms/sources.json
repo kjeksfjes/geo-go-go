@@ -1,0 +1,171 @@
+{
+  "retrieved": "2026-10-22",
+  "purpose": "Educational identification of counties; these depictions do not indicate official affiliation.",
+  "files": [
+    {
+      "code": "03",
+      "file": "03.svg",
+      "title": "File:Oslo komm.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Oslo_komm.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/da/Oslo_komm.svg",
+      "sha256": "93129140a8e6beadae18580aa3895870f20e9d928d59fb535222a2c324e2db1d",
+      "license": "Public domain",
+      "artist": "Unknown authorUnknown author",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "11",
+      "file": "11.svg",
+      "title": "File:Rogaland våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Rogaland_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Rogaland_v%C3%A5pen.svg",
+      "sha256": "9dceacd245bcac45a0ed4c45621abaee548e95027db0f6d8932fa1c1df1ada26",
+      "license": "Public domain",
+      "artist": "Hallvard Trætteberg, SKvalen",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "15",
+      "file": "15.svg",
+      "title": "File:Møre og Romsdal våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:M%C3%B8re_og_Romsdal_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/db/M%C3%B8re_og_Romsdal_v%C3%A5pen.svg",
+      "sha256": "cb1458bbf5326c9a942779287d1346660b3a0d85c472a0f361de20a28b9e790d",
+      "license": "Public domain",
+      "artist": "Knowledgeisfree",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "18",
+      "file": "18.svg",
+      "title": "File:Nordland våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Nordland_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Nordland_v%C3%A5pen.svg",
+      "sha256": "26f0b8e75081c38ab011a6a96eb8caa17a6be7be84ac3551a9a95d713d4e9ab6",
+      "license": "Public domain",
+      "artist": "SKvalen",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "31",
+      "file": "31.svg",
+      "title": "File:Østfold våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:%C3%98stfold_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a2/%C3%98stfold_v%C3%A5pen.svg",
+      "sha256": "6f5ab033824eded0598883a0d3021df9f98d59b637c3cd84a512b0ad7d292a62",
+      "license": "Public domain",
+      "artist": "Hallvard Trætteberg, SKvalen",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "32",
+      "file": "32.svg",
+      "title": "File:Akershus våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Akershus_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f2/Akershus_v%C3%A5pen.svg",
+      "sha256": "0935f2b6f65d98360efe38b2b793128db30a5000a718d0148b761f9d65750975",
+      "license": "Public domain",
+      "artist": "Own work",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "33",
+      "file": "33.svg",
+      "title": "File:Buskerud våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Buskerud_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Buskerud_v%C3%A5pen.svg",
+      "sha256": "24be63e852d2f5f24bd674d21c316c0f5827e86f9e8c3e9bfccbe8d73c023969",
+      "license": "Public domain",
+      "artist": "Hallvard Trætteberg, SKvalen",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "34",
+      "file": "34.svg",
+      "title": "File:Innlandet våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Innlandet_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Innlandet_v%C3%A5pen.svg",
+      "sha256": "1d9e43cd051cfde69bb7207856c368ee08e5b31c0f878fe47a49c9b9cfc3af9d",
+      "license": "Public domain",
+      "artist": "Unknown authorUnknown author",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "39",
+      "file": "39.svg",
+      "title": "File:Vestfold våpen 2024.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Vestfold_v%C3%A5pen_2024.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Vestfold_v%C3%A5pen_2024.svg",
+      "sha256": "274fe88c8ac904e78f2d905fef822ea36460a03f5184ccae505a8bd56827c3da",
+      "license": "Public domain",
+      "artist": "Vestfold og Telemark fylkeskommune",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "40",
+      "file": "40.svg",
+      "title": "File:Telemark våpen 2024.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Telemark_v%C3%A5pen_2024.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Telemark_v%C3%A5pen_2024.svg",
+      "sha256": "f321a48b214c14fb47b08eb3033e5837e18a9cd37d27e4fd785eb5f4626fe817",
+      "license": "Public domain",
+      "artist": "Telemark fylkeskommune",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "42",
+      "file": "42.svg",
+      "title": "File:Agder våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Agder_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/2/25/Agder_v%C3%A5pen.svg",
+      "sha256": "a33ccf5f3a90d91eb81604e366183329c197fe2ad13f971278a7e4f13e18faf7",
+      "license": "Public domain",
+      "artist": "Agder fylkeskommune",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "46",
+      "file": "46.svg",
+      "title": "File:Vestland våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Vestland_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Vestland_v%C3%A5pen.svg",
+      "sha256": "bfd122f277181984e9dd6491bfbe43d275e58fda24bc235a090c3528b9ea983c",
+      "license": "Public domain",
+      "artist": "Unknown authorUnknown author",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "50",
+      "file": "50.svg",
+      "title": "File:Trøndelag våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Tr%C3%B8ndelag_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Tr%C3%B8ndelag_v%C3%A5pen.svg",
+      "sha256": "dee57986befed9bae59aa703b3cf7981d716592963bca407d6f907edac32e4e2",
+      "license": "Public domain",
+      "artist": "Spider",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "55",
+      "file": "55.svg",
+      "title": "File:Troms våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Troms_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/da/Troms_v%C3%A5pen.svg",
+      "sha256": "a86ef72e68d50e5c2bbf3aa3693d901a1a2725447f6f451e7e31ffc1cb84849d",
+      "license": "Public domain",
+      "artist": "Own work  This W3C-unspecified vector image was created with Inkscape .",
+      "usageNotes": "insignia"
+    },
+    {
+      "code": "56",
+      "file": "56.svg",
+      "title": "File:Finnmark våpen.svg",
+      "page": "https://commons.wikimedia.org/wiki/File:Finnmark_v%C3%A5pen.svg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Finnmark_v%C3%A5pen.svg",
+      "sha256": "c16077917ad2092c53d63e68582568e28fb2e89aaaebed6f6f6885e7861c33ae",
+      "license": "Public domain",
+      "artist": "Own work  This W3C-unspecified vector image was created with Inkscape .",
+      "usageNotes": "insignia"
+    }
+  ]
+}

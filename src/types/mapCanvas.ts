@@ -8,7 +8,7 @@ export interface CanvasMapScene {
   coordinateKey: string
   spherePath: string
   bathymetry: Array<{ depth: number; path: string }>
-  contextCountries: Array<{ path: string; bounds: [[number, number], [number, number]] }>
+  contextCountries: Array<{ path: string; bounds: [[number, number], [number, number]]; clipPath?: string }>
   relief: Array<{ elevation: number; path: string }>
   reliefClipPath: string
   countries: Array<{

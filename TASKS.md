@@ -2,6 +2,32 @@
 
 Lightweight backlog for deferred work. Keep stable task IDs and update each task's status as work progresses; recording a task does not authorize starting it automatically. No task-management dependency is required for now.
 
+## TASK-012 — Add capital quiz modes
+
+Status: Backlog — deferred until requested. Added: 2026-10-18.
+
+Explore capital quizzes using the existing country identities, regional question pools, scoring, answer suggestions, and English/Norwegian interface. The repository currently has no capital catalog or city coordinates. [Natural Earth Populated Places](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/) is a candidate source for a small checked-in catalog; review its coverage and currency rather than importing one capital per country blindly. No database or live API is proposed.
+
+### Proposed scope and decisions
+
+- [ ] Start with **Name the capital**: highlight a country and ask for its capital using searchable answer suggestions. Consider **Find the capital** separately, with selectable markers or a forgiving geographic click radius suitable for touch.
+- [ ] Import and review capital names, coordinates, country associations, English/Bokmål display names, accepted spelling alternatives, source provenance, and licensing.
+- [ ] Define explicit answer policies for multiple capitals, constitutional capitals versus seats of government, disputed arrangements, and recent changes; support exceptions without changing country or quiz identities.
+- [ ] Reuse existing quiz behavior where practical, keep the catalog lightweight, and run proportionate data/build checks. Leave desktop/mobile visual acceptance to the user.
+
+## TASK-013 — Add USA state and Norway county map sets and quizzes
+
+Status: Norway counties and USA states implemented; awaiting the user's visual/device acceptance. Added: 2026-10-18. Updated: 2026-10-23.
+
+The Norway county map is available from the header selector with Explore, Find the county, and Name the county. It uses all 15 official county identities independently of country identities, shared quiz progression/cards/suggestions, and only county land geometry; foreign countries and unrelated layers are absent. Kartverket's 2026 boundaries are clipped to the existing Natural Earth 10m Norway coastline and simplified into shared-border assets; the app always uses the finer county geometry. Geometry is lazy-loaded, and Canvas and SVG share the same paths. Provenance, attribution, and regeneration are documented in [README.md](README.md#norway-counties) and [the source record](docs/norway-counties-source.json). County data and quiz progression have automated checks; no browser or device visual acceptance is claimed.
+
+### Remaining work
+
+- [ ] Obtain the user's desktop/mobile acceptance of county framing, Oslo's small target, coastal coverage, answer interactions, and both renderers.
+- [x] Import the 50 US states from Census 2025 cartographic boundaries, excluding DC and territories. Use marked Alaska/Hawaii insets, a fixed Albers USA projection, and a local scale caption.
+- [x] Add USA Explore/Find/Name modes, English/Bokmål names and search aliases, 50 local state flags, shared county/state rendering and navigation, lazy data loading, source provenance/import tools, and build/data checks.
+- [ ] Obtain the user’s desktop/mobile acceptance of state framing, insets, small-state targets, flags, quiz behavior, scale captions, and Canvas/SVG rendering.
+
 ## TASK-011 — Consider optional repository and deployment security hardening
 
 Status: Deferred by the user. Added: 2026-10-17.

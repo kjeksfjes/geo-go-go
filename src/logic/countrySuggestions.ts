@@ -1,6 +1,7 @@
 export interface CountrySuggestion {
   id: string
   name: string
+  aliases?: readonly string[]
 }
 
 export function normalizeCountrySearch(value: string) {
@@ -18,7 +19,7 @@ export function filterCountrySuggestions(options: readonly CountrySuggestion[], 
   const collator = new Intl.Collator(locale, { sensitivity: 'base' })
   return options.map((option) => ({
     option,
-    names: [option.name, ...(countrySearchAliases[option.id] ?? [])].map(normalizeCountrySearch),
+    names: [option.name, ...(option.aliases ?? []), ...(countrySearchAliases[option.id] ?? [])].map(normalizeCountrySearch),
   }))
     .filter(({ names }) => names.some((name) => name.includes(search)))
     .sort((a, b) => {

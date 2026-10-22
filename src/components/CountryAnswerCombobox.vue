@@ -1,15 +1,21 @@
 <script setup lang="ts">
+import { placeText } from '../logic/placeText'
+import type { PlaceKind } from '../types/administrativeMap'
 import { computed, onMounted, ref, useId, watch } from 'vue'
 import {
   ComboboxAnchor, ComboboxContent, ComboboxEmpty, ComboboxInput,
   ComboboxItem, ComboboxPortal, ComboboxRoot, ComboboxViewport,
 } from 'reka-ui'
-import { countryName, locale, t } from '../i18n'
+import { countryName, locale, t, type MessageKey } from '../i18n'
 import { countryInfoById } from '../data/countries'
 import type { QuizTipAction } from '../logic/quizTips'
 import { filterCountrySuggestions, normalizeCountrySearch } from '../logic/countrySuggestions'
 
-const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean }>()
+const props = defineProps<{ countryIds: readonly string[]; answerId: string | null; correct: boolean; names?: Readonly<Record<string, string>>; badges?: Readonly<Record<string, string>>; aliases?: Readonly<Record<string, readonly string[]>>; placeKind?: PlaceKind }>()
+function displayName(id: string) { return props.names ? props.names[id] ?? id : countryName(id) }
+function text(key: MessageKey, values: Record<string, string | number> = {}) {
+  return placeText(props.placeKind ?? 'country', key, values)
+}
 const emit = defineEmits<{ answer: [countryId: string]; 'tip-action': [action: QuizTipAction] }>()
 let selectionMethod: 'keyboard' | 'pointer' = 'keyboard'
 let selectionPointerType = 'mouse'
@@ -31,7 +37,7 @@ const inputId = `country-answer-${useId()}`
 const search = defineModel<string>('search', { required: true })
 const open = ref(false)
 const suggestions = computed(() => filterCountrySuggestions(
-  props.countryIds.map((id) => ({ id, name: countryName(id) })), search.value, locale.value,
+  props.countryIds.map((id) => ({ id, name: displayName(id), aliases: props.aliases?.[id] })), search.value, locale.value,
 ))
 
 function selectCountry(value: unknown) {
@@ -73,7 +79,7 @@ onMounted(() => {
       <input
         :id="inputId"
         class="country-answer__input"
-        :value="countryName(answerId)"
+        :value="displayName(answerId)"
         data-1p-ignore
         data-bwignore="true"
         data-lpignore="true"
@@ -107,7 +113,7 @@ onMounted(() => {
           data-lpignore="true"
           data-form-type="other"
           :aria-label="t('yourGuess')"
-          :placeholder="t('countryNamePlaceholder')"
+          :placeholder="text('countryNamePlaceholder')"
           autocorrect="off"
           autocapitalize="none"
           :spellcheck="false"
@@ -115,11 +121,12 @@ onMounted(() => {
         />
       </ComboboxAnchor>
       <ComboboxPortal>
-        <ComboboxContent @pointerdown.capture="recordSuggestionPointer" @keydown.capture="recordKeys" class="country-suggestions" position="popper" :side-offset="6" :collision-padding="12" :aria-label="t('countrySuggestions')">
+        <ComboboxContent @pointerdown.capture="recordSuggestionPointer" @keydown.capture="recordKeys" class="country-suggestions" position="popper" :side-offset="6" :collision-padding="12" :aria-label="text('countrySuggestions')">
           <ComboboxViewport class="country-suggestions__viewport">
-            <ComboboxEmpty class="country-suggestions__empty">{{ t('noCountryMatches') }}</ComboboxEmpty>
+            <ComboboxEmpty class="country-suggestions__empty">{{ text('noCountryMatches') }}</ComboboxEmpty>
             <ComboboxItem v-for="option in suggestions" :key="option.id" :value="option.id" :text-value="option.name" class="country-suggestions__item">
-              <span v-if="countryInfoById.get(option.id)?.flagCode" class="country-suggestions__flag fi" :class="`fi-${countryInfoById.get(option.id)?.flagCode}`" aria-hidden="true" />
+              <img v-if="badges?.[option.id]" class="country-suggestions__emblem" :src="badges[option.id]" alt="" />
+              <span v-else-if="!names && countryInfoById.get(option.id)?.flagCode" class="country-suggestions__flag fi" :class="`fi-${countryInfoById.get(option.id)?.flagCode}`" aria-hidden="true" />
               <span class="country-suggestions__name">{{ option.name }}</span>
             </ComboboxItem>
           </ComboboxViewport>
@@ -155,6 +162,7 @@ onMounted(() => {
 }
 .country-suggestions__viewport { min-height: 0; max-height: inherit; overflow-y: auto; overscroll-behavior: contain; }
 .country-suggestions__item { display: flex; align-items: center; gap: var(--ui-space-2); min-height: var(--ui-control-height); line-height: 1.4; padding: 0.625rem var(--ui-space-3); border-radius: var(--ui-radius-small); font-size: var(--ui-text-body); font-weight: var(--ui-weight-large); cursor: pointer; outline: none; }
+.country-suggestions__emblem { width: 1.5rem; height: 1.5rem; object-fit: contain; flex: 0 0 auto; }
 .country-suggestions__flag { flex: 0 0 auto; width: 1.333333rem; font-size: 1rem; border-radius: 2px; }
 .country-suggestions__name { min-width: 0; overflow-wrap: anywhere; }
 .country-suggestions__item[data-highlighted] { background: var(--ui-hover); color: var(--ui-ink); }

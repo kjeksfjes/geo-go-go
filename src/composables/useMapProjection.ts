@@ -46,7 +46,7 @@ export const projectionOptions: MapProjectionOption[] = [
   { id: 'regional-equal-area', label: 'Regional Equal Area' },
 ]
 
-const projectionFactories: Record<Exclude<MapProjectionId, 'regional-equal-area'>, () => GeoProjection> = {
+export const projectionFactories: Record<Exclude<MapProjectionId, 'regional-equal-area'>, () => GeoProjection> = {
   mercator: geoMercator,
   miller: geoMiller,
   'winkel-tripel': geoWinkel3,

@@ -2,15 +2,16 @@
 import type { MapScaleBar as ScaleBar } from '../logic/mapScale'
 import { t } from '../i18n'
 
-defineProps<{ scale: ScaleBar }>()
+defineProps<{ scale: ScaleBar; context?: string }>()
 </script>
 
 <template>
   <div
     class="map-scale-bar"
     role="img"
-    :aria-label="t('scaleAtMapCenter', { distance: scale.total })"
+    :aria-label="[context, t('scaleAtMapCenter', { distance: scale.total })].filter(Boolean).join(' · ')"
   >
+    <span v-if="context" class="map-scale-bar__context">{{ context }}</span>
     <div class="map-scale-bar__ruler" :style="{ width: `${scale.width}px` }">
       <span class="map-scale-bar__label map-scale-bar__label--start">0</span>
       <span class="map-scale-bar__label map-scale-bar__label--middle">{{ scale.midpoint }}</span>
@@ -32,6 +33,8 @@ defineProps<{ scale: ScaleBar }>()
   line-height: 1;
   pointer-events: none;
 }
+
+.map-scale-bar__context { position: absolute; right: 0; bottom: calc(100% + 1.65rem); white-space: nowrap; font-size: var(--ui-text-small); }
 
 .map-scale-bar__ruler {
   position: relative;

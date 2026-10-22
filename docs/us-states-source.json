@@ -1,0 +1,12 @@
+{
+  "source": "https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_state_500k.zip",
+  "vintage": "2025",
+  "retrieved": "2026-10-22",
+  "sha256": "9cbfe171dad1555e11770c981d8f4db9e687a65c86f5bdae684eeb487e2e9b80",
+  "attribution": "State boundaries: U.S. Census Bureau, 2025 cartographic boundaries (1:500,000).",
+  "processing": "Keep exactly the 50 reviewed state FIPS identities; exclude DC and territories. Topology-preserving coverage simplification at 0.001 degrees; retain islands and lake holes, clockwise exteriors for D3; round coordinates to six decimals. Alaska/Hawaii remain in their geographic positions in the asset; inset layout is a runtime projection.",
+  "names": "English Census names; Norwegian directional forms following NRK language guidance; all other names retain the English form.",
+  "nameSource": "https://sprak.nrk.no/2016/delstatar-usa/",
+  "license": "U.S. government work; public domain in the United States.",
+  "licenseSource": "https://www2.census.gov/foia/ds_policies/ds027.pdf"
+}

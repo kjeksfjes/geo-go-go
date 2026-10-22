@@ -1,9 +1,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch, type Ref } from 'vue'
+import { placeText } from '../logic/placeText'
+import type { PlaceKind } from '../types/administrativeMap'
 import { createQuizTipTracker, quizTipIds, quizTipRules, type QuizTipAction, type QuizTipId } from '../logic/quizTips'
 import { locale, t } from '../i18n'
 import { readStoredValue, writeStoredValue } from '../utils/storage'
 
 interface TipContext {
+  placeKind?: PlaceKind
   mode: string
   phase: string
   question: string
@@ -71,7 +74,7 @@ export function useQuizTips(context: Ref<TipContext>) {
     const key = current.id === 'continue'
       ? current.input === 'keyboard' ? 'tipSpaceNext' : current.input === 'mouse' ? 'tipClickNext' : 'tipTapNext'
       : tipText[current.id]
-    return t(key, {
+    return placeText(context.value.placeKind ?? 'country', key, {
       shortcut: /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘Enter' : 'Ctrl+Enter',
       after: t(context.value.mode === 'find-country' ? 'tipAfterAnswer' : 'tipAfterAnswerOrSkip'),
     })
