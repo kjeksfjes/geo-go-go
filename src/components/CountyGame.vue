@@ -4,7 +4,6 @@ import { geoAzimuthalEqualArea, geoPath, geoDistance } from 'd3-geo'
 import CanvasMap from './CanvasMap.vue'
 import MapSettingsPanel from './MapSettingsPanel.vue'
 import MapScaleBar from './MapScaleBar.vue'
-import MarineLabels from './MarineLabels.vue'
 import { projectionFactories, projectionOptions, type MapProjectionId } from '../composables/useMapProjection'
 import { mapSettingKeys } from '../logic/mapSettings'
 import { mapScaleBar, type ScaleUnitSystem } from '../logic/mapScale'
@@ -36,7 +35,6 @@ const scaleEnabled = ref(readStoredBoolean(mapSettingKeys.scaleBar, true))
 const scaleUnits = ref<ScaleUnitSystem>((['metric', 'imperial', 'nautical'] as const).find(unit => unit === readStoredValue(mapSettingKeys.scaleUnits)) ?? 'metric')
 const autoProjection = ref(readStoredBoolean(mapSettingKeys.autoRegionalProjection, false))
 const projectionId = ref<MapProjectionId>(projectionOptions.find(p => p.id === readStoredValue(mapSettingKeys.projection))?.id ?? 'mercator')
-const marineEnabled = ref(readStoredBoolean(mapSettingKeys.marineLabels, true))
 const bathymetryEnabled = ref(readStoredBoolean(mapSettingKeys.bathymetry, !window.matchMedia('(pointer: coarse)').matches))
 const reliefEnabled = ref(readStoredBoolean(mapSettingKeys.relief, false))
 const bathymetry = shallowRef<BathymetryBand[]>([])
@@ -68,7 +66,7 @@ async function setRelief(enabled: boolean) {
 for (const [state, key] of [
   [markersEnabled, mapSettingKeys.countryMarkers], [limitZoom, mapSettingKeys.limitedCountryZoom],
   [scaleEnabled, mapSettingKeys.scaleBar], [autoProjection, mapSettingKeys.autoRegionalProjection],
-  [marineEnabled, mapSettingKeys.marineLabels], [bathymetryEnabled, mapSettingKeys.bathymetry], [reliefEnabled, mapSettingKeys.relief],
+  [bathymetryEnabled, mapSettingKeys.bathymetry], [reliefEnabled, mapSettingKeys.relief],
 ] as const) watch(state, value => writeStoredValue(key, value))
 watch(scaleUnits, value => writeStoredValue(mapSettingKeys.scaleUnits, value))
 watch(projectionId, value => writeStoredValue(mapSettingKeys.projection, value))
@@ -303,10 +301,6 @@ onBeforeUnmount(() => { detailRequest++; document.removeEventListener('keydown',
         </template>
       </g>
     </svg>
-    <svg v-if="marineEnabled && !quiz" class="county-water-names" :viewBox="`0 0 ${width} ${height}`" aria-hidden="true">
-      <MarineLabels :visible="!isInteracting" :width="width" :height="height" :transform="transform"
-        :projection-scale="2 * Math.PI * projection.scale() / width" :project-point="point => projection(point) ?? undefined" :copy-offsets="[0]" :wrap-period="null" />
-    </svg>
     <div ref="overlay" class="map-overlay">
       <div v-if="quiz" class="map-overlay__card">
         <CountryQuizPanel ref="panel" :key="mode" county :names="countyNames" :badges="countyEmblems" :country-ids="[...countyIds]"
@@ -331,7 +325,7 @@ onBeforeUnmount(() => { detailRequest++; document.removeEventListener('keydown',
       :relief-loading="reliefLoading" :relief-enabled="reliefEnabled" :interaction-locked="detailLoading || bathymetryLoading || reliefLoading" :quiz-mode="quiz"
       :projection-id="activeProjectionId" :quiz-tips-enabled="quizTipsEnabled" :suggest-all-countries="false"
       :automatic-answer-reveal="automaticAnswerReveal" :always-show-wrong-answer="alwaysShowWrongAnswer"
-      v-model:auto-regional-projection="autoProjection" v-model:marine-labels-enabled="marineEnabled" v-model:country-markers-enabled="markersEnabled"
+      v-model:auto-regional-projection="autoProjection" :marine-labels-enabled="false" v-model:country-markers-enabled="markersEnabled"
       v-model:limited-country-zoom-enabled="limitZoom" v-model:scale-bar-enabled="scaleEnabled" v-model:scale-units="scaleUnits"
       @locale-change="setLocale" @detail-change="setDetail" @bathymetry-change="setBathymetry" @relief-change="setRelief" @projection-change="selectProjection"
       @quiz-tips-enabled-change="emit('quiz-tips-enabled-change', $event)" @quiz-tips-reset="emit('quiz-tips-reset')"
@@ -360,6 +354,5 @@ onBeforeUnmount(() => { detailRequest++; document.removeEventListener('keydown',
 .county-controls { position: absolute; right: 1rem; bottom: 2.5rem; }
 .county-controls button, .county-load-error button { min-height: var(--ui-control-height); padding: 0.45rem 0.7rem; border: 1px solid var(--ui-border); border-radius: var(--ui-radius-control); color: var(--ui-ink); background: var(--ui-panel); font: inherit; cursor: pointer; }
 .county-attribution { position: absolute; right: 0.5rem; bottom: 0.3rem; left: 0.5rem; width: fit-content; max-width: calc(100% - 1rem); padding: 0.15rem 0.3rem; border-radius: var(--ui-radius-small); background: var(--ui-panel); color: var(--ui-text); font-size: 0.65rem; }
-.county-water-names { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .county-load-error { position: absolute; right: 1rem; top: 1rem; z-index: 5; background: var(--ui-panel); padding: 0.5rem; }
 </style>

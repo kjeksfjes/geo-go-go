@@ -61,9 +61,9 @@ onBeforeUnmount(() => { if (resetTimer !== undefined) window.clearTimeout(resetT
             <MapDetailToggle :label="t('relief')" :loading="reliefLoading" :disabled="interactionLocked" :model-value="reliefEnabled" @update:model-value="setReliefEnabled" />
             <MapDetailToggle
               :label="t('waterNames')"
-              :description="quizMode ? t('waterNamesQuizHint') : undefined"
-              :disabled="interactionLocked || quizMode"
-              :model-value="marineLabelsEnabled && !quizMode"
+              :description="!county && quizMode ? t('waterNamesQuizHint') : undefined"
+              :disabled="interactionLocked || quizMode || county"
+              :model-value="marineLabelsEnabled && !quizMode && !county"
               @update:model-value="marineLabelsEnabled = $event"
             />
             <p id="settings-layer-performance-hint" class="settings-hint">{{ t('mapPerformanceHint') }}</p>
